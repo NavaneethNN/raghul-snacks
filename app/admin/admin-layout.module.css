@@ -1,0 +1,28 @@
+.adminLayout {
+  display: flex;
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+.mainContent {
+  flex: 1;
+  margin-left: 260px;
+  min-height: 100vh;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .mainContent {
+    margin-left: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .adminLayout {
+    flex-direction: column;
+  }
+
+  .mainContent {
+    margin-left: 0;
+  }
+}
