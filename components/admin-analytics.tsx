@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-dashboard.module.css";
 
 export function AdminAnalytics() {

@@ -2,11 +2,25 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-table.module.css";
 
 export function AdminBanners() {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
+  const [imageInputType, setImageInputType] = useState<"url" | "file">("url");
+  const [imagePreview, setImagePreview] = useState<string>("");
+
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
 
 
   return (
@@ -17,16 +31,13 @@ export function AdminBanners() {
           <h1>Homepage Banners</h1>
           <p>Manage promotional banners and hero images.</p>
         </div>
-        <div className={styles.headerActions}>
-          <button className={styles.primaryButton} onClick={() => setShowForm(true)}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            Add Banner
-          </button>
-          
-        </div>
+        <button className={styles.primaryButton} onClick={() => setShowForm(true)}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add Banner
+        </button>
       </header>
 
       <section className={styles.workspace}>
@@ -81,8 +92,59 @@ export function AdminBanners() {
                 <input type="text" placeholder="e.g., Summer Sale" required />
               </div>
               <div className={styles.field}>
-                <label>Image URL</label>
-                <input type="text" placeholder="https://..." required />
+                <label>Banner Image</label>
+                <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => { setImageInputType("url"); setImagePreview(""); }}
+                    style={{
+                      padding: "6px 12px",
+                      fontSize: "13px",
+                      border: "1.5px solid var(--line)",
+                      background: imageInputType === "url" ? "var(--terracotta)" : "var(--paper)",
+                      color: imageInputType === "url" ? "white" : "var(--ink)",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    URL
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageInputType("file")}
+                    style={{
+                      padding: "6px 12px",
+                      fontSize: "13px",
+                      border: "1.5px solid var(--line)",
+                      background: imageInputType === "file" ? "var(--terracotta)" : "var(--paper)",
+                      color: imageInputType === "file" ? "white" : "var(--ink)",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Upload File
+                  </button>
+                </div>
+                {imageInputType === "url" ? (
+                  <input type="text" placeholder="https://..." required />
+                ) : (
+                  <>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      style={{ marginBottom: "8px" }}
+                      required
+                    />
+                    {imagePreview && (
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        style={{ maxWidth: "300px", maxHeight: "200px", borderRadius: "8px", marginTop: "8px" }}
+                      />
+                    )}
+                  </>
+                )}
               </div>
               <div className={styles.field}>
                 <label>Link URL</label>

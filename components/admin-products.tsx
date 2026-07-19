@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-table.module.css";
 
 type Product = {
@@ -36,7 +37,23 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [imageInputType, setImageInputType] = useState<"url" | "file">("url");
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [imageData, setImageData] = useState<string>("");
 
+
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setImagePreview(base64String);
+        setImageData(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -44,6 +61,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     setError("");
 
     const formData = new FormData(e.currentTarget);
+    const imageValue = imageInputType === "file" ? imageData : (formData.get("image") as string);
+
     const data = {
       name: formData.get("name") as string,
       description: formData.get("description") as string,
@@ -52,7 +71,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
       offerPrice: formData.get("offerPrice") ? parseFloat(formData.get("offerPrice") as string) : null,
       weight: formData.get("weight") as string,
       categoryId: formData.get("categoryId") ? parseInt(formData.get("categoryId") as string) : null,
-      image: formData.get("image") as string,
+      image: imageValue,
       stock: parseInt(formData.get("stock") as string),
       featured: formData.get("featured") === "on",
       bestseller: formData.get("bestseller") === "on",
@@ -109,15 +128,13 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
           <h1>Products</h1>
           <p>Add, edit, and manage your product catalog.</p>
         </div>
-        <div className={styles.headerActions}>
-          <button className={styles.primaryButton} onClick={() => setShowForm(true)}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            Add Product
-          </button>
-        </div>
+        <button className={styles.primaryButton} onClick={() => setShowForm(true)}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add Product
+        </button>
       </header>
 
       <section className={styles.workspace}>
@@ -270,6 +287,10 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                   <label>Stock Quantity</label>
                   <input type="number" name="stock" placeholder="0" required />
                 </div>
+                <div className={styles.field}>
+                  <label>Shelf Life</label>
+                  <input type="text" name="shelfLife" placeholder="e.g., 30 days" />
+                </div>
               </div>
               <div className={styles.field}>
                 <label>Description</label>
@@ -280,8 +301,58 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                 <textarea name="ingredients" rows={3} placeholder="List ingredients..."></textarea>
               </div>
               <div className={styles.field}>
-                <label>Image URL</label>
-                <input type="text" name="image" placeholder="https://..." />
+                <label>Product Image</label>
+                <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => { setImageInputType("url"); setImagePreview(""); setImageData(""); }}
+                    style={{
+                      padding: "6px 12px",
+                      fontSize: "13px",
+                      border: "1.5px solid var(--line)",
+                      background: imageInputType === "url" ? "var(--terracotta)" : "var(--paper)",
+                      color: imageInputType === "url" ? "white" : "var(--ink)",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    URL
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setImageInputType("file"); }}
+                    style={{
+                      padding: "6px 12px",
+                      fontSize: "13px",
+                      border: "1.5px solid var(--line)",
+                      background: imageInputType === "file" ? "var(--terracotta)" : "var(--paper)",
+                      color: imageInputType === "file" ? "white" : "var(--ink)",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Upload File
+                  </button>
+                </div>
+                {imageInputType === "url" ? (
+                  <input type="text" name="image" placeholder="https://..." />
+                ) : (
+                  <>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      style={{ marginBottom: "8px" }}
+                    />
+                    {imagePreview && (
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        style={{ maxWidth: "200px", maxHeight: "200px", borderRadius: "8px", marginTop: "8px" }}
+                      />
+                    )}
+                  </>
+                )}
               </div>
               <div className={styles.checkboxGroup}>
                 <label className={styles.checkbox}>

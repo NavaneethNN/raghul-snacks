@@ -13,7 +13,7 @@
 
 .brand {
   padding: 32px 24px 24px;
-  border-bottom: 1px solid rgba(229, 165, 47, 0.15);
+  border-bottom: 1px solid rgba(201, 95, 59, 0.15);
 }
 
 .brandName {
@@ -25,7 +25,7 @@
 }
 
 .brandName span:first-child {
-  color: var(--saffron);
+  color: var(--terracotta);
 }
 
 .brandTagline {
@@ -58,13 +58,13 @@
 }
 
 .navItem:hover {
-  background: rgba(229, 165, 47, 0.08);
+  background: rgba(201, 95, 59, 0.08);
   color: var(--cream);
 }
 
 .navItem.active {
-  background: rgba(229, 165, 47, 0.15);
-  color: var(--saffron);
+  background: rgba(201, 95, 59, 0.15);
+  color: var(--terracotta);
   font-weight: 600;
 }
 
@@ -76,7 +76,7 @@
   transform: translateY(-50%);
   width: 3px;
   height: 60%;
-  background: var(--saffron);
+  background: var(--terracotta);
   border-radius: 0 2px 2px 0;
 }
 
@@ -99,7 +99,7 @@
 
 .footer {
   padding: 20px 16px;
-  border-top: 1px solid rgba(229, 165, 47, 0.15);
+  border-top: 1px solid rgba(201, 95, 59, 0.15);
   display: flex;
   flex-direction: column;
   gap: 12px;

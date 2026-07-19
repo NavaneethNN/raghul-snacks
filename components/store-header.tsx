@@ -8,6 +8,7 @@ export function StoreHeader() {
   const { count } = useCart();
   const [account, setAccount] = useState<{ name: string; email: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/session").then(async (response) => {
@@ -15,6 +16,17 @@ export function StoreHeader() {
       setAccount(data.account || null);
     }).catch(() => setAccount(null));
   }, []);
+
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [menuOpen]);
 
   return (
     <header className="site-header">
@@ -35,8 +47,6 @@ export function StoreHeader() {
             </svg>
           </div>
           <Link href="/about">Our Story</Link>
-          <Link href="#">Reviews</Link>
-          <Link href="#">Contact</Link>
         </nav>
 
         <div className="search-bar">
@@ -78,6 +88,48 @@ export function StoreHeader() {
             </svg>
             {count > 0 && <span className="cart-badge">{count}</span>}
           </Link>
+
+          <button
+            className="hamburger-btn"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+          >
+            <span className={menuOpen ? "open" : ""}></span>
+            <span className={menuOpen ? "open" : ""}></span>
+            <span className={menuOpen ? "open" : ""}></span>
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      {menuOpen && (
+        <div
+          className="mobile-menu-overlay"
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile Menu */}
+      <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
+        <div className="mobile-menu-header">
+          <Link className="brand" href="/" onClick={() => setMenuOpen(false)}>
+            <span>Raghul</span> Snacks
+          </Link>
+          
+        </div>
+
+        <nav className="mobile-nav">
+          <Link href="/shop" onClick={() => setMenuOpen(false)}>Shop All</Link>
+          <Link href="/shop" onClick={() => setMenuOpen(false)}>Categories</Link>
+          <Link href="/about" onClick={() => setMenuOpen(false)}>Our Story</Link>
+          <Link href="#" onClick={() => setMenuOpen(false)}>Wishlist</Link>
+          <Link href={account ? "/orders" : "/login"} onClick={() => setMenuOpen(false)}>
+            {account ? "My Orders" : "Login"}
+          </Link>
+        </nav>
+
+        <div className="mobile-menu-footer">
+          <p>Homemade • Fresh • Traditional</p>
         </div>
       </div>
     </header>

@@ -15,7 +15,7 @@
   gap: 24px;
 }
 
-.header > div {
+.header > div:first-child {
   flex: 1;
 }
 
@@ -40,6 +40,33 @@
   margin: 0 0 4px;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.notificationButton {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.notificationButton:hover {
+  background: var(--cream);
+  border-color: var(--terracotta);
+  color: var(--terracotta);
+}
+
 .signOutButton {
   background: var(--paper);
   border: 1.5px solid var(--line);
@@ -49,11 +76,15 @@
   font: 600 13px 'DM Sans', sans-serif;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .signOutButton:hover {
-  background: var(--cream);
+  background: var(--terracotta);
   border-color: var(--terracotta);
+  color: white;
 }
 
 .metrics {
@@ -214,6 +245,11 @@
     flex-direction: column;
     align-items: flex-start;
     padding: 24px;
+  }
+
+  .headerActions {
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .header h1 {
