@@ -1,0 +1,1 @@
+export default function TermsPage() { return <section className="empty-state"><p className="eyebrow">Terms</p><h1>Shopping with Raghul Snacks.</h1><p>Product availability, prices and delivery timelines may change. Payments are processed securely by Razorpay.</p></section>; }

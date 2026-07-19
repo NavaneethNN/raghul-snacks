@@ -1,0 +1,1 @@
+export default function PrivacyPage() { return <section className="empty-state"><p className="eyebrow">Privacy policy</p><h1>Your data, respected.</h1><p>Customer information is used only to process and deliver orders and to provide requested support.</p></section>; }

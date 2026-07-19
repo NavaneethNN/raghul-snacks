@@ -1,0 +1,1 @@
+export default function RefundPage() { return <section className="empty-state"><p className="eyebrow">Refund policy</p><h1>We&apos;re here to help.</h1><p>Please contact us with your order number if your package arrives damaged or has an issue.</p></section>; }

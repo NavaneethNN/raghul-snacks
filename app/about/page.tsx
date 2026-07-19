@@ -1,0 +1,1 @@
+export default function AboutPage() { return <section className="empty-state"><p className="eyebrow">Our story</p><h1>Rooted in tradition.</h1><p>We make familiar South Indian snacks with honest ingredients, traditional recipes and the goodness of millets.</p></section>; }
