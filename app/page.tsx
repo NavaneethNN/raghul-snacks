@@ -10,85 +10,26 @@ export default function HomePage() {
         <div className="hero-content">
           <p className="eyebrow">Tradition in every bite</p>
           <h1>
-            Authentic South Indian Snacks, <i>Made Fresh</i> Every Single Day.
+            Snacks made the <i>real</i> way.
           </h1>
           <p className="hero-copy">
             Wholesome millet snacks, stone-ground podis, crispy savouries and
             homemade flavours crafted in small batches.
           </p>
 
-          <div className="hero-rating">
-            <span className="stars">★★★★★</span>
-            <span>Trusted by 3000+ families</span>
-          </div>
-
           <div className="hero-actions">
             <Link className="button button-dark" href="/shop">
-              <svg
-                width="18"
-                height="16"
-                viewBox="0 0 18 16"
-                fill="none"
-              >
-                <path
-                  d="M1 2H3.5L5.5 13H16L17 6H5.5"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <circle cx="6" cy="15" r="0.8" fill="white" />
-                <circle cx="14" cy="15" r="0.8" fill="white" />
-              </svg>
-              Shop Fresh Snacks
+              Shop all snacks
             </Link>
             <Link className="button button-outline" href="#bestsellers">
-              Explore Categories →
+              Meet the favourites →
             </Link>
           </div>
 
-          <div className="trust-badges">
-            <div className="badge">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path
-                  d="M10 2C10 2 4 4 4 10C4 15 10 18 10 18C10 18 16 15 16 10C16 4 10 2 10 2Z"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  fill="none"
-                />
-              </svg>
-              <span>No Preservatives</span>
-            </div>
-
-            <div className="badge">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path
-                  d="M2 10C2 5.58 5.58 2 10 2C14.42 2 18 5.58 18 10C18 14.42 14.42 18 10 18C5.58 18 2 14.42 2 10Z"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  fill="none"
-                />
-                <path
-                  d="M10 7V10L12.5 12"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <span>Free Shipping above ₹499</span>
-            </div>
-
-            <div className="badge">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path
-                  d="M10 3C10 3 6 5 6 8.5C6 11.5 10 15 10 15C10 15 14 11.5 14 8.5C14 5 10 3 10 3Z"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  fill="none"
-                />
-                <circle cx="10" cy="8" r="1.5" fill="currentColor" />
-              </svg>
-              <span>Handmade Daily in small batches</span>
+          <div className="hero-trust">
+            <div className="trust-item">
+              <span className="trust-stars">★★★★★</span>
+              <span className="trust-text">Trusted by 3000+ families</span>
             </div>
           </div>
         </div>
@@ -97,7 +38,7 @@ export default function HomePage() {
           <div className="hero-image-wrapper">
             <div className="snacks-display">
               <img
-                src="/placeholder-snacks.png"
+                src="/hero.png"
                 alt="Traditional snacks"
               />
             </div>
