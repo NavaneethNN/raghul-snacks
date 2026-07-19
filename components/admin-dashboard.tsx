@@ -43,9 +43,6 @@ export function AdminDashboard() {
           <h1>Welcome back!</h1>
           <p>Manage your store, orders, and products from here.</p>
         </div>
-        <button className={styles.signOutButton} onClick={signOut}>
-          Sign out
-        </button>
       </header>
 
       <section className={styles.metrics}>

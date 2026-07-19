@@ -15,9 +15,6 @@ export function AdminAnalytics() {
           <h1>Analytics Dashboard</h1>
           <p>Track your store performance and sales metrics.</p>
         </div>
-        <button className={styles.signOutButton} onClick={signOut}>
-          Sign out
-        </button>
       </header>
 
       <section className={styles.metrics}>
