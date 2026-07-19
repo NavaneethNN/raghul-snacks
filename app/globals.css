@@ -41,27 +41,44 @@ button {
   color: #fff;
   text-align: center;
   padding: 10px 12px;
-  font: 10px 'DM Mono', monospace;
+  font: 11px 'DM Mono', monospace;
   letter-spacing: 0.02em;
+  overflow: hidden;
+  position: relative;
+  min-height: 34px;
+}
+
+.announcement-slider {
   display: flex;
   justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  overflow-x: auto;
-}
-
-.announcement span {
-  color: var(--saffron);
-  padding: 0 6px;
-  white-space: nowrap;
-  display: flex;
   align-items: center;
-  gap: 6px;
+  min-height: 14px;
 }
 
-.announcement span svg {
-  flex-shrink: 0;
-  vertical-align: middle;
+.announcement-item {
+  color: var(--saffron);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  animation: slideInFromRight 0.5s ease-in-out;
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.announcement-icon {
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
 }
 
 /* ===== HEADER / NAVBAR ===== */
