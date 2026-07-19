@@ -8,6 +8,34 @@
       "when": 1784434585594,
       "tag": "0000_nostalgic_vanisher",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784444325806,
+      "tag": "0001_last_deathstrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784452902531,
+      "tag": "0002_stale_blockbuster",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784454822104,
+      "tag": "0003_lively_cammi",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784455170897,
+      "tag": "0004_spicy_machine_man",
+      "breakpoints": true
     }
   ]
 }

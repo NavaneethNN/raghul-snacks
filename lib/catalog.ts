@@ -27,4 +27,4 @@ export const categories = [
   { slug: "gift-boxes", name: "Gift Boxes", detail: "Thoughtful, delicious gifting" },
 ];
 
-export const formatPrice = (price: number) => `₹${price}`;
+export const formatPrice = (price: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(price);

@@ -15,8 +15,8 @@ export default async function AdminPage() {
   } catch { redirect("/admin/login"); }
 
   try {
-    const recentOrders = await getDb().select({ id: orders.id, orderNumber: orders.orderNumber, customerName: orders.customerName, phone: orders.phone, address: orders.address, total: orders.total, paymentStatus: orders.paymentStatus, orderStatus: orders.orderStatus, createdAt: orders.createdAt }).from(orders).orderBy(desc(orders.createdAt)).limit(100);
-    return <section className="admin-page"><p className="eyebrow">Operations</p><h1>Orders.</h1><AdminOrders orders={recentOrders.map((order) => ({ ...order, total: Number(order.total), createdAt: order.createdAt.toISOString() }))} /></section>;
+    const recentOrders = await getDb().select({ id: orders.id, orderNumber: orders.orderNumber, customerName: orders.customerName, phone: orders.phone, email: orders.email, address: orders.address, city: orders.city, state: orders.state, pincode: orders.pincode, total: orders.total, paymentStatus: orders.paymentStatus, orderStatus: orders.orderStatus, shippingStatus: orders.shippingStatus, shipmentId: orders.shipmentId, awbCode: orders.awbCode, createdAt: orders.createdAt }).from(orders).orderBy(desc(orders.createdAt)).limit(100);
+    return <section className="admin-page"><AdminOrders orders={recentOrders.map((order) => ({ ...order, total: Number(order.total), createdAt: order.createdAt.toISOString() }))} /></section>;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to load orders.";
     return <section className="empty-state"><p className="eyebrow">Admin</p><h1>Orders are not ready.</h1><p>{message}</p></section>;
