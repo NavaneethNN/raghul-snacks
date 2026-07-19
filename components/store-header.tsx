@@ -70,13 +70,12 @@ export function StoreHeader() {
             <span>Account</span>
           </Link>
 
-          <Link href="/cart" className="action-icon cart-icon" title="Cart">
+          <Link href="/cart" className="action-icon cart-icon" title={`Cart${count > 0 ? ` (${count} items)` : ''}`}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M2 3H4L5.5 12.5H16L17 6H5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               <circle cx="6" cy="16" r="1" fill="currentColor" />
               <circle cx="14" cy="16" r="1" fill="currentColor" />
             </svg>
-            <span>Cart ({count})</span>
             {count > 0 && <span className="cart-badge">{count}</span>}
           </Link>
         </div>

@@ -203,24 +203,27 @@ button {
   display: none;
 }
 
-.cart-icon span {
-  display: flex;
+.cart-icon {
+  position: relative;
 }
 
 .cart-badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
+  top: -8px;
+  right: -8px;
   background: var(--saffron);
   color: white;
-  font-size: 9px;
-  font-weight: 600;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* ===== HERO SECTION ===== */
@@ -1110,17 +1113,12 @@ footer div:last-child {
     height: 18px;
   }
 
-  .cart-icon {
-    flex-direction: row;
-    gap: 4px;
-  }
-
-  .cart-icon span {
-    display: flex;
-  }
-
   .action-icon span {
     display: none;
+  }
+
+  .cart-badge {
+    display: flex;
   }
 
   .hero {
@@ -1348,14 +1346,6 @@ footer div:last-child {
     height: 20px;
   }
 
-  .cart-icon {
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .cart-icon span {
-    display: flex;
-  }
 
   .hero {
     min-height: 600px;
