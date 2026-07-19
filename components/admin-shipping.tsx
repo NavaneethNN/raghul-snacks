@@ -6,11 +6,6 @@ import styles from "./admin-table.module.css";
 export function AdminShipping() {
   const router = useRouter();
 
-  async function signOut() {
-    await fetch("/api/admin/session", { method: "DELETE" });
-    router.replace("/admin/login");
-    router.refresh();
-  }
 
   return (
     <div className={styles.page}>
@@ -21,7 +16,7 @@ export function AdminShipping() {
           <p>Configure shipping rates and delivery zones.</p>
         </div>
         <div className={styles.headerActions}>
-          <button className={styles.signOutButton} onClick={signOut}>Sign out</button>
+          
         </div>
       </header>
 

@@ -8,6 +8,7 @@ type Category = {
   id: number;
   name: string;
   slug: string;
+  description?: string | null;
   image: string | null;
   createdAt: Date;
   productCount: number;
@@ -18,11 +19,18 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [imageInputType, setImageInputType] = useState<"url" | "file">("url");
+  const [imagePreview, setImagePreview] = useState<string>("");
 
-  async function signOut() {
-    await fetch("/api/admin/session", { method: "DELETE" });
-    router.replace("/admin/login");
-    router.refresh();
+  function handleImageFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -31,10 +39,19 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
     setError("");
 
     const formData = new FormData(e.currentTarget);
+
+    let imageUrl = "";
+    if (imageInputType === "url") {
+      imageUrl = formData.get("imageUrl") as string;
+    } else if (imagePreview) {
+      imageUrl = imagePreview; // Base64 data URL
+    }
+
     const data = {
       name: formData.get("name") as string,
       slug: formData.get("slug") as string,
-      image: formData.get("image") as string,
+      description: formData.get("description") as string,
+      image: imageUrl,
     };
 
     try {
@@ -50,6 +67,7 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
       }
 
       setShowForm(false);
+      setImagePreview("");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create category");
@@ -90,7 +108,6 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
             </svg>
             Add Category
           </button>
-          <button className={styles.signOutButton} onClick={signOut}>Sign out</button>
         </div>
       </header>
 
@@ -179,8 +196,78 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
                 <small style={{ color: '#6b7280', fontSize: '12px' }}>Used in URLs. Only lowercase letters, numbers, and hyphens.</small>
               </div>
               <div className={styles.field}>
-                <label>Category Image URL</label>
-                <input type="text" name="image" placeholder="https://..." />
+                <label>Description</label>
+                <textarea name="description" rows={3} placeholder="Brief description of this category..."></textarea>
+              </div>
+              <div className={styles.field}>
+                <label>Category Image</label>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setImageInputType("url")}
+                    style={{
+                      padding: '8px 16px',
+                      background: imageInputType === "url" ? 'var(--terracotta)' : 'var(--cream)',
+                      color: imageInputType === "url" ? 'white' : 'var(--ink)',
+                      border: `1.5px solid ${imageInputType === "url" ? 'var(--terracotta)' : 'var(--line)'}`,
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Image URL
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageInputType("file")}
+                    style={{
+                      padding: '8px 16px',
+                      background: imageInputType === "file" ? 'var(--terracotta)' : 'var(--cream)',
+                      color: imageInputType === "file" ? 'white' : 'var(--ink)',
+                      border: `1.5px solid ${imageInputType === "file" ? 'var(--terracotta)' : 'var(--line)'}`,
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Upload File
+                  </button>
+                </div>
+                {imageInputType === "url" ? (
+                  <input type="text" name="imageUrl" placeholder="https://..." />
+                ) : (
+                  <>
+                    <input
+                      type="file"
+                      name="imageFile"
+                      accept="image/*"
+                      onChange={handleImageFileChange}
+                      style={{
+                        padding: '10px',
+                        border: '1.5px solid var(--line)',
+                        borderRadius: '8px',
+                        background: 'var(--cream)',
+                        fontSize: '14px',
+                      }}
+                    />
+                    {imagePreview && (
+                      <div style={{ marginTop: '12px' }}>
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          style={{
+                            maxWidth: '200px',
+                            maxHeight: '200px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--line)',
+                          }}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
               <div className={styles.formActions}>
                 <button type="button" className={styles.secondaryButton} onClick={() => setShowForm(false)}>

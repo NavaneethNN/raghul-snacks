@@ -8,11 +8,6 @@ export function AdminCoupons() {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
 
-  async function signOut() {
-    await fetch("/api/admin/session", { method: "DELETE" });
-    router.replace("/admin/login");
-    router.refresh();
-  }
 
   return (
     <div className={styles.page}>
@@ -30,7 +25,7 @@ export function AdminCoupons() {
             </svg>
             Create Coupon
           </button>
-          <button className={styles.signOutButton} onClick={signOut}>Sign out</button>
+          
         </div>
       </header>
 

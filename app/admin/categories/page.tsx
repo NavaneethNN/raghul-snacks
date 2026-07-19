@@ -21,6 +21,7 @@ export default async function AdminCategoriesPage() {
         id: categories.id,
         name: categories.name,
         slug: categories.slug,
+        description: categories.description,
         image: categories.image,
         createdAt: categories.createdAt,
         productCount: sql<number>`cast(count(${products.id}) as integer)`,

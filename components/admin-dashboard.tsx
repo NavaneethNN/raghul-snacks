@@ -34,11 +34,6 @@ const quickLinks = [
 export function AdminDashboard() {
   const router = useRouter();
 
-  async function signOut() {
-    await fetch("/api/admin/session", { method: "DELETE" });
-    router.replace("/admin/login");
-    router.refresh();
-  }
 
   return (
     <div className={styles.page}>

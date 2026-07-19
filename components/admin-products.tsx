@@ -37,11 +37,6 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  async function signOut() {
-    await fetch("/api/admin/session", { method: "DELETE" });
-    router.replace("/admin/login");
-    router.refresh();
-  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -122,7 +117,6 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
             </svg>
             Add Product
           </button>
-          <button className={styles.signOutButton} onClick={signOut}>Sign out</button>
         </div>
       </header>
 

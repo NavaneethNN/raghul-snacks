@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, slug, image } = body;
+    const { name, slug, description, image } = body;
 
     const categorySlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
     const [newCategory] = await db.insert(categories).values({
       name,
       slug: categorySlug,
+      description: description || null,
       image: image || null,
     }).returning();
 
