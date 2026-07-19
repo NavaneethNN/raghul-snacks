@@ -54,6 +54,14 @@ button {
   color: var(--saffron);
   padding: 0 6px;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.announcement span svg {
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
 /* ===== HEADER / NAVBAR ===== */
@@ -331,9 +339,14 @@ h2 i {
 }
 
 .trust-stars {
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
   color: var(--saffron);
-  letter-spacing: 2px;
+}
+
+.trust-stars svg {
+  flex-shrink: 0;
 }
 
 .trust-text {
