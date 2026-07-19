@@ -229,10 +229,10 @@ button {
   max-width: 1240px;
   margin: auto;
   padding: 30px 16px;
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 25px;
-  align-items: center;
+  align-items: stretch;
 }
 
 .hero-content {
@@ -367,11 +367,14 @@ h2 i {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  min-height: 280px;
 }
 
 .hero-image-wrapper {
   position: relative;
   width: 100%;
+  max-width: 350px;
   aspect-ratio: 1;
   display: flex;
   align-items: center;
@@ -1092,10 +1095,12 @@ footer div:last-child {
   }
 
   .hero {
+    display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 40px;
     padding: 40px 24px;
-    min-height: 500px;
+    min-height: auto;
+    align-items: center;
   }
 
   .hero-content {
@@ -1129,6 +1134,15 @@ footer div:last-child {
   .badge {
     flex-direction: row;
     gap: 8px;
+  }
+
+  .hero-visual {
+    min-height: 400px;
+  }
+
+  .hero-image-wrapper {
+    max-width: none;
+    aspect-ratio: 1;
   }
 
   .promo-badge {
@@ -1320,6 +1334,8 @@ footer div:last-child {
     min-height: 600px;
     gap: 60px;
     padding: 50px 28px 60px;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
   }
 
   .hero h1 {
@@ -1340,6 +1356,15 @@ footer div:last-child {
 
   .trust-badges {
     gap: 30px;
+  }
+
+  .hero-visual {
+    min-height: 500px;
+  }
+
+  .hero-image-wrapper {
+    max-width: none;
+    width: 100%;
   }
 
   .section {
