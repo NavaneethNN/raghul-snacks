@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, var(--cream) 0%, var(--paper) 100%);
   padding: 20px;
 }
 
@@ -13,11 +13,11 @@
 }
 
 .card {
-  background: white;
+  background: var(--paper);
   border-radius: 16px;
   padding: 48px 40px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 40px rgba(36, 49, 39, 0.1);
+  border: 1px solid var(--line);
 }
 
 .header {
@@ -66,8 +66,8 @@
 
 .input {
   width: 100%;
-  border: 1.5px solid #d1d5db;
-  background: #fafbfc;
+  border: 1.5px solid var(--line);
+  background: var(--cream);
   padding: 12px 14px;
   font: 14px 'DM Sans', sans-serif;
   color: var(--ink);
@@ -78,7 +78,7 @@
 .input:focus {
   outline: none;
   border-color: var(--terracotta);
-  background: white;
+  background: var(--paper);
   box-shadow: 0 0 0 3px rgba(201, 95, 59, 0.1);
 }
 
@@ -96,20 +96,20 @@
 .button {
   width: 100%;
   padding: 14px 20px;
-  background: var(--ink);
+  background: var(--terracotta);
   color: white;
   border: none;
   border-radius: 8px;
   font: 600 14px 'DM Sans', sans-serif;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 2px 8px rgba(36, 49, 39, 0.2);
+  box-shadow: 0 2px 8px rgba(201, 95, 59, 0.2);
 }
 
 .button:hover:not(:disabled) {
-  background: #1a2519;
+  background: var(--ink);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(36, 49, 39, 0.3);
+  box-shadow: 0 4px 12px rgba(201, 95, 59, 0.3);
 }
 
 .button:disabled {

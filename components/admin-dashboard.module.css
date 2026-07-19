@@ -2,12 +2,12 @@
   width: 100%;
   padding: 0;
   min-height: 100vh;
-  background: #f8f9fa;
+  background: var(--cream);
 }
 
 .header {
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
   padding: 32px 40px;
   display: flex;
   align-items: center;
@@ -41,9 +41,9 @@
 }
 
 .signOutButton {
-  background: white;
-  border: 1.5px solid #e5e7eb;
-  color: #374151;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  color: var(--ink);
   padding: 10px 20px;
   border-radius: 8px;
   font: 600 13px 'DM Sans', sans-serif;
@@ -52,8 +52,8 @@
 }
 
 .signOutButton:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  background: var(--cream);
+  border-color: var(--terracotta);
 }
 
 .metrics {
@@ -65,16 +65,16 @@
 }
 
 .metrics > div {
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--paper);
+  border: 1px solid var(--line);
   border-radius: 12px;
   padding: 24px;
   transition: all 0.2s;
 }
 
 .metrics > div:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: var(--sage);
+  box-shadow: 0 4px 12px rgba(201, 95, 59, 0.1);
   transform: translateY(-2px);
 }
 
@@ -120,8 +120,8 @@
 }
 
 .card {
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--paper);
+  border: 1px solid var(--line);
   border-radius: 12px;
   padding: 24px;
   display: flex;
@@ -132,7 +132,7 @@
 
 .card:hover {
   border-color: var(--terracotta);
-  box-shadow: 0 4px 12px rgba(201, 95, 59, 0.1);
+  box-shadow: 0 4px 12px rgba(201, 95, 59, 0.15);
   transform: translateY(-2px);
 }
 
@@ -174,8 +174,8 @@
 }
 
 .activityCard {
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--paper);
+  border: 1px solid var(--line);
   border-radius: 12px;
   padding: 48px 24px;
   text-align: center;

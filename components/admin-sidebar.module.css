@@ -1,8 +1,8 @@
 .sidebar {
   width: 260px;
   min-height: 100vh;
-  background: #243127;
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--ink);
+  border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -13,13 +13,13 @@
 
 .brand {
   padding: 32px 24px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(229, 165, 47, 0.15);
 }
 
 .brandName {
   font: 700 24px / 1.2 'Playfair Display', serif;
   letter-spacing: -0.01em;
-  color: #f8f9fa;
+  color: var(--cream);
   display: block;
   margin-bottom: 4px;
 }
@@ -30,7 +30,7 @@
 
 .brandTagline {
   margin: 0;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--sage);
   font: 600 11px 'DM Mono', monospace;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -49,7 +49,7 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--sage);
   text-decoration: none;
   border-radius: 8px;
   font: 500 14px 'DM Sans', sans-serif;
@@ -58,12 +58,12 @@
 }
 
 .navItem:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.9);
+  background: rgba(229, 165, 47, 0.08);
+  color: var(--cream);
 }
 
 .navItem.active {
-  background: rgba(239, 169, 55, 0.12);
+  background: rgba(229, 165, 47, 0.15);
   color: var(--saffron);
   font-weight: 600;
 }
@@ -99,14 +99,15 @@
 
 .footer {
   padding: 20px 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(229, 165, 47, 0.15);
 }
 
 .version {
   margin: 0;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--sage);
   font: 600 11px 'DM Mono', monospace;
   text-align: center;
+  opacity: 0.7;
 }
 
 /* Responsive */
@@ -145,7 +146,7 @@
     min-height: auto;
     position: relative;
     border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--line);
   }
 
   .brand {
