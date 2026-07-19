@@ -19,10 +19,12 @@ export function StoreHeader() {
   return (
     <header className="site-header">
       <div className="header-container">
-        <Link className="brand" href="/">
-          <span>Raghul</span> Snacks
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          <Link className="brand" href="/">
+            <span>Raghul</span> Snacks
+          </Link>
           <p className="brand-tagline">Homemade • Fresh • Traditional</p>
-        </Link>
+        </div>
 
         <nav className="header-nav">
           <Link href="/shop">Shop</Link>
