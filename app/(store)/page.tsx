@@ -109,18 +109,18 @@ export default async function HomePage() {
               href={`/shop/${category.slug}`}
               className={`category-card card-${index}`}
               key={category.slug}
+              style={{
+                backgroundImage: category.image
+                  ? `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.4)), url(${category.image})`
+                  : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
             >
-              {category.image && (
-                <div className="category-image">
-                  <img src={category.image} alt={category.name} />
-                </div>
-              )}
-              <div className="category-content">
-                <span className="category-mark">0{index + 1}</span>
-                <h3>{category.name}</h3>
-                <p>{category.description || 'Explore our collection'}</p>
-                <b>Explore →</b>
-              </div>
+              <span className="category-mark">0{index + 1}</span>
+              <h3>{category.name}</h3>
+              <p>{category.description || 'Explore our collection'}</p>
+              <b>Explore →</b>
             </Link>
           ))}
         </div>

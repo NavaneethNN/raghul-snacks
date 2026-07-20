@@ -1203,7 +1203,8 @@ section:not(.shop-page) .product-grid {
 }
 
 .category-card {
-  min-height: 280px;
+  min-height: 160px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -1212,110 +1213,68 @@ section:not(.shop-page) .product-grid {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
   width: 100%;
-  border-radius: 16px;
-  border: 1px solid var(--line);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
 }
 
 .category-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-.category-image {
-  width: 100%;
-  height: 180px;
-  overflow: hidden;
-  position: relative;
-  background: var(--cream);
-}
-
-.category-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
-}
-
-.category-card:hover .category-image img {
-  transform: scale(1.08);
-}
-
-.category-content {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  background: white;
-  position: relative;
+.category-card:after {
+  content: '';
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  right: -20px;
+  bottom: -20px;
+  border: 15px solid #fff8;
 }
 
 .category-card h3 {
-  font: 600 20px 'Playfair Display', serif;
-  line-height: 1.2;
-  margin: 8px 0 8px;
-  color: var(--ink);
+  font: 600 18px 'Playfair Display', serif;
+  line-height: 1.1;
+  margin: auto 0 5px;
+  max-width: 100%;
+  color: white;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .category-card p {
-  font-size: 13px;
-  line-height: 1.5;
-  margin: 0 0 auto;
-  color: #6b7280;
+  font-size: 12px;
+  margin: 0 0 12px;
+  max-width: 100%;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .category-card b {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--terracotta);
-  margin-top: 16px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: gap 0.2s ease;
-}
-
-.category-card:hover b {
-  gap: 8px;
+  font-size: 12px;
+  color: white;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .category-mark {
-  font: 600 10px 'DM Mono', monospace;
-  letter-spacing: 0.05em;
-  color: var(--terracotta);
-  background: rgba(201, 95, 59, 0.1);
-  padding: 4px 8px;
-  border-radius: 4px;
-  display: inline-block;
-  width: fit-content;
+  font: 11px 'DM Mono', monospace;
+  color: white;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Category card image fallback backgrounds */
-.card-0 .category-image:not(:has(img)) {
-  background: linear-gradient(135deg, #d4dbbf 0%, #c4cba8 100%);
+.card-0 {
+  background: #d4dbbf;
 }
 
-.card-1 .category-image:not(:has(img)) {
-  background: linear-gradient(135deg, #e8c979 0%, #deb860 100%);
+.card-1 {
+  background: #e8c979;
 }
 
-.card-2 .category-image:not(:has(img)) {
-  background: linear-gradient(135deg, #e8ac85 0%, #dc986d 100%);
+.card-2 {
+  background: #e8ac85;
 }
 
-.card-3 .category-image:not(:has(img)) {
-  background: linear-gradient(135deg, #b7d0c8 0%, #a1beb4 100%);
-}
-
-/* Add placeholder icon for categories without images */
-.category-image:not(:has(img))::after {
-  content: '✦';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 48px;
-  color: rgba(255, 255, 255, 0.4);
+.card-3 {
+  background: #b7d0c8;
 }
 
 .combo {
@@ -3957,27 +3916,12 @@ footer {
   }
 
   .category-card {
-    min-height: 320px;
-  }
-
-  .category-image {
-    height: 200px;
-  }
-
-  .category-content {
+    min-height: 200px;
     padding: 24px;
   }
 
   .category-card h3 {
-    font-size: 24px;
-  }
-
-  .category-card p {
-    font-size: 14px;
-  }
-
-  .category-card b {
-    font-size: 14px;
+    font-size: 22px;
   }
 
   .combo {
@@ -4254,27 +4198,12 @@ footer {
   }
 
   .category-card {
-    min-height: 360px;
-  }
-
-  .category-image {
-    height: 220px;
-  }
-
-  .category-content {
+    min-height: 250px;
     padding: 28px;
   }
 
   .category-card h3 {
-    font-size: 26px;
-  }
-
-  .category-card p {
-    font-size: 15px;
-  }
-
-  .category-card b {
-    font-size: 15px;
+    font-size: 27px;
   }
 
   .combo {
