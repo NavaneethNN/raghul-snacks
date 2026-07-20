@@ -46,6 +46,9 @@ export function AdminCombos() {
   });
   const [selectedItems, setSelectedItems] = useState<ComboItem[]>([]);
   const [showProductList, setShowProductList] = useState(false);
+  const [imageInputType, setImageInputType] = useState<"url" | "file">("url");
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [imageData, setImageData] = useState<string>("");
 
   useEffect(() => {
     fetchCombos();
@@ -90,6 +93,19 @@ export function AdminCombos() {
     }
   }
 
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setImagePreview(base64String);
+        setImageData(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
   function handleEdit(combo: Combo) {
     setEditingCombo(combo);
     setFormData({
@@ -103,6 +119,9 @@ export function AdminCombos() {
       productId: item.productId,
       quantity: item.quantity
     })) || []);
+    setImageInputType(combo.image?.startsWith("data:") ? "file" : "url");
+    setImagePreview(combo.image || "");
+    setImageData(combo.image || "");
     setShowForm(true);
   }
 
@@ -112,6 +131,8 @@ export function AdminCombos() {
     setFormData({ title: "", slug: "", price: "", offerPrice: "", image: "" });
     setSelectedItems([]);
     setShowProductList(false);
+    setImagePreview("");
+    setImageData("");
     setError("");
   }
 
@@ -175,6 +196,8 @@ export function AdminCombos() {
         : "/api/admin/combos";
       const method = editingCombo ? "PATCH" : "POST";
 
+      const imageValue = imageInputType === "file" ? imageData : formData.image;
+
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -183,7 +206,7 @@ export function AdminCombos() {
           slug: formData.slug,
           price: parseFloat(formData.price),
           offerPrice: formData.offerPrice ? parseFloat(formData.offerPrice) : null,
-          image: formData.image || null,
+          image: imageValue || null,
           items: selectedItems,
         }),
       });
@@ -401,13 +424,76 @@ export function AdminCombos() {
                 </div>
               </div>
               <div className={styles.field}>
-                <label>Image URL (Optional)</label>
-                <input
-                  type="text"
-                  placeholder="https://..."
-                  value={formData.image}
-                  onChange={(e) => handleInputChange("image", e.target.value)}
-                />
+                <label>Combo Image</label>
+                <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => { setImageInputType("url"); setImagePreview(""); setImageData(""); }}
+                    style={{
+                      padding: "6px 12px",
+                      fontSize: "13px",
+                      border: "1.5px solid var(--line)",
+                      background: imageInputType === "url" ? "var(--terracotta)" : "var(--paper)",
+                      color: imageInputType === "url" ? "white" : "var(--ink)",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    URL
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setImageInputType("file"); }}
+                    style={{
+                      padding: "6px 12px",
+                      fontSize: "13px",
+                      border: "1.5px solid var(--line)",
+                      background: imageInputType === "file" ? "var(--terracotta)" : "var(--paper)",
+                      color: imageInputType === "file" ? "white" : "var(--ink)",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Upload File
+                  </button>
+                </div>
+                {imageInputType === "url" ? (
+                  <input
+                    type="text"
+                    placeholder="https://..."
+                    value={formData.image}
+                    onChange={(e) => handleInputChange("image", e.target.value)}
+                  />
+                ) : (
+                  <>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      style={{ marginBottom: "8px" }}
+                    />
+                    {imagePreview && (
+                      <div style={{ position: "relative", display: "inline-block", marginTop: "8px", borderRadius: "8px", overflow: "hidden", width: "fit-content" }}>
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          style={{ maxWidth: "200px", maxHeight: "200px", borderRadius: "8px", display: "block" }}
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setImagePreview(""); setImageData(""); }}
+                          className={styles.imageDeleteButton}
+                          title="Remove image"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
               <div className={styles.field}>
                 <label>Products in Combo</label>

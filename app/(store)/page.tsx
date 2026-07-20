@@ -145,13 +145,13 @@ export default async function HomePage() {
       </section>
 
       {/* Combo Box Section */}
-      {featuredCombo && featuredCombo.name && (
+      {featuredCombo && featuredCombo.title && (
         <section className="combo">
           <div>
             <p className="eyebrow">Special Combo</p>
             <h2>
-              {featuredCombo.name}
-              {featuredCombo.name?.includes(' ') && (
+              {featuredCombo.title}
+              {featuredCombo.title?.includes(' ') && (
                 <>
                   <br />
                   <i>Box</i>
@@ -159,7 +159,7 @@ export default async function HomePage() {
               )}
             </h2>
             <p>
-              {featuredCombo.description || 'A curated selection of our finest snacks.'}
+              A curated selection of our finest snacks in one combo.
             </p>
 
             {featuredCombo.items && featuredCombo.items.length > 0 && (
@@ -171,7 +171,7 @@ export default async function HomePage() {
             )}
 
             <Link href="/shop" className="button button-light">
-              Get this combo · ₹{featuredCombo.offerPrice || featuredCombo.price}
+              Get this combo · ₹{featuredCombo.discount && parseFloat(featuredCombo.discount) > 0 ? featuredCombo.discount : featuredCombo.price}
             </Link>
           </div>
 
