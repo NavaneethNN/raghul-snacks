@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { ProductCard } from "@/components/product/product-card";
 import styles from "./shop-content.module.css";
 
@@ -90,7 +91,7 @@ export function ShopContent({
 
         {activeTab === 'combos' && combos.map((combo: any) => (
           <article key={combo.id} className="product-card">
-            <div className="product-visual">
+            <Link href={`/combo/${combo.slug}`} className="product-visual">
               {combo.image ? (
                 <img src={combo.image} alt={combo.title} />
               ) : (
@@ -99,19 +100,21 @@ export function ShopContent({
                 </div>
               )}
               <span className="category-label">Combo</span>
-            </div>
+            </Link>
             <div className="product-copy">
               <p>{combo.items?.length || 0} items</p>
-              <h3>{combo.title}</h3>
+              <Link href={`/combo/${combo.slug}`}>
+                <h3>{combo.title}</h3>
+              </Link>
               <div className="price">
                 <strong>₹{combo.discount && parseFloat(combo.discount) > 0 ? combo.discount : combo.price}</strong>
                 {combo.discount && parseFloat(combo.discount) > 0 && (
                   <s>₹{combo.price}</s>
                 )}
               </div>
-              <button className="button" style={{ marginTop: '12px' }}>
+              <Link href={`/combo/${combo.slug}`} className="button">
                 View Combo
-              </button>
+              </Link>
             </div>
           </article>
         ))}
