@@ -58,10 +58,6 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
     }
   }
 
-  const totalSpent = orders
-    .filter((order) => order.paymentStatus === "paid")
-    .reduce((sum, order) => sum + parseFloat(order.total), 0);
-
   return (
     <div className={styles.container}>
       <div className={styles.hero}>
@@ -105,28 +101,10 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
           </div>
         </section>
 
-        {/* Order Stats */}
-        <section className={styles.stats}>
-          <div className={styles.statCard}>
-            <span className={styles.statLabel}>Total Orders</span>
-            <strong className={styles.statValue}>{orders.length}</strong>
-          </div>
-          <div className={styles.statCard}>
-            <span className={styles.statLabel}>Total Spent</span>
-            <strong className={styles.statValue}>{price.format(totalSpent)}</strong>
-          </div>
-          <div className={styles.statCard}>
-            <span className={styles.statLabel}>Pending Orders</span>
-            <strong className={styles.statValue}>
-              {orders.filter((o) => o.orderStatus === "placed").length}
-            </strong>
-          </div>
-        </section>
-
-        {/* Recent Orders */}
+        {/* Orders */}
         <section className={styles.card}>
           <div className={styles.cardHeader}>
-            <h2>Recent Orders</h2>
+            <h2>Your Orders</h2>
             <Link href="/track" className={styles.textLink}>
               Track Order
             </Link>
@@ -154,7 +132,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
             </div>
           ) : (
             <div className={styles.ordersList}>
-              {orders.slice(0, 10).map((order) => (
+              {orders.map((order) => (
                 <div key={order.id} className={styles.orderCard}>
                   <div className={styles.orderHeader}>
                     <div>
