@@ -15,7 +15,7 @@ export function CustomerAuthForm({ mode }: { mode: "login" | "signup" }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const returnTo = searchParams.get("returnTo") || "/orders";
+  const returnTo = searchParams.get("returnTo") || "/account";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -215,8 +215,8 @@ export function CustomerAuthForm({ mode }: { mode: "login" | "signup" }) {
             <Link
               href={
                 signup
-                  ? `/login${returnTo !== "/orders" ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`
-                  : `/signup${returnTo !== "/orders" ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`
+                  ? `/login${returnTo !== "/account" ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`
+                  : `/signup${returnTo !== "/account" ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`
               }
             >
               {signup ? "Sign in" : "Create an account"}

@@ -4,22 +4,30 @@ import { getDb } from "@/lib/db";
 import { customerAccounts, orders, orderItems, products } from "@/drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { AccountDashboard } from "@/components/account-dashboard";
+import { customerCookieName, getCustomerSession } from "@/lib/customer-auth";
 
 export default async function AccountPage() {
   const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get("customer_session");
+  const sessionCookie = cookieStore.get(customerCookieName());
 
   if (!sessionCookie?.value) {
     redirect("/login?returnTo=/account");
   }
 
+  // Parse the session token
+  const session = getCustomerSession(sessionCookie.value);
+
+  if (!session) {
+    redirect("/login?returnTo=/account");
+  }
+
   const db = getDb();
 
-  // Fetch customer account details
+  // Fetch customer account details using session ID
   const [account] = await db
     .select()
     .from(customerAccounts)
-    .where(eq(customerAccounts.id, parseInt(sessionCookie.value)));
+    .where(eq(customerAccounts.id, session.id));
 
   if (!account) {
     redirect("/login?returnTo=/account");
