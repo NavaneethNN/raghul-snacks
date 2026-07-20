@@ -27,9 +27,24 @@ async function getProducts() {
   }
 }
 
+async function getCombos() {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/combos`, {
+      cache: 'no-store'
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (error) {
+    console.error('Error fetching combos:', error);
+    return [];
+  }
+}
+
 export default async function HomePage() {
   const categories = await getCategories();
   const allProducts = await getProducts();
+  const combos = await getCombos();
+  const featuredCombo = combos.length > 0 ? combos[0] : null;
   const bestsellers = allProducts.filter((p: any) => p.bestseller).slice(0, 4);
   const products = bestsellers.length > 0 ? bestsellers : allProducts.slice(0, 4);
   return (
@@ -126,40 +141,43 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Starter Box Section */}
-      <section className="combo">
-        <div>
-          <p className="eyebrow">The easy place to start</p>
-          <h2>
-            The Millet
-            <br />
-            <i>Starter Box.</i>
-          </h2>
-          <p>
-            Four classic snacks for tea time, gifting and everything in between.
-          </p>
+      {/* Combo Box Section */}
+      {featuredCombo && (
+        <section className="combo">
+          <div>
+            <p className="eyebrow">Special Combo</p>
+            <h2>
+              {featuredCombo.name.split(' ').slice(0, -1).join(' ')}
+              <br />
+              <i>{featuredCombo.name.split(' ').slice(-1)[0]}</i>
+            </h2>
+            <p>
+              {featuredCombo.description || 'A curated selection of our finest snacks.'}
+            </p>
 
-          <ul>
-            <li>Thinai Laddu</li>
-            <li>Samai Laddu</li>
-            <li>Varagu Laddu</li>
-            <li>Pepper Kadalai</li>
-          </ul>
+            {featuredCombo.items && featuredCombo.items.length > 0 && (
+              <ul>
+                {featuredCombo.items.map((item: any, index: number) => (
+                  <li key={index}>{item.name} ({item.quantity}g)</li>
+                ))}
+              </ul>
+            )}
 
-          <Link href="/shop" className="button button-light">
-            Get the box · ₹450
-          </Link>
-        </div>
+            <Link href="/shop" className="button button-light">
+              Get this combo · ₹{featuredCombo.offerPrice || featuredCombo.price}
+            </Link>
+          </div>
 
-        <div className="combo-visual">
-          <span>4</span>
-          <p>
-            little
-            <br />
-            delights
-          </p>
-        </div>
-      </section>
+          <div className="combo-visual">
+            <span>{featuredCombo.items?.length || 0}</span>
+            <p>
+              delicious
+              <br />
+              items
+            </p>
+          </div>
+        </section>
+      )}
 
       {/* Bestsellers Section */}
       <section className="section" id="bestsellers">
