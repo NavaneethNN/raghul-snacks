@@ -44,6 +44,7 @@ export function AdminCombos() {
     image: "",
   });
   const [selectedItems, setSelectedItems] = useState<ComboItem[]>([]);
+  const [showProductList, setShowProductList] = useState(false);
 
   useEffect(() => {
     fetchCombos();
@@ -88,17 +89,14 @@ export function AdminCombos() {
     }
   }
 
-  function addProduct(productId: number) {
-    if (selectedItems.find(item => item.productId === productId)) {
-      setError("Product already added to combo");
-      return;
+  function toggleProduct(productId: number) {
+    const exists = selectedItems.find(item => item.productId === productId);
+    if (exists) {
+      setSelectedItems(selectedItems.filter(item => item.productId !== productId));
+    } else {
+      setSelectedItems([...selectedItems, { productId, quantity: 1 }]);
     }
-    setSelectedItems([...selectedItems, { productId, quantity: 1 }]);
     setError("");
-  }
-
-  function removeProduct(productId: number) {
-    setSelectedItems(selectedItems.filter(item => item.productId !== productId));
   }
 
   function updateQuantity(productId: number, quantity: number) {
@@ -157,6 +155,7 @@ export function AdminCombos() {
       // Reset form and refresh
       setFormData({ title: "", slug: "", price: "", discount: "", image: "" });
       setSelectedItems([]);
+      setShowProductList(false);
       setShowForm(false);
       fetchCombos();
     } catch (err) {
@@ -367,26 +366,96 @@ export function AdminCombos() {
               </div>
               <div className={styles.field}>
                 <label>Products in Combo</label>
-                <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-                  <select
-                    style={{ flex: 1, border: "1.5px solid #d1d5db", background: "#fff", padding: "10px 14px", fontSize: "14px", borderRadius: "8px" }}
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        addProduct(parseInt(e.target.value));
-                        e.target.value = "";
-                      }
-                    }}
-                  >
-                    <option value="">Select a product...</option>
-                    {products.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.name} - {price.format(Number(product.price))}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowProductList(!showProductList)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    background: "var(--cream)",
+                    border: "1.5px solid var(--line)",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    color: "var(--ink)",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    transition: "all 0.2s",
+                    marginBottom: "12px"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "var(--paper)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "var(--cream)"}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  {showProductList ? "Hide Products" : "Add Products"}
+                </button>
+
+                {showProductList && (
+                  <div style={{ border: "1.5px solid #d1d5db", borderRadius: "8px", padding: "16px", background: "#fafbfc", marginBottom: "12px" }}>
+                    <p style={{ fontSize: "13px", color: "#6b7280", margin: "0 0 12px 0", fontWeight: 500 }}>
+                      Select products to include in this combo:
+                    </p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {products.length === 0 ? (
+                        <p style={{ color: "#9ca3af", fontSize: "13px", margin: 0 }}>
+                          No products available. Please add products first.
+                        </p>
+                      ) : (
+                        products.map((product) => {
+                          const isSelected = selectedItems.find(item => item.productId === product.id);
+                          return (
+                            <label
+                              key={product.id}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "12px",
+                                padding: "12px",
+                                background: isSelected ? "#ecfdf5" : "#fff",
+                                border: isSelected ? "2px solid #10b981" : "1px solid #e5e7eb",
+                                borderRadius: "8px",
+                                cursor: "pointer",
+                                transition: "all 0.2s"
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={!!isSelected}
+                                onChange={() => toggleProduct(product.id)}
+                                style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                              />
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>
+                                  {product.name}
+                                </div>
+                                <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "2px" }}>
+                                  {price.format(Number(product.price))}
+                                </div>
+                              </div>
+                              {isSelected && (
+                                <span style={{ fontSize: "11px", fontWeight: 600, color: "#10b981", textTransform: "uppercase" }}>
+                                  ✓ Selected
+                                </span>
+                              )}
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {selectedItems.length > 0 && (
-                  <div style={{ border: "1.5px solid #d1d5db", borderRadius: "8px", padding: "12px", background: "#fafbfc" }}>
+                  <div style={{ border: "1.5px solid #10b981", borderRadius: "8px", padding: "12px", background: "#ecfdf5" }}>
+                    <p style={{ fontSize: "12px", fontWeight: 600, color: "#065f46", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      Selected Products ({selectedItems.length})
+                    </p>
                     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                       {selectedItems.map((item) => {
                         const product = products.find(p => p.id === item.productId);
@@ -395,34 +464,26 @@ export function AdminCombos() {
                             <span style={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>
                               {product?.name}
                             </span>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#6b7280" }}>
-                                Qty:
-                                <input
-                                  type="number"
-                                  min="1"
-                                  value={item.quantity}
-                                  onChange={(e) => updateQuantity(item.productId, parseInt(e.target.value) || 1)}
-                                  style={{ width: "60px", border: "1px solid #d1d5db", padding: "4px 8px", borderRadius: "4px", textAlign: "center" }}
-                                />
-                              </label>
-                              <button
-                                type="button"
-                                onClick={() => removeProduct(item.productId)}
-                                style={{ background: "#fee2e2", border: "1px solid #dc2626", color: "#991b1b", padding: "4px 8px", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}
-                              >
-                                Remove
-                              </button>
-                            </div>
+                            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#6b7280" }}>
+                              Qty:
+                              <input
+                                type="number"
+                                min="1"
+                                value={item.quantity}
+                                onChange={(e) => updateQuantity(item.productId, parseInt(e.target.value) || 1)}
+                                style={{ width: "60px", border: "1px solid #d1d5db", padding: "4px 8px", borderRadius: "4px", textAlign: "center" }}
+                              />
+                            </label>
                           </div>
                         );
                       })}
                     </div>
                   </div>
                 )}
-                {selectedItems.length === 0 && (
+
+                {selectedItems.length === 0 && !showProductList && (
                   <p style={{ color: "#9ca3af", fontSize: "13px", margin: 0 }}>
-                    No products added yet. Select products from the dropdown above.
+                    No products selected. Click "Add Products" to select products.
                   </p>
                 )}
               </div>
