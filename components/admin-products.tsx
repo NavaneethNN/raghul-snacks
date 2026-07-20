@@ -393,7 +393,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                       style={{ marginBottom: "8px" }}
                     />
                     {imagePreview && (
-                      <div style={{ position: "relative", display: "inline-block", marginTop: "8px" }}>
+                      <div style={{ position: "relative", display: "inline-block", marginTop: "8px", borderRadius: "8px", overflow: "hidden", width: "fit-content" }}>
                         <img
                           src={imagePreview}
                           alt="Preview"
@@ -401,7 +401,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                         />
                         <button
                           type="button"
-                          onClick={() => { setImagePreview(""); setImageData(""); }}
+                          onClick={(e) => { e.preventDefault(); setImagePreview(""); setImageData(""); }}
                           className={styles.imageDeleteButton}
                           title="Remove image"
                         >

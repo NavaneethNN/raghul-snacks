@@ -601,7 +601,14 @@
 }
 
 /* Show delete button and overlay on parent hover */
-div:has(> .imageDeleteButton):hover::before {
+div:has(> img + .imageDeleteButton) {
+  position: relative;
+  display: inline-block;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+div:has(> img + .imageDeleteButton):hover::before {
   content: '';
   position: absolute;
   top: 0;
@@ -609,17 +616,17 @@ div:has(> .imageDeleteButton):hover::before {
   right: 0;
   bottom: 0;
   background: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 100%);
-  border-radius: 8px;
   z-index: 10;
   transition: all 0.2s ease;
+  pointer-events: none;
 }
 
-div:has(> .imageDeleteButton):hover .imageDeleteButton {
+div:has(> img + .imageDeleteButton):hover .imageDeleteButton {
   opacity: 1;
 }
 
 /* Smooth transition for image on hover */
-div:has(> .imageDeleteButton):hover img {
+div:has(> img + .imageDeleteButton):hover img {
   filter: brightness(0.85);
   transition: filter 0.2s ease;
 }

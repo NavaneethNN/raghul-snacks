@@ -311,7 +311,7 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
                       }}
                     />
                     {imagePreview && (
-                      <div style={{ marginTop: '12px', position: 'relative', display: 'inline-block' }}>
+                      <div style={{ marginTop: '12px', position: 'relative', display: 'inline-block', borderRadius: '8px', overflow: 'hidden', width: 'fit-content' }}>
                         <img
                           src={imagePreview}
                           alt="Preview"
@@ -325,7 +325,7 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
                         />
                         <button
                           type="button"
-                          onClick={() => setImagePreview("")}
+                          onClick={(e) => { e.preventDefault(); setImagePreview(""); }}
                           className={styles.imageDeleteButton}
                           title="Remove image"
                         >
