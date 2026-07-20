@@ -18,10 +18,25 @@ type Category = {
 export function AdminCategories({ categories }: { categories: Category[] }) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [imageInputType, setImageInputType] = useState<"url" | "file">("url");
   const [imagePreview, setImagePreview] = useState<string>("");
+
+  function handleEdit(category: Category) {
+    setEditingCategory(category);
+    setShowForm(true);
+    setImageInputType(category.image?.startsWith("data:") ? "file" : "url");
+    setImagePreview(category.image || "");
+  }
+
+  function handleCloseForm() {
+    setShowForm(false);
+    setEditingCategory(null);
+    setImagePreview("");
+    setError("");
+  }
 
   function handleImageFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -56,22 +71,26 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
     };
 
     try {
-      const response = await fetch("/api/admin/categories", {
-        method: "POST",
+      const url = editingCategory
+        ? `/api/admin/categories/${editingCategory.id}`
+        : "/api/admin/categories";
+      const method = editingCategory ? "PATCH" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.error || "Failed to create category");
+        throw new Error(result.error || `Failed to ${editingCategory ? 'update' : 'create'} category`);
       }
 
-      setShowForm(false);
-      setImagePreview("");
+      handleCloseForm();
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create category");
+      setError(err instanceof Error ? err.message : `Failed to ${editingCategory ? 'update' : 'create'} category`);
     } finally {
       setLoading(false);
     }
@@ -149,6 +168,16 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
                       <div className={styles.actionButtons}>
                         <button
                           className={styles.iconButton}
+                          onClick={() => handleEdit(category)}
+                          title="Edit"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                        </button>
+                        <button
+                          className={styles.iconButton}
                           onClick={() => handleDelete(category.id)}
                           title="Delete"
                         >
@@ -171,8 +200,8 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
         <div className={styles.modal}>
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
-              <h2>Add New Category</h2>
-              <button className={styles.closeButton} onClick={() => setShowForm(false)}>
+              <h2>{editingCategory ? 'Edit Category' : 'Add New Category'}</h2>
+              <button className={styles.closeButton} onClick={handleCloseForm}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -187,16 +216,16 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
               )}
               <div className={styles.field}>
                 <label>Category Name</label>
-                <input type="text" name="name" placeholder="e.g., Laddus" required />
+                <input type="text" name="name" placeholder="e.g., Laddus" defaultValue={editingCategory?.name} required />
               </div>
               <div className={styles.field}>
                 <label>Slug (URL-friendly name)</label>
-                <input type="text" name="slug" placeholder="e.g., laddus" required />
+                <input type="text" name="slug" placeholder="e.g., laddus" defaultValue={editingCategory?.slug} required />
                 <small style={{ color: '#6b7280', fontSize: '12px' }}>Used in URLs. Only lowercase letters, numbers, and hyphens.</small>
               </div>
               <div className={styles.field}>
                 <label>Description</label>
-                <textarea name="description" rows={3} placeholder="Brief description of this category..."></textarea>
+                <textarea name="description" rows={3} placeholder="Brief description of this category..." defaultValue={editingCategory?.description || ""}></textarea>
               </div>
               <div className={styles.field}>
                 <label>Category Image</label>
@@ -269,11 +298,11 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
                 )}
               </div>
               <div className={styles.formActions}>
-                <button type="button" className={styles.secondaryButton} onClick={() => setShowForm(false)}>
+                <button type="button" className={styles.secondaryButton} onClick={handleCloseForm}>
                   Cancel
                 </button>
                 <button type="submit" className={styles.primaryButton} disabled={loading}>
-                  {loading ? "Adding..." : "Add Category"}
+                  {loading ? (editingCategory ? "Updating..." : "Adding...") : (editingCategory ? "Update Category" : "Add Category")}
                 </button>
               </div>
             </form>

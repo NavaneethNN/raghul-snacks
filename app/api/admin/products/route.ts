@@ -33,7 +33,6 @@ export async function GET(request: NextRequest) {
         categoryId: products.categoryId,
         categoryName: categories.name,
         image: products.image,
-        stock: products.stock,
         featured: products.featured,
         bestseller: products.bestseller,
         createdAt: products.createdAt,
@@ -70,7 +69,6 @@ export async function POST(request: NextRequest) {
       weight,
       categoryId,
       image,
-      stock,
       featured,
       bestseller,
     } = body;
@@ -89,7 +87,6 @@ export async function POST(request: NextRequest) {
       weight,
       categoryId: categoryId || null,
       image: image || null,
-      stock: stock || 0,
       featured: featured || false,
       bestseller: bestseller || false,
     }).returning();

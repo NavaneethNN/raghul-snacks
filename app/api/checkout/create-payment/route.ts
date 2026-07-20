@@ -14,14 +14,20 @@ export async function POST(request: Request) {
   if (!payload.success) return NextResponse.json({ error: "Please check the delivery details and cart." }, { status: 400 });
   try {
     const db = getDb();
-    const email = payload.data.email.toLowerCase();
     const cookieStore = await cookies();
     const session = getCustomerSession(cookieStore.get(customerCookieName())?.value);
-    const existingAccount = (await db.select({ id: customerAccounts.id, email: customerAccounts.email }).from(customerAccounts).where(eq(customerAccounts.email, email)).limit(1))[0];
-    const isSignedInAccount = Boolean(session && existingAccount && session.id === existingAccount.id && session.email === existingAccount.email);
-    if (existingAccount && !isSignedInAccount) return NextResponse.json({ error: "An account already exists for this email. Please log in to continue checkout." }, { status: 409 });
-    if (!existingAccount && !payload.data.password) return NextResponse.json({ error: "Create a password to set up your account during checkout." }, { status: 400 });
-    const { subtotal, weight } = priceOrder(payload.data.items);
+
+    // User must be logged in to checkout
+    if (!session) {
+      return NextResponse.json({ error: "You must be logged in to continue checkout." }, { status: 401 });
+    }
+
+    const account = (await db.select({ id: customerAccounts.id, email: customerAccounts.email }).from(customerAccounts).where(eq(customerAccounts.id, session.id)).limit(1))[0];
+
+    if (!account) {
+      return NextResponse.json({ error: "Account not found. Please log in again." }, { status: 404 });
+    }
+    const { subtotal, weight } = await priceOrder(payload.data.items);
     const quote = await getShiprocketQuote(payload.data.pincode, weight, subtotal);
     if (!quote) return NextResponse.json({ error: "Shiprocket delivery configuration is incomplete." }, { status: 503 });
     const total = Math.round((subtotal + quote.charge) * 100) / 100;

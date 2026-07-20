@@ -22,9 +22,9 @@ export function PasswordInput({
   const [show, setShow] = useState(false);
 
   return (
-    <label style={{ position: "relative" }}>
-      {label}
-      <div style={{ position: "relative" }}>
+    <label style={{ position: "relative", display: "grid", gap: "7px" }}>
+      <span>{label}</span>
+      <div style={{ position: "relative", width: "100%" }}>
         <input
           autoComplete={autoComplete}
           type={show ? "text" : "password"}
@@ -33,7 +33,7 @@ export function PasswordInput({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          style={{ paddingRight: "48px" }}
+          style={{ paddingRight: "48px", width: "100%", boxSizing: "border-box" }}
         />
         <button
           type="button"
@@ -50,6 +50,7 @@ export function PasswordInput({
             color: "#6b7280",
             display: "flex",
             alignItems: "center",
+            zIndex: 10,
           }}
           aria-label={show ? "Hide password" : "Show password"}
         >

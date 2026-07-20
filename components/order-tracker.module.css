@@ -1,0 +1,253 @@
+.page {
+  min-height: 70vh;
+  padding: 64px 20px;
+  background: var(--cream);
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+.formSection {
+  max-width: 540px;
+}
+
+.formSection h1 {
+  font: 700 clamp(36px, 5vw, 48px) / 1.1 'Playfair Display', serif;
+  letter-spacing: -0.04em;
+  margin: 12px 0 16px;
+  color: var(--ink);
+}
+
+.subtitle {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #687267;
+  margin: 0 0 36px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field label {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.field input {
+  padding: 14px 16px;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  font-size: 16px;
+  background: var(--paper);
+  transition: all 0.2s ease;
+}
+
+.field input:focus {
+  border-color: var(--terracotta);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(201, 95, 59, 0.1);
+}
+
+.field small {
+  font-size: 13px;
+  color: #8a8479;
+}
+
+.error {
+  padding: 14px 16px;
+  background: #fee2e2;
+  border: 2px solid #dc2626;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.form .button {
+  margin-top: 12px;
+}
+
+.resultSection {
+  position: sticky;
+  top: 120px;
+}
+
+.statusCard {
+  background: var(--paper);
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  padding: 36px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.statusIcon {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, var(--terracotta), #e07856);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  margin: 0 0 24px;
+  box-shadow: 0 8px 24px rgba(201, 95, 59, 0.25);
+}
+
+.statusCard h2 {
+  font: 700 clamp(28px, 4vw, 36px) 'Playfair Display', serif;
+  letter-spacing: -0.03em;
+  margin: 12px 0 24px;
+  color: var(--ink);
+}
+
+.orderDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 0;
+  border-top: 2px solid var(--line);
+  border-bottom: 2px solid var(--line);
+  margin: 24px 0;
+}
+
+.detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail span {
+  font-size: 14px;
+  color: #8a8479;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 500;
+}
+
+.detail strong {
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.detail strong.paid {
+  color: #16a34a;
+}
+
+.timeline {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 32px 0;
+}
+
+.timeline > div {
+  position: relative;
+  padding: 12px 8px;
+  background: var(--cream);
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.timeline > div span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #a4aaa0;
+  display: block;
+}
+
+.timeline > div.active {
+  background: var(--paper);
+  border-color: var(--terracotta);
+  box-shadow: 0 2px 8px rgba(201, 95, 59, 0.15);
+}
+
+.timeline > div.active span {
+  color: var(--terracotta);
+}
+
+.timeline > div.active::before {
+  content: "✓";
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 24px;
+  height: 24px;
+  background: var(--terracotta);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(201, 95, 59, 0.3);
+}
+
+.helpText {
+  font-size: 14px;
+  color: #8a8479;
+  text-align: center;
+  margin: 24px 0 0;
+  padding: 16px;
+  background: rgba(184, 198, 167, 0.08);
+  border-radius: 8px;
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+  .container {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .formSection {
+    max-width: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding: 40px 20px;
+  }
+
+  .statusCard {
+    padding: 28px 20px;
+  }
+
+  .timeline {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .timeline > div {
+    padding: 10px 6px;
+  }
+
+  .timeline > div span {
+    font-size: 11px;
+  }
+
+  .resultSection {
+    position: static;
+  }
+}

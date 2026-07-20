@@ -29,7 +29,6 @@ export default async function AdminProductsPage() {
         categoryId: products.categoryId,
         categoryName: categories.name,
         image: products.image,
-        stock: products.stock,
         featured: products.featured,
         bestseller: products.bestseller,
         createdAt: products.createdAt,

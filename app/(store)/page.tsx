@@ -1,8 +1,37 @@
 import Link from "next/link";
-import { categories, products } from "@/lib/catalog";
 import { ProductCard } from "@/components/product/product-card";
 
-export default function HomePage() {
+async function getCategories() {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/categories`, {
+      cache: 'no-store'
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return [];
+  }
+}
+
+async function getProducts() {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/products`, {
+      cache: 'no-store'
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+}
+
+export default async function HomePage() {
+  const categories = await getCategories();
+  const allProducts = await getProducts();
+  const bestsellers = allProducts.filter((p: any) => p.bestseller).slice(0, 4);
+  const products = bestsellers.length > 0 ? bestsellers : allProducts.slice(0, 4);
   return (
     <>
       {/* Hero Section */}
@@ -63,7 +92,7 @@ export default function HomePage() {
       </section>
 
       {/* Browse by Craving Section */}
-      <section className="section">
+      <section className="section" id="categories">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Browse by craving</p>
@@ -75,7 +104,7 @@ export default function HomePage() {
         </div>
 
         <div className="category-grid">
-          {categories.map((category, index) => (
+          {categories.map((category: any, index: number) => (
             <Link
               href={`/shop/${category.slug}`}
               className={`category-card card-${index}`}
@@ -83,7 +112,7 @@ export default function HomePage() {
             >
               <span className="category-mark">0{index + 1}</span>
               <h3>{category.name}</h3>
-              <p>{category.detail}</p>
+              <p>{category.description || 'Explore our collection'}</p>
               <b>Explore →</b>
             </Link>
           ))}
@@ -132,10 +161,13 @@ export default function HomePage() {
             <p className="eyebrow">Loved by many</p>
             <h2>Our bestsellers.</h2>
           </div>
+          <Link href="/shop" className="text-link">
+            View all →
+          </Link>
         </div>
 
         <div className="product-grid">
-          {products.slice(0, 4).map((product) => (
+          {products.map((product: any) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -159,6 +191,90 @@ export default function HomePage() {
           <b>03</b>
           <h3>Fresh to your door</h3>
           <p>Made in small batches and shipped across India.</p>
+        </div>
+      </section>
+
+      {/* Contact Section */}
+      <section className="contact-section" id="contact">
+        <div className="contact-container">
+          <div className="contact-content">
+            <p className="eyebrow">Get in touch</p>
+            <h2>We'd love to hear from you.</h2>
+            <p className="contact-description">
+              Have a question about our snacks, need help with an order, or want to explore bulk orders?
+              We're here to help.
+            </p>
+
+            <div className="contact-details">
+              <div className="contact-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+                <div>
+                  <h4>Call us</h4>
+                  <a href="tel:+919876543210">+91 98765 43210</a>
+                </div>
+              </div>
+
+              <div className="contact-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                <div>
+                  <h4>Email us</h4>
+                  <a href="mailto:hello@raghulsnacks.com">hello@raghulsnacks.com</a>
+                </div>
+              </div>
+
+              <div className="contact-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <div>
+                  <h4>Visit us</h4>
+                  <p>123 Traditional Lane<br/>Chennai, Tamil Nadu 600001</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="contact-hours">
+              <h4>Business Hours</h4>
+              <p>Monday - Saturday: 9:00 AM - 6:00 PM</p>
+              <p>Sunday: Closed</p>
+            </div>
+          </div>
+
+          <div className="contact-form-wrapper">
+            <form className="contact-form">
+              <h3>Send us a message</h3>
+
+              <label>
+                <span>Your name</span>
+                <input type="text" name="name" placeholder="Full name" required />
+              </label>
+
+              <label>
+                <span>Email address</span>
+                <input type="email" name="email" placeholder="you@example.com" required />
+              </label>
+
+              <label>
+                <span>Phone number</span>
+                <input type="tel" name="phone" placeholder="10-digit mobile number" />
+              </label>
+
+              <label>
+                <span>Message</span>
+                <textarea name="message" rows={5} placeholder="How can we help you?" required></textarea>
+              </label>
+
+              <button type="submit" className="button button-dark">
+                Send message
+              </button>
+            </form>
+          </div>
         </div>
       </section>
     </>

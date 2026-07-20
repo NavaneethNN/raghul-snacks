@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   const payload = payloadSchema.safeParse(await request.json());
   if (!payload.success) return NextResponse.json({ error: "Enter a valid PIN code to calculate delivery." }, { status: 400 });
   try {
-    const { subtotal, weight } = priceOrder(payload.data.items);
+    const { subtotal, weight } = await priceOrder(payload.data.items);
     const quote = await getShiprocketQuote(payload.data.pincode, weight, subtotal);
     if (!quote) return NextResponse.json({ error: "Shiprocket delivery configuration is incomplete." }, { status: 503 });
     return NextResponse.json({ ...quote, subtotal, total: subtotal + quote.charge });

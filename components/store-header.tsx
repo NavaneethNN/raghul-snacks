@@ -3,18 +3,29 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart/cart-provider";
+import { useWishlist } from "@/components/wishlist/wishlist-provider";
 
 export function StoreHeader() {
   const { count } = useCart();
+  const { count: wishlistCount } = useWishlist();
   const [account, setAccount] = useState<{ name: string; email: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
 
   useEffect(() => {
     fetch("/api/auth/session").then(async (response) => {
       const data = await response.json() as { account?: { name: string; email: string } | null };
       setAccount(data.account || null);
     }).catch(() => setAccount(null));
+
+    fetch("/api/categories").then(async (response) => {
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data);
+      }
+    }).catch(() => setCategories([]));
   }, []);
 
   useEffect(() => {
@@ -28,6 +39,13 @@ export function StoreHeader() {
     };
   }, [menuOpen]);
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <header className="site-header">
       <div className="header-container">
@@ -40,13 +58,45 @@ export function StoreHeader() {
 
         <nav className="header-nav">
           <Link href="/shop">Shop</Link>
-          <div className="nav-dropdown">
-            <Link href="/shop">Categories</Link>
-            <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-              <path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+          <div
+            className="nav-dropdown"
+            onMouseEnter={() => setCategoriesOpen(true)}
+            onMouseLeave={() => setCategoriesOpen(false)}
+          >
+            <button
+              onClick={() => scrollToSection('categories')}
+              className="nav-link"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', color: 'inherit', padding: 0, display: 'flex', alignItems: 'center', gap: '4px' }}
+            >
+              Categories
+              <svg width="12" height="8" viewBox="0 0 12 8" fill="none" style={{ transition: 'transform 0.2s', transform: categoriesOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                <path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+            {categoriesOpen && (
+              <div className="dropdown-menu">
+                {categories.map((category) => (
+                  <Link
+                    key={category.slug}
+                    href={`/shop/${category.slug}`}
+                    className="dropdown-item"
+                  >
+                    <span>{category.name}</span>
+                    <small>{category.description || 'Explore our collection'}</small>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
+          <button
+            onClick={() => scrollToSection('bestsellers')}
+            className="nav-link"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', color: 'inherit', padding: 0 }}
+          >
+            Bestsellers
+          </button>
           <Link href="/about">Our Story</Link>
+          <Link href="/contact">Contact</Link>
         </nav>
 
         <div className="search-bar">
@@ -65,11 +115,11 @@ export function StoreHeader() {
         </div>
 
         <div className="header-actions">
-          <Link href="#" className="action-icon" title="Wishlist">
+          <Link href="/wishlist" className="action-icon" title={`Wishlist${wishlistCount > 0 ? ` (${wishlistCount} items)` : ''}`}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M10 17.5C10 17.5 2 13 2 7.5C2 4.74 4 3 6 3C7.5 3 9 4 10 5C11 4 12.5 3 14 3C16 3 18 4.74 18 7.5C18 13 10 17.5 10 17.5Z" stroke="currentColor" strokeWidth="1.5" />
             </svg>
-            <span>Wishlist</span>
+            {wishlistCount > 0 && <span className="cart-badge">{wishlistCount}</span>}
           </Link>
 
           <Link href={account ? "/orders" : "/login"} className="action-icon" title="Account">
@@ -80,11 +130,10 @@ export function StoreHeader() {
             <span>Account</span>
           </Link>
 
-          <Link href="/cart" className="action-icon cart-icon" title={`Cart${count > 0 ? ` (${count} items)` : ''}`}>
+          <Link href="/cart" className="action-icon cart-icon" title={`Bag${count > 0 ? ` (${count} items)` : ''}`}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M2 3H4L5.5 12.5H16L17 6H5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="6" cy="16" r="1" fill="currentColor" />
-              <circle cx="14" cy="16" r="1" fill="currentColor" />
+              <path d="M4 6H16V17C16 17.5523 15.5523 18 15 18H5C4.44772 18 4 17.5523 4 17V6Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+              <path d="M7 6V5C7 3.34315 8.34315 2 10 2C11.6569 2 13 3.34315 13 5V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             {count > 0 && <span className="cart-badge">{count}</span>}
           </Link>
@@ -120,9 +169,31 @@ export function StoreHeader() {
 
         <nav className="mobile-nav">
           <Link href="/shop" onClick={() => setMenuOpen(false)}>Shop All</Link>
-          <Link href="/shop" onClick={() => setMenuOpen(false)}>Categories</Link>
+          <button
+            onClick={() => {
+              scrollToSection('categories');
+              setMenuOpen(false);
+            }}
+            className="mobile-nav-link"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', color: 'inherit', padding: 0, textAlign: 'left', width: '100%' }}
+          >
+            Categories
+          </button>
+          <button
+            onClick={() => {
+              scrollToSection('bestsellers');
+              setMenuOpen(false);
+            }}
+            className="mobile-nav-link"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', color: 'inherit', padding: 0, textAlign: 'left', width: '100%' }}
+          >
+            Bestsellers
+          </button>
           <Link href="/about" onClick={() => setMenuOpen(false)}>Our Story</Link>
-          <Link href="#" onClick={() => setMenuOpen(false)}>Wishlist</Link>
+          <Link href="/contact" onClick={() => setMenuOpen(false)}>Contact</Link>
+          <Link href="/wishlist" onClick={() => setMenuOpen(false)}>
+            Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
+          </Link>
           <Link href={account ? "/orders" : "/login"} onClick={() => setMenuOpen(false)}>
             {account ? "My Orders" : "Login"}
           </Link>

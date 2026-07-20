@@ -2,27 +2,51 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Product } from "@/lib/catalog";
 import { formatPrice } from "@/lib/catalog";
 import { useCart } from "@/components/cart/cart-provider";
+import { WishlistButton } from "@/components/wishlist-button";
 
-export function ProductDetailView({ product }: { product: Product }) {
+export function ProductDetailView({ product }: { product: any }) {
   const router = useRouter();
   const { addItem, getItemQuantity } = useCart();
   const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState(false);
+
+  // Ensure product has the correct structure for cart
+  const cartProduct = {
+    ...product,
+    id: String(product.id), // Convert to string for consistency
+    slug: product.slug || '',
+    name: product.name || '',
+    price: parseFloat(product.price) || 0,
+    offerPrice: product.offerPrice ? parseFloat(product.offerPrice) : parseFloat(product.price),
+    weight: product.weight || '',
+    description: product.description || '',
+    ingredients: product.ingredients || '',
+    category: product.categorySlug || product.category || '',
+    image: product.image || '',
+  };
+
   const cartQuantity = getItemQuantity(product.id);
   const inCart = cartQuantity > 0;
 
+  const displayPrice = cartProduct.offerPrice;
+  const originalPrice = cartProduct.price;
+  const categoryName = product.categoryName || product.categorySlug?.replace("-", " ") || product.category?.replace("-", " ") || '';
+  const hasDiscount = product.offerPrice && displayPrice < originalPrice;
+
   function handleAddToCart() {
-    addItem(product, quantity);
-    router.push("/cart");
+    addItem(cartProduct, quantity);
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 2000);
   }
 
   return (
     <section className="product-page">
       <div className="product-large-visual">
         <img src={product.image || "/hero.png"} alt={product.name} />
-        <span className="category-badge">{product.category.replace("-", " ")}</span>
+        <span className="category-badge">{categoryName}</span>
+        <WishlistButton product={cartProduct} className="product-detail-wishlist" />
       </div>
 
       <div className="product-detail">
@@ -31,10 +55,10 @@ export function ProductDetailView({ product }: { product: Product }) {
 
         <div className="price-section">
           <div className="price">
-            <strong>{formatPrice(product.offerPrice)}</strong>
-            <s>{formatPrice(product.price)}</s>
+            <strong>{formatPrice(displayPrice)}</strong>
+            {hasDiscount && <s>{formatPrice(originalPrice)}</s>}
           </div>
-          <span className="savings">Save {formatPrice(product.price - product.offerPrice)}</span>
+          {hasDiscount && <span className="savings">Save {formatPrice(originalPrice - displayPrice)}</span>}
         </div>
 
         <p className="description">{product.description}</p>
@@ -96,10 +120,10 @@ export function ProductDetailView({ product }: { product: Product }) {
         )}
 
         <button
-          className="button button-dark wide-button"
+          className={`button ${inCart || added ? 'button-success' : 'button-dark'} wide-button`}
           onClick={handleAddToCart}
         >
-          {inCart ? `Update Cart (${cartQuantity} in cart)` : `Add ${quantity} to Cart`}
+          {inCart || added ? "✓ Added to Cart" : `Add ${quantity} to Cart`}
         </button>
 
         <p className="shipping-note">

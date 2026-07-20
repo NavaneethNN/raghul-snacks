@@ -31,7 +31,6 @@ export async function PATCH(
     if (body.weight !== undefined) updateData.weight = body.weight;
     if (body.categoryId !== undefined) updateData.categoryId = body.categoryId;
     if (body.image !== undefined) updateData.image = body.image;
-    if (body.stock !== undefined) updateData.stock = body.stock;
     if (body.featured !== undefined) updateData.featured = body.featured;
     if (body.bestseller !== undefined) updateData.bestseller = body.bestseller;
 

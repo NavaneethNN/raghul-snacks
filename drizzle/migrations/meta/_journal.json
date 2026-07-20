@@ -36,6 +36,13 @@
       "when": 1784455170897,
       "tag": "0004_spicy_machine_man",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784524372826,
+      "tag": "0005_next_rawhide_kid",
+      "breakpoints": true
     }
   ]
 }
