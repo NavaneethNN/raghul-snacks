@@ -16,7 +16,10 @@ export function AnnouncementBar() {
     // Fetch announcements
     fetch("/api/announcements")
       .then((res) => res.json())
-      .then((data) => setAnnouncements(data))
+      .then((data) => {
+        console.log("Announcements loaded:", data);
+        setAnnouncements(data);
+      })
       .catch((err) => console.error("Failed to load announcements:", err));
   }, []);
 
