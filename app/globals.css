@@ -200,16 +200,17 @@ input[type=number] {
 
 .dropdown-menu {
   position: absolute;
-  top: calc(100% + 12px);
-  left: 0;
+  top: calc(100% + 16px);
+  left: 50%;
+  transform: translateX(-50%);
   background: white;
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  padding: 8px;
-  min-width: 240px;
-  z-index: 10000;
-  border: 1px solid var(--line);
-  animation: fadeInDown 0.2s ease;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 12px;
+  min-width: 280px;
+  z-index: 10001;
+  border: 2px solid var(--line);
+  animation: fadeInDown 0.25s ease;
 }
 
 @keyframes fadeInDown {
@@ -226,26 +227,30 @@ input[type=number] {
 .dropdown-item {
   display: flex;
   flex-direction: column;
-  padding: 12px 16px;
-  border-radius: 8px;
-  transition: background 0.2s;
+  padding: 14px 18px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
   text-decoration: none;
   color: inherit;
+  gap: 2px;
 }
 
 .dropdown-item:hover {
-  background: #f8f5f0;
+  background: var(--cream);
+  transform: translateX(4px);
 }
 
 .dropdown-item span {
-  font-weight: 500;
-  color: #2c2416;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--ink);
   margin-bottom: 2px;
 }
 
 .dropdown-item small {
   font-size: 13px;
-  color: #6b5f4e;
+  color: #6b7280;
+  line-height: 1.4;
 }
 
 .header-nav svg {

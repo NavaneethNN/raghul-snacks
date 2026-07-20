@@ -553,45 +553,54 @@
   }
 }
 
-/* Image delete button - centered in image on hover */
+/* Image preview container with delete functionality */
+.imagePreviewContainer {
+  position: relative;
+  display: inline-block;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Image delete button - top right corner on hover */
 .imageDeleteButton {
   position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(220, 38, 38, 0.95);
-  border: 3px solid white;
+  top: 10px !important;
+  right: 10px !important;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.95);
+  backdrop-filter: blur(4px);
+  border: none;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   opacity: 0;
-  transition: all 0.25s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 10;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  z-index: 15;
   padding: 0;
 }
 
 .imageDeleteButton:hover {
-  background: rgba(185, 28, 28, 1);
-  transform: translate(-50%, -50%) scale(1.15) !important;
-  opacity: 1 !important;
+  background: rgba(220, 38, 38, 1);
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
 }
 
 .imageDeleteButton:active {
-  transform: translate(-50%, -50%) scale(0.95) !important;
+  transform: scale(0.95);
 }
 
 .imageDeleteButton svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
+  stroke-width: 3;
 }
 
-/* Show delete button on parent hover with overlay effect */
+/* Show delete button and overlay on parent hover */
 div:has(> .imageDeleteButton):hover::before {
   content: '';
   position: absolute;
@@ -599,11 +608,18 @@ div:has(> .imageDeleteButton):hover::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 100%);
   border-radius: 8px;
-  z-index: 5;
+  z-index: 10;
+  transition: all 0.2s ease;
 }
 
 div:has(> .imageDeleteButton):hover .imageDeleteButton {
   opacity: 1;
+}
+
+/* Smooth transition for image on hover */
+div:has(> .imageDeleteButton):hover img {
+  filter: brightness(0.85);
+  transition: filter 0.2s ease;
 }
