@@ -133,9 +133,10 @@ export default function AboutPage() {
       {/* Process Section */}
       <section className="process-section">
         <div className="process-container">
-          <p className="eyebrow">How we do it</p>
-          <h2>From grain to goodness.</h2>
-
+          <div className="values-intro">
+            <p className="eyebrow">How we do it</p>
+            <h2>From grain to goodness.</h2>
+          </div>
           <div className="process-steps">
             <div className="process-step">
               <div className="step-number">01</div>

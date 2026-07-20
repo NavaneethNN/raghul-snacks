@@ -88,13 +88,6 @@ export function StoreHeader() {
               </div>
             )}
           </div>
-          <button
-            onClick={() => scrollToSection('bestsellers')}
-            className="nav-link"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', color: 'inherit', padding: 0 }}
-          >
-            Bestsellers
-          </button>
           <Link href="/about">Our Story</Link>
           <Link href="/contact">Contact</Link>
         </nav>
