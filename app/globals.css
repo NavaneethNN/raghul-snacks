@@ -721,7 +721,7 @@ input[type=number] {
 }
 
 .eyebrow {
-  color: var(--saffron);
+  color: var(--terracotta);
   font: 11px 'DM Mono', monospace;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -740,7 +740,7 @@ input[type=number] {
   transform: translateY(-50%);
   width: 4px;
   height: 4px;
-  background: var(--saffron);
+  background: var(--terracotta);
   border-radius: 50%;
 }
 
@@ -3690,12 +3690,8 @@ footer {
     text-shadow: none;
   }
 
-  .hero .eyebrow {
+  .eyebrow {
     color: var(--terracotta);
-  }
-
-  .section .eyebrow {
-    color: var(--saffron);
   }
 
   .hero-visual {
