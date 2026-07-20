@@ -14,7 +14,7 @@ type Product = {
 
 type ComboItem = {
   productId: number;
-  quantity: number;
+  quantity: number; // Represents weight in grams
 };
 
 type Combo = {
@@ -94,15 +94,15 @@ export function AdminCombos() {
     if (exists) {
       setSelectedItems(selectedItems.filter(item => item.productId !== productId));
     } else {
-      setSelectedItems([...selectedItems, { productId, quantity: 1 }]);
+      setSelectedItems([...selectedItems, { productId, quantity: 100 }]); // Default 100g
     }
     setError("");
   }
 
-  function updateQuantity(productId: number, quantity: number) {
-    if (quantity < 1) return;
+  function updateWeight(productId: number, weight: number) {
+    if (weight < 1) return;
     setSelectedItems(selectedItems.map(item =>
-      item.productId === productId ? { ...item, quantity } : item
+      item.productId === productId ? { ...item, quantity: weight } : item
     ));
   }
 
@@ -253,7 +253,7 @@ export function AdminCombos() {
                         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                           {combo.items.map((item) => (
                             <span key={item.id} style={{ fontSize: "13px", color: "#6b7280" }}>
-                              {item.productName} × {item.quantity}
+                              {item.productName} - {item.quantity}g
                             </span>
                           ))}
                         </div>
@@ -460,18 +460,19 @@ export function AdminCombos() {
                       {selectedItems.map((item) => {
                         const product = products.find(p => p.id === item.productId);
                         return (
-                          <div key={item.productId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px", background: "#fff", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
+                          <div key={item.productId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", background: "#fff", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
                             <span style={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>
                               {product?.name}
                             </span>
                             <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#6b7280" }}>
-                              Qty:
+                              Weight (g):
                               <input
                                 type="number"
                                 min="1"
+                                step="50"
                                 value={item.quantity}
-                                onChange={(e) => updateQuantity(item.productId, parseInt(e.target.value) || 1)}
-                                style={{ width: "60px", border: "1px solid #d1d5db", padding: "4px 8px", borderRadius: "4px", textAlign: "center" }}
+                                onChange={(e) => updateWeight(item.productId, parseInt(e.target.value) || 100)}
+                                style={{ width: "80px", border: "1px solid #d1d5db", padding: "6px 10px", borderRadius: "4px", textAlign: "center", fontSize: "13px", fontWeight: 600 }}
                               />
                             </label>
                           </div>
