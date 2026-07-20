@@ -170,9 +170,14 @@ export default async function HomePage() {
               </ul>
             )}
 
-            <Link href="/shop" className="button button-light">
-              Get this combo · ₹{featuredCombo.discount && parseFloat(featuredCombo.discount) > 0 ? featuredCombo.discount : featuredCombo.price}
-            </Link>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <Link href="/shop" className="button button-light">
+                Get this combo · ₹{featuredCombo.discount && parseFloat(featuredCombo.discount) > 0 ? featuredCombo.discount : featuredCombo.price}
+              </Link>
+              <Link href="/shop?tab=combos" className="button button-outline">
+                View all combos →
+              </Link>
+            </div>
           </div>
 
           <div className="combo-visual">
