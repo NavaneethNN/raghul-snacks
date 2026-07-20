@@ -34,13 +34,14 @@ export function AdminCombos() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingCombo, setEditingCombo] = useState<Combo | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
     price: "",
-    discount: "",
+    offerPrice: "",
     image: "",
   });
   const [selectedItems, setSelectedItems] = useState<ComboItem[]>([]);
@@ -87,6 +88,31 @@ export function AdminCombos() {
         .replace(/(^-|-$)/g, "");
       setFormData((prev) => ({ ...prev, slug }));
     }
+  }
+
+  function handleEdit(combo: Combo) {
+    setEditingCombo(combo);
+    setFormData({
+      title: combo.title,
+      slug: combo.slug,
+      price: combo.price,
+      offerPrice: combo.discount, // Map discount to offerPrice
+      image: combo.image || "",
+    });
+    setSelectedItems(combo.items?.map(item => ({
+      productId: item.productId,
+      quantity: item.quantity
+    })) || []);
+    setShowForm(true);
+  }
+
+  function handleCloseForm() {
+    setShowForm(false);
+    setEditingCombo(null);
+    setFormData({ title: "", slug: "", price: "", offerPrice: "", image: "" });
+    setSelectedItems([]);
+    setShowProductList(false);
+    setError("");
   }
 
   function toggleProduct(productId: number) {
@@ -144,14 +170,19 @@ export function AdminCombos() {
     }
 
     try {
-      const response = await fetch("/api/admin/combos", {
-        method: "POST",
+      const url = editingCombo
+        ? `/api/admin/combos/${editingCombo.id}`
+        : "/api/admin/combos";
+      const method = editingCombo ? "PATCH" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: formData.title,
           slug: formData.slug,
           price: parseFloat(formData.price),
-          discount: formData.discount ? parseFloat(formData.discount) : 0,
+          offerPrice: formData.offerPrice ? parseFloat(formData.offerPrice) : null,
           image: formData.image || null,
           items: selectedItems,
         }),
@@ -159,17 +190,13 @@ export function AdminCombos() {
 
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.error || "Failed to create combo");
+        throw new Error(result.error || `Failed to ${editingCombo ? 'update' : 'create'} combo`);
       }
 
-      // Reset form and refresh
-      setFormData({ title: "", slug: "", price: "", discount: "", image: "" });
-      setSelectedItems([]);
-      setShowProductList(false);
-      setShowForm(false);
+      handleCloseForm();
       fetchCombos();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create combo");
+      setError(err instanceof Error ? err.message : `Failed to ${editingCombo ? 'update' : 'create'} combo`);
     } finally {
       setFormLoading(false);
     }
@@ -218,7 +245,7 @@ export function AdminCombos() {
                 <th>Combo Name</th>
                 <th>Products</th>
                 <th>Price</th>
-                <th>Discount</th>
+                <th>Offer Price</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -274,15 +301,23 @@ export function AdminCombos() {
                     <td><strong>{price.format(Number(combo.price))}</strong></td>
                     <td>
                       {Number(combo.discount) > 0 ? (
-                        <span className={`${styles.badge} ${styles.success}`}>
-                          {price.format(Number(combo.discount))} off
-                        </span>
+                        <strong style={{ color: "#10b981" }}>{price.format(Number(combo.discount))}</strong>
                       ) : (
                         "—"
                       )}
                     </td>
                     <td>
                       <div className={styles.actionButtons}>
+                        <button
+                          className={styles.iconButton}
+                          onClick={() => handleEdit(combo)}
+                          title="Edit"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                        </button>
                         <button
                           className={styles.iconButton}
                           onClick={() => handleDelete(combo.id)}
@@ -307,8 +342,8 @@ export function AdminCombos() {
         <div className={styles.modal}>
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
-              <h2>Create Product Combo</h2>
-              <button className={styles.closeButton} onClick={() => setShowForm(false)}>
+              <h2>{editingCombo ? 'Edit Combo' : 'Create Product Combo'}</h2>
+              <button className={styles.closeButton} onClick={handleCloseForm}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -355,13 +390,13 @@ export function AdminCombos() {
                   />
                 </div>
                 <div className={styles.field}>
-                  <label>Discount (₹)</label>
+                  <label>Offer Price (₹)</label>
                   <input
                     type="number"
                     step="0.01"
-                    placeholder="0.00"
-                    value={formData.discount}
-                    onChange={(e) => handleInputChange("discount", e.target.value)}
+                    placeholder="Optional"
+                    value={formData.offerPrice}
+                    onChange={(e) => handleInputChange("offerPrice", e.target.value)}
                   />
                 </div>
               </div>
@@ -500,11 +535,11 @@ export function AdminCombos() {
                 )}
               </div>
               <div className={styles.formActions}>
-                <button type="button" className={styles.secondaryButton} onClick={() => setShowForm(false)}>
+                <button type="button" className={styles.secondaryButton} onClick={handleCloseForm}>
                   Cancel
                 </button>
                 <button type="submit" className={styles.primaryButton} disabled={formLoading}>
-                  {formLoading ? "Creating..." : "Create Combo"}
+                  {formLoading ? (editingCombo ? "Updating..." : "Creating...") : (editingCombo ? "Update Combo" : "Create Combo")}
                 </button>
               </div>
             </form>

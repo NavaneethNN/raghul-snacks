@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { title, slug, price, discount, image, items } = body;
+    const { title, slug, price, offerPrice, image, items } = body;
 
     if (!title || !slug || !price) {
       return NextResponse.json(
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
         title,
         slug,
         price: price.toString(),
-        discount: discount ? discount.toString() : "0",
+        discount: offerPrice ? offerPrice.toString() : "0",
         image: image || null,
       })
       .returning();
