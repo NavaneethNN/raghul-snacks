@@ -555,9 +555,9 @@
 
 /* Image delete button */
 .imageDeleteButton {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -571,11 +571,14 @@
   opacity: 0;
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  padding: 0;
 }
 
 .imageDeleteButton:hover {
   background: rgba(185, 28, 28, 1);
   transform: scale(1.1);
+  opacity: 1 !important;
 }
 
 .imageDeleteButton:active {
