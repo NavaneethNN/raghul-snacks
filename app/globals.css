@@ -679,7 +679,7 @@ input[type=number] {
 .hero {
   min-height: 420px;
   max-width: 100%;
-  margin: 0 0 -12px 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -1017,7 +1017,7 @@ h2 i {
 .section {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 12px 16px;
+  padding: 16px 16px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -3467,8 +3467,8 @@ footer {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 60px;
-    padding: 60px 40px;
-    min-height: 600px;
+    padding: 40px 40px;
+    min-height: 550px;
     align-items: center;
     max-width: 1240px;
     margin: 0 auto;
@@ -3639,7 +3639,7 @@ footer {
   }
 
   .section {
-    padding: 32px 24px;
+    padding: 20px 24px;
   }
 
   .section h2 {
@@ -3651,10 +3651,6 @@ footer {
     justify-content: space-between;
     align-items: flex-end;
     margin-bottom: 20px;
-  }
-
-  .section h2 {
-    font-size: 42px;
   }
 
   .category-grid {
@@ -3885,9 +3881,9 @@ footer {
 
 
   .hero {
-    min-height: 600px;
+    min-height: 550px;
     gap: 60px;
-    padding: 50px 28px 60px;
+    padding: 35px 28px 45px;
     grid-template-columns: 1fr 1fr;
     align-items: center;
   }
@@ -3923,7 +3919,7 @@ footer {
   }
 
   .section {
-    padding: 40px 28px;
+    padding: 24px 28px;
   }
 
   .section h2 {
