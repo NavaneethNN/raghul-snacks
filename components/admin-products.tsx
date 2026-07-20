@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminHeaderActions } from "./admin-header-actions";
+import { formatWeight } from "@/lib/catalog";
 import styles from "./admin-table.module.css";
 
 type Product = {
@@ -221,7 +222,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                     <td>
                       <strong>{product.name}</strong>
                       <br />
-                      <small style={{ color: "#6b7280" }}>{product.weight}</small>
+                      <small style={{ color: "#6b7280" }}>{formatWeight(product.weight)}</small>
                     </td>
                     <td>{product.categoryName || "—"}</td>
                     <td>

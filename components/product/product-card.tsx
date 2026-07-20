@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatPrice } from "@/lib/catalog";
+import { formatPrice, formatWeight } from "@/lib/catalog";
 import { AddToCart } from "@/components/product/add-to-cart";
 import { WishlistButton } from "@/components/wishlist-button";
 
@@ -39,7 +39,7 @@ export function ProductCard({ product }: { product: any }) {
       </Link>
       <WishlistButton product={cartProduct} />
       <div className="product-copy">
-        <p>{product.weight}</p>
+        <p>{formatWeight(product.weight)}</p>
         <Link href={`/product/${product.slug}`}>
           <h3>{product.name}</h3>
         </Link>

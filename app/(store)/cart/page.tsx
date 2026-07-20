@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart/cart-provider";
-import { formatPrice } from "@/lib/catalog";
+import { formatPrice, formatWeight } from "@/lib/catalog";
 import { AddToCart } from "@/components/product/add-to-cart";
 import { CartShippingEstimate } from "@/components/cart-shipping-estimate";
 
@@ -78,7 +78,7 @@ export default function CartPage() {
               </div>
               <div>
                 <h3>{item.name}</h3>
-                <p>{item.weight}</p>
+                <p>{formatWeight(item.weight)}</p>
                 <strong>{formatPrice(item.offerPrice)}</strong>
               </div>
               <div className="quantity">

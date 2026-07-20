@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useWishlist } from "@/components/wishlist/wishlist-provider";
-import { formatPrice } from "@/lib/catalog";
+import { formatPrice, formatWeight } from "@/lib/catalog";
 import { WishlistButton } from "@/components/wishlist-button";
 
 export default function WishlistPage() {
@@ -49,7 +49,7 @@ export default function WishlistPage() {
               </Link>
               <WishlistButton product={item} />
               <div className="product-copy">
-                <p>{item.weight}</p>
+                <p>{formatWeight(item.weight)}</p>
                 <Link href={`/product/${item.slug}`}>
                   <h3>{item.name}</h3>
                 </Link>

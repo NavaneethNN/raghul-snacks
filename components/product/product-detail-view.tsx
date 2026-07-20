@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatPrice } from "@/lib/catalog";
+import { formatPrice, formatWeight } from "@/lib/catalog";
 import { useCart } from "@/components/cart/cart-provider";
 import { WishlistButton } from "@/components/wishlist-button";
 
@@ -70,7 +70,7 @@ export function ProductDetailView({ product }: { product: any }) {
             </svg>
             <div>
               <span>Weight</span>
-              <strong>{product.weight}</strong>
+              <strong>{formatWeight(product.weight)}</strong>
             </div>
           </div>
           <div className="detail-item">
