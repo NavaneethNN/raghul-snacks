@@ -2340,6 +2340,11 @@ h2 i {
   text-transform: uppercase;
   margin: 0 0 16px;
   text-align: center;
+  padding-left: 0;
+}
+
+.process-container .eyebrow::before {
+  display: none;
 }
 
 .process-container h2 {
