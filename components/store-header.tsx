@@ -122,7 +122,7 @@ export function StoreHeader() {
             {wishlistCount > 0 && <span className="cart-badge">{wishlistCount}</span>}
           </Link>
 
-          <Link href={account ? "/orders" : "/login"} className="action-icon" title="Account">
+          <Link href={account ? "/account" : "/login"} className="action-icon" title="Account">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <circle cx="10" cy="6" r="3.5" stroke="currentColor" strokeWidth="1.5" />
               <path d="M2 17C2 14 5.5 12 10 12C14.5 12 18 14 18 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -194,8 +194,8 @@ export function StoreHeader() {
           <Link href="/wishlist" onClick={() => setMenuOpen(false)}>
             Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
           </Link>
-          <Link href={account ? "/orders" : "/login"} onClick={() => setMenuOpen(false)}>
-            {account ? "My Orders" : "Login"}
+          <Link href={account ? "/account" : "/login"} onClick={() => setMenuOpen(false)}>
+            {account ? "My Account" : "Login"}
           </Link>
         </nav>
 
