@@ -553,39 +553,57 @@
   }
 }
 
-/* Image delete button */
+/* Image delete button - centered in image on hover */
 .imageDeleteButton {
   position: absolute !important;
-  top: 8px !important;
-  right: 8px !important;
-  width: 32px;
-  height: 32px;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: rgba(220, 38, 38, 0.9);
-  border: 2px solid white;
+  background: rgba(220, 38, 38, 0.95);
+  border: 3px solid white;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   opacity: 0;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 10;
   padding: 0;
 }
 
 .imageDeleteButton:hover {
   background: rgba(185, 28, 28, 1);
-  transform: scale(1.1);
+  transform: translate(-50%, -50%) scale(1.15) !important;
   opacity: 1 !important;
 }
 
 .imageDeleteButton:active {
-  transform: scale(0.95);
+  transform: translate(-50%, -50%) scale(0.95) !important;
 }
 
-/* Show delete button on parent hover */
+.imageDeleteButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Show delete button on parent hover with overlay effect */
+div:has(> .imageDeleteButton):hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  z-index: 5;
+}
+
 div:has(> .imageDeleteButton):hover .imageDeleteButton {
   opacity: 1;
 }
