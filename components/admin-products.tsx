@@ -40,6 +40,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
   const [imageInputType, setImageInputType] = useState<"url" | "file">("url");
   const [imagePreview, setImagePreview] = useState<string>("");
   const [imageData, setImageData] = useState<string>("");
+  const [productName, setProductName] = useState("");
+  const [productSlug, setProductSlug] = useState("");
 
 
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -57,6 +59,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
 
   function handleEdit(product: Product) {
     setEditingProduct(product);
+    setProductName(product.name);
+    setProductSlug(product.slug);
     setShowForm(true);
     setImageInputType(product.image?.startsWith("data:") ? "file" : "url");
     setImagePreview(product.image || "");
@@ -66,9 +70,21 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
   function handleCloseForm() {
     setShowForm(false);
     setEditingProduct(null);
+    setProductName("");
+    setProductSlug("");
     setImagePreview("");
     setImageData("");
     setError("");
+  }
+
+  function handleNameChange(name: string) {
+    setProductName(name);
+    // Auto-generate slug from name
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    setProductSlug(slug);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -279,11 +295,26 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
               <div className={styles.formGrid}>
                 <div className={styles.field}>
                   <label>Product Name</label>
-                  <input type="text" name="name" placeholder="e.g., Thinai Laddu" defaultValue={editingProduct?.name} required />
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="e.g., Thinai Laddu"
+                    value={productName}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    required
+                  />
                 </div>
                 <div className={styles.field}>
                   <label>Slug (URL)</label>
-                  <input type="text" name="slug" placeholder="e.g., thinai-laddu" defaultValue={editingProduct?.slug} required />
+                  <input
+                    type="text"
+                    name="slug"
+                    placeholder="e.g., thinai-laddu"
+                    value={productSlug}
+                    onChange={(e) => setProductSlug(e.target.value)}
+                    required
+                  />
+                  <small style={{ color: '#6b7280', fontSize: '12px' }}>Auto-generated from name</small>
                 </div>
                 <div className={styles.field}>
                   <label>Category</label>

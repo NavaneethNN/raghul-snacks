@@ -23,9 +23,13 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
   const [error, setError] = useState("");
   const [imageInputType, setImageInputType] = useState<"url" | "file">("url");
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [categoryName, setCategoryName] = useState("");
+  const [categorySlug, setCategorySlug] = useState("");
 
   function handleEdit(category: Category) {
     setEditingCategory(category);
+    setCategoryName(category.name);
+    setCategorySlug(category.slug);
     setShowForm(true);
     setImageInputType(category.image?.startsWith("data:") ? "file" : "url");
     setImagePreview(category.image || "");
@@ -34,8 +38,20 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
   function handleCloseForm() {
     setShowForm(false);
     setEditingCategory(null);
+    setCategoryName("");
+    setCategorySlug("");
     setImagePreview("");
     setError("");
+  }
+
+  function handleNameChange(name: string) {
+    setCategoryName(name);
+    // Auto-generate slug from name
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    setCategorySlug(slug);
   }
 
   function handleImageFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -216,12 +232,26 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
               )}
               <div className={styles.field}>
                 <label>Category Name</label>
-                <input type="text" name="name" placeholder="e.g., Laddus" defaultValue={editingCategory?.name} required />
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="e.g., Laddus"
+                  value={categoryName}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  required
+                />
               </div>
               <div className={styles.field}>
                 <label>Slug (URL-friendly name)</label>
-                <input type="text" name="slug" placeholder="e.g., laddus" defaultValue={editingCategory?.slug} required />
-                <small style={{ color: '#6b7280', fontSize: '12px' }}>Used in URLs. Only lowercase letters, numbers, and hyphens.</small>
+                <input
+                  type="text"
+                  name="slug"
+                  placeholder="e.g., laddus"
+                  value={categorySlug}
+                  onChange={(e) => setCategorySlug(e.target.value)}
+                  required
+                />
+                <small style={{ color: '#6b7280', fontSize: '12px' }}>Auto-generated from name</small>
               </div>
               <div className={styles.field}>
                 <label>Description</label>
