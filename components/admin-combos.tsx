@@ -99,10 +99,20 @@ export function AdminCombos() {
     setError("");
   }
 
-  function updateWeight(productId: number, weight: number) {
-    if (weight < 1) return;
+  function updateWeight(productId: number, weight: string) {
+    const numWeight = parseInt(weight);
+    // Allow empty or update with valid number
+    if (weight === "" || !isNaN(numWeight)) {
+      setSelectedItems(selectedItems.map(item =>
+        item.productId === productId ? { ...item, quantity: weight === "" ? 0 : numWeight } : item
+      ));
+    }
+  }
+
+  function handleWeightBlur(productId: number) {
+    // Ensure minimum weight of 1g on blur
     setSelectedItems(selectedItems.map(item =>
-      item.productId === productId ? { ...item, quantity: weight } : item
+      item.productId === productId && item.quantity < 1 ? { ...item, quantity: 100 } : item
     ));
   }
 
@@ -467,11 +477,12 @@ export function AdminCombos() {
                             <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#6b7280" }}>
                               Weight (g):
                               <input
-                                type="number"
-                                min="1"
-                                step="50"
-                                value={item.quantity}
-                                onChange={(e) => updateWeight(item.productId, parseInt(e.target.value) || 100)}
+                                type="text"
+                                inputMode="numeric"
+                                value={item.quantity || ""}
+                                onChange={(e) => updateWeight(item.productId, e.target.value)}
+                                onBlur={() => handleWeightBlur(item.productId)}
+                                placeholder="100"
                                 style={{ width: "80px", border: "1px solid #d1d5db", padding: "6px 10px", borderRadius: "4px", textAlign: "center", fontSize: "13px", fontWeight: 600 }}
                               />
                             </label>
