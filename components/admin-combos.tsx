@@ -5,6 +5,18 @@ import { useRouter } from "next/navigation";
 import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-table.module.css";
 
+type Product = {
+  id: number;
+  name: string;
+  price: string;
+  image: string | null;
+};
+
+type ComboItem = {
+  productId: number;
+  quantity: number;
+};
+
 type Combo = {
   id: number;
   title: string;
@@ -13,11 +25,13 @@ type Combo = {
   discount: string;
   image: string | null;
   createdAt: Date;
+  items?: Array<{ id: number; productId: number; quantity: number; productName: string }>;
 };
 
 export function AdminCombos() {
   const router = useRouter();
   const [combos, setCombos] = useState<Combo[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
@@ -29,9 +43,11 @@ export function AdminCombos() {
     discount: "",
     image: "",
   });
+  const [selectedItems, setSelectedItems] = useState<ComboItem[]>([]);
 
   useEffect(() => {
     fetchCombos();
+    fetchProducts();
   }, []);
 
   async function fetchCombos() {
@@ -47,6 +63,17 @@ export function AdminCombos() {
     }
   }
 
+  async function fetchProducts() {
+    try {
+      const response = await fetch("/api/products");
+      if (!response.ok) throw new Error("Failed to fetch products");
+      const data = await response.json();
+      setProducts(data);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  }
+
   function handleInputChange(field: string, value: string) {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError("");
@@ -59,6 +86,26 @@ export function AdminCombos() {
         .replace(/(^-|-$)/g, "");
       setFormData((prev) => ({ ...prev, slug }));
     }
+  }
+
+  function addProduct(productId: number) {
+    if (selectedItems.find(item => item.productId === productId)) {
+      setError("Product already added to combo");
+      return;
+    }
+    setSelectedItems([...selectedItems, { productId, quantity: 1 }]);
+    setError("");
+  }
+
+  function removeProduct(productId: number) {
+    setSelectedItems(selectedItems.filter(item => item.productId !== productId));
+  }
+
+  function updateQuantity(productId: number, quantity: number) {
+    if (quantity < 1) return;
+    setSelectedItems(selectedItems.map(item =>
+      item.productId === productId ? { ...item, quantity } : item
+    ));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -82,6 +129,11 @@ export function AdminCombos() {
       setFormLoading(false);
       return;
     }
+    if (selectedItems.length === 0) {
+      setError("Please add at least one product to the combo");
+      setFormLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch("/api/admin/combos", {
@@ -93,6 +145,7 @@ export function AdminCombos() {
           price: parseFloat(formData.price),
           discount: formData.discount ? parseFloat(formData.discount) : 0,
           image: formData.image || null,
+          items: selectedItems,
         }),
       });
 
@@ -103,6 +156,7 @@ export function AdminCombos() {
 
       // Reset form and refresh
       setFormData({ title: "", slug: "", price: "", discount: "", image: "" });
+      setSelectedItems([]);
       setShowForm(false);
       fetchCombos();
     } catch (err) {
@@ -153,7 +207,7 @@ export function AdminCombos() {
             <thead>
               <tr>
                 <th>Combo Name</th>
-                <th>Slug</th>
+                <th>Products</th>
                 <th>Price</th>
                 <th>Discount</th>
                 <th>Actions</th>
@@ -188,11 +242,25 @@ export function AdminCombos() {
               ) : (
                 combos.map((combo) => (
                   <tr key={combo.id}>
-                    <td><strong>{combo.title}</strong></td>
                     <td>
-                      <code style={{ background: "#f3f4f6", padding: "2px 8px", borderRadius: "4px", fontSize: "13px" }}>
+                      <strong>{combo.title}</strong>
+                      <br />
+                      <code style={{ background: "#f3f4f6", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", color: "#6b7280" }}>
                         {combo.slug}
                       </code>
+                    </td>
+                    <td>
+                      {combo.items && combo.items.length > 0 ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                          {combo.items.map((item) => (
+                            <span key={item.id} style={{ fontSize: "13px", color: "#6b7280" }}>
+                              {item.productName} × {item.quantity}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span style={{ color: "#9ca3af", fontSize: "13px" }}>No products</span>
+                      )}
                     </td>
                     <td><strong>{price.format(Number(combo.price))}</strong></td>
                     <td>
@@ -296,6 +364,67 @@ export function AdminCombos() {
                   value={formData.image}
                   onChange={(e) => handleInputChange("image", e.target.value)}
                 />
+              </div>
+              <div className={styles.field}>
+                <label>Products in Combo</label>
+                <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+                  <select
+                    style={{ flex: 1, border: "1.5px solid #d1d5db", background: "#fff", padding: "10px 14px", fontSize: "14px", borderRadius: "8px" }}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        addProduct(parseInt(e.target.value));
+                        e.target.value = "";
+                      }
+                    }}
+                  >
+                    <option value="">Select a product...</option>
+                    {products.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.name} - {price.format(Number(product.price))}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {selectedItems.length > 0 && (
+                  <div style={{ border: "1.5px solid #d1d5db", borderRadius: "8px", padding: "12px", background: "#fafbfc" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {selectedItems.map((item) => {
+                        const product = products.find(p => p.id === item.productId);
+                        return (
+                          <div key={item.productId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px", background: "#fff", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
+                            <span style={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>
+                              {product?.name}
+                            </span>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#6b7280" }}>
+                                Qty:
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={item.quantity}
+                                  onChange={(e) => updateQuantity(item.productId, parseInt(e.target.value) || 1)}
+                                  style={{ width: "60px", border: "1px solid #d1d5db", padding: "4px 8px", borderRadius: "4px", textAlign: "center" }}
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => removeProduct(item.productId)}
+                                style={{ background: "#fee2e2", border: "1px solid #dc2626", color: "#991b1b", padding: "4px 8px", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {selectedItems.length === 0 && (
+                  <p style={{ color: "#9ca3af", fontSize: "13px", margin: 0 }}>
+                    No products added yet. Select products from the dropdown above.
+                  </p>
+                )}
               </div>
               <div className={styles.formActions}>
                 <button type="button" className={styles.secondaryButton} onClick={() => setShowForm(false)}>
