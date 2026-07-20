@@ -44,9 +44,12 @@ export default async function HomePage() {
   const categories = await getCategories();
   const allProducts = await getProducts();
   const combos = await getCombos();
-  const featuredCombo = combos.length > 0 ? combos[0] : null;
+  const featuredCombo = combos && combos.length > 0 ? combos[0] : null;
   const bestsellers = allProducts.filter((p: any) => p.bestseller).slice(0, 4);
   const products = bestsellers.length > 0 ? bestsellers : allProducts.slice(0, 4);
+
+  console.log('Combos fetched:', combos);
+  console.log('Featured combo:', featuredCombo);
   return (
     <>
       {/* Hero Section */}
@@ -147,9 +150,13 @@ export default async function HomePage() {
           <div>
             <p className="eyebrow">Special Combo</p>
             <h2>
-              {featuredCombo.name.split(' ').slice(0, -1).join(' ')}
-              <br />
-              <i>{featuredCombo.name.split(' ').slice(-1)[0]}</i>
+              {featuredCombo.name}
+              {featuredCombo.name.includes(' ') && (
+                <>
+                  <br />
+                  <i>Box</i>
+                </>
+              )}
             </h2>
             <p>
               {featuredCombo.description || 'A curated selection of our finest snacks.'}
