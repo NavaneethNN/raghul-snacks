@@ -223,6 +223,35 @@
   border-bottom-color: var(--ink);
 }
 
+.googleButton {
+  width: 100%;
+  padding: 14px 16px;
+  background: white;
+  border: 1.5px solid #dcd8cd;
+  border-radius: 3px;
+  font: 600 14px 'DM Sans', sans-serif;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.2s;
+}
+
+.googleButton:hover {
+  background: #fafaf8;
+  border-color: #b8b5ab;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.googleButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .divider {
   margin: 20px 0;
   text-align: center;
@@ -247,6 +276,36 @@
 
 .divider::after {
   right: 0;
+}
+
+.passwordField {
+  position: relative;
+  width: 100%;
+}
+
+.passwordField input {
+  width: 100%;
+  padding-right: 48px;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #7a8577;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.passwordToggle:hover {
+  color: var(--ink);
 }
 
 @media (max-width: 1024px) {
