@@ -1063,11 +1063,17 @@ h2 i {
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   width: 100%;
+  max-width: 100%;
+}
+
+/* Keep 2 columns on all screen sizes for home page */
+.product-grid {
+  grid-template-columns: repeat(2, 1fr) !important;
 }
 
 @media (max-width: 360px) {
   .product-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     gap: 16px;
   }
 }
@@ -1418,35 +1424,36 @@ h2 i {
   }
 
   .product-visual {
-    height: 160px;
+    height: 150px;
   }
 
   .product-visual .category-label {
-    font-size: 10px;
-    padding: 3px 8px;
+    font-size: 9px;
+    padding: 3px 7px;
   }
 
   .product-visual b {
     font-size: 8px;
-    padding: 2px 5px;
+    padding: 2px 4px;
   }
 
   .placeholder-icon {
-    font-size: 48px;
+    font-size: 40px;
   }
 
   .product-copy {
-    padding: 12px;
+    padding: 10px;
   }
 
   .product-copy p {
-    font-size: 10px;
+    font-size: 9px;
+    margin-bottom: 2px;
   }
 
   .product-copy h3 {
-    font-size: 15px;
-    margin: 4px 0 10px;
-    line-height: 1.4;
+    font-size: 14px;
+    margin: 3px 0 8px;
+    line-height: 1.3;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
@@ -1455,26 +1462,26 @@ h2 i {
   }
 
   .price {
-    margin-bottom: 12px;
-    gap: 6px;
+    margin-bottom: 10px;
+    gap: 5px;
   }
 
   .price strong {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .price s {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .price em {
-    font-size: 9px;
-    padding: 2px 5px;
+    font-size: 8px;
+    padding: 2px 4px;
   }
 
   .product-copy .button {
-    padding: 9px;
-    font-size: 13px;
+    padding: 8px;
+    font-size: 12px;
   }
 }
 
@@ -1483,12 +1490,36 @@ h2 i {
     height: 180px;
   }
 
+  .product-copy {
+    padding: 14px;
+  }
+
   .product-copy h3 {
     font-size: 16px;
   }
 
   .price strong {
     font-size: 17px;
+  }
+}
+
+/* Ensure product cards fit well in 2-column layout on all screens */
+@media (min-width: 769px) {
+  .product-grid .product-card .product-visual {
+    height: 220px;
+  }
+
+  .product-grid .product-card .product-copy {
+    padding: 18px;
+  }
+
+  .product-grid .product-card .product-copy h3 {
+    font-size: 19px;
+    margin: 6px 0 14px;
+  }
+
+  .product-grid .product-card .price strong {
+    font-size: 19px;
   }
 }
 
@@ -3749,8 +3780,8 @@ footer {
   }
 
   .product-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
 
   .category-card {
@@ -4016,10 +4047,14 @@ footer {
     font-size: 48px;
   }
 
-  .category-grid,
-  .product-grid {
+  .category-grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 17px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
   }
 
   .category-card {
