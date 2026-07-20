@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatWeight } from "@/lib/catalog";
+import { ComboActions } from "@/components/combo-actions";
 
 async function getCombo(slug: string) {
   try {
@@ -77,6 +78,8 @@ export default async function ComboDetailPage({ params }: { params: Promise<{ sl
           </div>
         </div>
 
+        <ComboActions combo={combo} />
+
         {combo.items && combo.items.length > 0 && (
           <div style={{ marginTop: '32px' }}>
             <h3 style={{ fontSize: '20px', marginBottom: '16px', fontFamily: 'Playfair Display, serif' }}>
@@ -111,26 +114,6 @@ export default async function ComboDetailPage({ params }: { params: Promise<{ sl
             </ul>
           </div>
         )}
-
-        <div style={{ marginTop: '32px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <Link href="/shop?tab=combos" className="button" style={{
-            background: 'var(--ink)',
-            color: 'white',
-            flex: '1',
-            minWidth: '200px'
-          }}>
-            View All Combos
-          </Link>
-          <Link href="/shop" className="button" style={{
-            background: 'transparent',
-            color: 'var(--ink)',
-            border: '2px solid var(--ink)',
-            flex: '1',
-            minWidth: '200px'
-          }}>
-            Continue Shopping
-          </Link>
-        </div>
       </div>
     </section>
   );
