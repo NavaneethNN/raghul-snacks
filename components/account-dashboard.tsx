@@ -44,8 +44,8 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
 
     setSigningOut(true);
     try {
-      const response = await fetch("/api/auth/signout", {
-        method: "POST",
+      const response = await fetch("/api/auth/session", {
+        method: "DELETE",
       });
 
       if (response.ok) {

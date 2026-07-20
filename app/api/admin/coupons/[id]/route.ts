@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 // PATCH - Update coupon
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const cookieStore = await cookies();
   if (!isValidAdminSession(cookieStore.get(adminCookieName())?.value)) {
@@ -18,7 +18,8 @@ export async function PATCH(
   }
 
   try {
-    const id = parseInt(params.id);
+    const { id: idParam } = await params;
+    const id = parseInt(idParam);
     const body = await request.json();
     const { code, discountType, value, active } = body;
 
@@ -50,7 +51,7 @@ export async function PATCH(
 // DELETE - Delete coupon
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const cookieStore = await cookies();
   if (!isValidAdminSession(cookieStore.get(adminCookieName())?.value)) {
@@ -58,7 +59,8 @@ export async function DELETE(
   }
 
   try {
-    const id = parseInt(params.id);
+    const { id: idParam } = await params;
+    const id = parseInt(idParam);
     const db = getDb();
 
     await db.delete(coupons).where(eq(coupons.id, id));

@@ -27,7 +27,6 @@ export async function POST(request: Request) {
       maxAge: 60 * 60 * 24 * 30
     });
 
-    console.log("Login successful for:", account.email, "Session created with ID:", account.id);
     return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to log in.";

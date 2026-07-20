@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 // PATCH - Update product
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const cookieStore = await cookies();
   if (!isValidAdminSession(cookieStore.get(adminCookieName())?.value)) {
@@ -18,7 +18,8 @@ export async function PATCH(
   }
 
   try {
-    const id = parseInt(params.id);
+    const { id: idParam } = await params;
+    const id = parseInt(idParam);
     const body = await request.json();
 
     const updateData: any = {};
@@ -55,7 +56,7 @@ export async function PATCH(
 // DELETE - Delete product
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const cookieStore = await cookies();
   if (!isValidAdminSession(cookieStore.get(adminCookieName())?.value)) {
@@ -63,7 +64,8 @@ export async function DELETE(
   }
 
   try {
-    const id = parseInt(params.id);
+    const { id: idParam } = await params;
+    const id = parseInt(idParam);
     const db = getDb();
 
     await db.delete(products).where(eq(products.id, id));
