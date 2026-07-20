@@ -110,10 +110,17 @@ export default async function HomePage() {
               className={`category-card card-${index}`}
               key={category.slug}
             >
-              <span className="category-mark">0{index + 1}</span>
-              <h3>{category.name}</h3>
-              <p>{category.description || 'Explore our collection'}</p>
-              <b>Explore →</b>
+              {category.image && (
+                <div className="category-image">
+                  <img src={category.image} alt={category.name} />
+                </div>
+              )}
+              <div className="category-content">
+                <span className="category-mark">0{index + 1}</span>
+                <h3>{category.name}</h3>
+                <p>{category.description || 'Explore our collection'}</p>
+                <b>Explore →</b>
+              </div>
             </Link>
           ))}
         </div>
