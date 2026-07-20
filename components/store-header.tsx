@@ -115,11 +115,10 @@ export function StoreHeader() {
         </div>
 
         <div className="header-actions">
-          <Link href="/wishlist" className="action-icon" title={`Wishlist${wishlistCount > 0 ? ` (${wishlistCount} items)` : ''}`}>
+          <Link href="/wishlist" className="action-icon" title="Wishlist">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M10 17.5C10 17.5 2 13 2 7.5C2 4.74 4 3 6 3C7.5 3 9 4 10 5C11 4 12.5 3 14 3C16 3 18 4.74 18 7.5C18 13 10 17.5 10 17.5Z" stroke="currentColor" strokeWidth="1.5" />
             </svg>
-            {wishlistCount > 0 && <span className="cart-badge">{wishlistCount}</span>}
           </Link>
 
           <Link href={account ? "/account" : "/login"} className="action-icon" title="Account">
