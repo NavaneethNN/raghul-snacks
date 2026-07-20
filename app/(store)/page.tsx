@@ -145,13 +145,13 @@ export default async function HomePage() {
       </section>
 
       {/* Combo Box Section */}
-      {featuredCombo && (
+      {featuredCombo && featuredCombo.name && (
         <section className="combo">
           <div>
             <p className="eyebrow">Special Combo</p>
             <h2>
               {featuredCombo.name}
-              {featuredCombo.name.includes(' ') && (
+              {featuredCombo.name?.includes(' ') && (
                 <>
                   <br />
                   <i>Box</i>
@@ -165,7 +165,7 @@ export default async function HomePage() {
             {featuredCombo.items && featuredCombo.items.length > 0 && (
               <ul>
                 {featuredCombo.items.map((item: any, index: number) => (
-                  <li key={index}>{item.name} ({item.quantity}g)</li>
+                  <li key={index}>{item.name || 'Product'} ({item.quantity}g)</li>
                 ))}
               </ul>
             )}
