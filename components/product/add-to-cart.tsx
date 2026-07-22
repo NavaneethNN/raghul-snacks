@@ -11,6 +11,7 @@ export function AddToCart({ product, quantity = 1, className = "", showModal = f
   const inCart = getItemQuantity(product.id) > 0;
 
   function handleClick() {
+    if (inCart || added) return;
     addItem(product, quantity);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 2000);
@@ -20,6 +21,7 @@ export function AddToCart({ product, quantity = 1, className = "", showModal = f
     <button
       className={`button ${inCart || added ? 'button-success' : 'button-dark'} ${className}`}
       onClick={handleClick}
+      disabled={inCart || added}
     >
       {inCart || added ? "✓ Added to Cart" : "Add to Cart"}
     </button>

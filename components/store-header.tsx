@@ -29,12 +29,11 @@ export function StoreHeader() {
   }, []);
 
   useEffect(() => {
-    if (menuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    document.body.classList.toggle('mobile-menu-open', menuOpen);
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+
     return () => {
+      document.body.classList.remove('mobile-menu-open');
       document.body.style.overflow = '';
     };
   }, [menuOpen]);
@@ -88,7 +87,6 @@ export function StoreHeader() {
                     className="dropdown-item"
                   >
                     <span>{category.name}</span>
-                    <small>{category.description || 'Explore our collection'}</small>
                   </Link>
                 ))}
               </div>
@@ -162,7 +160,11 @@ export function StoreHeader() {
           <Link className="brand" href="/" onClick={() => setMenuOpen(false)}>
             <span>Raghul</span> Snacks
           </Link>
-          
+          <button type="button" className="close-btn" onClick={() => setMenuOpen(false)} aria-label="Close menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         <nav className="mobile-nav">
@@ -173,19 +175,8 @@ export function StoreHeader() {
               setMenuOpen(false);
             }}
             className="mobile-nav-link"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', color: 'inherit', padding: 0, textAlign: 'left', width: '100%' }}
           >
             Categories
-          </button>
-          <button
-            onClick={() => {
-              scrollToSection('bestsellers');
-              setMenuOpen(false);
-            }}
-            className="mobile-nav-link"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', font: 'inherit', color: 'inherit', padding: 0, textAlign: 'left', width: '100%' }}
-          >
-            Bestsellers
           </button>
           <Link href="/about" onClick={() => setMenuOpen(false)}>Our Story</Link>
           <Link href="/contact" onClick={() => setMenuOpen(false)}>Contact</Link>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import styles from "./admin-dashboard.module.css";
 
 const quickLinks = [
@@ -33,6 +34,32 @@ const quickLinks = [
 
 export function AdminDashboard() {
   const router = useRouter();
+  const [metrics, setMetrics] = useState({
+    totalOrders: 0,
+    totalProducts: 0,
+    totalCustomers: 0,
+    revenue: 0,
+  });
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        const response = await fetch("/api/admin/dashboard");
+        if (response.ok) {
+          const data = await response.json();
+          setMetrics(data.metrics);
+          setRecentOrders(data.recentOrders);
+        }
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadDashboardData();
+  }, []);
 
   async function handleSignOut() {
     try {
@@ -45,6 +72,8 @@ export function AdminDashboard() {
       console.error("Sign out failed:", error);
     }
   }
+
+  const price = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 
   return (
     <div className={styles.page}>
@@ -75,22 +104,22 @@ export function AdminDashboard() {
       <section className={styles.metrics}>
         <div>
           <span>Total Orders</span>
-          <strong>—</strong>
-          <small>Connect database to view</small>
+          <strong>{loading ? "..." : metrics.totalOrders}</strong>
+          <small>All time</small>
         </div>
         <div>
           <span>Products</span>
-          <strong>—</strong>
+          <strong>{loading ? "..." : metrics.totalProducts}</strong>
           <small>Active products</small>
         </div>
         <div>
           <span>Revenue</span>
-          <strong>₹—</strong>
+          <strong>{loading ? "..." : price.format(metrics.revenue)}</strong>
           <small>This month</small>
         </div>
         <div>
           <span>Customers</span>
-          <strong>—</strong>
+          <strong>{loading ? "..." : metrics.totalCustomers}</strong>
           <small>Total customers</small>
         </div>
       </section>
@@ -111,9 +140,28 @@ export function AdminDashboard() {
       </section>
 
       <section className={styles.recentActivity}>
-        <h2>Recent Activity</h2>
+        <h2>Recent Orders</h2>
         <div className={styles.activityCard}>
-          <p className={styles.emptyState}>No recent activity to display</p>
+          {loading ? (
+            <p className={styles.emptyState}>Loading recent orders...</p>
+          ) : recentOrders.length === 0 ? (
+            <p className={styles.emptyState}>No recent orders to display</p>
+          ) : (
+            <div className={styles.orderList}>
+              {recentOrders.map((order) => (
+                <Link key={order.orderNumber} href="/admin/orders#orders-list" className={styles.orderItem}>
+                  <div>
+                    <strong>{order.orderNumber}</strong>
+                    <small>{order.customerName}</small>
+                  </div>
+                  <div>
+                    <strong>{price.format(order.total)}</strong>
+                    <small className={order.orderStatus}>{order.orderStatus}</small>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </div>

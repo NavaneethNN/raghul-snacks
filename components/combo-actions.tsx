@@ -30,6 +30,7 @@ export function ComboActions({ combo }: { combo: any }) {
   const inCart = cartQuantity > 0;
 
   function handleAddToCart() {
+    if (inCart || added) return;
     addItem(cartCombo, quantity);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 2000);
@@ -96,6 +97,7 @@ export function ComboActions({ combo }: { combo: any }) {
       <button
         onClick={handleAddToCart}
         className="button"
+        disabled={inCart || added}
         style={{
           flex: '1',
           minWidth: '200px',

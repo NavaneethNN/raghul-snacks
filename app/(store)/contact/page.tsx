@@ -103,22 +103,6 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                <div className="contact-info-item">
-                  <div className="info-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                      <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                  </div>
-                  <div>
-                    <h4>Address</h4>
-                    <p>
-                      123 Traditional Lane<br />
-                      Chennai, Tamil Nadu 600001<br />
-                      India
-                    </p>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -146,72 +130,12 @@ export default function ContactPage() {
                 <a href="/orders">Track Your Order</a>
                 <a href="/shop">Browse Products</a>
                 <a href="/about">Our Story</a>
-                <a href="#faq">FAQs</a>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="contact-faq-section" id="faq">
-        <div className="contact-faq-container">
-          <div className="faq-header">
-            <p className="eyebrow">Frequently Asked</p>
-            <h2>Quick answers to common questions.</h2>
-          </div>
-
-          <div className="faq-grid">
-            <div className="faq-item">
-              <h3>What are your delivery timelines?</h3>
-              <p>
-                We ship within 1-2 business days. Delivery typically takes 3-5 business days
-                depending on your location. You'll receive tracking details via email and SMS.
-              </p>
-            </div>
-
-            <div className="faq-item">
-              <h3>Do you offer bulk orders?</h3>
-              <p>
-                Yes! We offer special pricing for bulk orders for events, corporate gifting,
-                and retail partnerships. Contact us at hello@raghulsnacks.com for a quote.
-              </p>
-            </div>
-
-            <div className="faq-item">
-              <h3>What is your return policy?</h3>
-              <p>
-                We want you to be completely satisfied. If you receive a damaged product or
-                aren't happy with your order, contact us within 7 days for a replacement or refund.
-              </p>
-            </div>
-
-            <div className="faq-item">
-              <h3>Are your snacks suitable for specific diets?</h3>
-              <p>
-                Most of our snacks are naturally vegetarian and made with wholesome millets.
-                Check individual product pages for detailed ingredient lists and dietary information.
-              </p>
-            </div>
-
-            <div className="faq-item">
-              <h3>How should I store the snacks?</h3>
-              <p>
-                Store in a cool, dry place away from direct sunlight. Once opened, transfer to
-                an airtight container to maintain freshness. Best consumed within 30 days.
-              </p>
-            </div>
-
-            <div className="faq-item">
-              <h3>Can I customize gift boxes?</h3>
-              <p>
-                Absolutely! We offer customizable gift boxes for special occasions. Contact us
-                with your requirements and we'll create something special for you.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
     </>
   );
 }

@@ -58,6 +58,28 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
     }
   }
 
+  async function downloadInvoice(orderNumber: string) {
+    try {
+      const response = await fetch(`/api/orders/${orderNumber}/invoice`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to download invoice");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-${orderNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error downloading invoice:", error);
+      alert(error instanceof Error ? error.message : "Failed to download invoice. Please try again.");
+    }
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.hero}>
@@ -184,6 +206,12 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                       ))}
                     </div>
                   )}
+                  <button
+                    onClick={() => downloadInvoice(order.orderNumber)}
+                    className={styles.downloadInvoiceButton}
+                  >
+                    Download Invoice
+                  </button>
                 </div>
               ))}
             </div>

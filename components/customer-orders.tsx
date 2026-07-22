@@ -40,5 +40,23 @@ export function CustomerOrders() {
   if (!order) return <section className={styles.lookup}><div><p className="eyebrow">Your orders</p><h1>Find your fresh picks.</h1><p>Enter your order number and mobile number to view your latest delivery status.</p></div><OrderTracker initialOrder={saved?.orderNumber} /></section>;
 
   const stageIndex = stages.indexOf(order.orderStatus);
-  return <main className={styles.page}><section className={styles.success}><div className={styles.check}>✓</div><p className="eyebrow">Payment successful</p><h1>Thank you, {order.customerName.split(" ")[0]}.</h1><p>Your payment is confirmed and your snacks are now being prepared.</p><div className={styles.reference}><span>Order number</span><strong>{order.orderNumber}</strong><small>Keep this handy to track your delivery.</small></div></section><section className={styles.grid}><article className={styles.statusCard}><div className={styles.cardHead}><div><p className="eyebrow">Order status</p><h2>{statusLabels[order.orderStatus] || "Order received"}</h2></div><span className={styles.status}>{order.orderStatus}</span></div><ol className={styles.timeline}>{stages.map((stage, index) => <li className={index <= stageIndex ? styles.done : ""} key={stage}><i>{index < stageIndex ? "✓" : index + 1}</i><div><strong>{statusLabels[stage]}</strong><span>{index === 0 ? new Date(order.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" }) : index === stageIndex ? "Current update" : "Pending"}</span></div></li>)}</ol>{order.awbCode && <div className={styles.awb}><span>Tracking number</span><strong>{order.awbCode}</strong></div>}</article><aside className={styles.summary}><p className="eyebrow">Order summary</p><div><span>Payment</span><strong>{order.paymentStatus === "paid" ? "Paid · Cashfree" : order.paymentStatus}</strong></div><div><span>Delivery to</span><strong>{order.city}, {order.state} · {order.pincode}</strong></div><div className={styles.total}><span>Total paid</span><strong>{price.format(order.total)}</strong></div><Link href="/shop" className="button button-dark">Continue shopping →</Link></aside></section><p className={styles.help}>Need help with this order? Keep your order number ready and contact us.</p></main>;
+  const downloadInvoice = async () => {
+    try {
+      const response = await fetch(`/api/orders/${order.orderNumber}/invoice`);
+      if (!response.ok) throw new Error("Failed to download invoice");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-${order.orderNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error downloading invoice:", error);
+      alert("Failed to download invoice. Please try again.");
+    }
+  };
+  return <main className={styles.page}><section className={styles.success}><div className={styles.check}>✓</div><p className="eyebrow">Payment successful</p><h1>Thank you, {order.customerName.split(" ")[0]}.</h1><p>Your payment is confirmed and your snacks are now being prepared.</p><div className={styles.reference}><span>Order number</span><strong>{order.orderNumber}</strong><small>Keep this handy to track your delivery.</small></div></section><section className={styles.grid}><article className={styles.statusCard}><div className={styles.cardHead}><div><p className="eyebrow">Order status</p><h2>{statusLabels[order.orderStatus] || "Order received"}</h2></div><span className={styles.status}>{order.orderStatus}</span></div><ol className={styles.timeline}>{stages.map((stage, index) => <li className={index <= stageIndex ? styles.done : ""} key={stage}><i>{index < stageIndex ? "✓" : index + 1}</i><div><strong>{statusLabels[stage]}</strong><span>{index === 0 ? new Date(order.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" }) : index === stageIndex ? "Current update" : "Pending"}</span></div></li>)}</ol>{order.awbCode && <div className={styles.awb}><span>Tracking number</span><strong>{order.awbCode}</strong></div>}</article><aside className={styles.summary}><p className="eyebrow">Order summary</p><div><span>Payment</span><strong>{order.paymentStatus === "paid" ? "Paid · Cashfree" : order.paymentStatus}</strong></div><div><span>Delivery to</span><strong>{order.city}, {order.state} · {order.pincode}</strong></div><div className={styles.total}><span>Total paid</span><strong>{price.format(order.total)}</strong></div><button onClick={downloadInvoice} className="button button-outline" style={{ width: "100%", marginBottom: "12px" }}>Download Invoice</button><Link href="/shop" className="button button-dark">Continue shopping →</Link></aside></section><p className={styles.help}>Need help with this order? Keep your order number ready and contact us.</p></main>;
 }

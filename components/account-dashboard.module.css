@@ -288,6 +288,25 @@
   font: 13px 'DM Mono', monospace;
 }
 
+.downloadInvoiceButton {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+  border-radius: 6px;
+  font: 600 13px 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.downloadInvoiceButton:hover {
+  background: var(--terracotta);
+  border-color: var(--terracotta);
+  color: white;
+}
+
 /* Responsive */
 @media (min-width: 768px) {
   .hero {

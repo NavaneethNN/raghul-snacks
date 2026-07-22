@@ -1,1 +1,0 @@
-export default function FaqPage() { return <section className="empty-state"><p className="eyebrow">Helpful answers</p><h1>Frequently asked questions.</h1><p>Orders above ₹499 receive free shipping. Every batch is made without preservatives and packed fresh.</p></section>; }

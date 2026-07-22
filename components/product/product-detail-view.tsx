@@ -36,6 +36,7 @@ export function ProductDetailView({ product }: { product: any }) {
   const hasDiscount = product.offerPrice && displayPrice < originalPrice;
 
   function handleAddToCart() {
+    if (inCart || added) return;
     addItem(cartProduct, quantity);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 2000);
@@ -122,6 +123,7 @@ export function ProductDetailView({ product }: { product: any }) {
         <button
           className={`button ${inCart || added ? 'button-success' : 'button-dark'} wide-button`}
           onClick={handleAddToCart}
+          disabled={inCart || added}
         >
           {inCart || added ? "✓ Added to Cart" : `Add ${quantity} to Cart`}
         </button>
