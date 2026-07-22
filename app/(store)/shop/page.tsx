@@ -1,4 +1,7 @@
+import { Suspense } from "react";
 import { ShopContent } from "@/components/shop-content";
+
+export const dynamic = 'force-dynamic';
 
 async function getCategories() {
   try {
@@ -48,7 +51,9 @@ export default async function ShopPage() {
     <section className="section shop-page">
       <p className="eyebrow">The full pantry</p>
       <h1>Find your next favourite.</h1>
-      <ShopContent categories={categories} products={products} combos={combos} />
+      <Suspense fallback={<div>Loading…</div>}>
+        <ShopContent categories={categories} products={products} combos={combos} />
+      </Suspense>
     </section>
   );
 }
