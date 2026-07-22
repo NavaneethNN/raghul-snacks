@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { CustomerAuthForm } from "@/components/customer-auth-form";
 
 export default function SignupPage() {
-  return <CustomerAuthForm mode="signup" />;
+  return (
+    <Suspense fallback={<div>Loading…</div>}>
+      <CustomerAuthForm mode="signup" />
+    </Suspense>
+  );
 }
