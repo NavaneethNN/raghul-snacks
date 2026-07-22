@@ -1,15 +1,15 @@
 import Link from "next/link";
+import { desc, eq } from "drizzle-orm";
 import { ProductCard } from "@/components/product/product-card";
+import { getDb } from "@/lib/db";
+import { products, categories, combos, comboItems } from "@/drizzle/schema";
 
 export const dynamic = 'force-dynamic';
 
 async function getCategories() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/categories`, {
-      cache: 'no-store'
-    });
-    if (!res.ok) return [];
-    return await res.json();
+    const db = getDb();
+    return await db.select().from(categories);
   } catch (error) {
     console.error('Error fetching categories:', error);
     return [];
@@ -18,11 +18,28 @@ async function getCategories() {
 
 async function getProducts() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/products`, {
-      cache: 'no-store'
-    });
-    if (!res.ok) return [];
-    return await res.json();
+    const db = getDb();
+    return await db
+      .select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        description: products.description,
+        ingredients: products.ingredients,
+        price: products.price,
+        offerPrice: products.offerPrice,
+        weight: products.weight,
+        categoryId: products.categoryId,
+        categoryName: categories.name,
+        categorySlug: categories.slug,
+        image: products.image,
+        featured: products.featured,
+        bestseller: products.bestseller,
+        createdAt: products.createdAt,
+      })
+      .from(products)
+      .leftJoin(categories, eq(products.categoryId, categories.id))
+      .orderBy(desc(products.createdAt));
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];
@@ -31,11 +48,23 @@ async function getProducts() {
 
 async function getCombos() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/combos`, {
-      cache: 'no-store'
-    });
-    if (!res.ok) return [];
-    return await res.json();
+    const db = getDb();
+    const allCombos = await db.select().from(combos).orderBy(desc(combos.createdAt));
+    return await Promise.all(
+      allCombos.map(async (combo) => {
+        const items = await db
+          .select({
+            id: comboItems.id,
+            productId: comboItems.productId,
+            quantity: comboItems.quantity,
+            name: products.name,
+          })
+          .from(comboItems)
+          .leftJoin(products, eq(comboItems.productId, products.id))
+          .where(eq(comboItems.comboId, combo.id));
+        return { ...combo, items };
+      })
+    );
   } catch (error) {
     console.error('Error fetching combos:', error);
     return [];
