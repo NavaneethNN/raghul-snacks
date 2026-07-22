@@ -9,6 +9,7 @@ export type Product = {
   description: string;
   ingredients: string;
   badge?: string;
+  image?: string | null;
 };
 
 export const products: Product[] = [
