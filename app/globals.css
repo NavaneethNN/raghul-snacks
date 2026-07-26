@@ -1315,7 +1315,7 @@ h2 i {
   background: var(--terracotta);
   color: #fff;
   max-width: 100%;
-  margin: 0 auto;
+  margin: 120px auto 0;
   min-height: auto;
   padding: 40px 16px;
   display: grid;
@@ -1935,7 +1935,7 @@ h2 i {
   .product-page {
     padding: 0 24px 60px;
     gap: 32px;
-    margin: 32px auto 0;
+    margin: 120px auto 0;
   }
 
   .product-large-visual {
@@ -2086,7 +2086,7 @@ h2 i {
   .product-page {
     padding: 0 16px 40px;
     gap: 24px;
-    margin: 24px auto 0;
+    margin: 120px auto 0;
   }
 
   .product-large-visual {
@@ -3026,7 +3026,7 @@ footer {
 
 .product-page {
   max-width: 1400px;
-  margin: 40px auto 0;
+  margin: 120px auto 0;
   padding: 0 20px 60px;
   display: grid;
   grid-template-columns: 1fr;

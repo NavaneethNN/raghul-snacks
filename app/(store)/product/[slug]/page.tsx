@@ -81,7 +81,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     <>
       <ProductDetailView product={product} />
 
-      <section className="section">
+      <section className="section shop-page">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Pairs beautifully with</p>
