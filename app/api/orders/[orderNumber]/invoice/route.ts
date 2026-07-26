@@ -76,132 +76,98 @@ export async function GET(request: NextRequest, context: { params: Promise<{ ord
       .from(orderItems)
       .where(eq(orderItems.orderId, orderId));
 
-    // Generate PDF
+    // Calculate totals
+    const subtotal = itemsData.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
+    const shipping = 40;
+    const discount = 0;
+    const total = Number(order.total);
+
+    // Generate PDF using jsPDF
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 20;
     let y = margin;
 
-    // Header with green background
-    doc.setFillColor(36, 49, 39);
-    doc.rect(0, 0, pageWidth, 50, "F");
-    
-    // Company name in header
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(24);
+    // Header
+    doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
-    doc.text("Raghul Snacks", margin, 25);
+    doc.text("Raghul Snacks", margin, y);
+    y += 10;
     
-    // Tagline
-    doc.setFontSize(10);
+    doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
-    doc.text("Traditional Millet Snacks", margin, 32);
-    
-    // Invoice label in header
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text("INVOICE", pageWidth - margin, 30, { align: "right" });
-    
-    y = 60;
-
-    // Invoice details row
-    doc.setTextColor(36, 49, 39);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Invoice Number: ${order.orderNumber}`, margin, y);
-    doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString("en-IN", { dateStyle: "long" })}`, pageWidth - margin, y, { align: "right" });
-    y += 8;
-    doc.text(`Order Status: ${order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1)}`, margin, y);
-    doc.text(`Payment: ${order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}`, pageWidth - margin, y, { align: "right" });
-    y += 20;
-
-    // Bill To section
-    doc.setFillColor(247, 244, 236);
-    doc.rect(margin, y, pageWidth - margin * 2, 35, "F");
-    
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(36, 49, 39);
-    doc.text("Bill To", margin + 5, y + 10);
-    
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(60, 60, 60);
-    doc.text(order.customerName, margin + 5, y + 18);
-    doc.text(order.address, margin + 5, y + 24);
-    doc.text(`${order.city}, ${order.state} - ${order.pincode}`, margin + 5, y + 30);
-    doc.text(`Phone: ${order.phone}`, margin + 5, y + 36);
-    
-    y += 45;
-
-    // Table header
-    doc.setFillColor(201, 95, 59);
-    doc.rect(margin, y, pageWidth - margin * 2, 12, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("Item", margin + 5, y + 8);
-    doc.text("Quantity", pageWidth - margin - 75, y + 8);
-    doc.text("Price", pageWidth - margin - 50, y + 8);
-    doc.text("Total", pageWidth - margin - 5, y + 8, { align: "right" });
-    y += 12;
-
-    // Table rows
-    doc.setTextColor(60, 60, 60);
-    doc.setFont("helvetica", "normal");
-    
-    itemsData.forEach((item, index) => {
-      if (y > 230) {
-        doc.addPage();
-        y = margin;
-      }
-      
-      const itemTotal = Number(item.price) * item.quantity;
-      
-      if (index % 2 === 0) {
-        doc.setFillColor(250, 248, 242);
-        doc.rect(margin, y, pageWidth - margin * 2, 10, "F");
-      }
-      
-      doc.setFontSize(9);
-      doc.text(item.name, margin + 5, y + 7);
-      doc.text(item.quantity.toString(), pageWidth - margin - 75, y + 7);
-      doc.text(`₹${Number(item.price).toFixed(2)}`, pageWidth - margin - 50, y + 7);
-      doc.text(`₹${itemTotal.toFixed(2)}`, pageWidth - margin - 5, y + 7, { align: "right" });
-      y += 10;
-    });
-
+    doc.text("INVOICE", pageWidth - margin, y, { align: "right" });
     y += 15;
 
-    // Total section with background
-    doc.setFillColor(36, 49, 39);
-    doc.rect(pageWidth - margin - 100, y, 100, 30, "F");
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-    doc.text("Total Amount:", pageWidth - margin - 95, y + 12);
-    
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text(`₹${Number(order.total).toFixed(2)}`, pageWidth - margin - 5, y + 18, { align: "right" });
-    
-    y += 40;
+    // Order details
+    doc.setFontSize(10);
+    doc.text(`Invoice No: ${order.orderNumber}`, margin, y);
+    doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString('en-IN')}`, pageWidth - margin, y, { align: "right" });
+    y += 8;
+    doc.text(`Status: ${order.orderStatus}`, margin, y);
+    doc.text(`Payment: ${order.paymentStatus}`, pageWidth - margin, y, { align: "right" });
+    y += 15;
 
-    // Footer section
-    doc.setFillColor(247, 244, 236);
-    doc.rect(0, 265, pageWidth, 35, "F");
+    // Bill To
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Bill To:", margin, y);
+    y += 8;
     
-    doc.setTextColor(36, 49, 39);
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text("Thank you for your order!", pageWidth / 2, 280, { align: "center" });
-    doc.text("For queries, contact us at hello@raghulsnacks.com | +91 98765 43210", pageWidth / 2, 290, { align: "center" });
+    doc.text(order.customerName, margin, y);
+    y += 6;
+    doc.text(order.address, margin, y);
+    y += 6;
+    doc.text(`${order.city}, ${order.state} - ${order.pincode}`, margin, y);
+    y += 6;
+    doc.text(order.phone, margin, y);
+    y += 15;
 
-    // Generate PDF buffer
+    // Items table
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("Item", margin, y);
+    doc.text("Qty", margin + 100, y);
+    doc.text("Price", margin + 120, y, { align: "right" });
+    doc.text("Total", pageWidth - margin - 5, y, { align: "right" });
+    y += 8;
+
+    doc.setFont("helvetica", "normal");
+    itemsData.forEach((item) => {
+      const itemTotal = Number(item.price) * item.quantity;
+      doc.text(item.name, margin, y);
+      doc.text(item.quantity.toString(), margin + 100, y);
+      doc.text(`₹${Number(item.price).toFixed(2)}`, margin + 120, y, { align: "right" });
+      doc.text(`₹${itemTotal.toFixed(2)}`, pageWidth - margin - 5, y, { align: "right" });
+      y += 6;
+    });
+
+    y += 10;
+
+    // Summary
+    doc.text(`Subtotal: ₹${subtotal.toFixed(2)}`, pageWidth - margin, y, { align: "right" });
+    y += 6;
+    doc.text(`Shipping: ₹${shipping.toFixed(2)}`, pageWidth - margin, y, { align: "right" });
+    y += 6;
+    doc.text(`Discount: ₹${discount.toFixed(2)}`, pageWidth - margin, y, { align: "right" });
+    y += 8;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text(`Total: ₹${total.toFixed(2)}`, pageWidth - margin, y, { align: "right" });
+    y += 15;
+
+    // Footer
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text("Thank you for shopping with Raghul Snacks!", pageWidth / 2, y, { align: "center" });
+    y += 6;
+    doc.text("hello@raghulsnacks.com • +91 98765 43210", pageWidth / 2, y, { align: "center" });
+
     const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(pdfBuffer as any, {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="invoice-${order.orderNumber}.pdf"`,

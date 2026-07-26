@@ -17,27 +17,30 @@ export default async function AccountPage() {
   // Parse the session token
   const session = getCustomerSession(sessionCookie.value);
 
-  if (!session) {
+  if (!session || !session.id) {
     redirect("/login?returnTo=/account");
   }
 
   const db = getDb();
 
   // Fetch customer account details using session ID
-  const [account] = await db
+  const account = await db
     .select()
     .from(customerAccounts)
-    .where(eq(customerAccounts.id, session.id));
+    .where(eq(customerAccounts.id, session.id))
+    .limit(1);
 
-  if (!account) {
+  if (!account || account.length === 0) {
     redirect("/login?returnTo=/account");
   }
 
-  // Fetch customer orders
+  const accountData = account[0];
+
+  // Fetch customer orders - use email to match since accountId might be null in some orders
   const customerOrders = await db
     .select()
     .from(orders)
-    .where(eq(orders.accountId, account.id))
+    .where(eq(orders.email, accountData.email))
     .orderBy(desc(orders.createdAt));
 
   // Fetch order items for each order
@@ -60,9 +63,9 @@ export default async function AccountPage() {
   return (
     <AccountDashboard
       account={{
-        name: account.name,
-        email: account.email,
-        createdAt: account.createdAt,
+        name: accountData.name,
+        email: accountData.email,
+        createdAt: accountData.createdAt,
       }}
       orders={ordersWithItems}
     />
