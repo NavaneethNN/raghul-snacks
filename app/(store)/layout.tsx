@@ -1,10 +1,12 @@
 import { StoreHeader } from "@/components/store-header";
 import { AnnouncementBar } from "@/components/announcement-bar";
+import { ScrollToTop } from "@/components/scroll-to-top";
 import Link from "next/link";
 
 export default function StoreLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <ScrollToTop />
       <AnnouncementBar />
       <StoreHeader />
       <main>{children}</main>

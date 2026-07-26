@@ -2,15 +2,31 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatWeight } from "@/lib/catalog";
 import { ComboActions } from "@/components/combo-actions";
+import { getDb } from "@/lib/db";
+import { combos, comboItems, products } from "@/drizzle/schema";
+import { eq } from "drizzle-orm";
+
+export const dynamic = 'force-dynamic';
 
 async function getCombo(slug: string) {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/combos`, {
-      cache: 'no-store'
-    });
-    if (!res.ok) return null;
-    const combos = await res.json();
-    return combos.find((c: any) => c.slug === slug) || null;
+    const db = getDb();
+    const result = await db.select().from(combos).where(eq(combos.slug, slug)).limit(1);
+    if (!result || result.length === 0) return null;
+    
+    const combo = result[0];
+    const items = await db
+      .select({
+        id: comboItems.id,
+        productId: comboItems.productId,
+        quantity: comboItems.quantity,
+        name: products.name,
+      })
+      .from(comboItems)
+      .leftJoin(products, eq(comboItems.productId, products.id))
+      .where(eq(comboItems.comboId, combo.id));
+    
+    return { ...combo, items };
   } catch (error) {
     console.error('Error fetching combo:', error);
     return null;

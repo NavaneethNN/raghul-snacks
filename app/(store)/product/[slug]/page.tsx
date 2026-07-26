@@ -1,14 +1,67 @@
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductDetailView } from "@/components/product/product-detail-view";
+import { getDb } from "@/lib/db";
+import { products, categories } from "@/drizzle/schema";
+import { eq } from "drizzle-orm";
+
+export const dynamic = 'force-dynamic';
+
+async function getProduct(slug: string) {
+  try {
+    const db = getDb();
+    const result = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        description: products.description,
+        ingredients: products.ingredients,
+        price: products.price,
+        offerPrice: products.offerPrice,
+        weight: products.weight,
+        categoryId: products.categoryId,
+        categoryName: categories.name,
+        categorySlug: categories.slug,
+        image: products.image,
+        featured: products.featured,
+        bestseller: products.bestseller,
+        createdAt: products.createdAt,
+      })
+      .from(products)
+      .leftJoin(categories, eq(products.categoryId, categories.id))
+      .where(eq(products.slug, slug))
+      .limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    return null;
+  }
+}
 
 async function getProducts() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/products`, {
-      cache: 'no-store'
-    });
-    if (!res.ok) return [];
-    return await res.json();
+    const db = getDb();
+    return await db
+      .select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        description: products.description,
+        ingredients: products.ingredients,
+        price: products.price,
+        offerPrice: products.offerPrice,
+        weight: products.weight,
+        categoryId: products.categoryId,
+        categoryName: categories.name,
+        categorySlug: categories.slug,
+        image: products.image,
+        featured: products.featured,
+        bestseller: products.bestseller,
+        createdAt: products.createdAt,
+      })
+      .from(products)
+      .leftJoin(categories, eq(products.categoryId, categories.id));
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];
@@ -17,11 +70,11 @@ async function getProducts() {
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const products = await getProducts();
-  const product = products.find((item: any) => item.slug === slug);
+  const product = await getProduct(slug);
 
   if (!product) notFound();
 
+  const products = await getProducts();
   const recommendations = products.filter((item: any) => item.id !== product.id).slice(0, 3);
 
   return (
