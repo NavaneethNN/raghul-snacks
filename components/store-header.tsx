@@ -13,6 +13,7 @@ export function StoreHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
+  const [categoriesTimeout, setCategoriesTimeout] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/session").then(async (response) => {
@@ -65,8 +66,19 @@ export function StoreHeader() {
           <Link href="/shop">Shop</Link>
           <div
             className="nav-dropdown"
-            onMouseEnter={() => setCategoriesOpen(true)}
-            onMouseLeave={() => setCategoriesOpen(false)}
+            onMouseEnter={() => {
+              if (categoriesTimeout) {
+                clearTimeout(categoriesTimeout);
+                setCategoriesTimeout(null);
+              }
+              setCategoriesOpen(true);
+            }}
+            onMouseLeave={() => {
+              const timeout = setTimeout(() => {
+                setCategoriesOpen(false);
+              }, 200);
+              setCategoriesTimeout(timeout);
+            }}
           >
             <button
               onClick={() => scrollToSection('categories')}
@@ -79,7 +91,22 @@ export function StoreHeader() {
               </svg>
             </button>
             {categoriesOpen && (
-              <div className="dropdown-menu">
+              <div 
+                className="dropdown-menu"
+                onMouseEnter={() => {
+                  if (categoriesTimeout) {
+                    clearTimeout(categoriesTimeout);
+                    setCategoriesTimeout(null);
+                  }
+                  setCategoriesOpen(true);
+                }}
+                onMouseLeave={() => {
+                  const timeout = setTimeout(() => {
+                    setCategoriesOpen(false);
+                  }, 200);
+                  setCategoriesTimeout(timeout);
+                }}
+              >
                 {categories.map((category) => (
                   <Link
                     key={category.slug}
