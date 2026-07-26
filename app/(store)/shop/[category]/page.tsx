@@ -1,26 +1,49 @@
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/product/product-card";
+import { getDb } from "@/lib/db";
+import { products, categories } from "@/drizzle/schema";
+import { eq } from "drizzle-orm";
 
-async function getCategories() {
+export const dynamic = 'force-dynamic';
+
+async function getCategory(slug: string) {
   try {
-    const res = await fetch('/api/categories', {
-      cache: 'no-store'
-    });
-    if (!res.ok) return [];
-    return await res.json();
+    const db = getDb();
+    const result = await db.select().from(categories).where(eq(categories.slug, slug)).limit(1);
+    return result[0] || null;
   } catch (error) {
-    console.error('Error fetching categories:', error);
-    return [];
+    console.error('Error fetching category:', error);
+    return null;
   }
 }
 
 async function getProducts(categorySlug: string) {
   try {
-    const res = await fetch(`/api/products?category=${categorySlug}`, {
-      cache: 'no-store'
-    });
-    if (!res.ok) return [];
-    return await res.json();
+    const db = getDb();
+    const category = await db.select().from(categories).where(eq(categories.slug, categorySlug)).limit(1);
+    if (!category || category.length === 0) return [];
+    
+    return await db
+      .select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        description: products.description,
+        ingredients: products.ingredients,
+        price: products.price,
+        offerPrice: products.offerPrice,
+        weight: products.weight,
+        categoryId: products.categoryId,
+        categoryName: categories.name,
+        categorySlug: categories.slug,
+        image: products.image,
+        featured: products.featured,
+        bestseller: products.bestseller,
+        createdAt: products.createdAt,
+      })
+      .from(products)
+      .leftJoin(categories, eq(products.categoryId, categories.id))
+      .where(eq(products.categoryId, category[0].id));
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];
@@ -29,16 +52,9 @@ async function getProducts(categorySlug: string) {
 
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
   const { category: slug } = await params;
-  const categories = await getCategories();
-  console.log('Categories from API:', categories);
-  console.log('Looking for slug:', slug);
-  const category = categories.find((item: any) => item.slug === slug);
-  console.log('Found category:', category);
+  const category = await getCategory(slug);
 
-  if (!category) {
-    console.log('Category not found, available slugs:', categories.map((c: any) => c.slug));
-    notFound();
-  }
+  if (!category) notFound();
 
   const items = await getProducts(slug);
 
