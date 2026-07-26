@@ -66,9 +66,9 @@ export function ShopContent({
           Combos
         </button>
         {categories.map((category) => (
-          <button
+          <Link
             key={category.slug}
-            onClick={() => setActiveTab(category.slug)}
+            href={`/shop/${category.slug}`}
             style={{
               background: activeTab === category.slug ? 'var(--ink)' : 'transparent',
               color: activeTab === category.slug ? 'white' : 'inherit',
@@ -77,10 +77,11 @@ export function ShopContent({
               borderRadius: '6px',
               cursor: 'pointer',
               fontWeight: activeTab === category.slug ? '600' : '400',
+              textDecoration: 'none',
             }}
           >
             {category.name}
-          </button>
+          </Link>
         ))}
       </div>
 
