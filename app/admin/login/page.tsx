@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
         <div className={styles.card}>
           <div className={styles.header}>
             <p className={styles.eyebrow}>Raghul Snacks</p>
-            <h1 className={styles.title}>Admin Portal</h1>
+            <h1 className={styles.title}>Admin Panel</h1>
             <p className={styles.subtitle}>Sign in to access the dashboard</p>
           </div>
 

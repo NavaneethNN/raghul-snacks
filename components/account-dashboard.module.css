@@ -288,8 +288,33 @@
   font: 13px 'DM Mono', monospace;
 }
 
-.downloadInvoiceButton {
+.orderActions {
+  display: flex;
+  gap: 8px;
   margin-top: 12px;
+}
+
+.buyAgainButton {
+  flex: 1;
+  padding: 8px 16px;
+  background: var(--terracotta);
+  border: 1.5px solid var(--terracotta);
+  color: white;
+  border-radius: 6px;
+  font: 600 13px 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.buyAgainButton:hover {
+  background: #b84e2e;
+  border-color: #b84e2e;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(201, 95, 59, 0.3);
+}
+
+.downloadInvoiceButton {
+  flex: 1;
   padding: 8px 16px;
   background: var(--paper);
   border: 1.5px solid var(--line);
@@ -298,7 +323,6 @@
   font: 600 13px 'DM Sans', sans-serif;
   cursor: pointer;
   transition: all 0.2s;
-  width: 100%;
 }
 
 .downloadInvoiceButton:hover {

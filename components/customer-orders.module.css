@@ -241,6 +241,41 @@
 
 .summary :global(.button) {
   margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font: 600 14px 'DM Sans', sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.summary :global(.button-outline) {
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+}
+
+.summary :global(.button-outline):hover {
+  background: var(--terracotta);
+  border-color: var(--terracotta);
+  color: white;
+}
+
+.summary :global(.button-dark) {
+  background: var(--ink);
+  color: white;
+}
+
+.summary :global(.button-dark):hover {
+  background: #1a1a1a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .help {

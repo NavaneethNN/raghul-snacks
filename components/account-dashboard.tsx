@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCart } from "@/components/cart/cart-provider";
 import styles from "./account-dashboard.module.css";
 
 type Order = {
@@ -14,9 +15,26 @@ type Order = {
   createdAt: Date;
   items: Array<{
     id: number;
+    productId: number | null;
     name: string;
     quantity: number;
     price: string;
+    product: {
+      id: number;
+      name: string;
+      slug: string;
+      description: string;
+      ingredients: string | null;
+      price: string;
+      offerPrice: string | null;
+      weight: string;
+      categoryId: number | null;
+      image: string | null;
+      stock: number;
+      featured: boolean;
+      bestseller: boolean;
+      createdAt: Date;
+    } | null;
   }>;
 };
 
@@ -31,6 +49,7 @@ type AccountDashboardProps = {
 
 export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   const router = useRouter();
+  const { addItem } = useCart();
   const [signingOut, setSigningOut] = useState(false);
 
   const price = new Intl.NumberFormat("en-IN", {
@@ -77,6 +96,42 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
     } catch (error) {
       console.error("Error downloading invoice:", error);
       alert(error instanceof Error ? error.message : "Failed to download invoice. Please try again.");
+    }
+  }
+
+  function handleBuyAgain(order: Order) {
+    if (!order.items || order.items.length === 0) {
+      alert("No items in this order");
+      return;
+    }
+
+    let addedCount = 0;
+    order.items.forEach((item) => {
+      if (item.product) {
+        // Transform database product to catalog Product type
+        const catalogProduct = {
+          id: String(item.product.id),
+          slug: item.product.slug,
+          name: item.product.name,
+          category: "snacks", // Default category since it's not in database
+          price: Number(item.product.price),
+          offerPrice: Number(item.product.offerPrice || item.product.price),
+          weight: item.product.weight,
+          description: item.product.description,
+          ingredients: item.product.ingredients || "",
+          badge: item.product.bestseller ? "Bestseller" : undefined,
+          image: item.product.image,
+        };
+        addItem(catalogProduct, item.quantity);
+        addedCount++;
+      }
+    });
+
+    if (addedCount > 0) {
+      alert(`${addedCount} item(s) added to cart`);
+      router.push("/cart");
+    } else {
+      alert("Unable to add items to cart. Some products may no longer be available.");
     }
   }
 
@@ -206,12 +261,20 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                       ))}
                     </div>
                   )}
-                  <button
-                    onClick={() => downloadInvoice(order.orderNumber)}
-                    className={styles.downloadInvoiceButton}
-                  >
-                    Download Invoice
-                  </button>
+                  <div className={styles.orderActions}>
+                    <button
+                      onClick={() => handleBuyAgain(order)}
+                      className={styles.buyAgainButton}
+                    >
+                      Buy Again
+                    </button>
+                    <button
+                      onClick={() => downloadInvoice(order.orderNumber)}
+                      className={styles.downloadInvoiceButton}
+                    >
+                      Download Invoice
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

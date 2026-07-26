@@ -43,12 +43,13 @@ export default async function AccountPage() {
     .where(eq(orders.email, accountData.email))
     .orderBy(desc(orders.createdAt));
 
-  // Fetch order items for each order
+  // Fetch order items for each order with product information
   const ordersWithItems = await Promise.all(
     customerOrders.map(async (order) => {
       const items = await db
         .select({
           id: orderItems.id,
+          productId: orderItems.productId,
           name: orderItems.name,
           quantity: orderItems.quantity,
           price: orderItems.price,
@@ -56,7 +57,22 @@ export default async function AccountPage() {
         .from(orderItems)
         .where(eq(orderItems.orderId, order.id));
 
-      return { ...order, items };
+      // Fetch product details for each item
+      const itemsWithProducts = await Promise.all(
+        items.map(async (item) => {
+          if (item.productId) {
+            const product = await db
+              .select()
+              .from(products)
+              .where(eq(products.id, item.productId))
+              .limit(1);
+            return { ...item, product: product[0] || null };
+          }
+          return { ...item, product: null };
+        })
+      );
+
+      return { ...order, items: itemsWithProducts };
     })
   );
 

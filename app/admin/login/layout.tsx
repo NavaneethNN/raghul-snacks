@@ -1,6 +1,6 @@
 export default function AdminLoginLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ minHeight: '100vh', background: '#f7f4ec' }}>
+    <div style={{ minHeight: '100vh', background: '#f7f4ec', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       {children}
     </div>
   );
