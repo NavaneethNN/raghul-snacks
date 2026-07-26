@@ -3,7 +3,7 @@ import { ProductCard } from "@/components/product/product-card";
 
 async function getCategories() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/categories`, {
+    const res = await fetch('/api/categories', {
       cache: 'no-store'
     });
     if (!res.ok) return [];
@@ -16,7 +16,7 @@ async function getCategories() {
 
 async function getProducts(categorySlug: string) {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/products?category=${categorySlug}`, {
+    const res = await fetch(`/api/products?category=${categorySlug}`, {
       cache: 'no-store'
     });
     if (!res.ok) return [];
@@ -30,9 +30,15 @@ async function getProducts(categorySlug: string) {
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
   const { category: slug } = await params;
   const categories = await getCategories();
+  console.log('Categories from API:', categories);
+  console.log('Looking for slug:', slug);
   const category = categories.find((item: any) => item.slug === slug);
+  console.log('Found category:', category);
 
-  if (!category) notFound();
+  if (!category) {
+    console.log('Category not found, available slugs:', categories.map((c: any) => c.slug));
+    notFound();
+  }
 
   const items = await getProducts(slug);
 
