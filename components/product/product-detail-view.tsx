@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { formatPrice, formatWeight } from "@/lib/catalog";
 import { useCart } from "@/components/cart/cart-provider";
@@ -11,6 +11,23 @@ export function ProductDetailView({ product }: { product: any }) {
   const { addItem, getItemQuantity } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState(499);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  async function fetchSettings() {
+    try {
+      const res = await fetch("/api/settings");
+      if (res.ok) {
+        const settings = await res.json();
+        setFreeShippingThreshold(parseInt(settings.freeShippingThreshold) || 499);
+      }
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+    }
+  }
 
   // Ensure product has the correct structure for cart
   const cartProduct = {
@@ -133,7 +150,7 @@ export function ProductDetailView({ product }: { product: any }) {
             <path d="M5 12h14"></path>
             <path d="M12 5l7 7-7 7"></path>
           </svg>
-          Free delivery on orders above ₹499
+          Free delivery on orders above ₹{freeShippingThreshold}
         </p>
       </div>
     </section>

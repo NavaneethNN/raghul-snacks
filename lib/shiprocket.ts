@@ -16,7 +16,7 @@ type ShipmentInput = {
 };
 
 type ShiprocketOrder = { order_id?: number | string; shipment_id?: number | string; awb_code?: string };
-type ShiprocketAwb = { response?: { data?: { awb_code?: string } }; awb_code?: string; message?: string }; 
+type ShiprocketAwb = { response?: { data?: { awb_code?: string } }; awb_code?: string; message?: string };
 
 const apiBase = "https://apiv2.shiprocket.in/v1/external";
 

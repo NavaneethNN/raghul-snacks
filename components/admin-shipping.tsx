@@ -1,11 +1,82 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import styles from "./admin-table.module.css";
 
 export function AdminShipping() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [settings, setSettings] = useState({
+    freeShippingThreshold: "499",
+    standardShippingRate: "50",
+    shiprocketApiKey: ""
+  });
 
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  async function fetchSettings() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/settings");
+      if (res.ok) {
+        const data = await res.json();
+        setSettings({
+          freeShippingThreshold: data.freeShippingThreshold || "499",
+          standardShippingRate: data.standardShippingRate || "50",
+          shiprocketApiKey: data.shiprocketApiKey || ""
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function saveSettings() {
+    setSaving(true);
+    try {
+      await Promise.all([
+        fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            key: "freeShippingThreshold",
+            value: settings.freeShippingThreshold,
+            description: "Minimum order value for free shipping"
+          })
+        }),
+        fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            key: "standardShippingRate",
+            value: settings.standardShippingRate,
+            description: "Standard shipping rate for orders below threshold"
+          })
+        }),
+        fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            key: "shiprocketApiKey",
+            value: settings.shiprocketApiKey,
+            description: "Shiprocket API key for shipping calculations"
+          })
+        })
+      ]);
+      alert("Settings saved successfully!");
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      alert("Failed to save settings");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className={styles.page}>
@@ -33,7 +104,9 @@ export function AdminShipping() {
                 </label>
                 <input
                   type="number"
-                  defaultValue="499"
+                  value={settings.freeShippingThreshold}
+                  onChange={(e) => setSettings({ ...settings, freeShippingThreshold: e.target.value })}
+                  disabled={loading}
                   style={{
                     width: '100%',
                     padding: '10px 14px',
@@ -51,7 +124,9 @@ export function AdminShipping() {
                 </label>
                 <input
                   type="number"
-                  defaultValue="50"
+                  value={settings.standardShippingRate}
+                  onChange={(e) => setSettings({ ...settings, standardShippingRate: e.target.value })}
+                  disabled={loading}
                   style={{
                     width: '100%',
                     padding: '10px 14px',
@@ -69,7 +144,10 @@ export function AdminShipping() {
                 </label>
                 <input
                   type="password"
+                  value={settings.shiprocketApiKey}
+                  onChange={(e) => setSettings({ ...settings, shiprocketApiKey: e.target.value })}
                   placeholder="Enter your Shiprocket API key"
+                  disabled={loading}
                   style={{
                     width: '100%',
                     padding: '10px 14px',
@@ -87,8 +165,10 @@ export function AdminShipping() {
               <button
                 className={styles.primaryButton}
                 style={{ marginTop: '24px' }}
+                onClick={saveSettings}
+                disabled={saving || loading}
               >
-                Save Settings
+                {saving ? "Saving..." : "Save Settings"}
               </button>
             </div>
           </div>
