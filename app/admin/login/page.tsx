@@ -33,7 +33,6 @@ export default function AdminLoginPage() {
     router.replace("/admin");
     router.refresh();
   }
-
   return (
     <div className={styles.page}>
       <div className={styles.container}>
@@ -43,7 +42,6 @@ export default function AdminLoginPage() {
             <h1 className={styles.title}>Admin Panel</h1>
             <p className={styles.subtitle}>Sign in to access the dashboard</p>
           </div>
-
           <form className={styles.form} onSubmit={submit}>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="password">
@@ -93,9 +91,7 @@ export default function AdminLoginPage() {
                 </button>
               </div>
             </div>
-
             {error && <p className={styles.error}>{error}</p>}
-
             <button
               type="submit"
               className={styles.button}
@@ -104,7 +100,6 @@ export default function AdminLoginPage() {
               {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>
-
           <div className={styles.footer}>
             <p>Secure access to order management</p>
           </div>

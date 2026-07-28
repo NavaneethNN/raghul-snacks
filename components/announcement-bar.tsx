@@ -11,13 +11,20 @@ type Announcement = {
 export function AnnouncementBar() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Fetch announcements
     fetch("/api/announcements")
       .then((res) => res.json())
-      .then((data) => setAnnouncements(data))
-      .catch((err) => console.error("Failed to load announcements:", err));
+      .then((data) => {
+        setAnnouncements(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to load announcements:", err);
+        setLoading(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -31,8 +38,23 @@ export function AnnouncementBar() {
     return () => clearInterval(interval);
   }, [announcements.length]);
 
+  // Show default announcement while loading or if no announcements
   if (announcements.length === 0) {
-    return null;
+    const defaultAnnouncement = loading
+      ? { id: 0, text: "Loading...", icon: null }
+      : { id: 0, text: "Free delivery on orders above ₹499", icon: "🚚" };
+    return (
+      <div className="announcement">
+        <div className="announcement-slider">
+          <span key={defaultAnnouncement.id} className="announcement-item">
+            {defaultAnnouncement.icon && (
+              <span className="announcement-icon">{defaultAnnouncement.icon}</span>
+            )}
+            {defaultAnnouncement.text}
+          </span>
+        </div>
+      </div>
+    );
   }
 
   const currentAnnouncement = announcements[currentIndex];
