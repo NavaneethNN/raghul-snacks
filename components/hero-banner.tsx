@@ -60,7 +60,6 @@ export function HeroBanner() {
   return (
     <div className="hero-banner">
       <div className="hero-banner-pattern">
-        <span className="hero-banner-gift">🎁</span>
         <span className="hero-banner-leaf leaf-1">🍃</span>
         <span className="hero-banner-leaf leaf-2">🍂</span>
         <span className="hero-banner-leaf leaf-3">🌿</span>
