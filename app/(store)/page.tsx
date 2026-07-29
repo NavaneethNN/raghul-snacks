@@ -138,8 +138,8 @@ export default async function HomePage() {
               />
             </div>
           </div>
-          <HeroBanner />
         </div>
+        <HeroBanner />
       </section>
 
       {/* Browse by Craving Section */}

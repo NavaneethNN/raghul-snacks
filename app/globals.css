@@ -59,6 +59,18 @@ main {
   animation: fadeIn 0.5s ease-in-out;
 }
 
+/* Mobile: Banner below hero section */
+@media (max-width: 1023px) {
+  .hero-banner {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 100%;
+    max-width: 400px;
+    margin: 20px auto 0;
+  }
+}
+
 .hero-banner-pattern {
   position: absolute;
   inset: 0;
@@ -1123,16 +1135,6 @@ h2 i {
 .hero-visual {
   display: none;
   position: relative;
-}
-
-.hero-banner {
-  display: block;
-  position: relative;
-  top: auto;
-  right: auto;
-  width: 100%;
-  max-width: 400px;
-  margin: 20px auto;
 }
 
 .hero-image-wrapper {
