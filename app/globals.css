@@ -3869,6 +3869,10 @@ footer {
     padding: 0;
   }
 
+  .hero-banner {
+    display: block;
+  }
+
   .hero-image-wrapper {
     display: flex;
     position: relative;
