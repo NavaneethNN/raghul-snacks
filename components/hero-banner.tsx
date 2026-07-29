@@ -40,7 +40,8 @@ export function HeroBanner() {
       const res = await fetch("/api/banners");
       if (res.ok) {
         const data = await res.json();
-        const activeBanners = data.banners?.filter((b: Banner) => b.active) || [];
+        const bannersArray = Array.isArray(data) ? data : (data.banners || []);
+        const activeBanners = bannersArray.filter((b: Banner) => b.active);
         setBanners(activeBanners);
       }
     } catch (error) {

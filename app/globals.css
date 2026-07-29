@@ -47,11 +47,11 @@ main {
   position: absolute;
   top: 20px;
   right: 20px;
-  width: 280px;
+  width: 220px;
   background: linear-gradient(135deg, #fff8f0 0%, #ffefe0 100%);
   border: 2px dashed #e5a52f66;
-  border-radius: 16px;
-  padding: 24px 20px;
+  border-radius: 12px;
+  padding: 16px 14px;
   overflow: hidden;
   text-align: center;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -67,15 +67,15 @@ main {
 
 .hero-banner-gift {
   position: absolute;
-  top: 8px;
+  top: 6px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 20px;
+  font-size: 16px;
 }
 
 .hero-banner-leaf {
   position: absolute;
-  font-size: 12px;
+  font-size: 10px;
   opacity: 0.6;
 }
 
@@ -89,16 +89,16 @@ main {
 }
 
 .hero-banner-eyebrow {
-  margin: 0 0 8px;
-  font: 700 11px 'DM Sans', sans-serif;
+  margin: 0 0 6px;
+  font: 700 10px 'DM Sans', sans-serif;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--terracotta);
 }
 
 .hero-banner-title {
-  margin: 0 0 6px;
-  font: 700 28px / 1.1 'Playfair Display', serif;
+  margin: 0 0 4px;
+  font: 700 22px / 1.1 'Playfair Display', serif;
   color: var(--ink);
 }
 
@@ -109,8 +109,8 @@ main {
 }
 
 .hero-banner-subtitle {
-  margin: 0 0 12px;
-  font-size: 13px;
+  margin: 0 0 10px;
+  font-size: 11px;
   color: #5c6358;
   line-height: 1.4;
 }
@@ -118,14 +118,14 @@ main {
 .hero-banner-coupon {
   display: inline-block;
   border: 1.5px dashed var(--terracotta);
-  border-radius: 6px;
-  padding: 8px 14px;
-  margin: 0 auto 12px;
+  border-radius: 5px;
+  padding: 6px 10px;
+  margin: 0 auto 10px;
   background: rgba(255, 255, 255, 0.6);
 }
 
 .hero-banner-coupon-text {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ink);
 }
 
@@ -138,11 +138,11 @@ main {
   display: inline-block;
   background: var(--ink);
   color: white;
-  padding: 10px 24px;
-  border-radius: 6px;
-  font: 600 13px 'DM Sans', sans-serif;
+  padding: 8px 18px;
+  border-radius: 5px;
+  font: 600 11px 'DM Sans', sans-serif;
   text-decoration: none;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   transition: background 0.2s ease;
 }
 
@@ -152,7 +152,7 @@ main {
 
 .hero-banner-validity {
   margin: 0;
-  font-size: 11px;
+  font-size: 10px;
   color: #6b7280;
 }
 
