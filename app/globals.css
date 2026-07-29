@@ -43,129 +43,141 @@ main {
   }
 }
 
-.banners-section {
-  padding-top: 24px !important;
-  padding-bottom: 24px !important;
-}
-
-.banners-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-}
-
-.banner-card {
-  position: relative;
+.hero-banner {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 280px;
   background: linear-gradient(135deg, #fff8f0 0%, #ffefe0 100%);
   border: 2px dashed #e5a52f66;
-  border-radius: 20px;
-  padding: 40px 28px;
+  border-radius: 16px;
+  padding: 24px 20px;
   overflow: hidden;
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  z-index: 10;
 }
 
-.banner-card-pattern {
+.hero-banner-pattern {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.banner-gift {
+.hero-banner-gift {
   position: absolute;
-  top: 16px;
+  top: 8px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 28px;
+  font-size: 20px;
 }
 
-.banner-leaf {
+.hero-banner-leaf {
   position: absolute;
-  font-size: 14px;
+  font-size: 12px;
   opacity: 0.6;
 }
 
-.banner-leaf.leaf-1 { top: 12%; left: 8%; }
-.banner-leaf.leaf-2 { top: 18%; right: 10%; }
-.banner-leaf.leaf-3 { bottom: 20%; left: 12%; }
-.banner-leaf.leaf-4 { bottom: 15%; right: 8%; }
-.banner-leaf.leaf-5 { top: 45%; left: 4%; }
+.hero-banner-leaf.leaf-1 { top: 8%; left: 6%; }
+.hero-banner-leaf.leaf-2 { top: 12%; right: 8%; }
+.hero-banner-leaf.leaf-3 { bottom: 15%; left: 8%; }
 
-.banner-card-content {
+.hero-banner-content {
   position: relative;
   z-index: 1;
-  width: 100%;
-  max-width: 360px;
 }
 
-.banner-eyebrow {
-  margin: 0 0 10px;
-  font: 700 13px 'DM Sans', sans-serif;
+.hero-banner-eyebrow {
+  margin: 0 0 8px;
+  font: 700 11px 'DM Sans', sans-serif;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--terracotta);
 }
 
-.banner-title {
-  margin: 0 0 8px;
-  font: 700 42px / 1.1 'Playfair Display', serif;
+.hero-banner-title {
+  margin: 0 0 6px;
+  font: 700 28px / 1.1 'Playfair Display', serif;
   color: var(--ink);
 }
 
-.banner-title strong,
-.banner-title em {
+.hero-banner-title strong,
+.hero-banner-title em {
   color: var(--terracotta);
   font-style: normal;
 }
 
-.banner-subtitle {
-  margin: 0 0 16px;
-  font-size: 15px;
+.hero-banner-subtitle {
+  margin: 0 0 12px;
+  font-size: 13px;
   color: #5c6358;
+  line-height: 1.4;
 }
 
-.banner-coupon {
+.hero-banner-coupon {
   display: inline-block;
   border: 1.5px dashed var(--terracotta);
-  border-radius: 8px;
-  padding: 10px 18px;
-  margin: 0 auto 16px;
+  border-radius: 6px;
+  padding: 8px 14px;
+  margin: 0 auto 12px;
   background: rgba(255, 255, 255, 0.6);
 }
 
-.banner-coupon-text {
-  font-size: 14px;
+.hero-banner-coupon-text {
+  font-size: 13px;
   color: var(--ink);
 }
 
-.banner-coupon-text strong {
+.hero-banner-coupon-text strong {
   color: var(--terracotta);
   font-weight: 700;
 }
 
-.banner-cta {
+.hero-banner-cta {
   display: inline-block;
   background: var(--ink);
   color: white;
-  padding: 12px 32px;
-  border-radius: 8px;
-  font: 600 14px 'DM Sans', sans-serif;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font: 600 13px 'DM Sans', sans-serif;
   text-decoration: none;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   transition: background 0.2s ease;
 }
 
-.banner-cta:hover {
+.hero-banner-cta:hover {
   background: var(--terracotta);
 }
 
-.banner-validity {
+.hero-banner-validity {
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
   color: #6b7280;
+}
+
+.hero-banner-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.hero-banner-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e5a52f33;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.hero-banner-dot.active {
+  background: var(--terracotta);
+}
+
+.hero-banner-dot:hover {
+  background: var(--terracotta);
 }
 
 body > * {
@@ -1109,6 +1121,7 @@ h2 i {
 
 .hero-visual {
   display: none;
+  position: relative;
 }
 
 .hero-image-wrapper {
@@ -3851,6 +3864,8 @@ footer {
     align-items: center;
     justify-content: center;
     z-index: 1;
+    margin: 0;
+    padding: 0;
   }
 
   .hero-image-wrapper {
