@@ -1,0 +1,54 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { getDb } from "@/lib/db";
+import { banners } from "@/drizzle/schema";
+import { desc, eq } from "drizzle-orm";
+
+export async function GET() {
+  try {
+    const db = getDb();
+    const allBanners = await db
+      .select()
+      .from(banners)
+      .orderBy(desc(banners.createdAt));
+    return NextResponse.json(allBanners);
+  } catch (error) {
+    console.error("Error fetching banners:", error);
+    return NextResponse.json({ error: "Failed to fetch banners" }, { status: 500 });
+  }
+}
+
+const bannerSchema = z.object({
+  eyebrow: z.string().default(""),
+  title: z.string().min(1),
+  subtitle: z.string().optional(),
+  offerText: z.string().optional(),
+  couponCode: z.string().optional(),
+  buttonText: z.string().default("Shop Now"),
+  validityText: z.string().optional(),
+  image: z.string().optional(),
+  href: z.string().default("/shop"),
+  active: z.boolean().default(true),
+});
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const parsed = bannerSchema.safeParse(body);
+    
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid banner data" }, { status: 400 });
+    }
+    
+    const db = getDb();
+    const [banner] = await db
+      .insert(banners)
+      .values(parsed.data)
+      .returning();
+    
+    return NextResponse.json(banner);
+  } catch (error) {
+    console.error("Error creating banner:", error);
+    return NextResponse.json({ error: "Failed to create banner" }, { status: 500 });
+  }
+}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import { ProductCard } from "@/components/product/product-card";
+import { HomeBanners } from "@/components/home-banners";
 import { getDb } from "@/lib/db";
 import { products, categories, combos, comboItems } from "@/drizzle/schema";
 
@@ -139,6 +140,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Promotional Banners */}
+      <HomeBanners />
 
       {/* Browse by Craving Section */}
       <section className="section" id="categories">

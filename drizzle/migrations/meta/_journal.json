@@ -50,6 +50,20 @@
       "when": 1785256287427,
       "tag": "0006_nasty_pride",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1785294616921,
+      "tag": "0007_great_arachne",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1785294882677,
+      "tag": "0008_nosy_falcon",
+      "breakpoints": true
     }
   ]
 }
