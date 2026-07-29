@@ -20,13 +20,16 @@ export type Banner = {
 async function getActiveBanners() {
   try {
     const db = getDb();
-    return await db
+    const result = await db
       .select()
       .from(banners)
       .where(eq(banners.active, true))
       .orderBy(desc(banners.createdAt));
+    return result;
   } catch (error) {
     console.error("Error fetching banners:", error);
+    // Return empty array on error to prevent page crash
+    // This handles case where banners table doesn't exist yet
     return [];
   }
 }
