@@ -16,7 +16,7 @@ export function StoreHeader() {
   const [categoriesTimeout, setCategoriesTimeout] = useState<NodeJS.Timeout | null>(null);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     fetch("/api/auth/session").then(async (response) => {
