@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { code, discountType, value, active } = body;
+    const { code, name, description, discountType, value, maxDiscount, minOrderValue, validFrom, validUntil, totalUsage, perCustomer, applicableProducts, applicableCategories, applyTo, firstPurchase, publicCoupon, notes, active } = body;
 
     if (!code || !discountType || !value) {
       return NextResponse.json(
@@ -51,8 +51,22 @@ export async function POST(request: Request) {
       .insert(coupons)
       .values({
         code: code.toUpperCase(),
+        name: name || null,
+        description: description || null,
         discountType,
         value: value.toString(),
+        maxDiscount: maxDiscount ? maxDiscount.toString() : null,
+        minOrderValue: minOrderValue ? minOrderValue.toString() : "0",
+        validFrom: validFrom ? new Date(validFrom) : null,
+        validUntil: validUntil ? new Date(validUntil) : null,
+        totalUsage: totalUsage ? parseInt(totalUsage) : null,
+        perCustomer: perCustomer ? parseInt(perCustomer) : null,
+        applicableProducts: applicableProducts && applicableProducts.length > 0 ? applicableProducts : null,
+        applicableCategories: applicableCategories && applicableCategories.length > 0 ? applicableCategories : null,
+        applyTo: applyTo || "entire_store",
+        firstPurchase: firstPurchase || false,
+        publicCoupon: publicCoupon !== undefined ? publicCoupon : true,
+        notes: notes || null,
         active: active !== undefined ? active : true,
       })
       .returning();

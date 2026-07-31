@@ -64,6 +64,20 @@
       "when": 1785294882677,
       "tag": "0008_nosy_falcon",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785336581735,
+      "tag": "0009_hesitant_wallflower",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785417632583,
+      "tag": "0010_purple_captain_marvel",
+      "breakpoints": true
     }
   ]
 }

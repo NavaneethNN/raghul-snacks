@@ -1,4 +1,4 @@
-# Raghul Snacks
+# Raghul Delights
 
 A mobile-first storefront for traditional millet snacks, built with Next.js App Router, Drizzle ORM, Neon PostgreSQL, and Razorpay.
 

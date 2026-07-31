@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import Script from "next/script";
@@ -11,7 +11,7 @@ import styles from "./checkout-wizard.module.css";
 type CheckoutForm = { customerName: string; phone: string; email: string; password: string; confirmPassword: string; address: string; city: string; state: string; pincode: string };
 type ShippingQuote = { charge: number; courierName: string; estimatedDeliveryDays: string | null };
 type PaymentOrder = { orderId: string; paymentSessionId: string; environment: "sandbox" | "production"; error?: string };
-type Coupon = { code: string; discountType: string; value: string; active: boolean };
+type Coupon = { code: string; name: string | null; description: string | null; discountType: string; value: string; maxDiscount: string | null; minOrderValue: string; validFrom: string | null; validUntil: string | null; totalUsage: number | null; perCustomer: number | null; applicableProducts: string[] | null; applicableCategories: string[] | null; applyTo: string | null; firstPurchase: boolean; publicCoupon: boolean; notes: string | null; active: boolean };
 
 const steps = ["Contact", "Delivery"];
 
@@ -31,10 +31,11 @@ export function CheckoutWizard() {
   const [error, setError] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
   const itemPayload = useMemo(() => items.map((item) => ({ productId: item.id, quantity: item.quantity })), [items]);
-  const shipping = quote?.charge ?? 0;
+  const shipping = quote?.charge ? 0;
   const discount = appliedCoupon 
     ? (appliedCoupon.discountType === "percentage" 
         ? (subtotal * Number(appliedCoupon.value)) / 100 
@@ -92,6 +93,50 @@ export function CheckoutWizard() {
     }, 450);
     return () => { controller.abort(); window.clearTimeout(timer); };
   }, [form.pincode, itemPayload]);
+
+  useEffect(() => {
+    fetchAvailableCoupons();
+  }, [items]);
+
+  async function fetchAvailableCoupons() {
+    try {
+      const response = await fetch("/api/coupons");
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableCoupons(data);
+      }
+    } catch (error) {
+      console.error("Error fetching coupons:", error);
+    }
+  }
+
+  function isCouponApplicable(coupon: Coupon): boolean {
+    const now = new Date();
+    
+    // Check if coupon is active
+    if (!coupon.active) return false;
+    
+    // Check validity dates
+    if (coupon.validFrom && new Date(coupon.validFrom) > now) return false;
+    if (coupon.validUntil && new Date(coupon.validUntil) < now) return false;
+    
+    // Check minimum order value
+    if (coupon.minOrderValue && subtotal < Number(coupon.minOrderValue)) return false;
+    
+    // Check applicable products
+    if (coupon.applicableProducts && coupon.applicableProducts.length > 0) {
+      const hasApplicableProduct = items.some(item => coupon.applicableProducts!.includes(item.slug));
+      if (!hasApplicableProduct) return false;
+    }
+    
+    // Check applicable categories
+    if (coupon.applicableCategories && coupon.applicableCategories.length > 0) {
+      const hasApplicableCategory = items.some(item => coupon.applicableCategories!.includes(item.categorySlug));
+      if (!hasApplicableCategory) return false;
+    }
+    
+    return true;
+  }
 
   function update(field: keyof CheckoutForm, value: string) { setError(""); setSuccess(""); setForm((current) => ({ ...current, [field]: value })); }
 
@@ -226,5 +271,57 @@ export function CheckoutWizard() {
 
   if (checkingAuth) return <section className={styles.empty}><p className="eyebrow">Checkout</p><h1>Checking authentication...</h1><p>Please wait while we verify your session.</p></section>;
   if (!items.length) return <section className={styles.empty}><p className="eyebrow">Checkout</p><h1>Your bag is empty.</h1><p>Add a few fresh snacks before placing your order.</p><Link className="button button-dark" href="/shop">Shop snacks</Link></section>;
-  return <><Script src="https://sdk.cashfree.com/js/v3/cashfree.js" onLoad={() => setPaymentReady(true)} /><main className={styles.page}><Link className={styles.back} href="/cart">← Back to bag</Link><div className={styles.intro}><p className="eyebrow">Secure checkout</p><h1>Fresh snacks, <em>on their way.</em></h1></div><div className={styles.layout}><form className={styles.card} onSubmit={pay}><nav className={styles.steps} aria-label="Checkout progress">{steps.map((label, index) => { const number = index + 1; return <button type="button" key={label} className={number === step ? styles.activeStep : number < step ? styles.completeStep : ""} disabled={number > step} onClick={() => setStep(number)}><span>{number < step ? "✓" : number}</span>{label}</button>; })}</nav>{step === 1 && <section className={styles.panel}><div className={styles.panelHead}><p>Step 1 of 2</p><h2>How can we reach you?</h2><span>We use this only for delivery updates.</span></div><div className={styles.fields}><label>Full name<input autoComplete="name" autoFocus required value={form.customerName} onChange={(event) => update("customerName", event.target.value)} /></label><label>Mobile number<input autoComplete="tel" required inputMode="numeric" pattern="[6-9][0-9]{9}" placeholder="10-digit number" value={form.phone} onChange={(event) => update("phone", event.target.value)} /></label><p className={styles.full}>Signed in as <strong>{account?.name}</strong> ({account?.email}). Your order will be added to this account.</p></div></section>}{step === 2 && <section className={styles.panel}><div className={styles.panelHead}><p>Step 2 of 2</p><h2>Where should we deliver?</h2><span>Choose your location to calculate a live courier rate and complete payment.</span></div><div className={styles.fields}><label className={styles.full}>Street address<textarea autoComplete="street-address" required minLength={8} placeholder="House / flat number, street and area" value={form.address} onChange={(event) => update("address", event.target.value)} /></label><label>State<select required value={form.state} onChange={(event) => update("state", event.target.value)}><option value="">{states.length ? "Select state" : "Loading states…"}</option>{states.map((state) => <option key={state} value={state}>{state}</option>)}</select></label><label>City<select required disabled={!form.state || !cities.length} value={form.city} onChange={(event) => update("city", event.target.value)}><option value="">{form.state ? cities.length ? "Select city" : "Loading cities…" : "Select state first"}</option>{cities.map((city) => <option key={city} value={city}>{city}</option>)}</select></label><label>PIN code<input autoComplete="postal-code" required inputMode="numeric" pattern="[0-9]{6}" placeholder="6-digit PIN" value={form.pincode} onChange={(event) => update("pincode", event.target.value)} /></label></div><div className={styles.courier}><div><strong>{quote?.courierName || "Courier rate"}</strong><span>{quoteLoading ? "Calculating delivery…" : quote?.estimatedDeliveryDays ? `Estimated delivery: ${quote.estimatedDeliveryDays}` : "Enter your PIN code for a live delivery quote"}</span></div><b>{quote ? formatPrice(shipping) : "—"}</b></div><p className={styles.security}>▣ Your payment is encrypted and processed securely. We never store card details.</p></section>}{success && <p className={styles.success}>{success}</p>}{error && <p className={styles.error}>{error}</p>}<div className={styles.actions}>{step > 1 ? <button className={styles.secondary} type="button" onClick={() => setStep(step - 1)}>← Back</button> : <span />}{step < 2 ? <button className="button button-dark" type="button" onClick={() => continueTo(step + 1)}>Continue →</button> : <button className="button button-dark" type="submit" disabled={loading || !paymentReady || !quote}>{loading ? "Opening secure payment…" : paymentReady && quote ? `Pay ${formatPrice(total)} securely` : !quote ? "Enter PIN code first" : "Loading secure payment…"}</button>}</div></form><aside className={styles.summary}><p className={styles.summaryLabel}>Order summary</p><h2>Your fresh picks.</h2><div className={styles.items}>{items.map((item) => <div key={item.id}><span>{item.name}<small>{formatWeight(item.weight)} · Qty {item.quantity}</small></span><strong>{formatPrice(item.offerPrice * item.quantity)}</strong></div>)}</div><p><span>Subtotal</span><strong>{formatPrice(subtotal)}</strong></p><p><span>Delivery</span><strong>{quote ? formatPrice(shipping) : "Calculated next"}</strong></p>{appliedCoupon && <p><span>Discount ({appliedCoupon.discountType === "percentage" ? `${appliedCoupon.value}%` : `₹${appliedCoupon.value}`})</span><strong style={{ color: "#10b981" }}>-{formatPrice(discount)}</strong></p>}{!appliedCoupon && <div className={styles.couponSection}><label className={styles.couponLabel}>Coupon code<input type="text" value={couponCode} onChange={(e) => { setCouponCode(e.target.value); setCouponError(""); }} placeholder="Enter coupon code" disabled={couponLoading} /><button type="button" onClick={applyCoupon} disabled={couponLoading || !couponCode.trim()} className={styles.applyCouponButton}>{couponLoading ? "Applying…" : "Apply"}</button></label>{couponError && <p className={styles.couponError}>{couponError}</p>}</div>}{appliedCoupon && <div className={styles.appliedCoupon}><span>Applied: <strong>{appliedCoupon.code}</strong></span><button type="button" onClick={removeCoupon} className={styles.removeCouponButton}>Remove</button></div>}<div className={styles.total}><span>Total</span><strong>{formatPrice(total)}</strong></div><small>Live courier pricing by Shiprocket</small></aside></div></main></>;
+  return <><Script src="https://sdk.cashfree.com/js/v3/cashfree.js" onLoad={() => setPaymentReady(true)} /><main className={styles.page}><Link className={styles.back} href="/cart">← Back to bag</Link><div className={styles.intro}><p className="eyebrow">Secure checkout</p><h1>Fresh snacks, <em>on their way.</em></h1></div><div className={styles.layout}><form className={styles.card} onSubmit={pay}><nav className={styles.steps} aria-label="Checkout progress">{steps.map((label, index) => { const number = index + 1; return <button type="button" key={label} className={number === step ? styles.activeStep : number < step ? styles.completeStep : ""} disabled={number > step} onClick={() => setStep(number)}><span>{number < step ? "✓" : number}</span>{label}</button>; })}</nav>{step === 1 && <section className={styles.panel}><div className={styles.panelHead}><p>Step 1 of 2</p><h2>How can we reach you?</h2><span>We use this only for delivery updates.</span></div><div className={styles.fields}><label>Full name<input autoComplete="name" autoFocus required value={form.customerName} onChange={(event) => update("customerName", event.target.value)} /></label><label>Mobile number<input autoComplete="tel" required inputMode="numeric" pattern="[6-9][0-9]{9}" placeholder="10-digit number" value={form.phone} onChange={(event) => update("phone", event.target.value)} /></label><p className={styles.full}>Signed in as <strong>{account?.name}</strong> ({account?.email}). Your order will be added to this account.</p></div></section>}{step === 2 && <section className={styles.panel}><div className={styles.panelHead}><p>Step 2 of 2</p><h2>Where should we deliver?</h2><span>Choose your location to calculate a live courier rate and complete payment.</span></div><div className={styles.fields}><label className={styles.full}>Street address<textarea autoComplete="street-address" required minLength={8} placeholder="House / flat number, street and area" value={form.address} onChange={(event) => update("address", event.target.value)} /></label><label>State<select required value={form.state} onChange={(event) => update("state", event.target.value)}><option value="">{states.length ? "Select state" : "Loading states…"}</option>{states.map((state) => <option key={state} value={state}>{state}</option>)}</select></label><label>City<select required disabled={!form.state || !cities.length} value={form.city} onChange={(event) => update("city", event.target.value)}><option value="">{form.state ? cities.length ? "Select city" : "Loading cities…" : "Select state first"}</option>{cities.map((city) => <option key={city} value={city}>{city}</option>)}</select></label><label>PIN code<input autoComplete="postal-code" required inputMode="numeric" pattern="[0-9]{6}" placeholder="6-digit PIN" value={form.pincode} onChange={(event) => update("pincode", event.target.value)} /></label></div><div className={styles.courier}><div><strong>{quote?.courierName || "Courier rate"}</strong><span>{quoteLoading ? "Calculating delivery…" : quote?.estimatedDeliveryDays ? `Estimated delivery: ${quote.estimatedDeliveryDays}` : "Enter your PIN code for a live delivery quote"}</span></div><b>{quote ? formatPrice(shipping) : "—"}</b></div><p className={styles.security}>▣ Your payment is encrypted and processed securely. We never store card details.</p></section>}{success && <p className={styles.success}>{success}</p>}{error && <p className={styles.error}>{error}</p>}<div className={styles.actions}>{step > 1 ? <button className={styles.secondary} type="button" onClick={() => setStep(step - 1)}>← Back</button> : <span />}{step < 2 ? <button className="button button-dark" type="button" onClick={() => continueTo(step + 1)}>Continue →</button> : <button className="button button-dark" type="submit" disabled={loading || !paymentReady || !quote}>{loading ? "Opening secure payment…" : paymentReady && quote ? `Pay ${formatPrice(total)} securely` : !quote ? "Enter PIN code first" : "Loading secure payment…"}</button>}</div></form><aside className={styles.summary}><p className={styles.summaryLabel}>Order summary</p><h2>Your fresh picks.</h2><div className={styles.items}>{items.map((item) => <div key={item.id}><span>{item.name}<small>{formatWeight(item.weight)} · Qty {item.quantity}</small></span><strong>{formatPrice(item.offerPrice * item.quantity)}</strong></div>)}</div><p><span>Subtotal</span><strong>{formatPrice(subtotal)}</strong></p><p><span>Delivery</span><strong>{quote ? formatPrice(shipping) : "Calculated next"}</strong></p>{appliedCoupon && <p><span>Discount ({appliedCoupon.discountType === "percentage" ? `${appliedCoupon.value}%` : `₹${appliedCoupon.value}`})</span><strong style={{ color: "#10b981" }}>-{formatPrice(discount)}</strong></p>}{!appliedCoupon && <><div className={styles.couponSection}><label className={styles.couponLabel}>Coupon code<input type="text" value={couponCode} onChange={(e) => { setCouponCode(e.target.value); setCouponError(""); }} placeholder="Enter coupon code" disabled={couponLoading} /><button type="button" onClick={applyCoupon} disabled={couponLoading || !couponCode.trim()} className={styles.applyCouponButton}>{couponLoading ? "Applying�" : "Apply"}</button></label>{couponError && <p className={styles.couponError}>{couponError}</p>}</div>{availableCoupons.length > 0 && <div className={styles.availableCoupons}><p className={styles.availableCouponsTitle}>Available coupons</p><div className={styles.couponList}>{availableCoupons.map((coupon) => { const applicable = isCouponApplicable(coupon); return <div key={coupon.code} className={`${styles.couponItem} ${!applicable ? styles.couponNotApplicable : ""}`} style={{ opacity: applicable ? 1 : 0.5, filter: applicable ? "none" : "blur(1px)" }} onClick={() => { if (applicable) { setCouponCode(coupon.code); applyCoupon(); } }}><div className={styles.couponHeader}><span className={styles.couponCode}>{coupon.code}</span><span className={styles.couponDiscount}>{coupon.discountType === "percentage" ? `${coupon.value}% off` : `₹${coupon.value} off`}</span></div><div className={styles.couponDetails}>{coupon.minOrderValue && <span>Min order: ₹${coupon.minOrderValue}</span>}{coupon.validUntil && <span>Valid until: {new Date(coupon.validUntil).toLocaleDateString()}</span>}</div></div>; })}</div></div></>}{appliedCoupon && <div className={styles.appliedCoupon}><span>Applied: <strong>{appliedCoupon.code}</strong></span><button type="button" onClick={removeCoupon} className={styles.removeCouponButton}>Remove</button></div>}<div className={styles.total}><span>Total</span><strong>{formatPrice(total)}</strong></div><small>Live courier pricing by Shiprocket</small></aside></div></main></>;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

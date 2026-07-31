@@ -21,6 +21,8 @@ type Banner = {
 type Coupon = {
   id: number;
   code: string;
+  name: string | null;
+  description: string | null;
   discountType: string;
   value: string;
 };
@@ -161,6 +163,25 @@ export function AdminBanners() {
         setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  }
+
+  function handleCouponChange(couponCode: string) {
+    setForm({ ...form, couponCode });
+    
+    if (couponCode) {
+      const selectedCoupon = coupons.find((c) => c.code === couponCode);
+      if (selectedCoupon) {
+        setForm({
+          ...form,
+          couponCode,
+          title: selectedCoupon.name || form.title,
+          subtitle: selectedCoupon.description || form.subtitle,
+          offerText: selectedCoupon.discountType === "percentage" 
+            ? `${selectedCoupon.value}% OFF` 
+            : `₹${selectedCoupon.value} OFF`,
+        });
+      }
     }
   }
 
@@ -314,7 +335,7 @@ export function AdminBanners() {
                 <label>Coupon Code</label>
                 <select
                   value={form.couponCode}
-                  onChange={(e) => setForm({ ...form, couponCode: e.target.value })}
+                  onChange={(e) => handleCouponChange(e.target.value)}
                   style={{
                     width: "100%",
                     padding: "10px 14px",
@@ -327,7 +348,7 @@ export function AdminBanners() {
                   <option value="">Select a coupon (optional)</option>
                   {coupons.map((coupon) => (
                     <option key={coupon.id} value={coupon.code}>
-                      {coupon.code} — {coupon.discountType === "percentage" ? `${coupon.value}%` : `₹${coupon.value}`} off
+                      {coupon.code} — {coupon.name || coupon.discountType === "percentage" ? `${coupon.value}%` : `₹${coupon.value}`} off
                     </option>
                   ))}
                 </select>
@@ -359,59 +380,6 @@ export function AdminBanners() {
                   placeholder="/shop or https://..."
                 />
               </div>
-              <div className={styles.field}>
-                <label>Banner Image</label>
-                <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
-                  <button
-                    type="button"
-                    onClick={() => { setImageInputType("url"); setImagePreview(""); }}
-                    style={{
-                      padding: "6px 12px",
-                      fontSize: "13px",
-                      border: "1.5px solid var(--line)",
-                      background: imageInputType === "url" ? "var(--terracotta)" : "var(--paper)",
-                      color: imageInputType === "url" ? "white" : "var(--ink)",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    URL
-                  </button>
-                </div>
-                {imageInputType === "url" ? (
-                  <input
-                    type="text"
-                    value={form.image}
-                    onChange={(e) => { setForm({ ...form, image: e.target.value }); setImagePreview(e.target.value); }}
-                    placeholder="https://..."
-                  />
-                ) : (
-                  <>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      style={{ marginBottom: "8px" }}
-                    />
-                    {imagePreview && (
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        style={{ maxWidth: "300px", maxHeight: "200px", borderRadius: "8px", marginTop: "8px" }}
-                      />
-                    )}
-                  </>
-                )}
-              </div>
-              {imagePreview && (
-                <div className={styles.field}>
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    style={{ maxWidth: "300px", maxHeight: "200px", borderRadius: "8px" }}
-                  />
-                </div>
-              )}
               <div className={styles.checkboxGroup}>
                 <label className={styles.checkbox}>
                   <input

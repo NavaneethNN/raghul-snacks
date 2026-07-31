@@ -71,17 +71,18 @@ async function getCombos() {
   }
 }
 
-export default async function ShopPage() {
+export default async function ShopPage({ searchParams }: { searchParams: { search?: string; tab?: string; category?: string } }) {
   const categories = await getCategories();
   const products = await getProducts();
   const combos = await getCombos();
+  const searchQuery = searchParams.search || "";
 
   return (
     <section className="section shop-page">
       <p className="eyebrow">The full pantry</p>
       <h1>Find your next favourite.</h1>
       <Suspense fallback={<div>Loading…</div>}>
-        <ShopContent categories={categories} products={products} combos={combos} />
+        <ShopContent categories={categories} products={products} combos={combos} searchQuery={searchQuery} />
       </Suspense>
     </section>
   );

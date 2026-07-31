@@ -6,7 +6,7 @@ export default function PrivacyPage() {
       
       <div className="policy-content">
         <h2>Our Commitment to Privacy</h2>
-        <p>At Raghul Snacks, we take your privacy seriously. This policy outlines how we collect, use, and protect your personal information when you visit our website or place an order.</p>
+        <p>At Raghul Delights, we take your privacy seriously. This policy outlines how we collect, use, and protect your personal information when you visit our website or place an order.</p>
         
         <h2>Information We Collect</h2>
         <h3>Personal Information</h3>

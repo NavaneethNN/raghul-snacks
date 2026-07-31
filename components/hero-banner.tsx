@@ -21,6 +21,7 @@ export function HeroBanner() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     fetchBanners();
@@ -51,6 +52,16 @@ export function HeroBanner() {
     }
   }
 
+  async function copyCouponToClipboard(couponCode: string) {
+    try {
+      await navigator.clipboard.writeText(couponCode);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy coupon:", error);
+    }
+  }
+
   if (loading || banners.length === 0) {
     return null;
   }
@@ -58,56 +69,55 @@ export function HeroBanner() {
   const banner = banners[currentIndex];
 
   return (
-    <div className="hero-banner">
-      <div className="hero-banner-pattern">
-        <span className="hero-banner-leaf leaf-1">🍃</span>
-        <span className="hero-banner-leaf leaf-2">🍂</span>
-        <span className="hero-banner-leaf leaf-3">🌿</span>
+    <>
+      <div className="hero-banner">
+        <div className="hero-banner-pattern">
+          <span className="hero-banner-leaf leaf-1">🍃</span>
+          <span className="hero-banner-leaf leaf-2">🍂</span>
+          <span className="hero-banner-leaf leaf-3">🌿</span>
+        </div>
+
+        <div className="hero-banner-content">
+          {banner.eyebrow && (
+            <p className="hero-banner-eyebrow">{banner.eyebrow}</p>
+          )}
+
+          {banner.title && (
+            <h3 className="hero-banner-title">{banner.title}</h3>
+          )}
+
+          {banner.subtitle && (
+            <p className="hero-banner-subtitle">{banner.subtitle}</p>
+          )}
+
+          {banner.couponCode && (
+            <div
+              className="hero-banner-coupon"
+              onClick={() => copyCouponToClipboard(banner.couponCode!)}
+              style={{ cursor: 'pointer' }}
+            >
+              <span className="hero-banner-coupon-text">
+                {banner.offerText || `Use Code:`}{" "}
+                <strong>{banner.couponCode}</strong>
+              </span>
+            </div>
+          )}
+
+          <Link href={banner.href || "/shop"} className="hero-banner-cta">
+            {banner.buttonText || "Shop Now"}
+          </Link>
+
+          {banner.validityText && (
+            <p className="hero-banner-validity">{banner.validityText}</p>
+          )}
+        </div>
       </div>
 
-      <div className="hero-banner-content">
-        {banner.eyebrow && (
-          <p className="hero-banner-eyebrow">{banner.eyebrow}</p>
-        )}
-
-        {banner.title && (
-          <h3 className="hero-banner-title">{banner.title}</h3>
-        )}
-
-        {banner.subtitle && (
-          <p className="hero-banner-subtitle">{banner.subtitle}</p>
-        )}
-
-        {banner.couponCode && (
-          <div className="hero-banner-coupon">
-            <span className="hero-banner-coupon-text">
-              {banner.offerText || `Use Code:`}{" "}
-              <strong>{banner.couponCode}</strong>
-            </span>
-          </div>
-        )}
-
-        <Link href={banner.href || "/shop"} className="hero-banner-cta">
-          {banner.buttonText || "Shop Now"}
-        </Link>
-
-        {banner.validityText && (
-          <p className="hero-banner-validity">{banner.validityText}</p>
-        )}
-
-        {banners.length > 1 && (
-          <div className="hero-banner-dots">
-            {banners.map((_, index) => (
-              <button
-                key={index}
-                className={`hero-banner-dot ${index === currentIndex ? "active" : ""}`}
-                onClick={() => setCurrentIndex(index)}
-                aria-label={`Go to banner ${index + 1}`}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+      {showToast && (
+        <div className={`toast ${showToast ? 'visible' : ''}`}>
+          Code copied!
+        </div>
+      )}
+    </>
   );
 }

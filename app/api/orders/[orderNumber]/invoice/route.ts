@@ -91,7 +91,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ ord
     // Header
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
-    doc.text("Raghul Snacks", margin, y);
+    doc.text("Raghul Delights", margin, y);
     y += 10;
     
     doc.setFontSize(12);
@@ -161,7 +161,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ ord
     // Footer
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text("Thank you for shopping with Raghul Snacks!", pageWidth / 2, y, { align: "center" });
+    doc.text("Thank you for shopping with Raghul Delights!", pageWidth / 2, y, { align: "center" });
     y += 6;
     doc.text("hello@raghulsnacks.com • +91 98765 43210", pageWidth / 2, y, { align: "center" });
 

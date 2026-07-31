@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb } from "@/lib/db";
-import { banners } from "@/drizzle/schema";
+import { banners, coupons } from "@/drizzle/schema";
 import { desc, eq } from "drizzle-orm";
 
 export async function GET() {
@@ -11,7 +11,39 @@ export async function GET() {
       .select()
       .from(banners)
       .orderBy(desc(banners.createdAt));
-    return NextResponse.json(allBanners);
+
+    // Fetch validity from associated coupons
+    const bannersWithValidity = await Promise.all(
+      allBanners.map(async (banner) => {
+        if (banner.couponCode) {
+          const [coupon] = await db
+            .select()
+            .from(coupons)
+            .where(eq(coupons.code, banner.couponCode))
+            .limit(1);
+          
+          if (coupon) {
+            let validityText = "";
+            if (coupon.validFrom && coupon.validUntil) {
+              const fromDate = new Date(coupon.validFrom).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' });
+              const untilDate = new Date(coupon.validUntil).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
+              validityText = `Valid: ${fromDate} - ${untilDate}`;
+            } else if (coupon.validUntil) {
+              const untilDate = new Date(coupon.validUntil).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
+              validityText = `Valid until: ${untilDate}`;
+            }
+            
+            return {
+              ...banner,
+              validityText: validityText || banner.validityText,
+            };
+          }
+        }
+        return banner;
+      })
+    );
+
+    return NextResponse.json(bannersWithValidity);
   } catch (error) {
     console.error("Error fetching banners:", error);
     return NextResponse.json({ error: "Failed to fetch banners" }, { status: 500 });

@@ -3,7 +3,7 @@ import "./globals.css";
 import { CartProvider } from "@/components/cart/cart-provider";
 import { WishlistProvider } from "@/components/wishlist/wishlist-provider";
 
-export const metadata: Metadata = { title: "Raghul Snacks | Tradition, thoughtfully made", description: "Wholesome traditional millet snacks delivered across India." };
+export const metadata: Metadata = { title: "Raghul Delights | Tradition, thoughtfully made", description: "Wholesome traditional millet snacks delivered across India." };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

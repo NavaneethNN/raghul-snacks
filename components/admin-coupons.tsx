@@ -7,8 +7,22 @@ import styles from "./admin-table.module.css";
 type Coupon = {
   id: number;
   code: string;
+  name: string | null;
+  description: string | null;
   discountType: string;
   value: string;
+  maxDiscount: string | null;
+  minOrderValue: string;
+  validFrom: string | null;
+  validUntil: string | null;
+  totalUsage: number | null;
+  perCustomer: number | null;
+  applicableProducts: string[] | null;
+  applicableCategories: string[] | null;
+  applyTo: string | null;
+  firstPurchase: boolean;
+  publicCoupon: boolean;
+  notes: string | null;
   active: boolean;
   createdAt: Date;
 };
@@ -16,6 +30,8 @@ type Coupon = {
 export function AdminCoupons() {
   const router = useRouter();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
@@ -23,14 +39,54 @@ export function AdminCoupons() {
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     code: "",
+    name: "",
+    description: "",
     discountType: "percentage",
     value: "",
+    maxDiscount: "",
+    minOrderValue: "0",
+    validFrom: "",
+    validUntil: "",
+    totalUsage: "",
+    perCustomer: "",
+    applicableProducts: [] as string[],
+    applicableCategories: [] as string[],
+    applyTo: "entire_store",
+    firstPurchase: false,
+    publicCoupon: true,
+    notes: "",
     active: true,
   });
 
   useEffect(() => {
     fetchCoupons();
+    fetchProducts();
+    fetchCategories();
   }, []);
+
+  async function fetchProducts() {
+    try {
+      const response = await fetch("/api/products");
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(data);
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  }
+
+  async function fetchCategories() {
+    try {
+      const response = await fetch("/api/categories");
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  }
 
   async function fetchCoupons() {
     try {
@@ -49,8 +105,22 @@ export function AdminCoupons() {
     setEditingCoupon(coupon);
     setFormData({
       code: coupon.code,
+      name: coupon.name || "",
+      description: coupon.description || "",
       discountType: coupon.discountType,
       value: coupon.value,
+      maxDiscount: coupon.maxDiscount || "",
+      minOrderValue: coupon.minOrderValue || "0",
+      validFrom: coupon.validFrom ? new Date(coupon.validFrom).toISOString().split('T')[0] : "",
+      validUntil: coupon.validUntil ? new Date(coupon.validUntil).toISOString().split('T')[0] : "",
+      totalUsage: coupon.totalUsage?.toString() || "",
+      perCustomer: coupon.perCustomer?.toString() || "",
+      applicableProducts: coupon.applicableProducts || [],
+      applicableCategories: coupon.applicableCategories || [],
+      applyTo: coupon.applyTo || "entire_store",
+      firstPurchase: coupon.firstPurchase || false,
+      publicCoupon: coupon.publicCoupon !== undefined ? coupon.publicCoupon : true,
+      notes: coupon.notes || "",
       active: coupon.active,
     });
     setShowForm(true);
@@ -59,7 +129,26 @@ export function AdminCoupons() {
   function handleCloseForm() {
     setShowForm(false);
     setEditingCoupon(null);
-    setFormData({ code: "", discountType: "percentage", value: "", active: true });
+    setFormData({
+      code: "",
+      name: "",
+      description: "",
+      discountType: "percentage",
+      value: "",
+      maxDiscount: "",
+      minOrderValue: "0",
+      validFrom: "",
+      validUntil: "",
+      totalUsage: "",
+      perCustomer: "",
+      applicableProducts: [],
+      applicableCategories: [],
+      applyTo: "entire_store",
+      firstPurchase: false,
+      publicCoupon: true,
+      notes: "",
+      active: true,
+    });
     setError("");
   }
 
@@ -91,8 +180,22 @@ export function AdminCoupons() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code: formData.code.toUpperCase(),
+          name: formData.name || null,
+          description: formData.description || null,
           discountType: formData.discountType,
           value: parseFloat(formData.value),
+          maxDiscount: formData.maxDiscount ? parseFloat(formData.maxDiscount) : null,
+          minOrderValue: parseFloat(formData.minOrderValue) || 0,
+          validFrom: formData.validFrom || null,
+          validUntil: formData.validUntil || null,
+          totalUsage: formData.totalUsage ? parseInt(formData.totalUsage) : null,
+          perCustomer: formData.perCustomer ? parseInt(formData.perCustomer) : null,
+          applicableProducts: formData.applicableProducts.length > 0 ? formData.applicableProducts : null,
+          applicableCategories: formData.applicableCategories.length > 0 ? formData.applicableCategories : null,
+          applyTo: formData.applyTo,
+          firstPurchase: formData.firstPurchase,
+          publicCoupon: formData.publicCoupon,
+          notes: formData.notes || null,
           active: formData.active,
         }),
       });
@@ -253,53 +356,256 @@ export function AdminCoupons() {
                   {error}
                 </div>
               )}
-              <div className={styles.field}>
-                <label>Coupon Code</label>
-                <input
-                  type="text"
-                  placeholder="e.g., WELCOME10"
-                  value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                  required
-                  style={{ textTransform: "uppercase" }}
-                />
-                <small style={{ color: "#6b7280", fontSize: "12px" }}>Use uppercase letters and numbers only.</small>
-              </div>
-              <div className={styles.formGrid}>
+              
+              {/* Basic Information */}
+              <div style={{ marginBottom: "24px", paddingBottom: "16px", borderBottom: "1px solid #e5e7eb" }}>
+                <h3 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "16px", color: "#374151" }}>Basic Information</h3>
                 <div className={styles.field}>
-                  <label>Discount Type</label>
-                  <select
-                    value={formData.discountType}
-                    onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
+                  <label>Coupon Code</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., WELCOME10"
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                     required
-                  >
-                    <option value="percentage">Percentage (%)</option>
-                    <option value="fixed">Fixed Amount (₹)</option>
-                  </select>
+                    style={{ textTransform: "uppercase" }}
+                  />
                 </div>
                 <div className={styles.field}>
-                  <label>Discount Value</label>
+                  <label>Coupon Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Welcome Offer"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label>Description</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., First order discount for new customers"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label>Status</label>
+                  <select
+                    value={formData.active ? "active" : "inactive"}
+                    onChange={(e) => setFormData({ ...formData, active: e.target.value === "active" })}
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Discount */}
+              <div style={{ marginBottom: "24px", paddingBottom: "16px", borderBottom: "1px solid #e5e7eb" }}>
+                <h3 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "16px", color: "#374151" }}>Discount</h3>
+                <div className={styles.formGrid}>
+                  <div className={styles.field}>
+                    <label>Discount Type</label>
+                    <select
+                      value={formData.discountType}
+                      onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
+                      required
+                    >
+                      <option value="percentage">Percentage</option>
+                      <option value="fixed">Fixed Amount</option>
+                    </select>
+                  </div>
+                  <div className={styles.field}>
+                    <label>{formData.discountType === "percentage" ? "Discount Percentage" : "Discount Amount"}</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder={formData.discountType === "percentage" ? "e.g., 20" : "e.g., 100"}
+                      value={formData.value}
+                      onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                      required
+                    />
+                    <small style={{ color: "#6b7280", fontSize: "12px" }}>
+                      {formData.discountType === "percentage" ? "Enter percentage value (e.g., 20 for 20%)" : "Enter fixed amount in rupees"}
+                    </small>
+                  </div>
+                </div>
+                {formData.discountType === "percentage" && (
+                  <div className={styles.field}>
+                    <label>Maximum Discount</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="e.g., 500"
+                      value={formData.maxDiscount}
+                      onChange={(e) => setFormData({ ...formData, maxDiscount: e.target.value })}
+                    />
+                    <small style={{ color: "#6b7280", fontSize: "12px" }}>Maximum discount amount for percentage-based coupons. Leave empty for no limit.</small>
+                  </div>
+                )}
+              </div>
+
+              {/* Validity */}
+              <div style={{ marginBottom: "24px", paddingBottom: "16px", borderBottom: "1px solid #e5e7eb" }}>
+                <h3 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "16px", color: "#374151" }}>Validity</h3>
+                <div className={styles.formGrid}>
+                  <div className={styles.field}>
+                    <label>Start Date</label>
+                    <input
+                      type="date"
+                      value={formData.validFrom}
+                      onChange={(e) => setFormData({ ...formData, validFrom: e.target.value })}
+                    />
+                  </div>
+                  <div className={styles.field}>
+                    <label>End Date</label>
+                    <input
+                      type="date"
+                      value={formData.validUntil}
+                      onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Usage Limits */}
+              <div style={{ marginBottom: "24px", paddingBottom: "16px", borderBottom: "1px solid #e5e7eb" }}>
+                <h3 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "16px", color: "#374151" }}>Usage Limits</h3>
+                <div className={styles.formGrid}>
+                  <div className={styles.field}>
+                    <label>Total Usage</label>
+                    <input
+                      type="number"
+                      placeholder="e.g., 1000"
+                      value={formData.totalUsage}
+                      onChange={(e) => setFormData({ ...formData, totalUsage: e.target.value })}
+                    />
+                    <small style={{ color: "#6b7280", fontSize: "12px" }}>Total times this coupon can be used. Leave empty for unlimited.</small>
+                  </div>
+                  <div className={styles.field}>
+                    <label>Per Customer</label>
+                    <input
+                      type="number"
+                      placeholder="e.g., 1"
+                      value={formData.perCustomer}
+                      onChange={(e) => setFormData({ ...formData, perCustomer: e.target.value })}
+                    />
+                    <small style={{ color: "#6b7280", fontSize: "12px" }}>Times a single customer can use this coupon. Leave empty for unlimited.</small>
+                  </div>
+                </div>
+                <div className={styles.field}>
+                  <label>Minimum Order</label>
                   <input
                     type="number"
                     step="0.01"
-                    placeholder="e.g., 10"
-                    value={formData.value}
-                    onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                    required
+                    placeholder="e.g., 999"
+                    value={formData.minOrderValue}
+                    onChange={(e) => setFormData({ ...formData, minOrderValue: e.target.value })}
                   />
+                  <small style={{ color: "#6b7280", fontSize: "12px" }}>Minimum order value required to use this coupon.</small>
                 </div>
               </div>
-              <div className={styles.field}>
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-                  <input
-                    type="checkbox"
-                    checked={formData.active}
-                    onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                    style={{ width: "18px", height: "18px", cursor: "pointer" }}
-                  />
-                  Active (customers can use this coupon)
-                </label>
+
+              {/* Applicability */}
+              <div style={{ marginBottom: "24px", paddingBottom: "16px", borderBottom: "1px solid #e5e7eb" }}>
+                <h3 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "16px", color: "#374151" }}>Applicability</h3>
+                <div className={styles.field}>
+                  <label>Apply To</label>
+                  <select
+                    value={formData.applyTo}
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      setFormData({ 
+                        ...formData, 
+                        applyTo: newValue,
+                        applicableCategories: newValue === "categories" ? formData.applicableCategories : [],
+                        applicableProducts: newValue === "products" ? formData.applicableProducts : []
+                      });
+                    }}
+                  >
+                    <option value="entire_store">Entire Store</option>
+                    <option value="categories">Specific Categories</option>
+                    <option value="products">Specific Products</option>
+                  </select>
+                </div>
+                {formData.applyTo === "categories" && (
+                  <div className={styles.field}>
+                    <label>Category</label>
+                    <select
+                      value={formData.applicableCategories[0] || ""}
+                      onChange={(e) => setFormData({ ...formData, applicableCategories: e.target.value ? [e.target.value] : [] })}
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        border: "1.5px solid var(--line)",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        background: "white",
+                      }}
+                    >
+                      <option value="">Select a category</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.slug}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                    <small style={{ color: "#6b7280", fontSize: "12px" }}>Select the category to apply this coupon to.</small>
+                  </div>
+                )}
+                {formData.applyTo === "products" && (
+                  <div className={styles.field}>
+                    <label>Product</label>
+                    <select
+                      value={formData.applicableProducts[0] || ""}
+                      onChange={(e) => setFormData({ ...formData, applicableProducts: e.target.value ? [e.target.value] : [] })}
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        border: "1.5px solid var(--line)",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        background: "white",
+                      }}
+                    >
+                      <option value="">Select a product</option>
+                      {products.map((product) => (
+                        <option key={product.id} value={product.slug}>
+                          {product.name}
+                        </option>
+                      ))}
+                    </select>
+                    <small style={{ color: "#6b7280", fontSize: "12px" }}>Select the product to apply this coupon to.</small>
+                  </div>
+                )}
               </div>
+
+              {/* Advanced Settings */}
+              <div style={{ marginBottom: "24px", paddingBottom: "16px", borderBottom: "1px solid #e5e7eb" }}>
+                <h3 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "16px", color: "#374151" }}>Advanced Settings</h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.firstPurchase}
+                      onChange={(e) => setFormData({ ...formData, firstPurchase: e.target.checked })}
+                      style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                    />
+                    <span>First Purchase Only</span>
+                  </label>
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.publicCoupon}
+                      onChange={(e) => setFormData({ ...formData, publicCoupon: e.target.checked })}
+                      style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                    />
+                    <span>Public Coupon (visible to customers)</span>
+                  </label>
+                </div>
+              </div>
+
               <div className={styles.formActions}>
                 <button type="button" className={styles.secondaryButton} onClick={handleCloseForm}>
                   Cancel

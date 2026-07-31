@@ -104,7 +104,7 @@ export function CustomerAuthForm({ mode }: { mode: "login" | "signup" }) {
   return (
     <main className={styles.page}>
       <section className={styles.intro}>
-        <p>Raghul Snacks account</p>
+        <p>Raghul Delights account</p>
         <h1>{signup ? "Save your favourites." : "Welcome back."}</h1>
         <p>
           {signup

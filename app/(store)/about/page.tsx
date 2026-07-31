@@ -12,7 +12,7 @@ export default function AboutPage() {
           </h1>
           <p className="hero-description">
             Born from a love for authentic South Indian flavors and the wisdom of wholesome millets,
-            Raghul Snacks brings you snacks that honor tradition while nourishing the modern family.
+            Raghul Delights brings you snacks that honor tradition while nourishing the modern family.
           </p>
         </div>
         <div className="about-hero-image">

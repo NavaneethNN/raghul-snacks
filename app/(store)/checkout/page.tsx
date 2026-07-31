@@ -77,7 +77,7 @@ function LegacyCheckoutPage() {
       const paymentOrder = await response.json() as PaymentOrder & { error?: string };
       if (!response.ok || !paymentOrder.key) throw new Error(paymentOrder.error || "Payment could not be started.");
       if (!window.Razorpay) throw new Error("The secure payment window is still loading. Please try again.");
-      new window.Razorpay({ key: paymentOrder.key, amount: paymentOrder.amount, currency: paymentOrder.currency, name: "Raghul Snacks", description: `${items.length} fresh snack item${items.length > 1 ? "s" : ""}`, order_id: paymentOrder.id, prefill: { name: form.customerName, contact: form.phone, email: form.email || undefined }, theme: { color: "#c95f3b" }, handler: async (payment) => {
+      new window.Razorpay({ key: paymentOrder.key, amount: paymentOrder.amount, currency: paymentOrder.currency, name: "Raghul Delights", description: `${items.length} fresh snack item${items.length > 1 ? "s" : ""}`, order_id: paymentOrder.id, prefill: { name: form.customerName, contact: form.phone, email: form.email || undefined }, theme: { color: "#c95f3b" }, handler: async (payment) => {
         const verifyResponse = await fetch("/api/razorpay/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, razorpayOrderId: payment.razorpay_order_id, razorpayPaymentId: payment.razorpay_payment_id, razorpaySignature: payment.razorpay_signature }) });
         const verified = await verifyResponse.json() as { orderNumber?: string; error?: string };
         if (!verifyResponse.ok || !verified.orderNumber) { setError(verified.error || "Your payment needs support review. Please contact us."); setLoading(false); return; }

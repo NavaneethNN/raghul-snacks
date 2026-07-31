@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useCart } from "@/components/cart/cart-provider";
 import { useWishlist } from "@/components/wishlist/wishlist-provider";
 
@@ -14,6 +14,9 @@ export function StoreHeader() {
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [categoriesTimeout, setCategoriesTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/auth/session").then(async (response) => {
@@ -39,25 +42,82 @@ export function StoreHeader() {
     };
   }, [menuOpen]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const scrollToSection = (sectionId: string) => {
-    // If not on home page, navigate to home first
+    // Close mobile menu first
+    setMenuOpen(false);
+    
+    // If not on home page, navigate to home with hash
     if (window.location.pathname !== '/') {
       window.location.href = `/#${sectionId}`;
       return;
     }
-    // If on home page, scroll to section
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    // If on home page, scroll to section with a small delay to ensure menu is closed
+    setTimeout(() => {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        const headerOffset = 80; // Account for fixed header height
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
+  };
+
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+  };
+
+  const handleSearchChange = async (value: string) => {
+    setSearchQuery(value);
+    if (value.trim().length >= 2) {
+      try {
+        const res = await fetch(`/api/products/search?q=${encodeURIComponent(value.trim())}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data || []);
+          setSearchOpen(true);
+        }
+      } catch (error) {
+        console.error("Search error:", error);
+        setSearchResults([]);
+      }
+    } else {
+      setSearchResults([]);
+      setSearchOpen(false);
     }
+  };
+
+  const handleResultClick = (product: any) => {
+    setSearchOpen(false);
+    setSearchQuery("");
+    window.location.href = `/product/${product.slug}`;
   };
 
   return (
     <header className="site-header">
       <div className="header-container">
+        <img src="/logo.png" alt="Raghul Delights" style={{ height: "70px", width: "auto", mixBlendMode: "multiply", margin: "-10px 0", padding: 0, maxHeight: "50px" }} />
         <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
           <Link className="brand" href="/">
-            <span>Raghul</span> Snacks
+          <span>Raghul</span> Delights
+
+            
           </Link>
           <p className="brand-tagline">Homemade • Fresh • Traditional</p>
         </div>
@@ -123,20 +183,66 @@ export function StoreHeader() {
           <Link href="/contact">Contact</Link>
         </nav>
 
-        <div className="search-bar">
+        <form className="search-bar" onSubmit={handleSearch} style={{ position: "relative" }} ref={searchRef}>
           <input
             type="text"
             placeholder="Search snacks..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            onFocus={() => searchResults.length > 0 && setSearchOpen(true)}
           />
-          <button className="search-btn">
+          <button type="submit" className="search-btn">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <circle cx="7.5" cy="7.5" r="6" stroke="currentColor" strokeWidth="1.5" />
               <path d="M11.5 11.5L16 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </button>
-        </div>
+          {searchOpen && searchResults.length > 0 && (
+            <div style={{
+              position: "absolute",
+              top: "100%",
+              left: 0,
+              right: 0,
+              background: "white",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              marginTop: "4px",
+              maxHeight: "300px",
+              overflowY: "auto",
+              zIndex: 100,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+            }}>
+              {searchResults.map((product: any) => (
+                <div
+                  key={product.id}
+                  onClick={() => handleResultClick(product)}
+                  style={{
+                    padding: "12px 16px",
+                    cursor: "pointer",
+                    borderBottom: "1px solid #f3f4f6",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "#f9fafb"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "white"}
+                >
+                  {product.image && (
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "4px" }}
+                    />
+                  )}
+                  <div>
+                    <div style={{ fontWeight: 500, fontSize: "14px", color: "#374151" }}>{product.name}</div>
+                    <div style={{ fontSize: "12px", color: "#6b7280" }}>₹{product.offerPrice || product.price}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </form>
 
         <div className="header-actions">
           <Link href="/wishlist" className="action-icon" title="Wishlist">
@@ -184,8 +290,9 @@ export function StoreHeader() {
       {/* Mobile Menu */}
       <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
         <div className="mobile-menu-header">
-          <Link className="brand" href="/" onClick={() => setMenuOpen(false)}>
-            <span>Raghul</span> Snacks
+          <Link className="brand" href="/" onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <img src="/logo.png" alt="Raghul Delights" style={{ height: "55px", width: "auto", mixBlendMode: "multiply" }} />
+            <span style={{ fontSize: "18px", fontWeight: 600 }}>Raghul Delights</span>
           </Link>
           <button type="button" className="close-btn" onClick={() => setMenuOpen(false)} aria-label="Close menu">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -197,10 +304,7 @@ export function StoreHeader() {
         <nav className="mobile-nav">
           <Link href="/shop" onClick={() => setMenuOpen(false)}>Shop All</Link>
           <button
-            onClick={() => {
-              scrollToSection('categories');
-              setMenuOpen(false);
-            }}
+            onClick={() => scrollToSection('categories')}
             className="mobile-nav-link"
           >
             Categories

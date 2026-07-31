@@ -2,6 +2,7 @@ import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import { ProductCard } from "@/components/product/product-card";
 import { HeroBanner } from "@/components/hero-banner";
+import { ScrollAnimate } from "@/components/scroll-animate";
 import { getDb } from "@/lib/db";
 import { products, categories, combos, comboItems } from "@/drizzle/schema";
 
@@ -137,206 +138,216 @@ export default async function HomePage() {
                 alt="Traditional snacks"
               />
             </div>
+            <HeroBanner />
           </div>
         </div>
-        <HeroBanner />
       </section>
 
       {/* Browse by Craving Section */}
       <section className="section" id="categories">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Browse by craving</p>
-            <h2>A little something for everyone.</h2>
-          </div>
-          <Link href="/shop" className="text-link">
-            View all →
-          </Link>
-        </div>
-
-        <div className="category-grid">
-          {categories.map((category: any, index: number) => (
-            <Link
-              href={`/shop/${category.slug}`}
-              className={`category-card card-${index}`}
-              key={category.slug}
-              style={{
-                backgroundImage: category.image
-                  ? `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.4)), url(${category.image})`
-                  : 'none',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            >
-              <span className="category-mark">0{index + 1}</span>
-              <h3>{category.name}</h3>
-              <p>{category.description || 'Explore our collection'}</p>
-              <b>Explore →</b>
+        <ScrollAnimate>
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Browse by craving</p>
+              <h2>A little something for everyone.</h2>
+            </div>
+            <Link href="/shop" className="text-link">
+              View all →
             </Link>
-          ))}
-        </div>
+          </div>
+
+          <div className="category-grid">
+            {categories.map((category: any, index: number) => (
+              <Link
+                href={`/shop/${category.slug}`}
+                className={`category-card card-${index}`}
+                key={category.slug}
+                style={{
+                  backgroundImage: category.image
+                    ? `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.4)), url(${category.image})`
+                    : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              >
+                <span className="category-mark">0{index + 1}</span>
+                <h3>{category.name}</h3>
+                <p>{category.description || 'Explore our collection'}</p>
+                <b>Explore →</b>
+              </Link>
+            ))}
+          </div>
+        </ScrollAnimate>
       </section>
 
       {/* Combo Box Section */}
       {featuredCombo && featuredCombo.title && (
-        <section className="combo">
-          <div>
-            <p className="eyebrow">Special Combo</p>
-            <h2>
-              {featuredCombo.title}
-              {featuredCombo.title?.includes(' ') && (
-                <>
-                  <br />
-                  <i>Box</i>
-                </>
+        <ScrollAnimate animation="left">
+          <section className="combo">
+            <div>
+              <p className="eyebrow">Special Combo</p>
+              <h2>
+                {featuredCombo.title}
+                {featuredCombo.title?.includes(' ') && (
+                  <>
+                    <br />
+                    <i>Box</i>
+                  </>
+                )}
+              </h2>
+              <p>
+                A curated selection of our finest snacks in one combo.
+              </p>
+
+              {featuredCombo.items && featuredCombo.items.length > 0 && (
+                <ul>
+                  {featuredCombo.items.map((item: any, index: number) => (
+                    <li key={index}>{item.name || 'Product'} ({item.quantity}g)</li>
+                  ))}
+                </ul>
               )}
-            </h2>
-            <p>
-              A curated selection of our finest snacks in one combo.
-            </p>
 
-            {featuredCombo.items && featuredCombo.items.length > 0 && (
-              <ul>
-                {featuredCombo.items.map((item: any, index: number) => (
-                  <li key={index}>{item.name || 'Product'} ({item.quantity}g)</li>
-                ))}
-              </ul>
-            )}
-
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <Link href="/shop" className="button button-light">
-                Get this combo · ₹{featuredCombo.discount && parseFloat(featuredCombo.discount) > 0 ? featuredCombo.discount : featuredCombo.price}
-              </Link>
-              <Link href="/shop?tab=combos" className="button button-outline">
-                View all combos →
-              </Link>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <Link href="/shop" className="button button-light">
+                  Get this combo · ₹{featuredCombo.discount && parseFloat(featuredCombo.discount) > 0 ? featuredCombo.discount : featuredCombo.price}
+                </Link>
+                <Link href="/shop?tab=combos" className="button button-outline">
+                  View all combos →
+                </Link>
+              </div>
             </div>
-          </div>
 
-          <div className="combo-visual">
-            <span>{featuredCombo.items?.length || 0}</span>
-            <p>
-              delicious
-              <br />
-              items
-            </p>
-          </div>
-        </section>
+            <div className="combo-visual">
+              <span>{featuredCombo.items?.length || 0}</span>
+              <p>
+                delicious
+                <br />
+                items
+              </p>
+            </div>
+          </section>
+        </ScrollAnimate>
       )}
 
       {/* Bestsellers Section */}
       <section className="section" id="bestsellers">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Loved by many</p>
-            <h2>Our bestsellers.</h2>
+        <ScrollAnimate>
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Loved by many</p>
+              <h2>Our bestsellers.</h2>
+            </div>
+            <Link href="/shop" className="text-link">
+              View all →
+            </Link>
           </div>
-          <Link href="/shop" className="text-link">
-            View all →
-          </Link>
-        </div>
 
-        <div className="product-grid">
-          {products.map((product: any) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+          <div className="product-grid">
+            {products.map((product: any) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </ScrollAnimate>
       </section>
 
       {/* Values Section */}
-      <section className="values">
-        <div>
-          <b>01</b>
-          <h3>Ingredients you know</h3>
-          <p>No preservatives. No unpronounceable extras.</p>
-        </div>
+      <ScrollAnimate>
+        <section className="values">
+          <div>
+            <b>01</b>
+            <h3>Ingredients you know</h3>
+            <p>No preservatives. No unpronounceable extras.</p>
+          </div>
 
-        <div>
-          <b>02</b>
-          <h3>Rooted in tradition</h3>
-          <p>Time-tested recipes with wholesome millets.</p>
-        </div>
+          <div>
+            <b>02</b>
+            <h3>Rooted in tradition</h3>
+            <p>Time-tested recipes with wholesome millets.</p>
+          </div>
 
-        <div>
-          <b>03</b>
-          <h3>Fresh to your door</h3>
-          <p>Made in small batches and shipped across India.</p>
-        </div>
-      </section>
+          <div>
+            <b>03</b>
+            <h3>Fresh to your door</h3>
+            <p>Made in small batches and shipped across India.</p>
+          </div>
+        </section>
+      </ScrollAnimate>
 
       {/* Contact Section */}
-      <section className="contact-section" id="contact">
-        <div className="contact-container">
-          <div className="contact-content">
-            <p className="eyebrow">Get in touch</p>
-            <h2>We'd love to hear from you.</h2>
-            <p className="contact-description">
-              Have a question about our snacks, need help with an order, or want to explore bulk orders?
-              We're here to help.
-            </p>
+      <ScrollAnimate animation="right">
+        <section className="contact-section" id="contact">
+          <div className="contact-container">
+            <div className="contact-content">
+              <p className="eyebrow">Get in touch</p>
+              <h2>We'd love to hear from you.</h2>
+              <p className="contact-description">
+                Have a question about our snacks, need help with an order, or want to explore bulk orders?
+                We're here to help.
+              </p>
 
-            <div className="contact-details">
-              <div className="contact-item">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                </svg>
-                <div>
-                  <h4>Call us</h4>
-                  <a href="tel:+919876543210">+91 98765 43210</a>
+              <div className="contact-details">
+                <div className="contact-item">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  </svg>
+                  <div>
+                    <h4>Call us</h4>
+                    <a href="tel:+919876543210">+91 98765 43210</a>
+                  </div>
                 </div>
+
+                <div className="contact-item">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                  </svg>
+                  <div>
+                    <h4>Email us</h4>
+                    <a href="mailto:hello@raghulsnacks.com">hello@raghulsnacks.com</a>
+                  </div>
+                </div>
+
               </div>
 
-              <div className="contact-item">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                  <polyline points="22,6 12,13 2,6"></polyline>
-                </svg>
-                <div>
-                  <h4>Email us</h4>
-                  <a href="mailto:hello@raghulsnacks.com">hello@raghulsnacks.com</a>
-                </div>
+              <div className="contact-hours">
+                <h4>Business Hours</h4>
+                <p>Monday - Saturday: 9:00 AM - 6:00 PM</p>
+                <p>Sunday: Closed</p>
               </div>
-
             </div>
 
-            <div className="contact-hours">
-              <h4>Business Hours</h4>
-              <p>Monday - Saturday: 9:00 AM - 6:00 PM</p>
-              <p>Sunday: Closed</p>
+            <div className="contact-form-wrapper">
+              <form className="contact-form">
+                <h3>Send us a message</h3>
+
+                <label>
+                  <span>Your name</span>
+                  <input type="text" name="name" placeholder="Full name" required />
+                </label>
+
+                <label>
+                  <span>Email address</span>
+                  <input type="email" name="email" placeholder="you@example.com" required />
+                </label>
+
+                <label>
+                  <span>Phone number</span>
+                  <input type="tel" name="phone" placeholder="10-digit mobile number" />
+                </label>
+
+                <label>
+                  <span>Message</span>
+                  <textarea name="message" rows={5} placeholder="How can we help you?" required></textarea>
+                </label>
+
+                <button type="submit" className="button button-dark">
+                  Send message
+                </button>
+              </form>
             </div>
           </div>
-
-          <div className="contact-form-wrapper">
-            <form className="contact-form">
-              <h3>Send us a message</h3>
-
-              <label>
-                <span>Your name</span>
-                <input type="text" name="name" placeholder="Full name" required />
-              </label>
-
-              <label>
-                <span>Email address</span>
-                <input type="email" name="email" placeholder="you@example.com" required />
-              </label>
-
-              <label>
-                <span>Phone number</span>
-                <input type="tel" name="phone" placeholder="10-digit mobile number" />
-              </label>
-
-              <label>
-                <span>Message</span>
-                <textarea name="message" rows={5} placeholder="How can we help you?" required></textarea>
-              </label>
-
-              <button type="submit" className="button button-dark">
-                Send message
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
+        </section>
+      </ScrollAnimate>
     </>
   );
 }

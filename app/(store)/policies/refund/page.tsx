@@ -6,7 +6,7 @@ export default function RefundPage() {
       
       <div className="policy-content">
         <h2>Our Return Policy</h2>
-        <p>At Raghul Snacks, we take pride in delivering fresh, high-quality snacks. If you're not satisfied with your order, we're committed to making it right.</p>
+        <p>At Raghul Delights, we take pride in delivering fresh, high-quality snacks. If you're not satisfied with your order, we're committed to making it right.</p>
         
         <h2>Eligibility for Returns</h2>
         <ul>

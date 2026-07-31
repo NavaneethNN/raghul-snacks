@@ -18,11 +18,13 @@ type Combo = any;
 export function ShopContent({
   categories,
   products,
-  combos
+  combos,
+  searchQuery = ""
 }: {
   categories: Category[];
   products: Product[];
-  combos: Combo[]
+  combos: Combo[];
+  searchQuery?: string;
 }) {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
@@ -33,6 +35,28 @@ export function ShopContent({
       setActiveTab(tabParam);
     }
   }, [tabParam]);
+
+  // Filter products based on search query
+  const filteredProducts = products.filter((product: any) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      product.name?.toLowerCase().includes(query) ||
+      product.description?.toLowerCase().includes(query) ||
+      product.categoryName?.toLowerCase().includes(query) ||
+      product.ingredients?.toLowerCase().includes(query)
+    );
+  });
+
+  // Filter combos based on search query
+  const filteredCombos = combos.filter((combo: any) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      combo.title?.toLowerCase().includes(query) ||
+      combo.items?.some((item: any) => item.name?.toLowerCase().includes(query))
+    );
+  });
 
   return (
     <>
@@ -85,11 +109,11 @@ export function ShopContent({
       </div>
 
       <div className="product-grid">
-        {activeTab === 'products' && products.map((product: any) => (
+        {activeTab === 'products' && filteredProducts.map((product: any) => (
           <ProductCard key={product.id} product={product} />
         ))}
 
-        {activeTab === 'combos' && combos.map((combo: any) => (
+        {activeTab === 'combos' && filteredCombos.map((combo: any) => (
           <article key={combo.id} className="product-card">
             <Link href={`/combo/${combo.slug}`} className="product-visual">
               {combo.image ? (
@@ -120,7 +144,7 @@ export function ShopContent({
         ))}
 
         {activeTab !== 'products' && activeTab !== 'combos' &&
-          products.filter((p: any) => p.categorySlug === activeTab).map((product: any) => (
+          filteredProducts.filter((p: any) => p.categorySlug === activeTab).map((product: any) => (
             <ProductCard key={product.id} product={product} />
           ))
         }

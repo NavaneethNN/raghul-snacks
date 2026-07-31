@@ -13,8 +13,11 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
       <footer>
         <div className="footer-container">
           <div className="footer-brand">
-            <div className="brand">
-              <span>Raghul</span> Snacks
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <img src="/logo-footer.png" alt="Raghul Delights" style={{ height: "80px", width: "auto" }} />
+              <Link href="/" className="brand">
+                <span>Raghul</span> Delights
+              </Link>
             </div>
             <p>Traditional South Indian snacks crafted with wholesome millets and authentic recipes. Made fresh in small batches, delivered across India.</p>
             <div className="footer-social">
@@ -65,15 +68,8 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
         </div>
 
         <div className="footer-bottom">
-          <p>&copy; 2024 Raghul Snacks. All rights reserved.</p>
-          <div className="footer-payment">
-            <span>We accept</span>
-            <div className="payment-icons">
-              <div className="payment-icon">VISA</div>
-              <div className="payment-icon">UPI</div>
-              <div className="payment-icon">Card</div>
-            </div>
-          </div>
+          <p>&copy; 2024 Raghul Delights. All rights reserved.</p>
+          
         </div>
       </footer>
     </>

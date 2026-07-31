@@ -35,7 +35,7 @@ export function AdminSettings() {
                   </label>
                   <input
                     type="text"
-                    defaultValue="Raghul Snacks"
+                    defaultValue="Raghul Delights"
                     style={{
                       width: '100%',
                       padding: '10px 14px',

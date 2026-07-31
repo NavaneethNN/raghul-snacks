@@ -80,9 +80,9 @@ export function AdminSidebar() {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.brand}>
-        <span className={styles.brandName}>
-          <span>Raghul</span> Snacks
-        </span>
+        <Link href="/admin" className={styles.brandName}>
+          <img src="/logo.png" alt="Raghul Delights" style={{ height: "40px", width: "auto", mixBlendMode: "multiply" }} />
+        </Link>
         <p className={styles.brandTagline}>Admin Panel</p>
       </div>
 
