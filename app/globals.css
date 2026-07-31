@@ -169,7 +169,7 @@ main {
 
 .hero-banner {
   position: absolute;
-  top: -100px;
+  top: 0;
   right: 10px;
   width: clamp(120px, 30%, 160px);
   background: linear-gradient(135deg, #fff8f0 0%, #ffefe0 100%);
@@ -224,7 +224,7 @@ main {
 @media (min-width: 768px) and (max-width: 1023px) {
   .hero-banner {
     position: absolute;
-    top: -100px;
+    top: 0;
     right: 10px;
     width: clamp(120px, 30%, 160px);
     margin: 0;

@@ -138,7 +138,6 @@ export default async function HomePage() {
                 alt="Traditional snacks"
               />
             </div>
-            <HeroBanner />
           </div>
         </div>
       </section>
