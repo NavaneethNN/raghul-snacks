@@ -12,36 +12,37 @@ export async function GET() {
       .from(banners)
       .orderBy(desc(banners.createdAt));
 
-    // Fetch validity from associated coupons
-    const bannersWithValidity = await Promise.all(
-      allBanners.map(async (banner) => {
-        if (banner.couponCode) {
-          const [coupon] = await db
-            .select()
-            .from(coupons)
-            .where(eq(coupons.code, banner.couponCode))
-            .limit(1);
-          
-          if (coupon) {
-            let validityText = "";
-            if (coupon.validFrom && coupon.validUntil) {
-              const fromDate = new Date(coupon.validFrom).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' });
-              const untilDate = new Date(coupon.validUntil).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
-              validityText = `Valid: ${fromDate} - ${untilDate}`;
-            } else if (coupon.validUntil) {
-              const untilDate = new Date(coupon.validUntil).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
-              validityText = `Valid until: ${untilDate}`;
-            }
-            
-            return {
-              ...banner,
-              validityText: validityText || banner.validityText,
-            };
+    // Fetch all coupons in a single query to avoid N+1 problem
+    const allCoupons = await db
+      .select()
+      .from(coupons);
+
+    // Create a map for quick lookup
+    const couponMap = new Map(allCoupons.map(c => [c.code, c]));
+
+    // Add validity from associated coupons
+    const bannersWithValidity = allBanners.map((banner) => {
+      if (banner.couponCode) {
+        const coupon = couponMap.get(banner.couponCode);
+        if (coupon) {
+          let validityText = "";
+          if (coupon.validFrom && coupon.validUntil) {
+            const fromDate = new Date(coupon.validFrom).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' });
+            const untilDate = new Date(coupon.validUntil).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
+            validityText = `Valid: ${fromDate} - ${untilDate}`;
+          } else if (coupon.validUntil) {
+            const untilDate = new Date(coupon.validUntil).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
+            validityText = `Valid until: ${untilDate}`;
           }
+          
+          return {
+            ...banner,
+            validityText: validityText || banner.validityText,
+          };
         }
-        return banner;
-      })
-    );
+      }
+      return banner;
+    });
 
     return NextResponse.json(bannersWithValidity);
   } catch (error) {
