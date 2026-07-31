@@ -1319,12 +1319,25 @@ h2 i {
 
 
 .hero-visual {
-  display: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero-image-wrapper {
+  display: block;
   position: relative;
 }
 
+.snacks-display {
+  display: none;
+}
+
+.snacks-display img {
+  display: none;
+}
+
 .hero-banner {
-  display: block !important;
   position: relative;
   top: auto;
   right: auto;
@@ -1341,7 +1354,14 @@ h2 i {
 }
 
 .hero-visual {
-  display: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero-image-wrapper {
+  display: block;
+  position: relative;
 }
 
 .snacks-display {
@@ -1350,6 +1370,22 @@ h2 i {
 
 .snacks-display img {
   display: none;
+}
+
+.hero-banner {
+  position: relative;
+  top: auto;
+  right: auto;
+  width: calc(100% - 32px);
+  max-width: 400px;
+  margin: 20px auto 24px;
+  box-sizing: border-box;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.hero-banner.transitioning {
+  opacity: 0;
+  transform: scale(0.95);
 }
 
 .promo-badge {

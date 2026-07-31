@@ -112,7 +112,7 @@ export function StoreHeader() {
   return (
     <header className="site-header">
       <div className="header-container">
-        <img src="/logo.png" alt="Raghul Delights" style={{ height: "60px", width: "auto", mixBlendMode: "multiply", margin: "-10px 0", padding: 0, maxHeight: "50px" }} />
+        <img src="/logo.png" alt="Raghul Delights" style={{ height: "70px", width: "auto", mixBlendMode: "multiply", margin: "-10px 0", padding: 0, maxHeight: "50px" }} />
         <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
           <Link className="brand" href="/">
           <span>Raghul</span> Delights
