@@ -178,12 +178,12 @@ main {
   padding: 10px 8px;
   overflow: hidden;
   text-align: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  animation: fadeIn 0.5s ease-in-out;
-  transition: all 0.3s ease;
-  max-height: calc(100% - 20px);
-  overflow-y: auto;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.hero-banner.transitioning {
+  opacity: 0;
+  transform: scale(0.95);
 }
 
 /* Mobile: Banner below hero section (matches hero background breakpoint) */
@@ -1332,6 +1332,12 @@ h2 i {
   max-width: 400px;
   margin: 20px auto 24px;
   box-sizing: border-box;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.hero-banner.transitioning {
+  opacity: 0;
+  transform: scale(0.95);
 }
 
 .hero-visual {

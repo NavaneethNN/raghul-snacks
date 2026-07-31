@@ -20,6 +20,8 @@ export type Banner = {
 export function HeroBanner() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [prevIndex, setPrevIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showToast, setShowToast] = useState(false);
 
@@ -30,11 +32,16 @@ export function HeroBanner() {
   useEffect(() => {
     if (banners.length > 1) {
       const interval = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % banners.length);
+        setIsTransitioning(true);
+        setTimeout(() => {
+          setPrevIndex(currentIndex);
+          setCurrentIndex((prev) => (prev + 1) % banners.length);
+          setTimeout(() => setIsTransitioning(false), 50);
+        }, 300);
       }, 5000); // Rotate every 5 seconds
       return () => clearInterval(interval);
     }
-  }, [banners]);
+  }, [banners, currentIndex]);
 
   async function fetchBanners() {
     try {
@@ -70,7 +77,7 @@ export function HeroBanner() {
 
   return (
     <>
-      <div className="hero-banner">
+      <div className={`hero-banner ${isTransitioning ? 'transitioning' : ''}`}>
         <div className="hero-banner-pattern">
           <span className="hero-banner-leaf leaf-1">🍃</span>
           <span className="hero-banner-leaf leaf-2">🍂</span>
