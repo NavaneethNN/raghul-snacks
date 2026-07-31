@@ -292,7 +292,7 @@ export default async function HomePage() {
                   </svg>
                   <div>
                     <h4>Call us</h4>
-                    <a href="tel:+919876543210">+91 98765 43210</a>
+                    <a href="tel:+918667829041">+91 86678 29041</a>
                   </div>
                 </div>
 

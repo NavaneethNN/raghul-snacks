@@ -40,7 +40,7 @@ export default function ShippingPage() {
         <p>Currently, we only ship within India. We're working on international shipping options and will update you when available.</p>
         
         <h2>Questions?</h2>
-        <p>Have questions about shipping? Contact us at <a href="mailto:hello@raghulsnacks.com">hello@raghulsnacks.com</a> or call <a href="tel:+919876543210">+91 98765 43210</a>.</p>
+        <p>Have questions about shipping? Contact us at <a href="mailto:hello@raghulsnacks.com">hello@raghulsnacks.com</a> or call <a href="tel:+918667829041">+91 86678 29041</a>.</p>
       </div>
     </section>
   );

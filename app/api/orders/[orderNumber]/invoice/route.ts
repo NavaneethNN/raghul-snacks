@@ -163,7 +163,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ ord
     doc.setFontSize(10);
     doc.text("Thank you for shopping with Raghul Delights!", pageWidth / 2, y, { align: "center" });
     y += 6;
-    doc.text("hello@raghulsnacks.com • +91 98765 43210", pageWidth / 2, y, { align: "center" });
+    doc.text("hello@raghulsnacks.com • +91 86678 29041", pageWidth / 2, y, { align: "center" });
 
     const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
 

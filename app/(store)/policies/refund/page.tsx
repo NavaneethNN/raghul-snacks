@@ -24,7 +24,7 @@ export default function RefundPage() {
         
         <h2>Return Process</h2>
         <ol>
-          <li>Contact us within 48 hours of delivery at <a href="mailto:hello@raghulsnacks.com">hello@raghulsnacks.com</a> or call <a href="tel:+919876543210">+91 98765 43210</a></li>
+          <li>Contact us within 48 hours of delivery at <a href="mailto:hello@raghulsnacks.com">hello@raghulsnacks.com</a> or call <a href="tel:+918667829041">+91 86678 29041</a></li>
           <li>Provide your order number and describe the issue with photos if possible</li>
           <li>Our team will review your case within 24 hours</li>
           <li>If approved, we'll arrange for replacement or refund</li>
@@ -47,7 +47,7 @@ export default function RefundPage() {
         <p>Have questions about returns? Reach out to us:</p>
         <ul>
           <li>Email: <a href="mailto:hello@raghulsnacks.com">hello@raghulsnacks.com</a></li>
-          <li>Phone: <a href="tel:+919876543210">+91 98765 43210</a></li>
+          <li>Phone: <a href="tel:+918667829041">+91 86678 29041</a></li>
         </ul>
       </div>
     </section>

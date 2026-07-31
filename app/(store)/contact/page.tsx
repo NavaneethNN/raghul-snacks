@@ -84,7 +84,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h4>Phone</h4>
-                    <a href="tel:+919876543210">+91 98765 43210</a>
+                    <a href="tel:+918667829041">+91 86678 29041</a>
                     <p>Mon-Sat, 9 AM - 6 PM</p>
                   </div>
                 </div>

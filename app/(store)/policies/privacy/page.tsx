@@ -90,7 +90,7 @@ export default function PrivacyPage() {
         <p>If you have questions about this privacy policy or your personal data, contact us:</p>
         <ul>
           <li>Email: <a href="mailto:hello@raghulsnacks.com">hello@raghulsnacks.com</a></li>
-          <li>Phone: <a href="tel:+919876543210">+91 98765 43210</a></li>
+          <li>Phone: <a href="tel:+918667829041">+91 86678 29041</a></li>
         </ul>
       </div>
     </section>
