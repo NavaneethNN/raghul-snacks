@@ -1318,6 +1318,17 @@ h2 i {
   position: relative;
 }
 
+.hero-banner {
+  display: block !important;
+  position: relative;
+  top: auto;
+  right: auto;
+  width: calc(100% - 32px);
+  max-width: 400px;
+  margin: 20px auto 24px;
+  box-sizing: border-box;
+}
+
 .hero-image-wrapper {
   display: none;
 }
