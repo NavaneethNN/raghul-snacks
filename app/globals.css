@@ -1338,13 +1338,12 @@ h2 i {
 }
 
 .hero-banner {
-  display: block !important;
   position: relative;
   top: auto;
   right: auto;
   width: calc(100% - 32px);
   max-width: 400px;
-  margin: 20px auto 24px;
+  margin: 20px auto 0;
   box-sizing: border-box;
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
