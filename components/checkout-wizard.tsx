@@ -35,7 +35,7 @@ export function CheckoutWizard() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
   const itemPayload = useMemo(() => items.map((item) => ({ productId: item.id, quantity: item.quantity })), [items]);
-  const shipping = quote?.charge ? 0;
+  const shipping = quote?.charge || 0;
   const discount = appliedCoupon 
     ? (appliedCoupon.discountType === "percentage" 
         ? (subtotal * Number(appliedCoupon.value)) / 100 
