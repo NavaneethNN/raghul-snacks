@@ -1,0 +1,31 @@
+﻿<!DOCTYPE html>
+<html>
+<body>
+<iframe id="f" src="http://localhost:3000" style="width:375px;height:1000px;border:none"></iframe>
+<script>
+document.getElementById('f').onload = function() {
+  setTimeout(function() {
+    try {
+      var doc = document.getElementById('f').contentDocument;
+      var hero = doc.querySelector('.hero');
+      var banner = doc.querySelector('.hero-banner');
+      var result = {
+        heroOverflow: getComputedStyle(hero).overflow,
+        heroHeight: hero.offsetHeight,
+        heroPaddingBottom: getComputedStyle(hero).paddingBottom,
+        bannerHeight: banner ? banner.offsetHeight : 'null',
+        bannerBottom: banner ? getComputedStyle(banner).bottom : 'null',
+        bannerPosition: banner ? getComputedStyle(banner).position : 'null',
+        bannerDisplay: banner ? getComputedStyle(banner).display : 'null',
+        bannerRect: banner ? JSON.stringify(banner.getBoundingClientRect()) : 'null',
+        heroRect: JSON.stringify(hero.getBoundingClientRect())
+      };
+      document.title = JSON.stringify(result);
+    } catch(e) {
+      document.title = 'ERROR: ' + e.message;
+    }
+  }, 3000);
+};
+</script>
+</body>
+</html>
