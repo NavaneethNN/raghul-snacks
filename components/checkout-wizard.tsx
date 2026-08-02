@@ -73,25 +73,25 @@ export function CheckoutWizard() {
     if (savedPincode && /^\d{6}$/.test(savedPincode))
       setForm((c) => ({ ...c, pincode: savedPincode }));
 
+    // Pre-fill contact details for logged-in users; guests can proceed without signing in
     fetch("/api/auth/session")
       .then(async (res) => {
         const data = (await res.json()) as {
           account?: { name: string; email: string } | null;
         };
-        if (!data.account) {
-          window.location.href = `/login?returnTo=${encodeURIComponent("/checkout")}`;
-          return;
+        if (data.account) {
+          setAccount(data.account);
+          setForm((c) => ({
+            ...c,
+            customerName: data.account!.name,
+            email: data.account!.email,
+          }));
         }
-        setAccount(data.account);
-        setForm((c) => ({
-          ...c,
-          customerName: data.account!.name,
-          email: data.account!.email,
-        }));
         setCheckingAuth(false);
       })
       .catch(() => {
-        window.location.href = `/login?returnTo=${encodeURIComponent("/checkout")}`;
+        // Network error — still allow guest checkout
+        setCheckingAuth(false);
       });
   }, []);
 
@@ -236,6 +236,8 @@ export function CheckoutWizard() {
       if (!/^[6-9]\d{9}$/.test(form.phone)) { setError("Please enter a valid 10-digit Indian mobile number starting with 6-9."); return; }
     }
     setStep(nextStep);
+    // Scroll to top so the new step header is visible, especially on mobile
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // ── Payment ────────────────────────────────────────────────────────────────
@@ -453,7 +455,7 @@ export function CheckoutWizard() {
                         : ""
                     }
                     disabled={number > step}
-                    onClick={() => setStep(number)}
+                    onClick={() => { setStep(number); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                   >
                     <span>{number < step ? "✓" : number}</span>
                     {label}
@@ -493,10 +495,20 @@ export function CheckoutWizard() {
                       onChange={(e) => update("phone", e.target.value)}
                     />
                   </label>
-                  <p className={styles.full}>
-                    Signed in as <strong>{account?.name}</strong> ({account?.email}).
-                    Your order will be added to this account.
-                  </p>
+                  {account ? (
+                    <p className={styles.full}>
+                      Signed in as <strong>{account.name}</strong> ({account.email}).
+                      Your order will be added to this account.
+                    </p>
+                  ) : (
+                    <p className={styles.full} style={{ fontSize: 13, color: "#687267" }}>
+                      Checking out as guest.{" "}
+                      <a href="/login?returnTo=/checkout" style={{ color: "var(--terracotta)", fontWeight: 600 }}>
+                        Sign in
+                      </a>{" "}
+                      to save this order to your account.
+                    </p>
+                  )}
                 </div>
               </section>
             )}
@@ -595,7 +607,7 @@ export function CheckoutWizard() {
 
             <div className={styles.actions}>
               {step > 1 ? (
-                <button className={styles.secondary} type="button" onClick={() => setStep(step - 1)}>
+                <button className={styles.secondary} type="button" onClick={() => { setStep(step - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
                   ← Back
                 </button>
               ) : (

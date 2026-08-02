@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { customerAccounts, customers, orderItems, orders } from "@/drizzle/schema";
-import { createCustomerSession, customerCookieName, getCustomerSession, hashPassword } from "@/lib/customer-auth";
+import { createCustomerSession, customerCookieName, getCustomerSession } from "@/lib/customer-auth";
 import { getDb } from "@/lib/db";
 import { cashfreeVerifiedOrderSchema } from "@/lib/order-input";
 import { priceOrder } from "@/lib/order-pricing";
@@ -27,25 +27,28 @@ export async function POST(request: Request) {
     const courierId = Number(paymentOrder.order_tags?.courier_id);
     if (!Number.isFinite(total)) return NextResponse.json({ error: "Payment amount does not match this order." }, { status: 400 });
 
+    // Check if this is an authenticated user or a guest
     const cookieStore = await cookies();
     const session = getCustomerSession(cookieStore.get(customerCookieName())?.value);
+    let accountId: number | null = null;
+    let accountEmail: string | undefined;
 
-    // User must be logged in to checkout
-    if (!session) {
-      return NextResponse.json({ error: "You must be logged in to complete checkout." }, { status: 401 });
+    if (session) {
+      const account = (await db
+        .select({ id: customerAccounts.id, name: customerAccounts.name, email: customerAccounts.email })
+        .from(customerAccounts)
+        .where(eq(customerAccounts.id, session.id))
+        .limit(1))[0];
+      if (account) {
+        accountId = account.id;
+        accountEmail = account.email;
+      }
     }
 
-    const account = (await db.select({ id: customerAccounts.id, name: customerAccounts.name, email: customerAccounts.email }).from(customerAccounts).where(eq(customerAccounts.id, session.id)).limit(1))[0];
-
-    if (!account) {
-      return NextResponse.json({ error: "Account not found. Please log in again." }, { status: 404 });
-    }
-
-    // Recompute the discount server-side from the coupon code rather than
-    // trusting any discount figure the client might have sent.
+    // Recompute discount server-side (use account email for per-customer limits if logged in)
     let discount = 0;
     if (payload.data.couponCode) {
-      const couponResult = await validateCoupon(payload.data.couponCode, subtotal, lines, account.email);
+      const couponResult = await validateCoupon(payload.data.couponCode, subtotal, lines, accountEmail);
       if (!couponResult.ok) return NextResponse.json({ error: couponResult.error }, { status: 400 });
       discount = couponResult.discountAmount;
     }
@@ -53,18 +56,60 @@ export async function POST(request: Request) {
     const shipping = total - (subtotal - discount);
     if (shipping < 0) return NextResponse.json({ error: "Payment amount does not match this order." }, { status: 400 });
 
-    const [customer] = await db.insert(customers).values({ name: payload.data.customerName, phone: payload.data.phone, email: payload.data.email }).onConflictDoUpdate({ target: customers.phone, set: { name: payload.data.customerName, email: payload.data.email } }).returning({ id: customers.id });
+    const [customer] = await db
+      .insert(customers)
+      .values({ name: payload.data.customerName, phone: payload.data.phone, email: payload.data.email })
+      .onConflictDoUpdate({ target: customers.phone, set: { name: payload.data.customerName, email: payload.data.email } })
+      .returning({ id: customers.id });
+
     const orderNumber = `RS-${Date.now().toString().slice(-8)}`;
-    const [order] = await db.insert(orders).values({ orderNumber, customerId: customer.id, accountId: account.id, customerName: payload.data.customerName, phone: payload.data.phone, email: payload.data.email || null, address: payload.data.address, city: payload.data.city, state: payload.data.state, pincode: payload.data.pincode, total: String(total), couponCode: payload.data.couponCode || null, discount: String(discount), paymentStatus: "paid", orderStatus: "placed", paymentOrderId: payload.data.cashfreeOrderId }).returning({ id: orders.id });
-    await db.insert(orderItems).values(lines.map((line) => ({ orderId: order.id, name: line.product.name, quantity: line.quantity, price: String(line.product.offerPrice) })));
+    const [order] = await db
+      .insert(orders)
+      .values({
+        orderNumber,
+        customerId: customer.id,
+        accountId,           // null for guests
+        customerName: payload.data.customerName,
+        phone: payload.data.phone,
+        email: payload.data.email || null,
+        address: payload.data.address,
+        city: payload.data.city,
+        state: payload.data.state,
+        pincode: payload.data.pincode,
+        total: String(total),
+        couponCode: payload.data.couponCode || null,
+        discount: String(discount),
+        paymentStatus: "paid",
+        orderStatus: "placed",
+        paymentOrderId: payload.data.cashfreeOrderId,
+      })
+      .returning({ id: orders.id });
+
+    await db.insert(orderItems).values(
+      lines.map((line) => ({ orderId: order.id, name: line.product.name, quantity: line.quantity, price: String(line.product.offerPrice) }))
+    );
+
     try {
       const shipment = await createShiprocketShipment({ orderNumber, customerName: payload.data.customerName, phone: payload.data.phone, email: payload.data.email || null, address: payload.data.address, city: payload.data.city, state: payload.data.state, pincode: payload.data.pincode, subtotal, shipping, courierId: Number.isFinite(courierId) ? courierId : null, lines });
       if (shipment) await db.update(orders).set({ shiprocketOrderId: String(shipment.order_id), shipmentId: shipment.shipment_id ? String(shipment.shipment_id) : null, awbCode: shipment.awb_code ?? null, shippingStatus: "created" }).where(eq(orders.id, order.id));
     } catch {
       await db.update(orders).set({ shippingStatus: "failed" }).where(eq(orders.id, order.id));
     }
+
     const response = NextResponse.json({ verified: true, orderNumber });
-    response.cookies.set(customerCookieName(), createCustomerSession(account), { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 30 });
+
+    // Only set a session cookie for logged-in users (guests don't get one)
+    if (session && accountId) {
+      const account = { id: accountId, name: payload.data.customerName, email: payload.data.email };
+      response.cookies.set(customerCookieName(), createCustomerSession(account as any), {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30,
+      });
+    }
+
     return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Payment was verified but the order could not be saved.";

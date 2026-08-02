@@ -52,6 +52,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   const router = useRouter();
   const { addItem } = useCart();
   const [signingOut, setSigningOut] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [name, setName] = useState(account.name);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(account.name);
@@ -74,14 +75,10 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   });
 
   async function handleSignOut() {
-    if (!confirm("Are you sure you want to sign out?")) return;
-
     setSigningOut(true);
+    setConfirmSignOut(false);
     try {
-      const response = await fetch("/api/auth/session", {
-        method: "DELETE",
-      });
-
+      const response = await fetch("/api/auth/session", { method: "DELETE" });
       if (response.ok) {
         router.push("/");
         router.refresh();
@@ -209,13 +206,25 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
         <section className={styles.card}>
           <div className={styles.cardHeader}>
             <h2>Account Details</h2>
-            <button
-              onClick={handleSignOut}
-              className={styles.signOutButton}
-              disabled={signingOut}
-            >
-              {signingOut ? "Signing out..." : "Sign Out"}
-            </button>
+            {!confirmSignOut ? (
+              <button
+                onClick={() => setConfirmSignOut(true)}
+                className={styles.signOutButton}
+                disabled={signingOut}
+              >
+                {signingOut ? "Signing out…" : "Sign Out"}
+              </button>
+            ) : (
+              <div className={styles.signOutConfirm}>
+                <span>Sign out?</span>
+                <button onClick={handleSignOut} className={styles.signOutConfirmYes} disabled={signingOut}>
+                  Yes
+                </button>
+                <button onClick={() => setConfirmSignOut(false)} className={styles.signOutConfirmNo}>
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
           <div className={styles.accountInfo}>
             <div className={styles.infoRow}>

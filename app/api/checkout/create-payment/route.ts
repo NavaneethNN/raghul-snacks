@@ -18,21 +18,18 @@ export async function POST(request: Request) {
     const cookieStore = await cookies();
     const session = getCustomerSession(cookieStore.get(customerCookieName())?.value);
 
-    // User must be logged in to checkout
-    if (!session) {
-      return NextResponse.json({ error: "You must be logged in to continue checkout." }, { status: 401 });
+    // Resolve account email for coupon validation (guests have no account)
+    let accountEmail: string | undefined;
+    if (session) {
+      const account = (await db.select({ id: customerAccounts.id, email: customerAccounts.email }).from(customerAccounts).where(eq(customerAccounts.id, session.id)).limit(1))[0];
+      if (account) accountEmail = account.email;
     }
 
-    const account = (await db.select({ id: customerAccounts.id, email: customerAccounts.email }).from(customerAccounts).where(eq(customerAccounts.id, session.id)).limit(1))[0];
-
-    if (!account) {
-      return NextResponse.json({ error: "Account not found. Please log in again." }, { status: 404 });
-    }
     const { lines, subtotal, weight } = await priceOrder(payload.data.items);
 
     let discount = 0;
     if (payload.data.couponCode) {
-      const couponResult = await validateCoupon(payload.data.couponCode, subtotal, lines, account.email);
+      const couponResult = await validateCoupon(payload.data.couponCode, subtotal, lines, accountEmail);
       if (!couponResult.ok) return NextResponse.json({ error: couponResult.error }, { status: 400 });
       discount = couponResult.discountAmount;
     }

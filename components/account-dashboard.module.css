@@ -80,6 +80,58 @@
   cursor: not-allowed;
 }
 
+/* Inline sign-out confirmation */
+.signOutConfirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: slideDown 0.15s ease-out;
+}
+
+.signOutConfirm span {
+  font-size: 13px;
+  color: var(--ink);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.signOutConfirmYes {
+  background: var(--terracotta);
+  border: 1.5px solid var(--terracotta);
+  color: white;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font: 600 13px 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.signOutConfirmYes:hover {
+  background: #b84e2e;
+  border-color: #b84e2e;
+}
+
+.signOutConfirmYes:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.signOutConfirmNo {
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+  padding: 7px 14px;
+  border-radius: 8px;
+  font: 600 13px 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.signOutConfirmNo:hover {
+  border-color: var(--terracotta);
+  color: var(--terracotta);
+}
+
 .accountInfo {
   display: flex;
   flex-direction: column;

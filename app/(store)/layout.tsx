@@ -14,8 +14,8 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
         <div className="footer-container">
           <div className="footer-brand">
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <img src="/logo-footer.png" alt="Raghul Delights" style={{ height: "80px", width: "auto" }} />
-              <Link href="/" className="brand">
+              <Link href="/" className="brand" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <img src="/logo-footer.png" alt="Raghul Delights" style={{ height: "80px", width: "auto" }} />
                 <span>Raghul</span> Delights
               </Link>
             </div>

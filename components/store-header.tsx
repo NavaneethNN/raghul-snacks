@@ -148,12 +148,12 @@ export function StoreHeader() {
   return (
     <header className="site-header">
       <div className="header-container">
-        <img src="/logo.png" alt="Raghul Delights" style={{ height: "48px", width: "auto", mixBlendMode: "multiply", margin: 0, padding: 0 }} />
+        <Link className="logo" href="/" >
+            <img src="/logo.png" alt="Raghul Delights" style={{ height: "48px", width: "auto", mixBlendMode: "multiply", margin: 0, padding: 0 }} />
+        </Link>
         <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-          <Link className="brand" href="/">
-          <span>Raghul</span> Delights
-
-            
+          <Link className="brand" href="/" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span>Raghul</span> Delights
           </Link>
           <p className="brand-tagline">Homemade • Fresh • Traditional</p>
         </div>

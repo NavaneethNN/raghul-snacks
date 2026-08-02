@@ -4,6 +4,7 @@ import "./globals.css";
 import { CartProvider } from "@/components/cart/cart-provider";
 import { WishlistProvider } from "@/components/wishlist/wishlist-provider";
 import { NavigationProgress } from "@/components/navigation-progress";
+import { ToastProvider } from "@/components/toast-provider";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -39,7 +40,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <NavigationProgress />
         <CartProvider>
           <WishlistProvider>
-            {children}
+            <ToastProvider>
+              {children}
+            </ToastProvider>
           </WishlistProvider>
         </CartProvider>
       </body>

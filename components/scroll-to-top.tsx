@@ -1,14 +1,26 @@
 "use client";
 
-import { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, Suspense } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
-export function ScrollToTop() {
+// Inner component uses useSearchParams which requires Suspense
+function ScrollToTopInner() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  // Both pathname and searchParams changes should scroll to top
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, searchParams]);
 
   return null;
+}
+
+export function ScrollToTop() {
+  return (
+    <Suspense fallback={null}>
+      <ScrollToTopInner />
+    </Suspense>
+  );
 }
