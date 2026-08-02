@@ -163,7 +163,7 @@ export function AdminCoupons() {
       return;
     }
 
-    if (!formData.value || parseFloat(formData.value) <= 0) {
+    if (formData.discountType !== "bogo" && (!formData.value || parseFloat(formData.value) <= 0)) {
       setError("Valid discount value is required");
       setFormLoading(false);
       return;
@@ -294,10 +294,16 @@ export function AdminCoupons() {
                         {coupon.code}
                       </code>
                     </td>
-                    <td style={{ textTransform: "capitalize" }}>{coupon.discountType}</td>
+                    <td style={{ textTransform: "capitalize" }}>
+                      {coupon.discountType === "bogo" ? "BOGO" : coupon.discountType}
+                    </td>
                     <td>
                       <strong>
-                        {coupon.discountType === "percentage" ? `${coupon.value}%` : `₹${coupon.value}`}
+                        {coupon.discountType === "bogo"
+                          ? "Buy 1 Get 1"
+                          : coupon.discountType === "percentage"
+                          ? `${coupon.value}%`
+                          : `₹${coupon.value}`}
                       </strong>
                     </td>
                     <td>
@@ -409,28 +415,54 @@ export function AdminCoupons() {
                     <label>Discount Type</label>
                     <select
                       value={formData.discountType}
-                      onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
+                      onChange={(e) => {
+                        const t = e.target.value;
+                        setFormData({
+                          ...formData,
+                          discountType: t,
+                          // BOGO doesn't use a monetary value — reset it so the
+                          // hidden field doesn't send a stale number.
+                          value: t === "bogo" ? "0" : formData.value,
+                          // BOGO always targets specific products; auto-switch applyTo.
+                          applyTo: t === "bogo" ? "products" : formData.applyTo,
+                        });
+                      }}
                       required
                     >
                       <option value="percentage">Percentage</option>
                       <option value="fixed">Fixed Amount</option>
+                      <option value="bogo">Buy 1 Get 1 Free (BOGO)</option>
                     </select>
                   </div>
-                  <div className={styles.field}>
-                    <label>{formData.discountType === "percentage" ? "Discount Percentage" : "Discount Amount"}</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      placeholder={formData.discountType === "percentage" ? "e.g., 20" : "e.g., 100"}
-                      value={formData.value}
-                      onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                      required
-                    />
-                    <small style={{ color: "#6b7280", fontSize: "12px" }}>
-                      {formData.discountType === "percentage" ? "Enter percentage value (e.g., 20 for 20%)" : "Enter fixed amount in rupees"}
-                    </small>
-                  </div>
+                  {formData.discountType !== "bogo" && (
+                    <div className={styles.field}>
+                      <label>{formData.discountType === "percentage" ? "Discount Percentage" : "Discount Amount"}</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder={formData.discountType === "percentage" ? "e.g., 20" : "e.g., 100"}
+                        value={formData.value}
+                        onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                        required
+                      />
+                      <small style={{ color: "#6b7280", fontSize: "12px" }}>
+                        {formData.discountType === "percentage"
+                          ? "Enter percentage value (e.g., 20 for 20%)"
+                          : "Enter fixed amount in rupees"}
+                      </small>
+                    </div>
+                  )}
                 </div>
+
+                {/* BOGO explanation box */}
+                {formData.discountType === "bogo" && (
+                  <div style={{ padding: "12px 14px", background: "#fef9c3", border: "1px solid #fde047", borderRadius: "6px", fontSize: "13px", color: "#713f12", marginBottom: "8px" }}>
+                    <strong>How BOGO works:</strong> customers get one free unit for every unit they buy of the selected product(s).
+                    Buy 2 → pay for 1, buy 4 → pay for 2, etc. The free unit is always valued at the product's current offer price.
+                    Leave the product selector below set to "Entire Store" to apply BOGO to every product in the cart.
+                  </div>
+                )}
+
                 {formData.discountType === "percentage" && (
                   <div className={styles.field}>
                     <label>Maximum Discount</label>

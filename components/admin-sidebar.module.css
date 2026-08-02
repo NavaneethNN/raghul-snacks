@@ -21,12 +21,20 @@
   font: 700 24px / 1.2 'Playfair Display', serif;
   letter-spacing: -0.01em;
   color: var(--cream);
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 4px;
 }
 
 .brandName span:first-child {
   color: var(--terracotta);
+}
+
+.shopName {
+  font: 700 20px / 1.2 'Playfair Display', serif;
+  color: var(--cream);
+  white-space: nowrap;
 }
 
 .brandTagline {

@@ -60,7 +60,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
               <h4>Support</h4>
               <ul>
                 <li><Link href="/policies/shipping">Shipping</Link></li>
-                <li><Link href="/policies/returns">Returns</Link></li>
+                <li><Link href="/policies/refund">Returns</Link></li>
                 <li><Link href="/policies/privacy">Privacy</Link></li>
               </ul>
             </div>

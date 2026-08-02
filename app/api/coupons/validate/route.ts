@@ -1,44 +1,45 @@
-import { NextRequest, NextResponse } from "next/server";
-import { coupons } from "@/drizzle/schema";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { customerAccounts } from "@/drizzle/schema";
+import { customerCookieName, getCustomerSession } from "@/lib/customer-auth";
+import { validateCoupon } from "@/lib/coupons";
 import { getDb } from "@/lib/db";
+import { orderItemSchema } from "@/lib/order-input";
+import { priceOrder } from "@/lib/order-pricing";
 import { eq } from "drizzle-orm";
 
+const inputSchema = z.object({ code: z.string().trim().min(1), items: z.array(orderItemSchema).min(1) });
+
 export async function POST(request: Request) {
+  const input = inputSchema.safeParse(await request.json());
+  if (!input.success) return NextResponse.json({ error: "A coupon code and your cart items are required." }, { status: 400 });
+
   try {
-    const body = await request.json();
-    const { code } = body;
+    const { lines, subtotal } = await priceOrder(input.data.items);
 
-    if (!code || typeof code !== "string") {
-      return NextResponse.json({ error: "Coupon code is required" }, { status: 400 });
+    const cookieStore = await cookies();
+    const session = getCustomerSession(cookieStore.get(customerCookieName())?.value);
+    let customerEmail: string | undefined;
+    if (session) {
+      const account = (await getDb().select({ email: customerAccounts.email }).from(customerAccounts).where(eq(customerAccounts.id, session.id)).limit(1))[0];
+      customerEmail = account?.email;
     }
 
-    const db = getDb();
-    const coupon = await db
-      .select()
-      .from(coupons)
-      .where(eq(coupons.code, code.toUpperCase()))
-      .limit(1);
-
-    if (!coupon || coupon.length === 0) {
-      return NextResponse.json({ error: "Invalid coupon code" }, { status: 404 });
-    }
-
-    const couponData = coupon[0];
-
-    if (!couponData.active) {
-      return NextResponse.json({ error: "This coupon is not active" }, { status: 400 });
-    }
+    const result = await validateCoupon(input.data.code, subtotal, lines, customerEmail);
+    if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
 
     return NextResponse.json({
       coupon: {
-        code: couponData.code,
-        discountType: couponData.discountType,
-        value: couponData.value,
-        active: couponData.active,
+        code: result.coupon.code,
+        name: result.coupon.name,
+        discountType: result.coupon.discountType,
+        value: result.coupon.value,
       },
+      discountAmount: result.discountAmount,
     });
   } catch (error) {
-    console.error("Error validating coupon:", error);
-    return NextResponse.json({ error: "Failed to validate coupon" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Failed to validate coupon.";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

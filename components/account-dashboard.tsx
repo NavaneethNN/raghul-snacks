@@ -12,7 +12,7 @@ type Order = {
   total: string;
   orderStatus: string;
   paymentStatus: string;
-  createdAt: Date;
+  createdAt: string;
   items: Array<{
     id: number;
     productId: number | null;
@@ -33,7 +33,6 @@ type Order = {
       stock: number;
       featured: boolean;
       bestseller: boolean;
-      createdAt: Date;
     } | null;
   }>;
 };
@@ -51,6 +50,11 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   const router = useRouter();
   const { addItem } = useCart();
   const [signingOut, setSigningOut] = useState(false);
+  const [name, setName] = useState(account.name);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(account.name);
+  const [savingName, setSavingName] = useState(false);
+  const [nameError, setNameError] = useState("");
 
   const price = new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -99,6 +103,44 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
     }
   }
 
+  function startEditingName() {
+    setNameDraft(name);
+    setNameError("");
+    setEditingName(true);
+  }
+
+  function cancelEditingName() {
+    setEditingName(false);
+    setNameError("");
+    setNameDraft(name);
+  }
+
+  async function saveName() {
+    const trimmed = nameDraft.trim();
+    if (trimmed.length < 2) {
+      setNameError("Name must be at least 2 characters long.");
+      return;
+    }
+    setSavingName(true);
+    setNameError("");
+    try {
+      const response = await fetch("/api/account", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmed }),
+      });
+      const data = await response.json() as { account?: { name: string }; error?: string };
+      if (!response.ok) throw new Error(data.error || "Unable to update your name.");
+      setName(data.account?.name || trimmed);
+      setEditingName(false);
+      router.refresh();
+    } catch (error) {
+      setNameError(error instanceof Error ? error.message : "Unable to update your name.");
+    } finally {
+      setSavingName(false);
+    }
+  }
+
   function handleBuyAgain(order: Order) {
     if (!order.items || order.items.length === 0) {
       alert("No items in this order");
@@ -106,14 +148,15 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
     }
 
     let addedCount = 0;
+    let skippedCount = 0;
+
     order.items.forEach((item) => {
       if (item.product) {
-        // Transform database product to catalog Product type
         const catalogProduct = {
           id: String(item.product.id),
           slug: item.product.slug,
           name: item.product.name,
-          category: "snacks", // Default category since it's not in database
+          category: "snacks",
           price: Number(item.product.price),
           offerPrice: Number(item.product.offerPrice || item.product.price),
           weight: item.product.weight,
@@ -124,15 +167,21 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
         };
         addItem(catalogProduct, item.quantity);
         addedCount++;
+      } else {
+        skippedCount++;
       }
     });
 
-    if (addedCount > 0) {
-      alert(`${addedCount} item(s) added to cart`);
-      router.push("/cart");
-    } else {
-      alert("Unable to add items to cart. Some products may no longer be available.");
+    if (addedCount === 0) {
+      alert("These products are no longer available.");
+      return;
     }
+
+    if (skippedCount > 0) {
+      alert(`${addedCount} item${addedCount > 1 ? "s" : ""} added to cart. ${skippedCount} item${skippedCount > 1 ? "s are" : " is"} no longer available.`);
+    }
+
+    router.push("/cart");
   }
 
   return (
@@ -160,7 +209,49 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
           <div className={styles.accountInfo}>
             <div className={styles.infoRow}>
               <span className={styles.label}>Name</span>
-              <strong>{account.name}</strong>
+              {editingName ? (
+                <div className={styles.nameEdit}>
+                  <input
+                    className={styles.nameInput}
+                    value={nameDraft}
+                    onChange={(event) => setNameDraft(event.target.value)}
+                    autoFocus
+                    maxLength={100}
+                    disabled={savingName}
+                  />
+                  <button
+                    type="button"
+                    className={styles.nameSaveButton}
+                    onClick={saveName}
+                    disabled={savingName}
+                  >
+                    {savingName ? "Saving…" : "Save"}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.nameCancelButton}
+                    onClick={cancelEditingName}
+                    disabled={savingName}
+                  >
+                    Cancel
+                  </button>
+                  {nameError && <p className={styles.nameError}>{nameError}</p>}
+                </div>
+              ) : (
+                <span className={styles.nameDisplay}>
+                  <strong>{name}</strong>
+                  <button
+                    type="button"
+                    className={styles.editIconButton}
+                    onClick={startEditingName}
+                    aria-label="Edit name"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                    </svg>
+                  </button>
+                </span>
+              )}
             </div>
             <div className={styles.infoRow}>
               <span className={styles.label}>Email</span>

@@ -25,7 +25,17 @@ type Coupon = {
   description: string | null;
   discountType: string;
   value: string;
+  validFrom: string | null;
+  validUntil: string | null;
 };
+
+function couponValidityText(coupon: Coupon): string {
+  if (coupon.validUntil) {
+    const untilDate = new Date(coupon.validUntil).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    return `Valid upto ${untilDate}`;
+  }
+  return "";
+}
 
 const initialForm = {
   eyebrow: "",
@@ -180,6 +190,7 @@ export function AdminBanners() {
           offerText: selectedCoupon.discountType === "percentage" 
             ? `${selectedCoupon.value}% OFF` 
             : `₹${selectedCoupon.value} OFF`,
+          validityText: couponValidityText(selectedCoupon) || form.validityText,
         });
       }
     }

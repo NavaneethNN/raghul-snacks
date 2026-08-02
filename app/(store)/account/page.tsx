@@ -57,22 +57,50 @@ export default async function AccountPage() {
         .from(orderItems)
         .where(eq(orderItems.orderId, order.id));
 
-      // Fetch product details for each item
+      // Fetch product details for each item.
+      // product_id is null on older orders — fall back to matching by name.
       const itemsWithProducts = await Promise.all(
         items.map(async (item) => {
-          if (item.productId) {
-            const product = await db
-              .select()
-              .from(products)
-              .where(eq(products.id, item.productId))
-              .limit(1);
-            return { ...item, product: product[0] || null };
-          }
-          return { ...item, product: null };
+          const lookupById = item.productId
+            ? await db.select().from(products).where(eq(products.id, item.productId)).limit(1)
+            : [];
+
+          const lookupByName = lookupById.length === 0
+            ? await db.select().from(products).where(eq(products.name, item.name)).limit(1)
+            : [];
+
+          const p = lookupById[0] ?? lookupByName[0] ?? null;
+
+          return {
+            ...item,
+            product: p
+              ? {
+                  id: p.id,
+                  name: p.name,
+                  slug: p.slug,
+                  description: p.description,
+                  ingredients: p.ingredients,
+                  price: p.price,
+                  offerPrice: p.offerPrice,
+                  weight: p.weight,
+                  categoryId: p.categoryId,
+                  image: p.image,
+                  stock: p.stock,
+                  featured: p.featured,
+                  bestseller: p.bestseller,
+                }
+              : null,
+          };
         })
       );
 
-      return { ...order, items: itemsWithProducts };
+    return {
+        ...order,
+        total: String(order.total),
+        discount: String(order.discount),
+        createdAt: order.createdAt.toISOString(),
+        items: itemsWithProducts,
+      };
     })
   );
 

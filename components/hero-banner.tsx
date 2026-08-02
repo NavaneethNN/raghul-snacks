@@ -17,16 +17,22 @@ export type Banner = {
   active: boolean;
 };
 
-export function HeroBanner() {
-  const [banners, setBanners] = useState<Banner[]>([]);
+export function HeroBanner({ initialBanners }: { initialBanners?: Banner[] } = {}) {
+  const initialActive = (initialBanners ?? []).filter((b) => b.active);
+  const [banners, setBanners] = useState<Banner[]>(initialActive);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [prevIndex, setPrevIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialBanners === undefined);
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    fetchBanners();
+    // Server already provided the initial banners for the first paint;
+    // only fetch here to pick up changes made after the page was rendered.
+    if (initialBanners === undefined) {
+      fetchBanners();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -104,7 +110,6 @@ export function HeroBanner() {
               style={{ cursor: 'pointer' }}
             >
               <span className="hero-banner-coupon-text">
-                {banner.offerText || `Use Code:`}{" "}
                 <strong>{banner.couponCode}</strong>
               </span>
             </div>

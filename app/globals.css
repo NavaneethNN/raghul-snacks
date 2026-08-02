@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&display=swap');
+/* Fonts are loaded via next/font in app/layout.tsx — no @import needed here */
 
 :root {
   --ink: #243127;
@@ -23,13 +23,13 @@ body {
   margin: 0;
   background: var(--cream);
   color: var(--ink);
-  font: 16px / 1.5 'DM Sans', sans-serif;
+  font: 16px / 1.5 var(--font-dm-sans, 'DM Sans', sans-serif);
   transition: background-color 0.3s ease;
   overflow-x: hidden;
 }
 
 main {
-  animation: fadeIn 0.3s ease-in-out;
+  /* No entrance animation — instant feel on navigation */
 }
 
 @keyframes fadeIn {
@@ -169,13 +169,14 @@ main {
 
 .hero-banner {
   position: absolute;
-  top: 0;
+  top: 10px;
   right: 10px;
-  width: clamp(120px, 30%, 160px);
+  width: fit-content;
+  min-width: 200px;
   background: linear-gradient(135deg, #fff8f0 0%, #ffefe0 100%);
   border: 2px dashed #e5a52f66;
   border-radius: 10px;
-  padding: 10px 8px;
+  padding: 10px 14px;
   overflow: hidden;
   text-align: center;
   transition: opacity 0.3s ease, transform 0.3s ease;
@@ -201,21 +202,41 @@ main {
     flex-shrink: 1;
   }
 
+  .hero::before {
+    height: 520px !important;
+    bottom: auto !important;
+  }
+
+  .hero-visual {
+    display: flex !important;
+    justify-content: center;
+    padding: 0 16px 20px;
+  }
+
+  .hero-image-wrapper {
+    position: static;
+    display: contents;
+  }
+
   .hero-banner {
-    position: relative;
-    top: auto;
-    right: auto;
-    width: calc(100% - 32px);
-    max-width: 400px;
-    margin: 20px auto 24px;
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    transform: none !important;
+    width: fit-content;
+    min-width: 200px;
+    max-width: calc(100% - 24px);
+    margin: 0 auto;
     box-sizing: border-box;
     display: block !important;
+    z-index: 2;
   }
 
   .hero-banner-cta {
     display: block;
-    width: auto;
-    max-width: 200px;
+    width: fit-content;
     margin: 8px auto 0;
   }
 }
@@ -224,9 +245,10 @@ main {
 @media (min-width: 768px) and (max-width: 1023px) {
   .hero-banner {
     position: absolute;
-    top: 0;
+    top: 10px;
     right: 10px;
-    width: clamp(120px, 30%, 160px);
+    width: fit-content;
+    min-width: 200px;
     margin: 0;
     max-height: calc(100% - 20px);
     overflow-y: auto;
@@ -282,12 +304,14 @@ main {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--terracotta);
+  white-space: nowrap;
 }
 
 .hero-banner-title {
   margin: 0 0 2px;
   font: 700 16px / 1.1 'Playfair Display', serif;
   color: var(--ink);
+  white-space: nowrap;
 }
 
 .hero-banner-title strong,
@@ -301,38 +325,45 @@ main {
   font-size: 9px;
   color: #5c6358;
   line-height: 1.3;
+  white-space: nowrap;
 }
 
 .hero-banner-coupon {
   display: inline-block;
   border: 1.5px dashed var(--terracotta);
   border-radius: 3px;
-  padding: 1px 4px;
+  padding: 4px 10px;
   margin: 0 auto 6px;
   background: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  width: max-content;
 }
 
 .hero-banner-coupon-text {
-  font-size: 9px;
+  font-size: 12px;
   color: var(--ink);
+  white-space: nowrap;
+  display: inline;
 }
 
 .hero-banner-coupon-text strong {
   color: var(--terracotta);
   font-weight: 700;
+  display: inline;
 }
 
 .hero-banner-cta {
   display: block;
   background: var(--ink);
   color: white;
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 3px;
-  font: 600 9px 'DM Sans', sans-serif;
+  font: 600 10px 'DM Sans', sans-serif;
   text-decoration: none;
   margin: 0 auto 3px;
   transition: background 0.3s ease, transform 0.2s ease;
-  width: fit-content;
+  width: max-content;
+  white-space: nowrap !important;
 }
 
 .hero-banner-cta:hover {
@@ -344,6 +375,7 @@ main {
   margin: 0;
   font-size: 8px;
   color: #6b7280;
+  white-space: nowrap;
 }
 
 .hero-banner-dots {
@@ -413,12 +445,9 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
-/* Global Transitions */
-* {
-  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-  transition-duration: 0.2s;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
+/* Targeted transitions only — the global wildcard rule was removed because
+   applying transition-property to every element causes unnecessary style
+   recalculations and jank during page navigation. */
 
 *:focus-visible {
   outline: 2px solid var(--terracotta);
@@ -855,11 +884,11 @@ body.mobile-menu-open .announcement {
   font-weight: 500;
   color: var(--ink);
   transition: all 0.2s;
-  border-left: 3px solid transparent;
   opacity: 0;
   transform: translateX(20px);
   background: none;
   border: none;
+  border-left: 3px solid transparent;
   text-align: left;
   width: 100%;
   cursor: pointer;
@@ -1060,7 +1089,7 @@ body.mobile-menu-open .announcement {
   flex-direction: column;
   align-items: stretch;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   background-image: url('/hero.png');
   background-size: cover;
   background-position: center;
@@ -1242,6 +1271,121 @@ h2 i {
   }
 }
 
+/* ===== VERY SMALL SCREENS (under 360px) ===== */
+@media (max-width: 360px) {
+  * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .hero {
+    overflow-x: hidden;
+  }
+
+  .hero-content {
+    padding: 24px 12px;
+    overflow: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .hero h1 {
+    font-size: clamp(22px, 7.5vw, 32px);
+  }
+
+  .hero-copy {
+    font-size: 13px;
+  }
+
+  .hero-feature span {
+    font-size: 11px;
+  }
+
+  .hero-feature {
+    gap: 6px;
+  }
+
+  .button {
+    padding: 12px 10px;
+    font-size: 12px;
+    white-space: normal !important;
+    text-align: center;
+    word-wrap: break-word;
+  }
+
+  .hero-banner {
+    min-width: unset;
+    max-width: calc(100% - 16px);
+  }
+
+  .hero-banner-eyebrow,
+  .hero-banner-subtitle,
+  .hero-banner-coupon-text,
+  .hero-banner-validity {
+    white-space: normal !important;
+  }
+
+  .hero-banner-title {
+    font-size: 14px;
+  }
+
+  .hero-banner-subtitle {
+    font-size: 11px;
+  }
+
+  .hero-banner-coupon {
+    padding: 4px 8px;
+  }
+
+  .hero-banner-coupon-text {
+    font-size: 11px;
+  }
+
+  .hero-banner-cta {
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+
+  .section-heading h2 {
+    font-size: clamp(18px, 6vw, 24px);
+  }
+
+  .section-heading {
+    padding: 0 12px;
+  }
+
+  .combo {
+    padding: 30px 12px;
+  }
+
+  .combo h2 {
+    font-size: clamp(22px, 7vw, 28px);
+  }
+
+  .combo p,
+  .combo li {
+    font-size: 13px;
+  }
+
+  .combo .button {
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+
+  .announcement {
+    font-size: 10px;
+    padding: 6px 8px;
+  }
+
+  .site-header {
+    padding: 6px 8px;
+  }
+
+  .brand {
+    font-size: 14px;
+  }
+}
+
 .button {
   border: 0;
   border-radius: 6px;
@@ -1335,22 +1479,6 @@ h2 i {
 
 .snacks-display img {
   display: none;
-}
-
-.hero-banner {
-  position: relative;
-  top: auto;
-  right: auto;
-  width: calc(100% - 32px);
-  max-width: 400px;
-  margin: 20px auto 0;
-  box-sizing: border-box;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.hero-banner.transitioning {
-  opacity: 0;
-  transform: scale(0.95);
 }
 
 .promo-badge {
@@ -1512,8 +1640,8 @@ h2 i {
 /* Shop page and Wishlist page responsive grid */
 .shop-page .product-grid,
 .wishlist-page .product-grid {
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
 }
 
 /* Staggered animation for product cards */
@@ -1536,8 +1664,8 @@ h2 i {
 /* Home page bestsellers section - responsive grid */
 @media (max-width: 360px) {
   section#bestsellers .product-grid {
-    grid-template-columns: 1fr !important;
-    gap: 16px;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px;
   }
 }
 
@@ -1935,6 +2063,32 @@ h2 i {
   color: var(--ink);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(229, 165, 47, 0.3);
+}
+
+.product-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product-actions .button {
+  width: auto;
+  flex: 1 1 120px;
+}
+
+.buy-now-button {
+  background: transparent;
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  box-shadow: none;
+}
+
+.buy-now-button:hover {
+  background: var(--ink);
+  color: white;
+  border-color: var(--ink);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(36, 49, 39, 0.15);
 }
 
 /* Product Card Mobile Responsiveness */
@@ -4044,6 +4198,7 @@ footer {
     margin: 0 auto;
     background-image: none !important;
     background: var(--cream);
+    overflow: visible;
   }
 
   .hero::before {
@@ -4095,6 +4250,7 @@ footer {
     position: relative;
     width: 100%;
     max-width: 500px;
+    overflow: visible;
   }
 
   .snacks-display {
@@ -4476,6 +4632,10 @@ footer {
 
   .hero-actions {
     gap: 15px;
+  }
+
+  .hero-banner {
+    top: -40px;
   }
 
   .button {

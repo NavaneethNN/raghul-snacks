@@ -71,11 +71,12 @@ async function getCombos() {
   }
 }
 
-export default async function ShopPage({ searchParams }: { searchParams: { search?: string; tab?: string; category?: string } }) {
+export default async function ShopPage({ searchParams }: { searchParams: Promise<{ search?: string; tab?: string; category?: string }> }) {
+  const params = await searchParams;
   const categories = await getCategories();
   const products = await getProducts();
   const combos = await getCombos();
-  const searchQuery = searchParams.search || "";
+  const searchQuery = params.search || "";
 
   return (
     <section className="section shop-page">

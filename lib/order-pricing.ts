@@ -3,6 +3,7 @@ import { products as productsTable } from "@/drizzle/schema";
 import { inArray } from "drizzle-orm";
 
 export type RequestedItem = { productId: string; quantity: number };
+export type PricedLine = { product: { slug: string; categoryId: number | null; [key: string]: unknown }; quantity: number; lineTotal: number };
 
 export async function priceOrder(items: RequestedItem[]) {
   const db = getDb();

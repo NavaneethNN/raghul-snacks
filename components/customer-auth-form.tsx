@@ -19,6 +19,17 @@ export function CustomerAuthForm({ mode }: { mode: "login" | "signup" }) {
   const [loading, setLoading] = useState(false);
   const returnTo = searchParams.get("returnTo") || "/account";
 
+  useEffect(() => {
+    const googleErrors: Record<string, string> = {
+      google_not_configured: "Google Sign-In is not available at this time.",
+      google_denied: "Google sign-in was cancelled.",
+      google_no_email: "We couldn't get a verified email from your Google account.",
+      google_failed: "Something went wrong signing in with Google. Please try again.",
+    };
+    const code = searchParams.get("error");
+    if (code) setError(googleErrors[code] || "Something went wrong signing in with Google.");
+  }, [searchParams]);
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -81,24 +92,13 @@ export function CustomerAuthForm({ mode }: { mode: "login" | "signup" }) {
     }
   }
 
-  async function handleGoogleSignIn() {
+  function handleGoogleSignIn() {
     setError("");
     setLoading(true);
-    try {
-      // Check if Google OAuth is configured
-      const response = await fetch(`/api/auth/google?returnTo=${encodeURIComponent(returnTo)}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Google Sign-In is not available at this time.");
-      }
-
-      // If configured, redirect to Google OAuth
-      window.location.href = `/api/auth/google?returnTo=${encodeURIComponent(returnTo)}`;
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to continue with Google.");
-      setLoading(false);
-    }
+    // Navigate to the Google OAuth flow directly; it redirects to Google's
+    // consent screen and comes back to /api/auth/google/callback, which
+    // sends the browser to `returnTo` on success or /login?error=... on failure.
+    window.location.href = `/api/auth/google?returnTo=${encodeURIComponent(returnTo)}`;
   }
 
   return (

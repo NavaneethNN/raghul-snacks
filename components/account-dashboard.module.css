@@ -105,6 +105,102 @@
   color: var(--ink);
 }
 
+.nameDisplay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editIconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.editIconButton:hover {
+  border-color: var(--terracotta);
+  color: var(--terracotta);
+  background: var(--cream);
+}
+
+.nameEdit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.nameInput {
+  flex: 1;
+  min-width: 160px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  font: 600 15px 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.nameInput:focus {
+  outline: none;
+  border-color: var(--terracotta);
+}
+
+.nameSaveButton {
+  padding: 8px 14px;
+  background: var(--terracotta);
+  border: 1.5px solid var(--terracotta);
+  color: white;
+  border-radius: 6px;
+  font: 600 13px 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nameSaveButton:hover {
+  background: #b84e2e;
+  border-color: #b84e2e;
+}
+
+.nameSaveButton:disabled,
+.nameCancelButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.nameCancelButton {
+  padding: 8px 14px;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+  border-radius: 6px;
+  font: 600 13px 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nameCancelButton:hover {
+  border-color: var(--terracotta);
+  color: var(--terracotta);
+}
+
+.nameError {
+  width: 100%;
+  margin: 0;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
 .textLink {
   font: 600 13px 'DM Sans', sans-serif;
   color: var(--terracotta);
@@ -209,8 +305,11 @@
 }
 
 .orderTotal {
-  font: 700 18px 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
   color: var(--ink);
+  letter-spacing: -0.01em;
 }
 
 .badges {
@@ -276,6 +375,7 @@
   background: var(--paper);
   border-radius: 6px;
   font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
 }
 
 .itemName {

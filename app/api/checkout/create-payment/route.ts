@@ -6,6 +6,7 @@ import { customerCookieName, getCustomerSession } from "@/lib/customer-auth";
 import { getDb } from "@/lib/db";
 import { checkoutSchema } from "@/lib/order-input";
 import { priceOrder } from "@/lib/order-pricing";
+import { validateCoupon } from "@/lib/coupons";
 import { createCashfreeOrder } from "@/lib/cashfree";
 import { getShiprocketQuote } from "@/lib/shiprocket";
 
@@ -27,10 +28,18 @@ export async function POST(request: Request) {
     if (!account) {
       return NextResponse.json({ error: "Account not found. Please log in again." }, { status: 404 });
     }
-    const { subtotal, weight } = await priceOrder(payload.data.items);
-    const quote = await getShiprocketQuote(payload.data.pincode, weight, subtotal);
+    const { lines, subtotal, weight } = await priceOrder(payload.data.items);
+
+    let discount = 0;
+    if (payload.data.couponCode) {
+      const couponResult = await validateCoupon(payload.data.couponCode, subtotal, lines, account.email);
+      if (!couponResult.ok) return NextResponse.json({ error: couponResult.error }, { status: 400 });
+      discount = couponResult.discountAmount;
+    }
+
+    const quote = await getShiprocketQuote(payload.data.pincode, weight, subtotal - discount);
     if (!quote) return NextResponse.json({ error: "Shiprocket delivery configuration is incomplete." }, { status: 503 });
-    const total = Math.round((subtotal + quote.charge) * 100) / 100;
+    const total = Math.round((subtotal - discount + quote.charge) * 100) / 100;
     const orderId = `RS${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
     const origin = new URL(request.url).origin;
     const payment = await createCashfreeOrder({ orderId, amount: total, customerName: payload.data.customerName, customerPhone: payload.data.phone, customerEmail: payload.data.email, returnUrl: `${origin}/checkout?cashfree_order_id={order_id}`, shipping: quote.charge, courierId: quote.courierId });

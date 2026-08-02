@@ -12,7 +12,9 @@ export async function POST(request: Request) {
   if (!input.success) return NextResponse.json({ error: "Enter your email and password." }, { status: 400 });
   try {
     const account = (await getDb().select({ id: customerAccounts.id, name: customerAccounts.name, email: customerAccounts.email, passwordHash: customerAccounts.passwordHash }).from(customerAccounts).where(eq(customerAccounts.email, input.data.email.toLowerCase())).limit(1))[0];
-    if (!account || !(await verifyPassword(input.data.password, account.passwordHash))) return NextResponse.json({ error: "Incorrect email or password." }, { status: 401 });
+    if (!account) return NextResponse.json({ error: "Incorrect email or password." }, { status: 401 });
+    if (!account.passwordHash) return NextResponse.json({ error: "This account uses Google Sign-In. Please continue with Google." }, { status: 401 });
+    if (!(await verifyPassword(input.data.password, account.passwordHash))) return NextResponse.json({ error: "Incorrect email or password." }, { status: 401 });
 
     // Create session with account ID, name, and email
     const sessionData = { id: account.id, name: account.name, email: account.email };

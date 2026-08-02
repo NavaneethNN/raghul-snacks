@@ -81,11 +81,12 @@ export function AdminSidebar() {
     <aside className={styles.sidebar}>
       <div className={styles.brand}>
         <Link href="/admin" className={styles.brandName}>
-          <img src="/logo.png" alt="Raghul Delights" style={{ height: "40px", width: "auto", mixBlendMode: "multiply" }} />
+          <img src="/logo-footer.png" alt="Raghul Delights" style={{ height: "60px", width: "auto" }} />
+          <span className={styles.shopName}>Raghul Delights</span>
+          
+          <span className={styles.brandTagline}>Admin Panel</span>
         </Link>
-        <p className={styles.brandTagline}>Admin Panel</p>
       </div>
-
       <nav className={styles.nav}>
         {navItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));

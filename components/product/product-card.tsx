@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatPrice, formatWeight } from "@/lib/catalog";
 import { AddToCart } from "@/components/product/add-to-cart";
+import { BuyNow } from "@/components/product/buy-now";
 import { WishlistButton } from "@/components/wishlist-button";
 
 export function ProductCard({ product }: { product: any }) {
@@ -47,7 +48,10 @@ export function ProductCard({ product }: { product: any }) {
           <strong>{formatPrice(displayPrice)}</strong>
           {product.offerPrice && <s>{formatPrice(originalPrice)}</s>}
         </div>
-        <AddToCart product={cartProduct} showModal={true} />
+        <div className="product-actions">
+          <AddToCart product={cartProduct} showModal={true} />
+          <BuyNow product={cartProduct} />
+        </div>
       </div>
     </article>
   );

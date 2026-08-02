@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { code, name, description, discountType, value, maxDiscount, minOrderValue, validFrom, validUntil, totalUsage, perCustomer, applicableProducts, applicableCategories, applyTo, firstPurchase, publicCoupon, notes, active } = body;
 
-    if (!code || !discountType || !value) {
+    if (!code || !discountType || (discountType !== "bogo" && !value)) {
       return NextResponse.json(
         { error: "Code, discount type, and value are required" },
         { status: 400 }
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
         name: name || null,
         description: description || null,
         discountType,
-        value: value.toString(),
+        value: discountType === "bogo" ? "0" : value.toString(),
         maxDiscount: maxDiscount ? maxDiscount.toString() : null,
         minOrderValue: minOrderValue ? minOrderValue.toString() : "0",
         validFrom: validFrom ? new Date(validFrom) : null,

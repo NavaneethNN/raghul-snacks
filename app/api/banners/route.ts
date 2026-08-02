@@ -1,49 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb } from "@/lib/db";
-import { banners, coupons } from "@/drizzle/schema";
-import { desc, eq } from "drizzle-orm";
+import { banners } from "@/drizzle/schema";
+import { getBannersWithValidity } from "@/lib/banners";
 
 export async function GET() {
   try {
-    const db = getDb();
-    const allBanners = await db
-      .select()
-      .from(banners)
-      .orderBy(desc(banners.createdAt));
-
-    // Fetch all coupons in a single query to avoid N+1 problem
-    const allCoupons = await db
-      .select()
-      .from(coupons);
-
-    // Create a map for quick lookup
-    const couponMap = new Map(allCoupons.map(c => [c.code, c]));
-
-    // Add validity from associated coupons
-    const bannersWithValidity = allBanners.map((banner) => {
-      if (banner.couponCode) {
-        const coupon = couponMap.get(banner.couponCode);
-        if (coupon) {
-          let validityText = "";
-          if (coupon.validFrom && coupon.validUntil) {
-            const fromDate = new Date(coupon.validFrom).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' });
-            const untilDate = new Date(coupon.validUntil).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
-            validityText = `Valid: ${fromDate} - ${untilDate}`;
-          } else if (coupon.validUntil) {
-            const untilDate = new Date(coupon.validUntil).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
-            validityText = `Valid until: ${untilDate}`;
-          }
-          
-          return {
-            ...banner,
-            validityText: validityText || banner.validityText,
-          };
-        }
-      }
-      return banner;
-    });
-
+    const bannersWithValidity = await getBannersWithValidity();
     return NextResponse.json(bannersWithValidity);
   } catch (error) {
     console.error("Error fetching banners:", error);

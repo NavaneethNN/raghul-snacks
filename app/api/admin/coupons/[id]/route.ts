@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { eq } from "drizzle-orm";
-import { coupons } from "@/drizzle/schema";
+import { coupons, banners } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
 
@@ -23,7 +23,7 @@ export async function PATCH(
     const body = await request.json();
     const { code, name, description, discountType, value, maxDiscount, minOrderValue, validFrom, validUntil, totalUsage, perCustomer, applicableProducts, applicableCategories, applyTo, firstPurchase, publicCoupon, notes, active } = body;
 
-    if (!code || !discountType || !value) {
+    if (!code || !discountType || (discountType !== "bogo" && !value)) {
       return NextResponse.json(
         { error: "Code, discount type, and value are required" },
         { status: 400 }
@@ -31,14 +31,17 @@ export async function PATCH(
     }
 
     const db = getDb();
+    const [existing] = await db.select().from(coupons).where(eq(coupons.id, id)).limit(1);
+    const newCode = code.toUpperCase();
+
     await db
       .update(coupons)
       .set({
-        code: code.toUpperCase(),
+        code: newCode,
         name: name || null,
         description: description || null,
         discountType,
-        value: value.toString(),
+        value: discountType === "bogo" ? "0" : value.toString(),
         maxDiscount: maxDiscount ? maxDiscount.toString() : null,
         minOrderValue: minOrderValue ? minOrderValue.toString() : "0",
         validFrom: validFrom ? new Date(validFrom) : null,
@@ -54,6 +57,16 @@ export async function PATCH(
         active: active !== undefined ? active : true,
       })
       .where(eq(coupons.id, id));
+
+    // Banners link to coupons by code, not id, so a rename must be
+    // cascaded or the banner would keep pointing at a code that no
+    // longer exists.
+    if (existing && existing.code !== newCode) {
+      await db
+        .update(banners)
+        .set({ couponCode: newCode })
+        .where(eq(banners.couponCode, existing.code));
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -77,7 +90,18 @@ export async function DELETE(
     const id = parseInt(idParam);
     const db = getDb();
 
+    const [existing] = await db.select().from(coupons).where(eq(coupons.id, id)).limit(1);
+
     await db.delete(coupons).where(eq(coupons.id, id));
+
+    // Unlink any banners pointing at the deleted coupon so the storefront
+    // doesn't keep advertising a code that no longer exists.
+    if (existing) {
+      await db
+        .update(banners)
+        .set({ couponCode: null })
+        .where(eq(banners.couponCode, existing.code));
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

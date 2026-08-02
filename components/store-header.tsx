@@ -1,35 +1,59 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { useCart } from "@/components/cart/cart-provider";
 import { useWishlist } from "@/components/wishlist/wishlist-provider";
 
+// Module-level cache so session + categories are fetched once per browser
+// session, not on every client-side navigation.
+let cachedSession: { name: string; email: string } | null | undefined = undefined;
+let cachedCategories: any[] | undefined = undefined;
+
 export function StoreHeader() {
+  const router = useRouter();
   const { count } = useCart();
   const { count: wishlistCount } = useWishlist();
-  const [account, setAccount] = useState<{ name: string; email: string } | null>(null);
+  const [account, setAccount] = useState<{ name: string; email: string } | null>(cachedSession ?? null);
   const [searchQuery, setSearchQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>(cachedCategories ?? []);
   const [categoriesTimeout, setCategoriesTimeout] = useState<NodeJS.Timeout | null>(null);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    fetch("/api/auth/session").then(async (response) => {
-      const data = await response.json() as { account?: { name: string; email: string } | null };
-      setAccount(data.account || null);
-    }).catch(() => setAccount(null));
+    // Only fetch if not already cached
+    if (cachedSession === undefined) {
+      fetch("/api/auth/session")
+        .then(async (response) => {
+          const data = await response.json() as { account?: { name: string; email: string } | null };
+          cachedSession = data.account || null;
+          setAccount(cachedSession);
+        })
+        .catch(() => {
+          cachedSession = null;
+          setAccount(null);
+        });
+    }
 
-    fetch("/api/categories").then(async (response) => {
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(data);
-      }
-    }).catch(() => setCategories([]));
+    if (cachedCategories === undefined) {
+      fetch("/api/categories")
+        .then(async (response) => {
+          if (response.ok) {
+            const data = await response.json();
+            cachedCategories = data;
+            setCategories(data);
+          }
+        })
+        .catch(() => {
+          cachedCategories = [];
+          setCategories([]);
+        });
+    }
   }, []);
 
   useEffect(() => {
@@ -54,27 +78,21 @@ export function StoreHeader() {
   }, []);
 
   const scrollToSection = (sectionId: string) => {
-    // Close mobile menu first
     setMenuOpen(false);
     
-    // If not on home page, navigate to home with hash
     if (window.location.pathname !== '/') {
-      window.location.href = `/#${sectionId}`;
+      // Use Next.js router for client-side navigation instead of hard reload
+      router.push(`/#${sectionId}`);
       return;
     }
     
-    // If on home page, scroll to section with a small delay to ensure menu is closed
     setTimeout(() => {
       const element = document.getElementById(sectionId);
       if (element) {
-        const headerOffset = 80; // Account for fixed header height
+        const headerOffset = 80;
         const elementPosition = element.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-        
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth'
-        });
+        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
       }
     }, 100);
   };
@@ -106,13 +124,31 @@ export function StoreHeader() {
   const handleResultClick = (product: any) => {
     setSearchOpen(false);
     setSearchQuery("");
-    window.location.href = `/product/${product.slug}`;
+    // Use Next.js router for client-side navigation (avoids full page reload)
+    router.push(`/product/${product.slug}`);
   };
+
+  // Expose a way to invalidate the session cache (called on sign-in/sign-out)
+  // so the header reflects the new auth state on the next render cycle.
+  useEffect(() => {
+    const invalidate = () => {
+      cachedSession = undefined;
+      fetch("/api/auth/session")
+        .then(async (r) => {
+          const d = await r.json() as { account?: { name: string; email: string } | null };
+          cachedSession = d.account || null;
+          setAccount(cachedSession);
+        })
+        .catch(() => { cachedSession = null; setAccount(null); });
+    };
+    window.addEventListener("session-changed", invalidate);
+    return () => window.removeEventListener("session-changed", invalidate);
+  }, []);
 
   return (
     <header className="site-header">
       <div className="header-container">
-        <img src="/logo.png" alt="Raghul Delights" style={{ height: "70px", width: "auto", mixBlendMode: "multiply", margin: "-10px 0", padding: 0, maxHeight: "50px" }} />
+        <img src="/logo.png" alt="Raghul Delights" style={{ height: "48px", width: "auto", mixBlendMode: "multiply", margin: 0, padding: 0 }} />
         <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
           <Link className="brand" href="/">
           <span>Raghul</span> Delights
@@ -182,7 +218,6 @@ export function StoreHeader() {
           <Link href="/about">Our Story</Link>
           <Link href="/contact">Contact</Link>
         </nav>
-
         <form className="search-bar" onSubmit={handleSearch} style={{ position: "relative" }} ref={searchRef}>
           <input
             type="text"

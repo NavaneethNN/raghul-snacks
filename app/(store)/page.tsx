@@ -5,8 +5,18 @@ import { HeroBanner } from "@/components/hero-banner";
 import { ScrollAnimate } from "@/components/scroll-animate";
 import { getDb } from "@/lib/db";
 import { products, categories, combos, comboItems } from "@/drizzle/schema";
+import { getBannersWithValidity } from "@/lib/banners";
 
 export const dynamic = 'force-dynamic';
+
+async function getBanners() {
+  try {
+    return await getBannersWithValidity();
+  } catch (error) {
+    console.error('Error fetching banners:', error);
+    return [];
+  }
+}
 
 async function getCategories() {
   try {
@@ -77,6 +87,7 @@ export default async function HomePage() {
   const categories = await getCategories();
   const allProducts = await getProducts();
   const combos = await getCombos();
+  const banners = await getBanners();
   const featuredCombo = combos && combos.length > 0 ? combos[0] : null;
   const bestsellers = allProducts.filter((p: any) => p.bestseller).slice(0, 4);
   const products = bestsellers.length > 0 ? bestsellers : allProducts.slice(0, 4);
@@ -138,7 +149,7 @@ export default async function HomePage() {
                 alt="Traditional snacks"
               />
             </div>
-            <HeroBanner />
+            <HeroBanner initialBanners={banners} />
           </div>
         </div>
       </section>

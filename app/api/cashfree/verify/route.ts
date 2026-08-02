@@ -6,6 +6,7 @@ import { createCustomerSession, customerCookieName, getCustomerSession, hashPass
 import { getDb } from "@/lib/db";
 import { cashfreeVerifiedOrderSchema } from "@/lib/order-input";
 import { priceOrder } from "@/lib/order-pricing";
+import { validateCoupon } from "@/lib/coupons";
 import { getCashfreeOrder } from "@/lib/cashfree";
 import { createShiprocketShipment } from "@/lib/shiprocket";
 
@@ -23,9 +24,8 @@ export async function POST(request: Request) {
 
     const { lines, subtotal } = await priceOrder(payload.data.items);
     const total = Number(paymentOrder.order_amount);
-    const shipping = total - subtotal;
     const courierId = Number(paymentOrder.order_tags?.courier_id);
-    if (!Number.isFinite(total) || shipping < 0) return NextResponse.json({ error: "Payment amount does not match this order." }, { status: 400 });
+    if (!Number.isFinite(total)) return NextResponse.json({ error: "Payment amount does not match this order." }, { status: 400 });
 
     const cookieStore = await cookies();
     const session = getCustomerSession(cookieStore.get(customerCookieName())?.value);
@@ -40,9 +40,22 @@ export async function POST(request: Request) {
     if (!account) {
       return NextResponse.json({ error: "Account not found. Please log in again." }, { status: 404 });
     }
+
+    // Recompute the discount server-side from the coupon code rather than
+    // trusting any discount figure the client might have sent.
+    let discount = 0;
+    if (payload.data.couponCode) {
+      const couponResult = await validateCoupon(payload.data.couponCode, subtotal, lines, account.email);
+      if (!couponResult.ok) return NextResponse.json({ error: couponResult.error }, { status: 400 });
+      discount = couponResult.discountAmount;
+    }
+
+    const shipping = total - (subtotal - discount);
+    if (shipping < 0) return NextResponse.json({ error: "Payment amount does not match this order." }, { status: 400 });
+
     const [customer] = await db.insert(customers).values({ name: payload.data.customerName, phone: payload.data.phone, email: payload.data.email }).onConflictDoUpdate({ target: customers.phone, set: { name: payload.data.customerName, email: payload.data.email } }).returning({ id: customers.id });
     const orderNumber = `RS-${Date.now().toString().slice(-8)}`;
-    const [order] = await db.insert(orders).values({ orderNumber, customerId: customer.id, accountId: account.id, customerName: payload.data.customerName, phone: payload.data.phone, email: payload.data.email || null, address: payload.data.address, city: payload.data.city, state: payload.data.state, pincode: payload.data.pincode, total: String(total), paymentStatus: "paid", orderStatus: "placed", paymentOrderId: payload.data.cashfreeOrderId }).returning({ id: orders.id });
+    const [order] = await db.insert(orders).values({ orderNumber, customerId: customer.id, accountId: account.id, customerName: payload.data.customerName, phone: payload.data.phone, email: payload.data.email || null, address: payload.data.address, city: payload.data.city, state: payload.data.state, pincode: payload.data.pincode, total: String(total), couponCode: payload.data.couponCode || null, discount: String(discount), paymentStatus: "paid", orderStatus: "placed", paymentOrderId: payload.data.cashfreeOrderId }).returning({ id: orders.id });
     await db.insert(orderItems).values(lines.map((line) => ({ orderId: order.id, name: line.product.name, quantity: line.quantity, price: String(line.product.offerPrice) })));
     try {
       const shipment = await createShiprocketShipment({ orderNumber, customerName: payload.data.customerName, phone: payload.data.phone, email: payload.data.email || null, address: payload.data.address, city: payload.data.city, state: payload.data.state, pincode: payload.data.pincode, subtotal, shipping, courierId: Number.isFinite(courierId) ? courierId : null, lines });

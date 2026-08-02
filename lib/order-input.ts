@@ -16,6 +16,7 @@ const checkoutFields = z.object({
   state: z.string().trim().min(2).max(80),
   pincode: z.string().trim().regex(/^\d{6}$/, "Enter a valid 6-digit PIN code."),
   items: z.array(orderItemSchema).min(1).max(20),
+  couponCode: z.string().trim().max(40).optional(),
 });
 
 const passwordsMatch = (value: { password?: string; confirmPassword?: string }) => {
