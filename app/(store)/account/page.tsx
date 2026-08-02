@@ -38,7 +38,18 @@ export default async function AccountPage() {
 
   // Fetch customer orders - use email to match since accountId might be null in some orders
   const customerOrders = await db
-    .select()
+    .select({
+      id: orders.id,
+      orderNumber: orders.orderNumber,
+      total: orders.total,
+      discount: orders.discount,
+      couponCode: orders.couponCode,
+      paymentStatus: orders.paymentStatus,
+      orderStatus: orders.orderStatus,
+      shippingStatus: orders.shippingStatus,
+      awbCode: orders.awbCode,
+      createdAt: orders.createdAt,
+    })
     .from(orders)
     .where(eq(orders.email, accountData.email))
     .orderBy(desc(orders.createdAt));
@@ -98,6 +109,7 @@ export default async function AccountPage() {
         ...order,
         total: String(order.total),
         discount: String(order.discount),
+        couponCode: order.couponCode ?? null,
         createdAt: order.createdAt.toISOString(),
         items: itemsWithProducts,
       };

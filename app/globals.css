@@ -1567,7 +1567,7 @@ h2 i {
 .section {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 120px 16px 32px;
+  padding: 48px 16px 32px;
   width: 100%;
   box-sizing: border-box;
   position: relative;
@@ -1814,7 +1814,7 @@ h2 i {
   background: var(--terracotta);
   color: #fff;
   max-width: 100%;
-  margin: 120px auto 0;
+  margin: 48px auto 0;
   min-height: auto;
   padding: 40px 16px;
   display: grid;
@@ -3378,6 +3378,14 @@ footer {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 32px;
+}
+
+/* Single column footer links on very small phones */
+@media (max-width: 380px) {
+  .footer-links {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
 }
 
 .footer-column h4 {

@@ -323,7 +323,7 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .page {
-    padding: 40px 20px 64px;
+    padding: 32px 16px 56px;
   }
 
   .grid,
@@ -332,31 +332,51 @@
   }
 
   .lookup {
-    padding: 40px 20px 64px;
-    gap: 36px;
+    padding: 32px 16px 56px;
+    gap: 28px;
   }
 
   .lookup h1 {
-    font-size: clamp(32px, 8vw, 42px);
+    font-size: clamp(28px, 8vw, 42px);
   }
 
   .success {
-    margin-bottom: 40px;
+    margin-bottom: 32px;
+  }
+
+  .success h1 {
+    font-size: clamp(28px, 7vw, 44px);
+  }
+
+  .success > p:last-of-type {
+    font-size: 15px;
   }
 
   .statusCard,
   .summary {
-    padding: 24px;
+    padding: 20px 16px;
   }
 
   .check {
-    width: 64px;
-    height: 64px;
-    font-size: 32px;
+    width: 56px;
+    height: 56px;
+    font-size: 28px;
   }
 
   .reference {
-    padding: 16px 20px;
+    padding: 14px 16px;
+  }
+
+  .reference strong {
+    font-size: 18px;
+    letter-spacing: 0.02em;
+  }
+
+  .cardHead {
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
   }
 
   .cardHead h2 {
@@ -367,28 +387,63 @@
     position: static;
   }
 
+  .summary .total strong {
+    font-size: 26px;
+  }
+
   .timeline li {
-    grid-template-columns: 32px 1fr;
-    gap: 12px;
+    grid-template-columns: 30px 1fr;
+    gap: 10px;
   }
 
   .timeline i {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     font-size: 12px;
+  }
+
+  .timeline strong {
+    font-size: 14px;
   }
 }
 
 @media (max-width: 480px) {
+  .page {
+    padding: 24px 12px 48px;
+  }
+
+  .lookup {
+    padding: 24px 12px 48px;
+    gap: 20px;
+  }
+
+  .lookup h1 {
+    font-size: clamp(24px, 8vw, 36px);
+  }
+
   .success h1 {
-    font-size: clamp(28px, 8vw, 36px);
+    font-size: clamp(24px, 8vw, 36px);
+  }
+
+  .reference {
+    padding: 12px 14px;
   }
 
   .reference strong {
-    font-size: 18px;
+    font-size: 16px;
+  }
+
+  .statusCard,
+  .summary {
+    padding: 16px 12px;
   }
 
   .summary .total strong {
-    font-size: 28px;
+    font-size: 22px;
+  }
+
+  .cardHead {
+    padding-bottom: 12px;
+    margin-bottom: 16px;
   }
 }

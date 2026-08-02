@@ -264,14 +264,84 @@
 .orderCard {
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 16px;
+  overflow: hidden;
   background: var(--cream);
-  transition: all 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .orderCard:hover {
   border-color: var(--sage);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.orderCardOpen {
+  border-color: var(--terracotta);
+  box-shadow: 0 2px 12px rgba(201, 95, 59, 0.08);
+}
+
+/* ── Clickable header toggle ── */
+.orderToggle {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.orderToggle:hover .orderNumber {
+  color: var(--terracotta);
+}
+
+/* Top row: order number + date — always on its own line, never truncated */
+.orderMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+}
+
+/* Bottom row: total + badges + chevron — all on one line, right-aligned */
+.orderSummaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+/* Keep old class names so existing responsive rules don't break */
+.orderToggleLeft  { display: none; }
+.orderToggleRight { display: none; }
+
+/* Chevron arrow */
+.chevron {
+  color: #9ca3af;
+  flex-shrink: 0;
+  transition: transform 0.22s ease, color 0.2s;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+  color: var(--terracotta);
+}
+
+/* ── Collapsible body ── */
+.orderBody {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--line);
+  animation: slideDown 0.18s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .orderHeader {
@@ -365,21 +435,68 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-top: 14px;
+  margin-bottom: 14px;
 }
 
 .orderItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  gap: 12px;
+  padding: 10px 12px;
   background: var(--paper);
+  border: 1px solid var(--line);
   border-radius: 6px;
-  font-size: 14px;
   font-family: 'DM Sans', sans-serif;
+}
+
+.itemLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.itemThumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  flex-shrink: 0;
 }
 
 .itemName {
   font-weight: 600;
+  font-size: 14px;
+  color: var(--ink);
+  display: block;
+}
+
+.itemWeight {
+  font-size: 11px;
+  color: #6b7280;
+  font-family: 'DM Mono', monospace;
+  display: block;
+  margin-top: 2px;
+}
+
+.itemRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.itemQty {
+  font: 12px 'DM Mono', monospace;
+  color: #6b7280;
+}
+
+.itemPrice {
+  font: 600 14px 'DM Sans', sans-serif;
   color: var(--ink);
 }
 
@@ -391,7 +508,78 @@
 .orderActions {
   display: flex;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 4px;
+}
+
+/* ── Price breakdown ── */
+.priceBreakdown {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.breakdownRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.breakdownRow:last-child {
+  border-bottom: none;
+}
+
+.breakdownRow span:first-child {
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.breakdownRow span:last-child {
+  font-weight: 600;
+}
+
+.breakdownTotal {
+  background: var(--ink) !important;
+  color: white !important;
+}
+
+.breakdownTotal span:first-child {
+  color: #b8c6a7 !important;
+  font: 10px 'DM Mono', monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.breakdownTotal span:last-child {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e5a52f !important;
+}
+
+.free {
+  color: #15803d !important;
+}
+
+.saving {
+  color: #15803d !important;
+}
+
+.couponTag {
+  display: inline-block;
+  padding: 1px 7px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 4px;
+  font: 600 10px 'DM Mono', monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .buyAgainButton {
@@ -460,6 +648,23 @@
     align-items: center;
   }
 
+  .orderCard:hover {
+    border-color: var(--sage);
+  }
+
+  .orderToggle {
+    padding: 20px;
+    gap: 10px;
+  }
+
+  .orderBody {
+    padding: 0 20px 20px;
+  }
+
+  .orderSummaryRow {
+    gap: 12px;
+  }
+
   .orderHeader {
     align-items: center;
   }
@@ -474,5 +679,86 @@
 @media (min-width: 1024px) {
   .content {
     padding: 40px 28px;
+  }
+}
+
+/* ── Mobile-specific fixes ── */
+@media (max-width: 767px) {
+  .orderToggle {
+    padding: 14px;
+    gap: 8px;
+  }
+
+  /* Stack action buttons vertically so text never clips */
+  .orderActions {
+    flex-direction: column;
+  }
+
+  .buyAgainButton,
+  .downloadInvoiceButton {
+    flex: none;
+    width: 100%;
+  }
+
+  /* Shrink price breakdown font on small screens */
+  .breakdownRow {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .breakdownTotal span:last-child {
+    font-size: 14px;
+  }
+
+  /* Compact item rows */
+  .itemThumb {
+    width: 34px;
+    height: 34px;
+  }
+
+  .itemName {
+    font-size: 13px;
+  }
+
+  .orderNumber {
+    font-size: 13px;
+  }
+
+  .orderTotal {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 400px) {
+  .orderToggle {
+    padding: 12px;
+    gap: 6px;
+  }
+
+  .orderTotal {
+    font-size: 13px;
+  }
+
+  .badge {
+    font-size: 9px;
+    padding: 3px 6px;
+  }
+
+  /* Hero padding tighter */
+  .hero {
+    padding: 28px 12px;
+  }
+
+  .hero h1 {
+    font-size: 26px;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
+  .content {
+    padding: 14px 12px;
+    gap: 14px;
   }
 }
