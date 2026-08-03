@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductDetailView } from "@/components/product/product-detail-view";
+import { ProductReviews } from "@/components/product/product-reviews";
 import { getDb } from "@/lib/db";
 import { products, categories } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -80,6 +81,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   return (
     <>
       <ProductDetailView product={product} />
+
+      <ProductReviews productId={product.id} />
 
       <section className="section shop-page">
         <div className="section-heading">

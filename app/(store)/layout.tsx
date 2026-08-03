@@ -1,6 +1,7 @@
 import { StoreHeader } from "@/components/store-header";
 import { AnnouncementBar } from "@/components/announcement-bar";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { DeliveryNotification } from "@/components/delivery-notification";
 import Link from "next/link";
 
 export default function StoreLayout({ children }: { children: React.ReactNode }) {
@@ -9,6 +10,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
       <ScrollToTop />
       <AnnouncementBar />
       <StoreHeader />
+      <DeliveryNotification />
       <main>{children}</main>
       <footer>
         <div className="footer-container">
