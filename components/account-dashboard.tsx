@@ -103,7 +103,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
 
   async function submitReview(productId: number) {
     if (!reviewRating) { alert("Please select a star rating."); return; }
-    if (reviewContent.trim().length < 10) { alert("Review must be at least 10 characters."); return; }
+    if (reviewContent.trim().length < 1) { alert("Review cannot be empty."); return; }
     setReviewSubmitting(true);
     try {
       const res = await fetch("/api/reviews", {
@@ -503,7 +503,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                                       </div>
                                       <textarea
                                         className={styles.reviewTextarea}
-                                        placeholder="What did you think? (min 10 characters)"
+                                        placeholder="What did you think?"
                                         value={reviewContent}
                                         onChange={(e) => setReviewContent(e.target.value)}
                                         rows={3}

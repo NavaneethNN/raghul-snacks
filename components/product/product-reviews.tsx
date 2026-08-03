@@ -64,7 +64,7 @@ export function ProductReviews({ productId }: { productId: number }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!rating) { setSubmitError("Please select a star rating."); return; }
-    if (content.trim().length < 10) { setSubmitError("Review must be at least 10 characters."); return; }
+    if (content.trim().length < 1) { setSubmitError("Review cannot be empty."); return; }
     setSubmitting(true); setSubmitError("");
     try {
       const res = await fetch("/api/reviews", {

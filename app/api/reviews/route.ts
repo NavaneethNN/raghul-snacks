@@ -131,8 +131,8 @@ export async function POST(request: NextRequest) {
   if (rating < 1 || rating > 5) {
     return NextResponse.json({ error: "Rating must be between 1 and 5." }, { status: 400 });
   }
-  if (content.trim().length < 10) {
-    return NextResponse.json({ error: "Review must be at least 10 characters." }, { status: 400 });
+  if (content.trim().length < 1) {
+    return NextResponse.json({ error: "Review cannot be empty." }, { status: 400 });
   }
 
   const db = getDb();
