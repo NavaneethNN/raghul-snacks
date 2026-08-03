@@ -7,7 +7,6 @@ import { useCart } from "@/components/cart/cart-provider";
 import { formatPrice } from "@/lib/catalog";
 import { clearBuyNowItem, readBuyNowItem, type BuyNowItem } from "@/lib/buy-now";
 import styles from "./checkout-wizard.module.css";
-
 type CheckoutForm = { customerName: string; phone: string; email: string; password: string; confirmPassword: string; address: string; city: string; state: string; pincode: string };
 type ShippingQuote = { charge: number; courierName: string; estimatedDeliveryDays: string | null };
 type PaymentOrder = { orderId: string; paymentSessionId: string; environment: "sandbox" | "production"; error?: string };
@@ -234,6 +233,10 @@ export function CheckoutWizard() {
       if (form.customerName.trim().length < 3) { setError("Name must be at least 3 characters long."); return; }
       if (!form.phone) { setError("Please enter your mobile number."); return; }
       if (!/^[6-9]\d{9}$/.test(form.phone)) { setError("Please enter a valid 10-digit Indian mobile number starting with 6-9."); return; }
+      // For guests, validate email if provided
+      if (!account && form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+        setError("Please enter a valid email address."); return;
+      }
     }
     setStep(nextStep);
     // Scroll to top so the new step header is visible, especially on mobile
@@ -302,11 +305,8 @@ export function CheckoutWizard() {
         "raghul-snacks-last-order",
         JSON.stringify({ orderNumber: verified.orderNumber, phone: form.phone }),
       );
-      setSuccess("Payment successful! Your order is confirmed. Taking you to your order details…");
-      window.setTimeout(() => {
-        if (buyNowItem) clearBuyNowItem(); else clearCart();
-        window.location.assign("/orders");
-      }, 1100);
+      if (buyNowItem) clearBuyNowItem(); else clearCart();
+      window.location.assign("/orders");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to continue to payment.");
       setLoading(false);
@@ -389,15 +389,22 @@ export function CheckoutWizard() {
               <div className={styles.couponList}>
                 {publicCoupons.map((c) => {
                   const meetsMin = subtotal >= parseFloat(c.minOrderValue || "0");
+
+                  // For BOGO: need total eligible units >= 2
+                  const totalUnits = items.reduce((sum, item) => sum + item.quantity, 0);
+                  const bogoClear = c.discountType !== "bogo" || totalUnits >= 2;
+
+                  const eligible = meetsMin && bogoClear;
+
                   return (
                     <div
                       key={c.id}
-                      className={`${styles.couponItem} ${!meetsMin ? styles.couponNotApplicable : ""}`}
-                      role={meetsMin ? "button" : undefined}
-                      tabIndex={meetsMin ? 0 : undefined}
-                      onClick={() => { if (meetsMin) applyCoupon(c.code); }}
-                      onKeyDown={(e) => { if (meetsMin && (e.key === "Enter" || e.key === " ")) applyCoupon(c.code); }}
-                      title={meetsMin ? `Click to apply ${c.code}` : `Add more items to use this coupon`}
+                      className={`${styles.couponItem} ${!eligible ? styles.couponNotApplicable : ""}`}
+                      role={eligible ? "button" : undefined}
+                      tabIndex={eligible ? 0 : undefined}
+                      onClick={() => { if (eligible) applyCoupon(c.code); }}
+                      onKeyDown={(e) => { if (eligible && (e.key === "Enter" || e.key === " ")) applyCoupon(c.code); }}
+                      title={eligible ? `Click to apply ${c.code}` : undefined}
                     >
                       <div className={styles.couponHeader}>
                         <span className={styles.couponCode}>{c.code}</span>
@@ -405,7 +412,16 @@ export function CheckoutWizard() {
                       </div>
                       <div className={styles.couponDetails}>
                         {c.description && <span>{c.description}</span>}
-                        {parseFloat(c.minOrderValue || "0") > 0 && (
+                        {/* BOGO — always show the min-2 requirement */}
+                        {c.discountType === "bogo" && (
+                          <span style={{ fontWeight: 600, color: bogoClear ? "#15803d" : "#92400e" }}>
+                            {bogoClear
+                              ? "✓ Eligible — 1 unit will be free"
+                              : "Min. 2 products required · Add 1 more to use this offer"}
+                          </span>
+                        )}
+                        {/* Min order value hint (non-BOGO) */}
+                        {c.discountType !== "bogo" && parseFloat(c.minOrderValue || "0") > 0 && (
                           <span>
                             {meetsMin
                               ? "✓ Eligible on your order"
@@ -501,13 +517,25 @@ export function CheckoutWizard() {
                       Your order will be added to this account.
                     </p>
                   ) : (
-                    <p className={styles.full} style={{ fontSize: 13, color: "#687267" }}>
-                      Checking out as guest.{" "}
-                      <a href="/login?returnTo=/checkout" style={{ color: "var(--terracotta)", fontWeight: 600 }}>
-                        Sign in
-                      </a>{" "}
-                      to save this order to your account.
-                    </p>
+                    <>
+                      <label className={styles.full}>
+                        Email address
+                        <input
+                          autoComplete="email"
+                          type="email"
+                          placeholder="For order confirmation"
+                          value={form.email}
+                          onChange={(e) => update("email", e.target.value)}
+                        />
+                      </label>
+                      <p className={styles.full} style={{ fontSize: 13, color: "#687267" }}>
+                        Checking out as guest.{" "}
+                        <a href="/login?returnTo=/checkout" style={{ color: "var(--terracotta)", fontWeight: 600 }}>
+                          Sign in
+                        </a>{" "}
+                        to save this order to your account.
+                      </p>
+                    </>
                   )}
                 </div>
               </section>

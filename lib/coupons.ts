@@ -74,6 +74,10 @@ export async function validateCoupon(rawCode: string, subtotal: number, lines: P
     }
     unitPrices.sort((a, b) => b - a);
 
+    // Need at least 2 units for BOGO to give anything free
+    if (unitPrices.length < 2)
+      return { ok: false, error: "Buy 1 Get 1 requires at least 2 units of the eligible product in your cart." };
+
     // Every odd index (0-based) is the free unit in each pair
     let discountAmount = 0;
     for (let i = 1; i < unitPrices.length; i += 2) {

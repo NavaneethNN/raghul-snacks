@@ -171,7 +171,7 @@ main {
 /* ── Hero banner: compact card, top-right of hero image wrapper ── */
 .hero-banner-track {
   position: absolute;
-  top: 10px;
+  top: -70px;
   right: 10px;
   width: 210px;
   overflow: hidden;
@@ -3049,10 +3049,11 @@ h2 i {
 }
 
 .about-cta {
-  background: var(--ink);
-  color: white;
-  padding: 100px 24px;
+  background: var(--cream);
+  color: var(--ink);
+  padding: 80px 24px;
   text-align: center;
+  border-top: 1px solid var(--line);
 }
 
 .about-cta-content {
@@ -3064,13 +3065,13 @@ h2 i {
   font: 700 36px 'Playfair Display', serif;
   letter-spacing: -0.02em;
   margin: 0 0 16px;
-  color: white;
+  color: var(--ink);
 }
 
 .about-cta p {
   font-size: 16px;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.8);
+  color: #657165;
   margin: 0 0 32px;
 }
 
@@ -3082,24 +3083,29 @@ h2 i {
 }
 
 .about-cta .button-dark {
-  background: white;
-  color: var(--ink);
-  border: 2px solid white;
+  background: var(--ink);
+  color: white;
+  border: 2px solid var(--ink);
 }
 
 .about-cta .button-dark:hover {
-  background: var(--saffron);
-  border-color: var(--saffron);
+  background: var(--terracotta);
+  border-color: var(--terracotta);
   color: white;
   transform: translateY(-2px);
 }
 
 .about-cta .button-outline {
   background: transparent;
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: var(--ink);
+  border: 2px solid var(--ink);
 }
 
+.about-cta .button-outline:hover {
+  background: var(--ink);
+  color: white;
+  transform: translateY(-2px);
+}
 .about-cta .button-outline:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: white;
@@ -3619,6 +3625,26 @@ footer {
   display: grid;
   grid-template-columns: 1fr;
   gap: 40px;
+}
+
+.product-back-btn {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: none;
+  color: #687267;
+  font: 600 14px 'DM Sans', sans-serif;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+  width: fit-content;
+  margin-bottom: -24px;
+}
+
+.product-back-btn:hover {
+  color: var(--terracotta);
 }
 
 .product-large-visual {

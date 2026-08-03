@@ -8,7 +8,7 @@ export const orderItemSchema = z.object({
 const checkoutFields = z.object({
   customerName: z.string().trim().min(2).max(100),
   phone: z.string().trim().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number."),
-  email: z.string().trim().email(),
+  email: z.string().trim().email().optional().or(z.literal("")),
   password: z.string().max(128).optional(),
   confirmPassword: z.string().max(128).optional(),
   address: z.string().trim().min(8).max(300),

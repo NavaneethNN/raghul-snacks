@@ -68,6 +68,18 @@ export function ProductDetailView({ product }: { product: any }) {
 
   return (
     <section className="product-page">
+      <button
+        type="button"
+        onClick={() => router.back()}
+        className="product-back-btn"
+        aria-label="Go back"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M19 12H5" />
+          <path d="M12 5l-7 7 7 7" />
+        </svg>
+        Back
+      </button>
       <div className="product-large-visual">
         <img src={product.image || "/hero.png"} alt={product.name} />
         <span className="category-badge">{categoryName}</span>
@@ -164,14 +176,6 @@ export function ProductDetailView({ product }: { product: any }) {
             </button>
           </div>
         )}
-
-        <p className="shipping-note">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M5 12h14" />
-            <path d="M12 5l7 7-7 7" />
-          </svg>
-          Free delivery on orders above ₹{freeShippingThreshold}
-        </p>
       </div>
     </section>
   );

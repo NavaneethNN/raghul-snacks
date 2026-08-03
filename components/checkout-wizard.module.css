@@ -413,11 +413,17 @@
   padding: 12px;
   border-radius: 4px;
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, opacity 0.2s;
 }
 
 .couponItem:hover { border-color: var(--terracotta); }
-.couponNotApplicable { cursor: not-allowed; opacity: 0.6; }
+
+.couponNotApplicable {
+  cursor: not-allowed;
+  opacity: 0.45;
+  background: #f3f3f1;
+  pointer-events: none;
+}
 
 .couponHeader {
   display: flex;
