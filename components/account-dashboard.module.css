@@ -493,14 +493,21 @@
 
 .orderItem {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 0;
   padding: 10px 12px;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 6px;
   font-family: 'DM Sans', sans-serif;
+}
+
+.itemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
 }
 
 .itemLeft {
@@ -634,7 +641,120 @@
   text-transform: uppercase;
 }
 
-.buyAgainButton {
+.reviewBtn {
+  background: none;
+  border: 1.5px solid var(--terracotta);
+  color: var(--terracotta);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font: 600 11px 'DM Sans', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.reviewBtn:hover {
+  background: var(--terracotta);
+  color: #fff;
+}
+
+.reviewDone {
+  font: 600 11px 'DM Mono', monospace;
+  color: #15803d;
+  white-space: nowrap;
+}
+
+.inlineReview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0 4px;
+  border-top: 1px solid var(--line);
+  margin-top: 8px;
+  animation: slideDown 0.18s ease-out;
+}
+
+.starRow {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #ddd;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.starFilled {
+  color: #e5a52f;
+}
+
+.star:hover,
+.star:hover ~ .star {
+  color: #e5a52f;
+}
+
+.reviewTextarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  font: 14px 'DM Sans', sans-serif;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+  color: var(--ink);
+}
+
+.reviewTextarea:focus {
+  border-color: var(--terracotta);
+}
+
+.reviewFormActions {
+  display: flex;
+  gap: 8px;
+}
+
+.reviewSubmitBtn {
+  background: var(--terracotta);
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font: 600 13px 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.reviewSubmitBtn:hover:not(:disabled) {
+  background: #b84e2e;
+}
+
+.reviewSubmitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.reviewCancelBtn {
+  background: none;
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font: 600 13px 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reviewCancelBtn:hover {
+  border-color: var(--terracotta);
+  color: var(--terracotta);
+}
   flex: 1;
   padding: 8px 16px;
   background: var(--terracotta);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart/cart-provider";
@@ -59,6 +59,14 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   const [savingName, setSavingName] = useState(false);
   const [nameError, setNameError] = useState("");
   const [expandedOrders, setExpandedOrders] = useState<Set<number>>(new Set());
+  // productId → true if already reviewed, false if eligible, undefined if not purchased yet
+  const [reviewedProductIds, setReviewedProductIds] = useState<Record<number, boolean>>({});
+  // Item id currently showing the review form
+  const [reviewingItemProductId, setReviewingItemProductId] = useState<number | null>(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewContent, setReviewContent] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewMsg, setReviewMsg] = useState<Record<number, string>>({});
 
   function toggleOrder(id: number) {
     setExpandedOrders((prev) => {
@@ -66,6 +74,50 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+  }
+
+  // Pre-load which products have already been reviewed by this user
+  useEffect(() => {
+    const deliveredOrders = orders.filter((o) => o.orderStatus === "delivered");
+    const productIds = Array.from(new Set(
+      deliveredOrders.flatMap((o) => o.items.map((i) => i.product?.id).filter(Boolean) as number[])
+    ));
+    if (productIds.length === 0) return;
+    Promise.all(
+      productIds.map((pid) =>
+        fetch(`/api/reviews?productId=${pid}`)
+          .then((r) => r.json())
+          .then((d: { canReview?: boolean; alreadyReviewed?: boolean }) => ({ pid, reviewed: d.alreadyReviewed ?? false, canReview: d.canReview ?? false }))
+          .catch(() => ({ pid, reviewed: false, canReview: false }))
+      )
+    ).then((results) => {
+      const map: Record<number, boolean> = {};
+      results.forEach(({ pid, reviewed }) => { map[pid] = reviewed; });
+      setReviewedProductIds(map);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function submitReview(productId: number) {
+    if (!reviewRating) { alert("Please select a star rating."); return; }
+    if (reviewContent.trim().length < 10) { alert("Review must be at least 10 characters."); return; }
+    setReviewSubmitting(true);
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId, rating: reviewRating, content: reviewContent }),
+      });
+      const data = await res.json() as { message?: string; error?: string };
+      if (!res.ok) throw new Error(data.error);
+      setReviewMsg((prev) => ({ ...prev, [productId]: data.message || "Review submitted!" }));
+      setReviewedProductIds((prev) => ({ ...prev, [productId]: true }));
+      setReviewingItemProductId(null);
+      setReviewRating(0);
+      setReviewContent("");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to submit review.");
+    } finally { setReviewSubmitting(false); }
   }
 
   const price = new Intl.NumberFormat("en-IN", {
@@ -374,31 +426,101 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                       <div className={styles.orderBody}>
                         {order.items && order.items.length > 0 && (
                           <div className={styles.orderItems}>
-                            {order.items.map((item) => (
-                              <div key={item.id} className={styles.orderItem}>
-                                <div className={styles.itemLeft}>
-                                  {item.product?.image && (
-                                    <img
-                                      src={item.product.image}
-                                      alt={item.name}
-                                      className={styles.itemThumb}
-                                    />
-                                  )}
-                                  <div>
-                                    <span className={styles.itemName}>{item.name}</span>
-                                    {item.product?.weight && (
-                                      <span className={styles.itemWeight}>{item.product.weight}</span>
+                            {order.items.map((item) => {
+                              const pid = item.product?.id;
+                              const isDelivered = order.orderStatus === "delivered";
+                              const alreadyReviewed = pid ? reviewedProductIds[pid] === true : false;
+                              const canReview = isDelivered && pid && reviewedProductIds[pid] === false;
+                              const isReviewOpen = reviewingItemProductId === pid;
+                              const doneMsg = pid ? reviewMsg[pid] : undefined;
+
+                              return (
+                                <div key={item.id} className={styles.orderItem}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, width: "100%" }}>
+                                  <div className={styles.itemLeft}>
+                                    {item.product?.image && (
+                                      <img
+                                        src={item.product.image}
+                                        alt={item.name}
+                                        className={styles.itemThumb}
+                                      />
+                                    )}
+                                    <div>
+                                      <span className={styles.itemName}>{item.name}</span>
+                                      {item.product?.weight && (
+                                        <span className={styles.itemWeight}>{item.product.weight}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className={styles.itemRight}>
+                                    <span className={styles.itemQty}>× {item.quantity}</span>
+                                    <span className={styles.itemPrice}>
+                                      {price.format(parseFloat(item.price) * item.quantity)}
+                                    </span>
+                                    {/* Review state */}
+                                    {doneMsg && (
+                                      <span className={styles.reviewDone}>✓ {doneMsg}</span>
+                                    )}
+                                    {!doneMsg && alreadyReviewed && (
+                                      <span className={styles.reviewDone}>✓ Reviewed</span>
+                                    )}
+                                    {!doneMsg && canReview && !isReviewOpen && (
+                                      <button
+                                        className={styles.reviewBtn}
+                                        onClick={() => {
+                                          setReviewingItemProductId(pid!);
+                                          setReviewRating(0);
+                                          setReviewContent("");
+                                        }}
+                                      >
+                                        ★ Write a review
+                                      </button>
                                     )}
                                   </div>
+                                  </div>
+
+                                  {/* Inline review form */}
+                                  {!doneMsg && canReview && isReviewOpen && (
+                                    <div className={styles.inlineReview}>
+                                      {/* Star rating */}
+                                      <div className={styles.starRow}>
+                                        {[1, 2, 3, 4, 5].map((n) => (
+                                          <button
+                                            key={n}
+                                            type="button"
+                                            className={`${styles.star} ${n <= reviewRating ? styles.starFilled : ""}`}
+                                            onClick={() => setReviewRating(n)}
+                                            aria-label={`${n} star`}
+                                          >★</button>
+                                        ))}
+                                      </div>
+                                      <textarea
+                                        className={styles.reviewTextarea}
+                                        placeholder="What did you think? (min 10 characters)"
+                                        value={reviewContent}
+                                        onChange={(e) => setReviewContent(e.target.value)}
+                                        rows={3}
+                                      />
+                                      <div className={styles.reviewFormActions}>
+                                        <button
+                                          className={styles.reviewSubmitBtn}
+                                          onClick={() => submitReview(pid!)}
+                                          disabled={reviewSubmitting}
+                                        >
+                                          {reviewSubmitting ? "Submitting…" : "Submit"}
+                                        </button>
+                                        <button
+                                          className={styles.reviewCancelBtn}
+                                          onClick={() => setReviewingItemProductId(null)}
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
-                                <div className={styles.itemRight}>
-                                  <span className={styles.itemQty}>× {item.quantity}</span>
-                                  <span className={styles.itemPrice}>
-                                    {price.format(parseFloat(item.price) * item.quantity)}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
 
