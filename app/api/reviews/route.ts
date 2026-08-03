@@ -76,15 +76,29 @@ export async function GET(request: NextRequest) {
 
     if (hasPurchased) {
       // Has this user already reviewed this product?
-      const [{ value: existingCount }] = await db
-        .select({ value: count() })
+      const existingReview = await db
+        .select({ id: reviews.id, rating: reviews.rating })
         .from(reviews)
-        .where(and(eq(reviews.productId, productId), eq(reviews.accountId, session.id)));
-      alreadyReviewed = Number(existingCount) > 0;
+        .where(and(eq(reviews.productId, productId), eq(reviews.accountId, session.id)))
+        .limit(1);
+
+      alreadyReviewed = existingReview.length > 0;
+      const existingRating = existingReview[0]?.rating ?? 0;
       canReview = !alreadyReviewed;
 
       const account = (await db.select({ name: customerAccounts.name }).from(customerAccounts).where(eq(customerAccounts.id, session.id)).limit(1))[0];
       accountName = account?.name ?? "";
+
+      return NextResponse.json({
+        reviews: approvedReviews.map((r) => ({
+          ...r,
+          createdAt: r.createdAt?.toISOString() ?? null,
+        })),
+        canReview,
+        alreadyReviewed,
+        existingRating,
+        accountName,
+      });
     }
   }
 
@@ -95,6 +109,7 @@ export async function GET(request: NextRequest) {
     })),
     canReview,
     alreadyReviewed,
+    existingRating: 0,
     accountName,
   });
 }

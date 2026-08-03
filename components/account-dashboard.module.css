@@ -659,9 +659,10 @@
 }
 
 .reviewDone {
-  font: 600 11px 'DM Mono', monospace;
-  color: #15803d;
+  font: 600 14px 'DM Mono', monospace;
+  color: #e5a52f;
   white-space: nowrap;
+  letter-spacing: 1px;
 }
 
 .inlineReview {

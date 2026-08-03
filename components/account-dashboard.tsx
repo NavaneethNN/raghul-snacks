@@ -59,8 +59,8 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   const [savingName, setSavingName] = useState(false);
   const [nameError, setNameError] = useState("");
   const [expandedOrders, setExpandedOrders] = useState<Set<number>>(new Set());
-  // productId → true if already reviewed, false if eligible, undefined if not purchased yet
-  const [reviewedProductIds, setReviewedProductIds] = useState<Record<number, boolean>>({});
+  // productId → 0 = eligible to review, >0 = already reviewed (value is their rating)
+  const [reviewedProductIds, setReviewedProductIds] = useState<Record<number, number>>({});
   // Item id currently showing the review form
   const [reviewingItemProductId, setReviewingItemProductId] = useState<number | null>(null);
   const [reviewRating, setReviewRating] = useState(0);
@@ -87,12 +87,15 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
       productIds.map((pid) =>
         fetch(`/api/reviews?productId=${pid}`)
           .then((r) => r.json())
-          .then((d: { canReview?: boolean; alreadyReviewed?: boolean }) => ({ pid, reviewed: d.alreadyReviewed ?? false, canReview: d.canReview ?? false }))
-          .catch(() => ({ pid, reviewed: false, canReview: false }))
+          .then((d: { canReview?: boolean; alreadyReviewed?: boolean; existingRating?: number }) => ({
+            pid,
+            rating: d.alreadyReviewed ? (d.existingRating ?? 1) : 0,
+          }))
+          .catch(() => ({ pid, rating: -1 })) // -1 = not a purchaser, hide option
       )
     ).then((results) => {
-      const map: Record<number, boolean> = {};
-      results.forEach(({ pid, reviewed }) => { map[pid] = reviewed; });
+      const map: Record<number, number> = {};
+      results.forEach(({ pid, rating }) => { if (rating >= 0) map[pid] = rating; });
       setReviewedProductIds(map);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -111,7 +114,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
       const data = await res.json() as { message?: string; error?: string };
       if (!res.ok) throw new Error(data.error);
       setReviewMsg((prev) => ({ ...prev, [productId]: data.message || "Review submitted!" }));
-      setReviewedProductIds((prev) => ({ ...prev, [productId]: true }));
+      setReviewedProductIds((prev) => ({ ...prev, [productId]: reviewRating }));
       setReviewingItemProductId(null);
       setReviewRating(0);
       setReviewContent("");
@@ -429,10 +432,12 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                             {order.items.map((item) => {
                               const pid = item.product?.id;
                               const isDelivered = order.orderStatus === "delivered";
-                              const alreadyReviewed = pid ? reviewedProductIds[pid] === true : false;
-                              const canReview = isDelivered && pid && reviewedProductIds[pid] === false;
+                              // reviewedProductIds[pid]: undefined=not purchaser, 0=eligible, >0=already reviewed (value=rating)
+                              const reviewState = pid !== undefined ? reviewedProductIds[pid] : undefined;
+                              const alreadyReviewed = reviewState !== undefined && reviewState > 0;
+                              const canReview = isDelivered && pid !== undefined && reviewState === 0;
                               const isReviewOpen = reviewingItemProductId === pid;
-                              const doneMsg = pid ? reviewMsg[pid] : undefined;
+                              const doneMsg = pid !== undefined ? reviewMsg[pid] : undefined;
 
                               return (
                                 <div key={item.id} className={styles.orderItem}>
@@ -459,10 +464,12 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                                     </span>
                                     {/* Review state */}
                                     {doneMsg && (
-                                      <span className={styles.reviewDone}>✓ {doneMsg}</span>
+                                      <span className={styles.reviewDone}>✓ Pending approval</span>
                                     )}
-                                    {!doneMsg && alreadyReviewed && (
-                                      <span className={styles.reviewDone}>✓ Reviewed</span>
+                                    {!doneMsg && alreadyReviewed && reviewState !== undefined && reviewState > 0 && (
+                                      <span className={styles.reviewDone} title="Your rating">
+                                        {"★".repeat(reviewState)}{"☆".repeat(5 - reviewState)}
+                                      </span>
                                     )}
                                     {!doneMsg && canReview && !isReviewOpen && (
                                       <button
@@ -473,7 +480,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                                           setReviewContent("");
                                         }}
                                       >
-                                        ★ Write a review
+                                        ★ Review
                                       </button>
                                     )}
                                   </div>
