@@ -13,6 +13,7 @@ export type InvoiceData = {
   couponCode: string | null;
   discount: string | number;
   total: string | number;
+  logoDataUri?: string;
   items: Array<{
     name: string;
     quantity: number;
@@ -248,9 +249,12 @@ export function buildInvoiceHtml(data: InvoiceData): string {
 
   <!-- Header -->
   <div class="header">
-    <div>
-      <div class="brand-name">Raghul Delights</div>
-      <div class="brand-tagline">Fresh &amp; Authentic South Indian Snacks</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      ${data.logoDataUri ? `<img src="${data.logoDataUri}" alt="Raghul Delights" style="height:52px;width:auto;mix-blend-mode:multiply;" />` : ""}
+      <div>
+        <div class="brand-name">Raghul Delights</div>
+        <div class="brand-tagline">Fresh &amp; Authentic South Indian Snacks</div>
+      </div>
     </div>
     <div class="invoice-label">
       <h2>Invoice</h2>

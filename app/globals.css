@@ -16,7 +16,7 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 120px;
+  scroll-padding-top: 90px;
 }
 
 body {
@@ -541,7 +541,7 @@ body.mobile-menu-open .announcement {
 
 #categories,
 #bestsellers {
-  scroll-margin-top: 120px;
+  scroll-margin-top: 90px;
 }
 
 /* ===== HEADER / NAVBAR ===== */
@@ -1664,7 +1664,7 @@ h2 i {
 .product-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: 10px;
   width: 100%;
   max-width: 100%;
   animation: fadeInUp 0.6s ease-out 0.2s backwards;
@@ -1674,7 +1674,7 @@ h2 i {
 .shop-page .product-grid,
 .wishlist-page .product-grid {
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 16px;
+  gap: 10px;
 }
 
 /* Staggered animation for product cards */
@@ -1698,28 +1698,28 @@ h2 i {
 @media (max-width: 360px) {
   section#bestsellers .product-grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 12px;
+    gap: 8px;
   }
 }
 
 @media (min-width: 361px) and (max-width: 640px) {
   section#bestsellers .product-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 10px;
   }
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
   section#bestsellers .product-grid {
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    gap: 14px;
   }
 }
 
 @media (min-width: 1025px) {
   section#bestsellers .product-grid {
     grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
+    gap: 16px;
   }
 }
 
@@ -1728,7 +1728,7 @@ h2 i {
   .shop-page .product-grid,
   .wishlist-page .product-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 10px;
   }
 }
 
@@ -1736,7 +1736,7 @@ h2 i {
   .shop-page .product-grid,
   .wishlist-page .product-grid {
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    gap: 14px;
   }
 }
 
@@ -1744,7 +1744,7 @@ h2 i {
   .shop-page .product-grid,
   .wishlist-page .product-grid {
     grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
+    gap: 16px;
   }
 }
 
@@ -2515,7 +2515,7 @@ h2 i {
   .product-page {
     padding: 0 24px 60px;
     gap: 32px;
-    margin: 120px auto 0;
+    margin: 0 auto;
   }
 
   .product-large-visual {
@@ -2666,7 +2666,7 @@ h2 i {
   .product-page {
     padding: 0 16px 40px;
     gap: 24px;
-    margin: 120px auto 0;
+    margin: 0 auto;
   }
 
   .product-large-visual {
@@ -3614,8 +3614,8 @@ footer {
 
 .product-page {
   max-width: 1400px;
-  margin: 120px auto 0;
-  padding: 0 20px 60px;
+  margin: 0 auto;
+  padding: 32px 20px 60px;
   display: grid;
   grid-template-columns: 1fr;
   gap: 40px;
@@ -3704,12 +3704,15 @@ footer {
 }
 
 .price-section .price strong {
-  font: 700 24px 'Playfair Display', serif;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--ink);
 }
 
 .price-section .price s {
-  font: 500 16px 'DM Sans', sans-serif;
+  font: 500 18px 'DM Sans', sans-serif;
   color: #9ca396;
 }
 
@@ -3836,6 +3839,77 @@ footer {
   color: var(--ink);
   min-width: 32px;
   text-align: center;
+}
+/* ── Product detail: compact quantity + purchase row ── */
+.quantity-selector-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: var(--cream);
+  border-radius: 8px;
+  border: 1.5px solid var(--line);
+  flex-shrink: 0;
+}
+
+.quantity-selector-compact button {
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.quantity-selector-compact button:hover:not(:disabled) {
+  background: var(--terracotta);
+  color: white;
+  border-color: var(--terracotta);
+}
+
+.quantity-selector-compact button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.quantity-selector-compact span {
+  font: 700 15px 'DM Sans', sans-serif;
+  color: var(--ink);
+  min-width: 22px;
+  text-align: center;
+}
+
+.product-purchase-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+/* Add to Cart inside the row fills available space */
+.product-purchase-row .wide-button {
+  flex: 1;
+  width: auto;
+  padding: 12px 18px;
+  font-size: 15px;
+}
+
+/* Buy Now sits below as its own full-width row */
+.product-buy-now-row {
+  margin-top: 10px;
+}
+
+.product-buy-now-row .wide-button {
+  width: 100%;
+  padding: 12px 18px;
+  font-size: 15px;
 }
 
 .wide-button {

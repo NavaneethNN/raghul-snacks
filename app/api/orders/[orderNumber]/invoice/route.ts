@@ -116,7 +116,18 @@ export async function GET(
       .where(eq(orderItems.orderId, order.id));
 
     // Build HTML
-    const html = buildInvoiceHtml({ ...order, items });
+    const { readFileSync } = await import("fs");
+    const { join } = await import("path");
+    let logoDataUri = "";
+    try {
+      const logoPath = join(process.cwd(), "public", "logo.png");
+      const logoBytes = readFileSync(logoPath);
+      logoDataUri = `data:image/png;base64,${logoBytes.toString("base64")}`;
+    } catch {
+      // logo not found — skip it in the PDF
+    }
+
+    const html = buildInvoiceHtml({ ...order, items, logoDataUri });
 
     // Launch Puppeteer and render PDF
     browser = await getBrowser();
