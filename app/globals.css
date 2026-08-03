@@ -584,7 +584,7 @@ body.mobile-menu-open .announcement {
 }
 
 .brand-tagline {
-  display: none;
+  display: block;
   margin: 0;
   font: 10px 'DM Mono', monospace;
   color: #7a7a7a;

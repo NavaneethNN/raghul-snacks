@@ -18,6 +18,7 @@ export function CartShippingEstimate({ items, subtotal }: { items: CartLine[]; s
   useEffect(() => {
     if (!/^\d{6}$/.test(pincode)) { setQuote(null); return; }
     const controller = new AbortController();
+    // Only fire after user finishes typing (900ms) to reduce unnecessary API calls
     const timer = window.setTimeout(async () => {
       setLoading(true); setError("");
       try {
@@ -26,7 +27,7 @@ export function CartShippingEstimate({ items, subtotal }: { items: CartLine[]; s
         if (!response.ok) throw new Error(data.error || "Unable to calculate delivery.");
         setQuote(data); window.localStorage.setItem("raghul-snacks-pincode", pincode);
       } catch (caught) { if (!controller.signal.aborted) { setQuote(null); setError(caught instanceof Error ? caught.message : "Unable to calculate delivery."); } } finally { if (!controller.signal.aborted) setLoading(false); }
-    }, 450);
+    }, 900);
     return () => { controller.abort(); window.clearTimeout(timer); };
   }, [pincode, payload]);
 
