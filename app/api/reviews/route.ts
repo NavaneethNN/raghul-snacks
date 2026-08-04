@@ -181,3 +181,41 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ success: true, message: "Thank you! Your review is pending approval." });
 }
+
+// PATCH /api/reviews
+// Body: { productId, rating, content }
+// Lets a logged-in purchaser update their existing review.
+export async function PATCH(request: NextRequest) {
+  const cookieStore = await cookies();
+  const session = getCustomerSession(cookieStore.get(customerCookieName())?.value);
+  if (!session) return NextResponse.json({ error: "Sign in to edit your review." }, { status: 401 });
+
+  const body = await request.json() as { productId: number; rating: number; content: string };
+  const { productId, rating, content } = body;
+
+  if (!productId || !rating || !content?.trim()) {
+    return NextResponse.json({ error: "Product, rating and review text are required." }, { status: 400 });
+  }
+  if (rating < 1 || rating > 5) {
+    return NextResponse.json({ error: "Rating must be between 1 and 5." }, { status: 400 });
+  }
+
+  const db = getDb();
+
+  const existing = await db
+    .select({ id: reviews.id })
+    .from(reviews)
+    .where(and(eq(reviews.productId, productId), eq(reviews.accountId, session.id)))
+    .limit(1);
+
+  if (existing.length === 0) {
+    return NextResponse.json({ error: "No existing review found to edit." }, { status: 404 });
+  }
+
+  await db
+    .update(reviews)
+    .set({ rating, content: content.trim(), approved: false })
+    .where(eq(reviews.id, existing[0].id));
+
+  return NextResponse.json({ success: true });
+}

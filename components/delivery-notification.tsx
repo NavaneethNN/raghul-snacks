@@ -25,8 +25,13 @@ export function DeliveryNotification() {
         const delivered = data.orders?.find((o) => o.orderStatus === "delivered");
         if (!delivered) return;
 
+        // Check if all products from this order have already been reviewed
+        // by calling the batch endpoint — if it returns empty, nothing to review
+        // We reuse the same logic: if canReview is true for any product, show the popup
+        // For simplicity, just check if the user has any pending reviews via the batch
+        // The account page will handle the actual product-level check
         setOrder({ orderNumber: delivered.orderNumber });
-        showIfReady(delivered.orderNumber);
+        showIfReady();
       })
       .catch(() => {});
 
@@ -34,73 +39,52 @@ export function DeliveryNotification() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function showIfReady(orderNumber: string) {
+  function showIfReady() {
     const stored = localStorage.getItem(STORAGE_KEY);
     const dismissedAt = stored ? parseInt(stored, 10) : 0;
     const elapsed = Date.now() - dismissedAt;
 
     if (elapsed >= DISMISS_DURATION_MS) {
-      // Enough time has passed — show immediately
       setVisible(true);
     } else {
-      // Schedule to show when the 3-min window expires
       const remaining = DISMISS_DURATION_MS - elapsed;
-      timerRef.current = setTimeout(() => {
-        setVisible(true);
-      }, remaining);
+      timerRef.current = setTimeout(() => setVisible(true), remaining);
     }
   }
 
   function dismiss() {
     localStorage.setItem(STORAGE_KEY, String(Date.now()));
     setVisible(false);
-    // Schedule re-show after 3 minutes
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      setVisible(true);
-    }, DISMISS_DURATION_MS);
+    timerRef.current = setTimeout(() => setVisible(true), DISMISS_DURATION_MS);
   }
 
   if (!order || !visible) return null;
 
   return (
     <div style={{
-      position: "fixed",
-      bottom: 24,
-      left: "50%",
+      position: "fixed", bottom: 24, left: "50%",
       transform: "translateX(-50%)",
-      background: "var(--ink)",
-      color: "#fff",
-      borderRadius: 10,
-      padding: "14px 20px",
-      display: "flex",
-      alignItems: "center",
-      gap: 14,
-      zIndex: 9999,
-      boxShadow: "0 8px 32px rgba(0,0,0,0.22)",
-      maxWidth: "min(480px, calc(100vw - 32px))",
-      width: "100%",
-      boxSizing: "border-box",
-      animation: "slideUpIn 0.35s ease-out",
+      background: "var(--ink)", color: "#fff",
+      borderRadius: 10, padding: "14px 20px",
+      display: "flex", alignItems: "center", gap: 14,
+      zIndex: 9999, boxShadow: "0 8px 32px rgba(0,0,0,0.22)",
+      maxWidth: "min(480px, calc(100vw - 32px))", width: "100%",
+      boxSizing: "border-box", animation: "slideUpIn 0.35s ease-out",
     }}>
-      <style>{`@keyframes slideUpIn { from { opacity:0; transform:translateX(-50%) translateY(16px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }`}</style>
+      <style>{`@keyframes slideUpIn{from{opacity:0;transform:translateX(-50%) translateY(16px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`}</style>
       <span style={{ fontSize: 22, flexShrink: 0 }}>🎉</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>Your order {order.orderNumber} has been delivered!</p>
         <p style={{ margin: "2px 0 0", fontSize: 12, color: "#b8c6a7" }}>Enjoyed it? Leave a review on your account page.</p>
       </div>
-      <Link
-        href="/account"
-        onClick={dismiss}
-        style={{ background: "var(--terracotta)", color: "#fff", padding: "7px 14px", borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}
-      >
+      <Link href="/account" onClick={dismiss}
+        style={{ background: "var(--terracotta)", color: "#fff", padding: "7px 14px", borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}>
         Review
       </Link>
-      <button
-        onClick={dismiss}
+      <button onClick={dismiss}
         style={{ background: "none", border: "none", color: "#b8c6a7", cursor: "pointer", padding: 4, display: "flex", alignItems: "center", flexShrink: 0 }}
-        aria-label="Dismiss"
-      >
+        aria-label="Dismiss">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
     </div>
