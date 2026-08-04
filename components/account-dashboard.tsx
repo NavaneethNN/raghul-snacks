@@ -463,12 +463,9 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                                       {price.format(parseFloat(item.price) * item.quantity)}
                                     </span>
                                     {/* Review state */}
-                                    {doneMsg && (
-                                      <span className={styles.reviewDone}>✓ Pending approval</span>
-                                    )}
-                                    {!doneMsg && alreadyReviewed && reviewState !== undefined && reviewState > 0 && (
+                                    {(doneMsg || (alreadyReviewed && reviewState !== undefined && reviewState > 0)) && (
                                       <span className={styles.reviewDone} title="Your rating">
-                                        {"★".repeat(reviewState)}{"☆".repeat(5 - reviewState)}
+                                        {"★".repeat(doneMsg ? reviewRating : reviewState!)}{"☆".repeat(5 - (doneMsg ? reviewRating : reviewState!))}
                                       </span>
                                     )}
                                     {!doneMsg && canReview && !isReviewOpen && (

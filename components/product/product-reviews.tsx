@@ -50,7 +50,6 @@ export function ProductReviews({ productId }: { productId: number }) {
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [submitMsg, setSubmitMsg] = useState("");
   const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
@@ -74,8 +73,10 @@ export function ProductReviews({ productId }: { productId: number }) {
       });
       const json = await res.json() as { message?: string; error?: string };
       if (!res.ok) throw new Error(json.error || "Failed to submit review.");
-      setSubmitMsg(json.message || "Review submitted!");
+      // Just mark as reviewed — no pending message shown to the user
       setData((prev) => prev ? { ...prev, canReview: false, alreadyReviewed: true } : prev);
+      setRating(0);
+      setContent("");
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Failed to submit review.");
     } finally { setSubmitting(false); }
@@ -103,7 +104,7 @@ export function ProductReviews({ productId }: { productId: number }) {
       </div>
 
       {/* Write a review */}
-      {data.canReview && !submitMsg && (
+      {data.canReview && (
         <div style={{ background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 10, padding: "24px 20px", marginBottom: 32 }}>
           <p style={{ margin: "0 0 4px", fontSize: 11, fontFamily: "'DM Mono',monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--terracotta)" }}>
             Share your experience
@@ -140,13 +141,7 @@ export function ProductReviews({ productId }: { productId: number }) {
         </div>
       )}
 
-      {submitMsg && (
-        <div style={{ background: "#dcfce7", border: "1px solid #bbf7d0", borderRadius: 8, padding: "14px 18px", marginBottom: 28, color: "#15803d", fontSize: 14, fontWeight: 500 }}>
-          ✓ {submitMsg}
-        </div>
-      )}
-
-      {data.alreadyReviewed && !submitMsg && (
+      {data.alreadyReviewed && (
         <div style={{ background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, padding: "12px 16px", marginBottom: 24, fontSize: 13, color: "#687267" }}>
           You have already reviewed this product. Thank you!
         </div>
