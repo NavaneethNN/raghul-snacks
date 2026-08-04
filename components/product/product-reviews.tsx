@@ -143,12 +143,12 @@ export function ProductReviews({ productId }: { productId: number }) {
       )}
 
       {data.alreadyReviewed && (
-        <div style={{ background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, padding: "14px 18px", marginBottom: 24, display: "flex", alignItems: "center", gap: 14 }}>
-          <div>
-            <p style={{ margin: "0 0 4px", fontSize: 12, fontFamily: "'DM Mono',monospace", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--terracotta)" }}>Your review</p>
+        <div style={{ background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, padding: "14px 18px", marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
             <Stars rating={data.existingRating} />
+            <span style={{ fontSize: 12, fontFamily: "'DM Mono',monospace", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--terracotta)" }}>Your review</span>
           </div>
-          <p style={{ margin: 0, fontSize: 13, color: "#687267" }}>Your review is pending approval and will appear here once approved.</p>
+          <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>Pending approval — will appear here once approved.</p>
         </div>
       )}
 
