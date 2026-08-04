@@ -1,38 +1,67 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 type DeliveredOrder = { orderNumber: string };
 
+const DISMISS_DURATION_MS = 3 * 60 * 1000; // 3 minutes
+const STORAGE_KEY = "delivery-notification-dismissed-at";
+
 export function DeliveryNotification() {
   const [order, setOrder] = useState<DeliveredOrder | null>(null);
-  const [dismissed, setDismissed] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // Only check for logged-in users
     fetch("/api/auth/session")
       .then((r) => r.json())
       .then(async (d) => {
         if (!d.account) return;
 
-        // Check if they've dismissed this notification already
-        const dismissedKey = window.sessionStorage.getItem("delivery-notification-dismissed");
-
-        // Fetch their most recent delivered order
         const res = await fetch("/api/orders/mine");
         if (!res.ok) return;
         const data = await res.json() as { orders?: Array<{ orderNumber: string; orderStatus: string }> };
         const delivered = data.orders?.find((o) => o.orderStatus === "delivered");
         if (!delivered) return;
 
-        if (dismissedKey === delivered.orderNumber) return;
         setOrder({ orderNumber: delivered.orderNumber });
+        showIfReady(delivered.orderNumber);
       })
       .catch(() => {});
+
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!order || dismissed) return null;
+  function showIfReady(orderNumber: string) {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const dismissedAt = stored ? parseInt(stored, 10) : 0;
+    const elapsed = Date.now() - dismissedAt;
+
+    if (elapsed >= DISMISS_DURATION_MS) {
+      // Enough time has passed — show immediately
+      setVisible(true);
+    } else {
+      // Schedule to show when the 3-min window expires
+      const remaining = DISMISS_DURATION_MS - elapsed;
+      timerRef.current = setTimeout(() => {
+        setVisible(true);
+      }, remaining);
+    }
+  }
+
+  function dismiss() {
+    localStorage.setItem(STORAGE_KEY, String(Date.now()));
+    setVisible(false);
+    // Schedule re-show after 3 minutes
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setVisible(true);
+    }, DISMISS_DURATION_MS);
+  }
+
+  if (!order || !visible) return null;
 
   return (
     <div style={{
@@ -62,19 +91,13 @@ export function DeliveryNotification() {
       </div>
       <Link
         href="/account"
-        onClick={() => {
-          window.sessionStorage.setItem("delivery-notification-dismissed", order.orderNumber);
-          setDismissed(true);
-        }}
+        onClick={dismiss}
         style={{ background: "var(--terracotta)", color: "#fff", padding: "7px 14px", borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}
       >
         Review
       </Link>
       <button
-        onClick={() => {
-          window.sessionStorage.setItem("delivery-notification-dismissed", order.orderNumber);
-          setDismissed(true);
-        }}
+        onClick={dismiss}
         style={{ background: "none", border: "none", color: "#b8c6a7", cursor: "pointer", padding: 4, display: "flex", alignItems: "center", flexShrink: 0 }}
         aria-label="Dismiss"
       >
