@@ -76,28 +76,29 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
     });
   }
 
-  // Pre-load which products have already been reviewed by this user
+  // Pre-load which products have already been reviewed by this user — single batch call
   useEffect(() => {
     const deliveredOrders = orders.filter((o) => o.orderStatus === "delivered");
     const productIds = Array.from(new Set(
       deliveredOrders.flatMap((o) => o.items.map((i) => i.product?.id).filter(Boolean) as number[])
     ));
     if (productIds.length === 0) return;
-    Promise.all(
-      productIds.map((pid) =>
-        fetch(`/api/reviews?productId=${pid}`)
-          .then((r) => r.json())
-          .then((d: { canReview?: boolean; alreadyReviewed?: boolean; existingRating?: number }) => ({
-            pid,
-            rating: d.alreadyReviewed ? (d.existingRating ?? 1) : 0,
-          }))
-          .catch(() => ({ pid, rating: -1 })) // -1 = not a purchaser, hide option
-      )
-    ).then((results) => {
-      const map: Record<number, number> = {};
-      results.forEach(({ pid, rating }) => { if (rating >= 0) map[pid] = rating; });
-      setReviewedProductIds(map);
-    });
+
+    fetch("/api/reviews/batch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productIds }),
+    })
+      .then((r) => r.json())
+      .then((data: Record<number, { canReview: boolean; existingRating: number }>) => {
+        const map: Record<number, number> = {};
+        for (const [pid, info] of Object.entries(data)) {
+          // 0 = eligible to review, >0 = already reviewed (value = their rating)
+          map[Number(pid)] = info.existingRating > 0 ? info.existingRating : 0;
+        }
+        setReviewedProductIds(map);
+      })
+      .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

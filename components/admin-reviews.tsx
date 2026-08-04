@@ -19,7 +19,11 @@ const STARS = "★★★★★";
 export function AdminReviews() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "pending" | "approved">("all");
+  const [filter, setFilter] = useState<"all" | "pending" | "approved">("pending");
+
+  // Counts
+  const pendingCount = reviews.filter((r) => !r.approved).length;
+  const approvedCount = reviews.filter((r) => r.approved).length;
   const [busy, setBusy] = useState<number | null>(null);
   const [message, setMessage] = useState("");
 
@@ -66,20 +70,37 @@ export function AdminReviews() {
           <h1>Customer Reviews</h1>
           <p>Approve or remove product reviews before they appear on the site.</p>
         </div>
+        {pendingCount > 0 && (
+          <div style={{ background: "#fef3c7", border: "1px solid #fde047", borderRadius: 10, padding: "12px 20px", display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 22 }}>⏳</span>
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 16, color: "#92400e" }}>{pendingCount} review{pendingCount !== 1 ? "s" : ""} awaiting approval</p>
+              <p style={{ margin: 0, fontSize: 13, color: "#a16207" }}>Click Approve to make them visible on the site.</p>
+            </div>
+          </div>
+        )}
       </header>
 
       <section className={styles.workspace}>
         <div className={styles.toolbar}>
           <div className={styles.filters}>
-            {(["all", "pending", "approved"] as const).map((f) => (
-              <button key={f} className={filter === f ? styles.activeFilter : ""} onClick={() => setFilter(f)}>
-                {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
+            <button className={filter === "all" ? styles.activeFilter : ""} onClick={() => setFilter("all")}>
+              All ({reviews.length})
+            </button>
+            <button className={filter === "pending" ? styles.activeFilter : ""} onClick={() => setFilter("pending")}>
+              Pending {pendingCount > 0 && <span style={{ background: "#f59e0b", color: "#fff", borderRadius: "999px", padding: "1px 7px", fontSize: 11, fontWeight: 700, marginLeft: 4 }}>{pendingCount}</span>}
+            </button>
+            <button className={filter === "approved" ? styles.activeFilter : ""} onClick={() => setFilter("approved")}>
+              Approved ({approvedCount})
+            </button>
           </div>
         </div>
 
-        {message && <p className={styles.message}>{message}</p>}
+        {message && (
+          <div style={{ padding: "10px 16px", background: "#d1fae5", border: "1px solid #6ee7b7", borderRadius: 8, color: "#065f46", fontSize: 13, fontWeight: 500, marginBottom: 16 }}>
+            {message}
+          </div>
+        )}
 
         <div className={styles.tableWrapper}>
           <table className={styles.table}>

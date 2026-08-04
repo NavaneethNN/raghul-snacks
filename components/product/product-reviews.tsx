@@ -14,6 +14,7 @@ type ReviewsData = {
   reviews: Review[];
   canReview: boolean;
   alreadyReviewed: boolean;
+  existingRating: number;
   accountName: string;
 };
 
@@ -142,8 +143,12 @@ export function ProductReviews({ productId }: { productId: number }) {
       )}
 
       {data.alreadyReviewed && (
-        <div style={{ background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, padding: "12px 16px", marginBottom: 24, fontSize: 13, color: "#687267" }}>
-          You have already reviewed this product. Thank you!
+        <div style={{ background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, padding: "14px 18px", marginBottom: 24, display: "flex", alignItems: "center", gap: 14 }}>
+          <div>
+            <p style={{ margin: "0 0 4px", fontSize: 12, fontFamily: "'DM Mono',monospace", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--terracotta)" }}>Your review</p>
+            <Stars rating={data.existingRating} />
+          </div>
+          <p style={{ margin: 0, fontSize: 13, color: "#687267" }}>Your review is pending approval and will appear here once approved.</p>
         </div>
       )}
 
