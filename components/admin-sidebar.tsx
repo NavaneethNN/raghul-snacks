@@ -52,7 +52,6 @@ export function AdminSidebar() {
         <Link href="/admin" className={styles.brandName}>
           <img src="/logo-footer.png" alt="Raghul Delights" style={{ height: "60px", width: "auto" }} />
           <span className={styles.shopName}>Raghul Delights</span>
-          <span className={styles.brandTagline}>Admin Panel</span>
         </Link>
       </div>
       <nav className={styles.nav}>

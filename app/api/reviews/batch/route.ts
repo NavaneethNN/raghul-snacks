@@ -1,4 +1,4 @@
-import { and, eq, inArray, or, isNull } from "drizzle-orm";
+import { and, eq, inArray, or } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { orderItems, orders, products, reviews } from "@/drizzle/schema";
@@ -6,78 +6,108 @@ import { customerCookieName, getCustomerSession } from "@/lib/customer-auth";
 import { getDb } from "@/lib/db";
 
 // POST /api/reviews/batch
-// Body: { productIds: number[] }
-// Returns: Record<productId, { canReview: boolean; existingRating: number }>
-// A productId absent from the response means the user hasn't purchased it.
+// Body: { productIds: number[], orderId: number }
+// Returns: Record<productId, {
+//   canReview: boolean;       // this order has no review yet
+//   canEdit: boolean;         // most-recent order AND product reviewed in a prior order
+//   existingRating: number;   // rating of prior review (for edit pre-fill)
+// }>
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
   const session = getCustomerSession(cookieStore.get(customerCookieName())?.value);
   if (!session) return NextResponse.json({});
 
-  const { productIds } = await request.json() as { productIds: number[] };
-  if (!productIds?.length) return NextResponse.json({});
+  const { productIds, orderId } = await request.json() as {
+    productIds: number[];
+    orderId: number;
+  };
+  if (!productIds?.length || !orderId) return NextResponse.json({});
 
   const db = getDb();
 
-  // 1. Resolve product names so we can match order_items that have product_id = null
+  // 1. Resolve product names for name-based matching (old orders have product_id=null)
   const productRows = await db
     .select({ id: products.id, name: products.name })
     .from(products)
     .where(inArray(products.id, productIds));
-
-  // map: productId → name
   const idToName = new Map(productRows.map((p) => [p.id, p.name]));
-  // map: name → productId (for reverse lookup)
   const nameToId = new Map(productRows.map((p) => [p.name, p.id]));
 
-  // 2. Fetch ALL paid order_items for this account (both by productId and by name)
-  const allPurchasedItems = await db
-    .select({ productId: orderItems.productId, name: orderItems.name })
-    .from(orderItems)
-    .innerJoin(orders, eq(orderItems.orderId, orders.id))
-    .where(
-      and(
-        eq(orders.accountId, session.id),
-        eq(orders.paymentStatus, "paid"),
-      ),
-    );
+  // 2. Find all paid orders for this account, ordered newest first
+  const allOrders = await db
+    .select({ id: orders.id, createdAt: orders.createdAt })
+    .from(orders)
+    .where(and(eq(orders.accountId, session.id), eq(orders.paymentStatus, "paid")));
 
-  // Build set of purchased productIds — matching by product_id OR by name fallback
-  const purchasedIds = new Set<number>();
-  for (const row of allPurchasedItems) {
-    if (row.productId && productIds.includes(row.productId)) {
-      purchasedIds.add(row.productId);
-    } else if (!row.productId && row.name) {
-      // product_id is null on older orders — match by name
-      const pid = nameToId.get(row.name);
-      if (pid && productIds.includes(pid)) purchasedIds.add(pid);
+  allOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const mostRecentOrderId = allOrders[0]?.id;
+  const isCurrentOrderMostRecent = orderId === mostRecentOrderId;
+
+  // 3. Fetch all order items across all paid orders for this account
+  const allOrderIds = allOrders.map((o) => o.id);
+  if (!allOrderIds.length) return NextResponse.json({});
+
+  const allItems = await db
+    .select({ orderId: orderItems.orderId, productId: orderItems.productId, name: orderItems.name })
+    .from(orderItems)
+    .where(inArray(orderItems.orderId, allOrderIds));
+
+  // Build map: productId → set of orderIds that contain it
+  const productOrderMap = new Map<number, Set<number>>();
+  for (const item of allItems) {
+    let pid = item.productId;
+    if (!pid && item.name) pid = nameToId.get(item.name) ?? null;
+    if (!pid) continue;
+    if (!productOrderMap.has(pid)) productOrderMap.set(pid, new Set());
+    productOrderMap.get(pid)!.add(item.orderId);
+  }
+
+  // 4. Fetch all reviews by this user
+  const allReviews = await db
+    .select({ productId: reviews.productId, orderId: reviews.orderId, rating: reviews.rating })
+    .from(reviews)
+    .where(eq(reviews.accountId, session.id));
+
+  // Map: productId+orderId → rating
+  const reviewMap = new Map<string, number>();
+  for (const r of allReviews) {
+    if (r.productId && r.orderId) {
+      reviewMap.set(`${r.productId}-${r.orderId}`, r.rating);
+    } else if (r.productId) {
+      // Legacy review without orderId — associate with first order containing this product
+      const firstOrder = [...(productOrderMap.get(r.productId) ?? [])].sort()[0];
+      if (firstOrder) reviewMap.set(`${r.productId}-${firstOrder}`, r.rating);
     }
   }
 
-  if (purchasedIds.size === 0) return NextResponse.json({});
+  // 5. Build result for each requested productId
+  const result: Record<number, { canReview: boolean; canEdit: boolean; existingRating: number }> = {};
 
-  // 3. Fetch existing reviews by this user for purchased products
-  const existingReviews = await db
-    .select({ productId: reviews.productId, rating: reviews.rating })
-    .from(reviews)
-    .where(
-      and(
-        eq(reviews.accountId, session.id),
-        inArray(reviews.productId, [...purchasedIds]),
-      ),
-    );
+  for (const pid of productIds) {
+    const orderIdsWithProduct = productOrderMap.get(pid);
+    if (!orderIdsWithProduct || !orderIdsWithProduct.has(orderId)) continue;
+    // User purchased this product in the current order
 
-  const reviewedMap = new Map(
-    existingReviews
-      .filter((r) => r.productId !== null)
-      .map((r) => [r.productId!, r.rating])
-  );
+    const thisOrderReviewKey = `${pid}-${orderId}`;
+    const hasReviewedThisOrder = reviewMap.has(thisOrderReviewKey);
 
-  // 4. Build response
-  const result: Record<number, { canReview: boolean; existingRating: number }> = {};
-  for (const pid of purchasedIds) {
-    const existingRating = reviewedMap.get(pid) ?? 0;
-    result[pid] = { canReview: existingRating === 0, existingRating };
+    // Find if there's a review from a PREVIOUS order (for edit eligibility)
+    const priorOrderReview = [...orderIdsWithProduct]
+      .filter((oid) => oid !== orderId && reviewMap.has(`${pid}-${oid}`))
+      .map((oid) => reviewMap.get(`${pid}-${oid}`)!)[0];
+    const hasPriorReview = priorOrderReview !== undefined;
+
+    // canReview: no review yet for this specific order
+    const canReview = !hasReviewedThisOrder;
+
+    // canEdit: most recent order, product was in a prior order with a review, no review yet for current order
+    const canEdit = isCurrentOrderMostRecent && hasPriorReview && !hasReviewedThisOrder;
+
+    result[pid] = {
+      canReview,
+      canEdit,
+      existingRating: priorOrderReview ?? 0,
+    };
   }
 
   return NextResponse.json(result);

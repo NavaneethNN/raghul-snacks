@@ -59,10 +59,10 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   const [savingName, setSavingName] = useState(false);
   const [nameError, setNameError] = useState("");
   const [expandedOrders, setExpandedOrders] = useState<Set<number>>(new Set());
-  // productId → 0 = eligible to review, >0 = already reviewed (value is their rating)
-  const [reviewedProductIds, setReviewedProductIds] = useState<Record<number, number>>({});
-  // Item id currently showing the review form
-  const [reviewingItemProductId, setReviewingItemProductId] = useState<number | null>(null);
+  // key: "productId-orderId" → review state for that specific order+product
+  const [reviewStateMap, setReviewStateMap] = useState<Record<string, { canReview: boolean; canEdit: boolean; existingRating: number }>>({});
+  // Item currently showing the review form: "productId-orderId"
+  const [reviewingKey, setReviewingKey] = useState<string | null>(null);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewContent, setReviewContent] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
@@ -84,38 +84,52 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
     ));
     if (productIds.length === 0) return;
 
-    fetch("/api/reviews/batch", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productIds }),
-    })
-      .then((r) => r.json())
-      .then((data: Record<number, { canReview: boolean; existingRating: number }>) => {
-        const map: Record<number, number> = {};
-        for (const [pid, info] of Object.entries(data)) {
-          // 0 = eligible to review, >0 = already reviewed (value = their rating)
-          map[Number(pid)] = info.existingRating > 0 ? info.existingRating : 0;
-        }
-        setReviewedProductIds(map);
+    // For each delivered order, call batch with that order's productIds + orderId
+    const calls = deliveredOrders.map((o) => {
+      const pids = o.items.map((i) => i.product?.id).filter(Boolean) as number[];
+      if (!pids.length) return Promise.resolve({ orderId: o.id, data: {} });
+      return fetch("/api/reviews/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productIds: pids, orderId: o.id }),
       })
-      .catch(() => {});
+        .then((r) => r.json())
+        .then((data: Record<number, { canReview: boolean; canEdit: boolean; existingRating: number }>) => ({ orderId: o.id, data }))
+        .catch(() => ({ orderId: o.id, data: {} }));
+    });
+
+    Promise.all(calls).then((results) => {
+      // Merge all results — key by "pid-orderId" to distinguish per-order state
+      const map: Record<string, { canReview: boolean; canEdit: boolean; existingRating: number }> = {};
+      for (const { orderId, data } of results) {
+        for (const [pid, info] of Object.entries(data)) {
+          map[`${pid}-${orderId}`] = info as { canReview: boolean; canEdit: boolean; existingRating: number };
+        }
+      }
+      setReviewStateMap(map);
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function submitReview(productId: number, isEdit: boolean) {
+  async function submitReview(productId: number, orderId: number, isEdit: boolean) {
     if (!reviewRating) { alert("Please select a star rating."); return; }
     if (reviewContent.trim().length < 1) { alert("Review cannot be empty."); return; }
     setReviewSubmitting(true);
+    const key = `${productId}-${orderId}`;
     try {
       const res = await fetch("/api/reviews", {
         method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, rating: reviewRating, content: reviewContent }),
+        body: JSON.stringify({ productId, orderId, rating: reviewRating, content: reviewContent }),
       });
-      const data = await res.json() as { message?: string; error?: string };
+      const data = await res.json() as { error?: string };
       if (!res.ok) throw new Error(data.error);
-      setReviewedProductIds((prev) => ({ ...prev, [productId]: reviewRating }));
-      setReviewingItemProductId(null);
+      // Mark as reviewed for this order+product
+      setReviewStateMap((prev) => ({
+        ...prev,
+        [key]: { canReview: false, canEdit: false, existingRating: reviewRating },
+      }));
+      setReviewingKey(null);
       setReviewRating(0);
       setReviewContent("");
     } catch (err) {
@@ -432,15 +446,14 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                             {order.items.map((item) => {
                               const pid = item.product?.id;
                               const isDelivered = order.orderStatus === "delivered";
-                              // reviewedProductIds[pid]: undefined=not purchaser, 0=eligible, >0=already reviewed (value=rating)
-                              const reviewState = pid !== undefined ? reviewedProductIds[pid] : undefined;
-                              const alreadyReviewed = reviewState !== undefined && reviewState > 0;
-                              const canReview = isDelivered && pid !== undefined && reviewState === 0;
-                              const isReviewOpen = reviewingItemProductId === pid;
-                              const doneMsg = pid !== undefined ? reviewMsg[pid] : undefined;
-                              // Can edit if delivered and already reviewed
-                              const canEdit = isDelivered && alreadyReviewed && pid !== undefined;
-                              const isEditing = canEdit && isReviewOpen;
+                              const key = pid !== undefined ? `${pid}-${order.id}` : undefined;
+                              const state = key ? reviewStateMap[key] : undefined;
+                              // state undefined = not a purchaser or not yet loaded
+                              const canReview = isDelivered && !!state?.canReview;
+                              const canEdit = isDelivered && !!state?.canEdit;
+                              const alreadyReviewed = state !== undefined && !state.canReview && !state.canEdit && state.existingRating > 0;
+                              const isOpen = reviewingKey === key;
+                              const isEditing = canEdit && isOpen;
 
                               return (
                                 <div key={item.id} className={styles.orderItem}>
@@ -466,34 +479,25 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                                       {price.format(parseFloat(item.price) * item.quantity)}
                                     </span>
                                     {/* Review state */}
-                                    {(alreadyReviewed && reviewState !== undefined && reviewState > 0 && !isEditing) && (
+                                    {(alreadyReviewed && !isOpen) && (
+                                      <span className={styles.reviewDone} title="Your rating">
+                                        {"★".repeat(state?.existingRating ?? 0)}{"☆".repeat(5 - (state?.existingRating ?? 0))}
+                                      </span>
+                                    )}
+                                    {canEdit && !isOpen && (
                                       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
-                                        <span className={styles.reviewDone} title="Your rating">
-                                          {"★".repeat(reviewState)}{"☆".repeat(5 - reviewState)}
-                                        </span>
-                                        {canEdit && (
-                                          <button
-                                            className={styles.reviewBtn}
-                                            style={{ fontSize: 10 }}
-                                            onClick={() => {
-                                              setReviewingItemProductId(pid!);
-                                              setReviewRating(reviewState);
-                                              setReviewContent("");
-                                            }}
-                                          >
-                                            ✏ Edit
-                                          </button>
-                                        )}
+                                        <button
+                                          className={styles.reviewBtn}
+                                          onClick={() => { setReviewingKey(key!); setReviewRating(state?.existingRating ?? 0); setReviewContent(""); }}
+                                        >
+                                          ✏ Edit Review
+                                        </button>
                                       </div>
                                     )}
-                                    {!alreadyReviewed && canReview && !isReviewOpen && (
+                                    {canReview && !isOpen && (
                                       <button
                                         className={styles.reviewBtn}
-                                        onClick={() => {
-                                          setReviewingItemProductId(pid!);
-                                          setReviewRating(0);
-                                          setReviewContent("");
-                                        }}
+                                        onClick={() => { setReviewingKey(key!); setReviewRating(0); setReviewContent(""); }}
                                       >
                                         ★ Review
                                       </button>
@@ -502,20 +506,17 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                                   </div>
 
                                   {/* Inline review form — new review or edit */}
-                                  {((!alreadyReviewed && canReview && isReviewOpen) || isEditing) && (
+                                  {(canReview || canEdit) && isOpen && (
                                     <div className={styles.inlineReview}>
                                       <p style={{ margin: "0 0 8px", fontSize: 11, fontFamily: "'DM Mono',monospace", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--terracotta)" }}>
                                         {isEditing ? "Edit your review" : "Write a review"}
                                       </p>
                                       <div className={styles.starRow}>
                                         {[1, 2, 3, 4, 5].map((n) => (
-                                          <button
-                                            key={n}
-                                            type="button"
+                                          <button key={n} type="button"
                                             className={`${styles.star} ${n <= reviewRating ? styles.starFilled : ""}`}
                                             onClick={() => setReviewRating(n)}
-                                            aria-label={`${n} star`}
-                                          >★</button>
+                                            aria-label={`${n} star`}>★</button>
                                         ))}
                                       </div>
                                       <textarea
@@ -526,17 +527,13 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                                         rows={3}
                                       />
                                       <div className={styles.reviewFormActions}>
-                                        <button
-                                          className={styles.reviewSubmitBtn}
-                                          onClick={() => submitReview(pid!, isEditing)}
-                                          disabled={reviewSubmitting}
-                                        >
+                                        <button className={styles.reviewSubmitBtn}
+                                          onClick={() => submitReview(pid!, order.id, isEditing)}
+                                          disabled={reviewSubmitting}>
                                           {reviewSubmitting ? "Saving…" : isEditing ? "Update Review" : "Submit"}
                                         </button>
-                                        <button
-                                          className={styles.reviewCancelBtn}
-                                          onClick={() => setReviewingItemProductId(null)}
-                                        >
+                                        <button className={styles.reviewCancelBtn}
+                                          onClick={() => setReviewingKey(null)}>
                                           Cancel
                                         </button>
                                       </div>
