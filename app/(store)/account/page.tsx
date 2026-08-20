@@ -46,6 +46,7 @@ export default async function AccountPage() {
       couponCode: orders.couponCode,
       paymentStatus: orders.paymentStatus,
       orderStatus: orders.orderStatus,
+      paymentMethod: orders.paymentMethod,
       shippingStatus: orders.shippingStatus,
       awbCode: orders.awbCode,
       createdAt: orders.createdAt,

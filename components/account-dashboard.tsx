@@ -15,6 +15,7 @@ type Order = {
   couponCode: string | null;
   orderStatus: string;
   paymentStatus: string;
+  paymentMethod?: string | null;
   createdAt: string;
   items: Array<{
     id: number;

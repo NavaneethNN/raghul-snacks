@@ -11,6 +11,7 @@ type Order = {
   couponCode: string | null;
   orderStatus: string;
   paymentStatus: string;
+  paymentMethod?: string | null;
   createdAt: string;
   items: Array<{
     id: number;
@@ -220,9 +221,14 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
           <div>
             <p style={{ margin: "0 0 4px", fontSize: 11, fontFamily: "'DM Mono',monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--terracotta)" }}>Order Details</p>
             <h2 style={{ margin: 0, fontFamily: "'Playfair Display',serif", fontSize: 22, letterSpacing: "-0.03em" }}>{order.orderNumber}</h2>
-            <p style={{ margin: "3px 0 0", fontSize: 13, color: "#6b7280" }}>
-              {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
-            </p>
+            <div style={{ display: "flex", gap: 16, marginTop: 6 }}>
+              <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>
+                {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+              </p>
+              <p style={{ margin: 0, fontSize: 12, color: "#9ca3af", fontFamily: "'DM Mono',monospace", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                {order.paymentMethod === "online" ? "💳 Online Payment" : order.paymentMethod?.toUpperCase() || "Payment"}
+              </p>
+            </div>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <Badge label={order.orderStatus} />
