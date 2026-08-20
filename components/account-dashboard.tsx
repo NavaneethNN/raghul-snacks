@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart/cart-provider";
+import { OrderDetailModal } from "@/components/order-detail-modal";
 import styles from "./account-dashboard.module.css";
 
 type Order = {
@@ -58,84 +59,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   const [nameDraft, setNameDraft] = useState(account.name);
   const [savingName, setSavingName] = useState(false);
   const [nameError, setNameError] = useState("");
-  const [expandedOrders, setExpandedOrders] = useState<Set<number>>(new Set());
-  // key: "productId-orderId" → review state for that specific order+product
-  const [reviewStateMap, setReviewStateMap] = useState<Record<string, { canReview: boolean; canEdit: boolean; existingRating: number }>>({});
-  // Item currently showing the review form: "productId-orderId"
-  const [reviewingKey, setReviewingKey] = useState<string | null>(null);
-  const [reviewRating, setReviewRating] = useState(0);
-  const [reviewContent, setReviewContent] = useState("");
-  const [reviewSubmitting, setReviewSubmitting] = useState(false);
-  const [reviewMsg, setReviewMsg] = useState<Record<number, string>>({});
-
-  function toggleOrder(id: number) {
-    setExpandedOrders((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }
-
-  // Pre-load which products have already been reviewed by this user — single batch call
-  useEffect(() => {
-    const deliveredOrders = orders.filter((o) => o.orderStatus === "delivered");
-    const productIds = Array.from(new Set(
-      deliveredOrders.flatMap((o) => o.items.map((i) => i.product?.id).filter(Boolean) as number[])
-    ));
-    if (productIds.length === 0) return;
-
-    // For each delivered order, call batch with that order's productIds + orderId
-    const calls = deliveredOrders.map((o) => {
-      const pids = o.items.map((i) => i.product?.id).filter(Boolean) as number[];
-      if (!pids.length) return Promise.resolve({ orderId: o.id, data: {} });
-      return fetch("/api/reviews/batch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productIds: pids, orderId: o.id }),
-      })
-        .then((r) => r.json())
-        .then((data: Record<number, { canReview: boolean; canEdit: boolean; existingRating: number }>) => ({ orderId: o.id, data }))
-        .catch(() => ({ orderId: o.id, data: {} }));
-    });
-
-    Promise.all(calls).then((results) => {
-      // Merge all results — key by "pid-orderId" to distinguish per-order state
-      const map: Record<string, { canReview: boolean; canEdit: boolean; existingRating: number }> = {};
-      for (const { orderId, data } of results) {
-        for (const [pid, info] of Object.entries(data)) {
-          map[`${pid}-${orderId}`] = info as { canReview: boolean; canEdit: boolean; existingRating: number };
-        }
-      }
-      setReviewStateMap(map);
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function submitReview(productId: number, orderId: number, isEdit: boolean) {
-    if (!reviewRating) { alert("Please select a star rating."); return; }
-    if (reviewContent.trim().length < 1) { alert("Review cannot be empty."); return; }
-    setReviewSubmitting(true);
-    const key = `${productId}-${orderId}`;
-    try {
-      const res = await fetch("/api/reviews", {
-        method: isEdit ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, orderId, rating: reviewRating, content: reviewContent }),
-      });
-      const data = await res.json() as { error?: string };
-      if (!res.ok) throw new Error(data.error);
-      // Mark as reviewed for this order+product
-      setReviewStateMap((prev) => ({
-        ...prev,
-        [key]: { canReview: false, canEdit: false, existingRating: reviewRating },
-      }));
-      setReviewingKey(null);
-      setReviewRating(0);
-      setReviewContent("");
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to submit review.");
-    } finally { setReviewSubmitting(false); }
-  }
+  const [detailOrder, setDetailOrder] = useState<Order | null>(null);
 
   const price = new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -389,225 +313,68 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
             </div>
           ) : (
             <div className={styles.ordersList}>
-              {orders.map((order) => {
-                const isOpen = expandedOrders.has(order.id);
-                return (
-                  <div key={order.id} className={`${styles.orderCard} ${isOpen ? styles.orderCardOpen : ""}`}>
+              {/* Order detail modal */}
+              {detailOrder && (
+                <OrderDetailModal
+                  order={detailOrder}
+                  onClose={() => setDetailOrder(null)}
+                  onDownloadInvoice={downloadInvoice}
+                  onBuyAgain={handleBuyAgain}
+                />
+              )}
 
-                    {/* ── Clickable header row ── */}
-                    <button
-                      type="button"
-                      className={styles.orderToggle}
-                      onClick={() => toggleOrder(order.id)}
-                      aria-expanded={isOpen}
-                    >
-                      {/* Top row: order number + date */}
-                      <div className={styles.orderMeta}>
-                        <strong className={styles.orderNumber}>{order.orderNumber}</strong>
-                        <p className={styles.orderDate}>
-                          {new Date(order.createdAt).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </p>
+              {orders.map((order) => (
+                <div key={order.id} className={styles.orderCard}>
+                  {/* ── Clickable header row — opens detail modal ── */}
+                  <button
+                    type="button"
+                    className={styles.orderToggle}
+                    onClick={() => setDetailOrder(order)}
+                    aria-label={`View details for ${order.orderNumber}`}
+                  >
+                    {/* Top row: order number + date */}
+                    <div className={styles.orderMeta}>
+                      <strong className={styles.orderNumber}>{order.orderNumber}</strong>
+                      <p className={styles.orderDate}>
+                        {new Date(order.createdAt).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+
+                    {/* Bottom row: amount + badges + arrow */}
+                    <div className={styles.orderSummaryRow}>
+                      <strong className={styles.orderTotal}>
+                        {price.format(parseFloat(order.total))}
+                      </strong>
+                      <div className={styles.badges}>
+                        <span className={`${styles.badge} ${styles[order.orderStatus]}`}>
+                          {order.orderStatus}
+                        </span>
+                        <span className={`${styles.badge} ${order.paymentStatus === "paid" ? styles.paid : styles.pending}`}>
+                          {order.paymentStatus}
+                        </span>
                       </div>
-
-                      {/* Bottom row: amount + badges + chevron */}
-                      <div className={styles.orderSummaryRow}>
-                        <strong className={styles.orderTotal}>
-                          {price.format(parseFloat(order.total))}
-                        </strong>
-                        <div className={styles.badges}>
-                          <span className={`${styles.badge} ${styles[order.orderStatus]}`}>
-                            {order.orderStatus}
-                          </span>
-                          <span className={`${styles.badge} ${order.paymentStatus === "paid" ? styles.paid : styles.pending}`}>
-                            {order.paymentStatus}
-                          </span>
-                        </div>
-                        <svg
-                          className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ""}`}
-                          width="16" height="16" viewBox="0 0 24 24"
-                          fill="none" stroke="currentColor" strokeWidth="2.5"
-                          strokeLinecap="round" strokeLinejoin="round"
-                          aria-hidden="true"
-                        >
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      </div>
-                    </button>
-
-                    {/* ── Collapsible body ── */}
-                    {isOpen && (
-                      <div className={styles.orderBody}>
-                        {order.items && order.items.length > 0 && (
-                          <div className={styles.orderItems}>
-                            {order.items.map((item) => {
-                              const pid = item.product?.id;
-                              const isDelivered = order.orderStatus === "delivered";
-                              const key = pid !== undefined ? `${pid}-${order.id}` : undefined;
-                              const state = key ? reviewStateMap[key] : undefined;
-                              // state undefined = not a purchaser or not yet loaded
-                              const canReview = isDelivered && !!state?.canReview;
-                              const canEdit = isDelivered && !!state?.canEdit;
-                              const alreadyReviewed = state !== undefined && !state.canReview && !state.canEdit && state.existingRating > 0;
-                              const isOpen = reviewingKey === key;
-                              const isEditing = canEdit && isOpen;
-
-                              return (
-                                <div key={item.id} className={styles.orderItem}>
-                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, width: "100%" }}>
-                                  <div className={styles.itemLeft}>
-                                    {item.product?.image && (
-                                      <img
-                                        src={item.product.image}
-                                        alt={item.name}
-                                        className={styles.itemThumb}
-                                      />
-                                    )}
-                                    <div>
-                                      <span className={styles.itemName}>{item.name}</span>
-                                      {item.product?.weight && (
-                                        <span className={styles.itemWeight}>{item.product.weight}</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className={styles.itemRight}>
-                                    <span className={styles.itemQty}>× {item.quantity}</span>
-                                    <span className={styles.itemPrice}>
-                                      {price.format(parseFloat(item.price) * item.quantity)}
-                                    </span>
-                                    {/* Review state */}
-                                    {(alreadyReviewed && !isOpen) && (
-                                      <span className={styles.reviewDone} title="Your rating">
-                                        {"★".repeat(state?.existingRating ?? 0)}{"☆".repeat(5 - (state?.existingRating ?? 0))}
-                                      </span>
-                                    )}
-                                    {canEdit && !isOpen && (
-                                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
-                                        <button
-                                          className={styles.reviewBtn}
-                                          onClick={() => { setReviewingKey(key!); setReviewRating(state?.existingRating ?? 0); setReviewContent(""); }}
-                                        >
-                                          ✏ Edit Review
-                                        </button>
-                                      </div>
-                                    )}
-                                    {canReview && !isOpen && (
-                                      <button
-                                        className={styles.reviewBtn}
-                                        onClick={() => { setReviewingKey(key!); setReviewRating(0); setReviewContent(""); }}
-                                      >
-                                        ★ Review
-                                      </button>
-                                    )}
-                                  </div>
-                                  </div>
-
-                                  {/* Inline review form — new review or edit */}
-                                  {(canReview || canEdit) && isOpen && (
-                                    <div className={styles.inlineReview}>
-                                      <p style={{ margin: "0 0 8px", fontSize: 11, fontFamily: "'DM Mono',monospace", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--terracotta)" }}>
-                                        {isEditing ? "Edit your review" : "Write a review"}
-                                      </p>
-                                      <div className={styles.starRow}>
-                                        {[1, 2, 3, 4, 5].map((n) => (
-                                          <button key={n} type="button"
-                                            className={`${styles.star} ${n <= reviewRating ? styles.starFilled : ""}`}
-                                            onClick={() => setReviewRating(n)}
-                                            aria-label={`${n} star`}>★</button>
-                                        ))}
-                                      </div>
-                                      <textarea
-                                        className={styles.reviewTextarea}
-                                        placeholder="What did you think?"
-                                        value={reviewContent}
-                                        onChange={(e) => setReviewContent(e.target.value)}
-                                        rows={3}
-                                      />
-                                      <div className={styles.reviewFormActions}>
-                                        <button className={styles.reviewSubmitBtn}
-                                          onClick={() => submitReview(pid!, order.id, isEditing)}
-                                          disabled={reviewSubmitting}>
-                                          {reviewSubmitting ? "Saving…" : isEditing ? "Update Review" : "Submit"}
-                                        </button>
-                                        <button className={styles.reviewCancelBtn}
-                                          onClick={() => setReviewingKey(null)}>
-                                          Cancel
-                                        </button>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {/* ── Price breakdown ── */}
-                        {(() => {
-                          const subtotal = order.items.reduce(
-                            (sum, item) => sum + parseFloat(item.price) * item.quantity, 0
-                          );
-                          const discount = parseFloat(order.discount) || 0;
-                          const total = parseFloat(order.total);
-                          const shipping = total - subtotal + discount;
-                          return (
-                            <div className={styles.priceBreakdown}>
-                              <div className={styles.breakdownRow}>
-                                <span>Subtotal</span>
-                                <span>{price.format(subtotal)}</span>
-                              </div>
-                              {shipping > 0 ? (
-                                <div className={styles.breakdownRow}>
-                                  <span>Delivery</span>
-                                  <span>{price.format(shipping)}</span>
-                                </div>
-                              ) : (
-                                <div className={styles.breakdownRow}>
-                                  <span>Delivery</span>
-                                  <span className={styles.free}>Free</span>
-                                </div>
-                              )}
-                              {discount > 0 && (
-                                <div className={styles.breakdownRow}>
-                                  <span>
-                                    Discount
-                                    {order.couponCode && (
-                                      <span className={styles.couponTag}>{order.couponCode}</span>
-                                    )}
-                                  </span>
-                                  <span className={styles.saving}>− {price.format(discount)}</span>
-                                </div>
-                              )}
-                              <div className={`${styles.breakdownRow} ${styles.breakdownTotal}`}>
-                                <span>Total paid</span>
-                                <span>{price.format(total)}</span>
-                              </div>
-                            </div>
-                          );
-                        })()}
-
-                        <div className={styles.orderActions}>
-                          <button
-                            onClick={() => handleBuyAgain(order)}
-                            className={styles.buyAgainButton}
-                          >
-                            Buy Again
-                          </button>
-                          <button
-                            onClick={() => downloadInvoice(order.orderNumber)}
-                            className={styles.downloadInvoiceButton}
-                          >
-                            Download Invoice
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                      <svg
+                        className={styles.chevron}
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M9 18l6-6-6-6" />
+                      </svg>
+                    </div>
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </section>
