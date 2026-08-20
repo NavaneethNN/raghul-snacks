@@ -7,6 +7,12 @@ type CashfreeOrder = {
   message?: string;
 };
 
+type CashfreePayment = {
+  payment_status?: string;
+  payment_method?: Record<string, unknown>;
+  message?: string;
+};
+
 function getConfiguration() {
   const clientId = process.env.CASHFREE_CLIENT_ID;
   const clientSecret = process.env.CASHFREE_CLIENT_SECRET;
@@ -55,4 +61,20 @@ export async function createCashfreeOrder(input: { orderId: string; amount: numb
 export async function getCashfreeOrder(orderId: string) {
   const { data } = await cashfreeRequest(`/orders/${encodeURIComponent(orderId)}`);
   return data;
+}
+
+// Returns the payment method string (upi, card, netbanking, wallet, etc.) for the first successful payment
+export async function getCashfreePaymentMethod(orderId: string): Promise<string> {
+  try {
+    const { data } = await cashfreeRequest(`/orders/${encodeURIComponent(orderId)}/payments`);
+    // The payments API returns an array
+    const payments = Array.isArray(data) ? data as CashfreePayment[] : [data as CashfreePayment];
+    const paid = payments.find((p) => p.payment_status === "SUCCESS");
+    if (!paid?.payment_method) return "online";
+    // payment_method is an object like { upi: {...} } or { card: {...} } or { netbanking: {...} }
+    const method = Object.keys(paid.payment_method)[0] ?? "online";
+    return method;
+  } catch {
+    return "online";
+  }
 }

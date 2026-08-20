@@ -7,7 +7,7 @@ import { getDb } from "@/lib/db";
 import { cashfreeVerifiedOrderSchema } from "@/lib/order-input";
 import { priceOrder } from "@/lib/order-pricing";
 import { validateCoupon } from "@/lib/coupons";
-import { getCashfreeOrder } from "@/lib/cashfree";
+import { getCashfreeOrder, getCashfreePaymentMethod } from "@/lib/cashfree";
 import { createShiprocketShipment } from "@/lib/shiprocket";
 
 export async function POST(request: Request) {
@@ -17,6 +17,9 @@ export async function POST(request: Request) {
   try {
     const paymentOrder = await getCashfreeOrder(payload.data.cashfreeOrderId);
     if (paymentOrder.order_status !== "PAID") return NextResponse.json({ error: "Payment is not complete yet." }, { status: 400 });
+
+    // Fetch actual payment method (upi, card, netbanking, etc.)
+    const paymentMethod = await getCashfreePaymentMethod(payload.data.cashfreeOrderId);
 
     const db = getDb();
     const existing = await db.select({ orderNumber: orders.orderNumber }).from(orders).where(eq(orders.paymentOrderId, payload.data.cashfreeOrderId)).limit(1);
@@ -80,6 +83,7 @@ export async function POST(request: Request) {
         couponCode: payload.data.couponCode || null,
         discount: String(discount),
         paymentStatus: "paid",
+        paymentMethod,
         orderStatus: "placed",
         paymentOrderId: payload.data.cashfreeOrderId,
       })

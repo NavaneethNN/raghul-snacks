@@ -221,13 +221,16 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
           <div>
             <p style={{ margin: "0 0 4px", fontSize: 11, fontFamily: "'DM Mono',monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--terracotta)" }}>Order Details</p>
             <h2 style={{ margin: 0, fontFamily: "'Playfair Display',serif", fontSize: 22, letterSpacing: "-0.03em" }}>{order.orderNumber}</h2>
-            <div style={{ display: "flex", gap: 16, marginTop: 6 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px", marginTop: 6 }}>
               <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>
                 {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
               </p>
-              <p style={{ margin: 0, fontSize: 12, color: "#9ca3af", fontFamily: "'DM Mono',monospace", letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                {order.paymentMethod === "online" ? "💳 Online Payment" : order.paymentMethod?.toUpperCase() || "Payment"}
-              </p>
+              {order.paymentMethod && (
+                <p style={{ margin: 0, fontSize: 12, color: "#6b7280", display: "flex", alignItems: "center", gap: 4 }}>
+                  {({ upi: "📱 UPI", card: "💳 Card", netbanking: "🏦 Net Banking", wallet: "👛 Wallet", emi: "📅 EMI", online: "💳 Online", cod: "💵 Cash on Delivery" } as Record<string, string>)[order.paymentMethod]
+                    ?? `💳 ${order.paymentMethod.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}`}
+                </p>
+              )}
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -280,6 +283,7 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
               { label: "Subtotal", value: fmt(subtotal) },
               { label: "Shipping", value: shipping > 0 ? fmt(shipping) : "Free", green: shipping === 0 },
               ...(discount > 0 ? [{ label: `Discount${order.couponCode ? ` (${order.couponCode})` : ""}`, value: `− ${fmt(discount)}`, green: true }] : []),
+              { label: "Payment mode", value: (({ upi: "UPI", card: "Card", netbanking: "Net Banking", wallet: "Wallet", emi: "EMI", online: "Online Payment", cod: "Cash on Delivery" } as Record<string, string>)[order.paymentMethod ?? "online"] ?? (order.paymentMethod ?? "Online Payment")) },
             ].map((row, i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "9px 14px", borderBottom: "1px solid var(--line)", background: "var(--paper)", fontSize: 13 }}>
                 <span style={{ color: "#6b7280" }}>{row.label}</span>
