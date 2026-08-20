@@ -72,11 +72,17 @@ export async function POST(request: NextRequest) {
   const reviewMap = new Map<string, number>();
   for (const r of allReviews) {
     if (r.productId && r.orderId) {
+      // Normal case — review tied to specific order
       reviewMap.set(`${r.productId}-${r.orderId}`, r.rating);
     } else if (r.productId) {
-      // Legacy review without orderId — associate with first order containing this product
-      const firstOrder = [...(productOrderMap.get(r.productId) ?? [])].sort()[0];
-      if (firstOrder) reviewMap.set(`${r.productId}-${firstOrder}`, r.rating);
+      // Legacy review with order_id=null — associate with the OLDEST order containing this product
+      // so it counts as a "prior review" for repurchase detection
+      const ordersWithProduct = [...(productOrderMap.get(r.productId) ?? [])];
+      ordersWithProduct.sort((a, b) => a - b); // ascending = oldest first
+      const oldestOrderId = ordersWithProduct[0];
+      if (oldestOrderId) {
+        reviewMap.set(`${r.productId}-${oldestOrderId}`, r.rating);
+      }
     }
   }
 
