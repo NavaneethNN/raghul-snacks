@@ -3917,14 +3917,17 @@ footer {
   display: flex;
   align-items: stretch;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 /* Add to Cart and Buy Now sit in the same row */
 .product-purchase-row .wide-button {
   flex: 1;
+  min-width: 120px;
   width: auto;
   padding: 12px 18px;
   font-size: 15px;
+  white-space: nowrap;
 }
 
 
