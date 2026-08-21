@@ -19,15 +19,26 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [hydrated, setHydrated] = useState(false);
 
+  // Read from localStorage once on mount
   useEffect(() => {
     const saved = window.localStorage.getItem("raghul-snacks-cart");
-    if (saved) setItems(JSON.parse(saved) as CartItem[]);
+    if (saved) {
+      try {
+        setItems(JSON.parse(saved) as CartItem[]);
+      } catch {
+        // corrupted data — start fresh
+      }
+    }
+    setHydrated(true);
   }, []);
 
+  // Write to localStorage only after hydration to avoid overwriting saved data
   useEffect(() => {
+    if (!hydrated) return;
     window.localStorage.setItem("raghul-snacks-cart", JSON.stringify(items));
-  }, [items]);
+  }, [items, hydrated]);
 
   const value = useMemo(() => ({
     items,

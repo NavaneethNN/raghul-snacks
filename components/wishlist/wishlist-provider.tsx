@@ -25,7 +25,9 @@ const WishlistContext = createContext<WishlistContextValue | null>(null);
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<WishlistItem[]>([]);
+  const [hydrated, setHydrated] = useState(false);
 
+  // Read from localStorage once on mount
   useEffect(() => {
     const saved = window.localStorage.getItem("raghul-snacks-wishlist");
     if (saved) {
@@ -36,11 +38,14 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         setItems([]);
       }
     }
+    setHydrated(true);
   }, []);
 
+  // Write only after hydration to avoid overwriting saved data
   useEffect(() => {
+    if (!hydrated) return;
     window.localStorage.setItem("raghul-snacks-wishlist", JSON.stringify(items));
-  }, [items]);
+  }, [items, hydrated]);
 
   const addItem = (item: WishlistItem) => {
     setItems((current) => {
