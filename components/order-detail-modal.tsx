@@ -164,8 +164,8 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
               </p>
               {order.paymentMethod && (
                 <p style={{ margin: 0, fontSize: 12, color: "#6b7280", display: "flex", alignItems: "center", gap: 4 }}>
-                  {({ upi: "📱 UPI", card: "💳 Credit / Debit Card", netbanking: "🏦 Net Banking", wallet: "👛 Wallet", emi: "📅 EMI", online: "💳 Online Payment", cod: "💵 Cash on Delivery" } as Record<string, string>)[order.paymentMethod]
-                    ?? `💳 ${order.paymentMethod.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}`}
+                  {({ upi: "UPI", card: "Credit / Debit Card", netbanking: "Net Banking", wallet: "Wallet", emi: "EMI", online: "Online Payment", cod: "Cash on Delivery" } as Record<string, string>)[order.paymentMethod]
+                    ?? order.paymentMethod.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                 </p>
               )}
             </div>

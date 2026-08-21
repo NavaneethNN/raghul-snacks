@@ -74,7 +74,12 @@ export function DeliveryNotification() {
       boxSizing: "border-box", animation: "slideUpIn 0.35s ease-out",
     }}>
       <style>{`@keyframes slideUpIn{from{opacity:0;transform:translateX(-50%) translateY(16px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`}</style>
-      <span style={{ fontSize: 22, flexShrink: 0 }}>🎉</span>
+      <span style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e5a52f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>Your order {order.orderNumber} has been delivered!</p>
         <p style={{ margin: "2px 0 0", fontSize: 12, color: "#b8c6a7" }}>Enjoyed it? Share your experience.</p>
