@@ -38,7 +38,7 @@ type Order = {
   }>;
 };
 
-type ReviewState = { canReview: boolean; canEdit: boolean; existingRating: number; priorOrderId?: number };
+type ReviewState = { canReview: boolean; existingRating: number };
 
 interface Props {
   order: Order;
@@ -112,21 +112,19 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
   const total = parseFloat(order.total);
   const shipping = total - subtotal + discount;
 
-  // Items that still need a review
+  // Items that have not been reviewed for this order yet
   const reviewableItems = order.items.filter((item) => {
     const pid = item.product?.id;
     if (!pid) return false;
     const s = reviewStates[pid];
-    return s && (s.canReview || s.canEdit);
+    return s?.canReview === true;
   });
 
-  // Navigate to the product page with the review form pre-opened
+  // Navigate to the product page with the write-review form pre-opened
   function openReview(item: Order["items"][number]) {
     if (!item.product?.slug) return;
-    const state = reviewStates[item.product.id];
-    const reviewOrderId = state?.canEdit && state?.priorOrderId ? state.priorOrderId : order.id;
     onClose();
-    router.push(`/product/${item.product.slug}?writeReview=1&orderId=${reviewOrderId}#reviews`);
+    router.push(`/product/${item.product.slug}?writeReview=1&orderId=${order.id}#reviews`);
   }
 
   return (
@@ -252,7 +250,7 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
                     )}
                     <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>{item.name}</span>
                     <span style={{ fontSize: 11, color: "var(--terracotta)", fontWeight: 600, whiteSpace: "nowrap" }}>
-                      {reviewStates[item.product!.id]?.canEdit ? "Edit review →" : "Write review →"}
+                      Write review →
                     </span>
                   </button>
                 ))}
