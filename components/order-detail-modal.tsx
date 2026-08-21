@@ -157,7 +157,7 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "20px 20px 0", position: "sticky", top: 0, background: "var(--paper)", zIndex: 1, borderBottom: "1px solid var(--line)", paddingBottom: 16 }}>
           <div>
             <p style={{ margin: "0 0 4px", fontSize: 11, fontFamily: "'DM Mono',monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--terracotta)" }}>Order Details</p>
-            <h2 style={{ margin: 0, fontFamily: "'Playfair Display',serif", fontSize: 22, letterSpacing: "-0.03em" }}>{order.orderNumber}</h2>
+            <h2 style={{ margin: 0, fontFamily: "'DM Sans',sans-serif", fontSize: 20, fontWeight: 700, letterSpacing: "0.01em" }}>{order.orderNumber}</h2>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px", marginTop: 6 }}>
               <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>
                 {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
@@ -226,7 +226,7 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
             ))}
             <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 14px", background: "var(--ink)" }}>
               <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b8c6a7" }}>Total Paid</span>
-              <span style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 700, color: "#e5a52f" }}>{fmt(total)}</span>
+              <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 18, fontWeight: 700, color: "#e5a52f" }}>{fmt(total)}</span>
             </div>
           </section>
 
