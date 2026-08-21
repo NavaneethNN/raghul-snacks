@@ -9,7 +9,6 @@ export function AdminShipping() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState({
-    freeShippingThreshold: "499",
     standardShippingRate: "50",
     shiprocketApiKey: ""
   });
@@ -25,7 +24,6 @@ export function AdminShipping() {
       if (res.ok) {
         const data = await res.json();
         setSettings({
-          freeShippingThreshold: data.freeShippingThreshold || "499",
           standardShippingRate: data.standardShippingRate || "50",
           shiprocketApiKey: data.shiprocketApiKey || ""
         });
@@ -45,18 +43,9 @@ export function AdminShipping() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            key: "freeShippingThreshold",
-            value: settings.freeShippingThreshold,
-            description: "Minimum order value for free shipping"
-          })
-        }),
-        fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
             key: "standardShippingRate",
             value: settings.standardShippingRate,
-            description: "Standard shipping rate for orders below threshold"
+            description: "Standard shipping rate"
           })
         }),
         fetch("/api/settings", {
@@ -98,26 +87,6 @@ export function AdminShipping() {
             <p style={{ margin: '0 0 24px', color: '#6b7280', fontSize: '14px' }}>Set up your shipping rates and delivery zones.</p>
 
             <div style={{ background: '#fafbfc', border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#374151' }}>
-                  Free Shipping Threshold (₹)
-                </label>
-                <input
-                  type="number"
-                  value={settings.freeShippingThreshold}
-                  onChange={(e) => setSettings({ ...settings, freeShippingThreshold: e.target.value })}
-                  disabled={loading}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    border: '1.5px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    background: 'white'
-                  }}
-                />
-              </div>
-
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#374151' }}>
                   Standard Shipping Rate (₹)

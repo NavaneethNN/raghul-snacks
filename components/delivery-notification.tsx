@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
-type DeliveredOrder = { orderNumber: string };
+type DeliveredOrder = { orderNumber: string; reviewHref: string };
 
 const DISMISS_DURATION_MS = 3 * 60 * 1000; // 3 minutes
 const STORAGE_KEY = "delivery-notification-dismissed-at";
@@ -19,18 +19,19 @@ export function DeliveryNotification() {
       .then(async (d) => {
         if (!d.account) return;
 
-        const res = await fetch("/api/orders/mine");
-        if (!res.ok) return;
-        const data = await res.json() as { orders?: Array<{ orderNumber: string; orderStatus: string }> };
-        const delivered = data.orders?.find((o) => o.orderStatus === "delivered");
+        // Find the most recent delivered order
+        const ordersRes = await fetch("/api/orders/mine");
+        if (!ordersRes.ok) return;
+        const ordersData = await ordersRes.json() as { orders?: Array<{ orderNumber: string; orderStatus: string }> };
+        const delivered = ordersData.orders?.find((o) => o.orderStatus === "delivered");
         if (!delivered) return;
 
-        // Check if all products from this order have already been reviewed
-        // by calling the batch endpoint — if it returns empty, nothing to review
-        // We reuse the same logic: if canReview is true for any product, show the popup
-        // For simplicity, just check if the user has any pending reviews via the batch
-        // The account page will handle the actual product-level check
-        setOrder({ orderNumber: delivered.orderNumber });
+        // Get the direct link to the first unreviewed product
+        const targetRes = await fetch("/api/orders/review-target");
+        const targetData = await targetRes.json() as { href: string | null };
+        if (!targetData.href) return; // all reviewed — nothing to show
+
+        setOrder({ orderNumber: delivered.orderNumber, reviewHref: targetData.href });
         showIfReady();
       })
       .catch(() => {});
@@ -76,15 +77,20 @@ export function DeliveryNotification() {
       <span style={{ fontSize: 22, flexShrink: 0 }}>🎉</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>Your order {order.orderNumber} has been delivered!</p>
-        <p style={{ margin: "2px 0 0", fontSize: 12, color: "#b8c6a7" }}>Enjoyed it? Leave a review on your account page.</p>
+        <p style={{ margin: "2px 0 0", fontSize: 12, color: "#b8c6a7" }}>Enjoyed it? Share your experience.</p>
       </div>
-      <Link href="/account" onClick={dismiss}
-        style={{ background: "var(--terracotta)", color: "#fff", padding: "7px 14px", borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}>
+      <Link
+        href={order.reviewHref}
+        onClick={dismiss}
+        style={{ background: "var(--terracotta)", color: "#fff", padding: "7px 14px", borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}
+      >
         Review
       </Link>
-      <button onClick={dismiss}
+      <button
+        onClick={dismiss}
         style={{ background: "none", border: "none", color: "#b8c6a7", cursor: "pointer", padding: 4, display: "flex", alignItems: "center", flexShrink: 0 }}
-        aria-label="Dismiss">
+        aria-label="Dismiss"
+      >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
     </div>

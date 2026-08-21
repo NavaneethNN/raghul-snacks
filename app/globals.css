@@ -4113,28 +4113,6 @@ footer {
   margin-bottom: 20px;
 }
 
-.shipping-progress {
-  background: #e3eadb;
-  padding: 12px;
-  margin-bottom: 18px;
-}
-
-.shipping-progress p {
-  font-size: 12px;
-  margin: 0 0 8px;
-}
-
-.shipping-progress div {
-  height: 6px;
-  background: #c6d1ba;
-}
-
-.shipping-progress i {
-  display: block;
-  background: #5c7d50;
-  height: 100%;
-}
-
 .cart-items {
   background: var(--paper);
 }

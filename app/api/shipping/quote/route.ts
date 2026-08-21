@@ -10,24 +10,6 @@ export async function POST(request: Request) {
   if (!payload.success) return NextResponse.json({ error: "Enter a valid PIN code to calculate delivery." }, { status: 400 });
   try {
     const { subtotal, weight } = await priceOrder(payload.data.items);
-    
-    // Get free shipping threshold from settings
-    let freeShippingThreshold = 499;
-    try {
-      const settingsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/settings`, { cache: 'no-store' });
-      if (settingsRes.ok) {
-        const settings = await settingsRes.json();
-        freeShippingThreshold = parseInt(settings.freeShippingThreshold) || 499;
-      }
-    } catch (error) {
-      console.error("Error fetching shipping settings:", error);
-    }
-    
-    // If subtotal exceeds threshold, free shipping
-    if (subtotal >= freeShippingThreshold) {
-      return NextResponse.json({ charge: 0, courierId: 0, courierName: "Free Shipping", estimatedDeliveryDays: null, subtotal, total: subtotal });
-    }
-    
     const quote = await getShiprocketQuote(payload.data.pincode, weight, subtotal);
     if (!quote) return NextResponse.json({ error: "Shiprocket delivery configuration is incomplete." }, { status: 503 });
     return NextResponse.json({ ...quote, subtotal, total: subtotal + quote.charge });

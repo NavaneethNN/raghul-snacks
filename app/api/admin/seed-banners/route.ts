@@ -23,7 +23,7 @@ export async function POST() {
         eyebrow: "NEW ARRIVALS",
         title: "Fresh Millet Snacks",
         subtitle: "Handcrafted with love",
-        offerText: "Free shipping on orders above ₹499",
+        offerText: "Handcrafted fresh for you",
         couponCode: null,
         buttonText: "Explore",
         validityText: "Limited time offer",

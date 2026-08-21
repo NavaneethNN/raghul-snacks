@@ -26,8 +26,7 @@ export default function ShippingPage() {
         
         <h2>Shipping Charges</h2>
         <ul>
-          <li><strong>Free shipping</strong> on orders above ₹499</li>
-          <li><strong>Standard shipping:</strong> ₹49 for orders below ₹499</li>
+          <li><strong>Standard shipping:</strong> ₹49 per order</li>
         </ul>
         
         <h2>Order Tracking</h2>

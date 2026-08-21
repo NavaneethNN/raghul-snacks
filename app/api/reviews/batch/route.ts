@@ -11,6 +11,7 @@ import { getDb } from "@/lib/db";
 //   canReview: boolean;       // this order has no review yet
 //   canEdit: boolean;         // most-recent order AND product reviewed in a prior order
 //   existingRating: number;   // rating of prior review (for edit pre-fill)
+//   priorOrderId?: number;    // orderId of the prior review (used when submitting PATCH)
 // }>
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 5. Build result for each requested productId
-  const result: Record<number, { canReview: boolean; canEdit: boolean; existingRating: number }> = {};
+  const result: Record<number, { canReview: boolean; canEdit: boolean; existingRating: number; priorOrderId?: number }> = {};
 
   for (const pid of productIds) {
     const orderIdsWithProduct = productOrderMap.get(pid);
@@ -109,10 +110,15 @@ export async function POST(request: NextRequest) {
     // canEdit: most recent order, product was in a prior order with a review, no review yet for current order
     const canEdit = isCurrentOrderMostRecent && hasPriorReview && !hasReviewedThisOrder;
 
+    // Find the prior orderId that has the review (needed for edit submission)
+    const priorOrderId = [...orderIdsWithProduct]
+      .filter((oid) => oid !== orderId && reviewMap.has(`${pid}-${oid}`))[0];
+
     result[pid] = {
       canReview,
       canEdit,
       existingRating: priorOrderReview ?? 0,
+      priorOrderId,
     };
   }
 

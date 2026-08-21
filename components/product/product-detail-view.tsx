@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { formatPrice, formatWeight } from "@/lib/catalog";
 import { useCart } from "@/components/cart/cart-provider";
 import { useToast } from "@/components/toast-provider";
@@ -15,14 +15,6 @@ export function ProductDetailView({ product }: { product: any }) {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
-  const [freeShippingThreshold, setFreeShippingThreshold] = useState(499);
-
-  useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((s) => setFreeShippingThreshold(parseInt(s.freeShippingThreshold) || 499))
-      .catch(() => {});
-  }, []);
 
   const cartProduct = {
     ...product,

@@ -31,6 +31,7 @@ export default async function AdminOrdersPage() {
         pincode: orders.pincode,
         total: orders.total,
         paymentStatus: orders.paymentStatus,
+        paymentMethod: orders.paymentMethod,
         orderStatus: orders.orderStatus,
         shippingStatus: orders.shippingStatus,
         shipmentId: orders.shipmentId,
