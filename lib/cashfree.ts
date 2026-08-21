@@ -72,8 +72,11 @@ export async function getCashfreePaymentMethod(orderId: string): Promise<string>
     const paid = payments.find((p) => p.payment_status === "SUCCESS");
     if (!paid?.payment_method) return "online";
     // payment_method is an object like { upi: {...} } or { card: {...} } or { netbanking: {...} }
-    const method = Object.keys(paid.payment_method)[0] ?? "online";
-    return method;
+    const method = Object.keys(paid.payment_method)[0];
+    // Filter out keys that aren't real payment method types (Cashfree sometimes includes non-method keys)
+    const knownMethods = ["upi", "card", "netbanking", "wallet", "emi", "cod", "paylater", "banktransfer"];
+    const matched = knownMethods.find((m) => m === method);
+    return matched ?? method ?? "online";
   } catch {
     return "online";
   }
