@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Product } from "@/lib/catalog";
 
 type CartItem = Product & { quantity: number };
@@ -17,45 +17,207 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
+// ── Server cart helpers ───────────────────────────────────────────────────────
+
+type ServerCartItem = {
+  productId: string;
+  quantity: number;
+  product: {
+    id: number; name: string; slug: string; description: string;
+    ingredients: string | null; price: string; offerPrice: string | null;
+    weight: string; categoryId: number | null; image: string | null;
+    stock: number; featured: boolean; bestseller: boolean;
+  } | null;
+};
+
+async function fetchServerCart(): Promise<CartItem[]> {
+  try {
+    const res = await fetch("/api/cart", { credentials: "include" });
+    if (!res.ok) return [];
+    const data = await res.json() as { items: ServerCartItem[] };
+    return data.items
+      .filter((row) => row.product !== null)
+      .map((row) => {
+        const p = row.product!;
+        return {
+          id: row.productId,
+          name: p.name,
+          slug: p.slug,
+          description: p.description,
+          ingredients: p.ingredients ?? "",
+          price: parseFloat(p.price),
+          offerPrice: p.offerPrice ? parseFloat(p.offerPrice) : parseFloat(p.price),
+          weight: p.weight,
+          category: "",
+          image: p.image ?? "",
+          featured: p.featured,
+          bestseller: p.bestseller,
+          quantity: row.quantity,
+        } as CartItem;
+      });
+  } catch {
+    return [];
+  }
+}
+
+async function pushServerCart(items: CartItem[]) {
+  if (!items.length) return;
+  try {
+    await fetch("/api/cart", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: items.map((i) => ({ productId: i.id, quantity: i.quantity })) }),
+    });
+  } catch { /* best-effort */ }
+}
+
+async function removeServerItem(productId: string) {
+  try {
+    await fetch("/api/cart", {
+      method: "DELETE",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId }),
+    });
+  } catch { /* best-effort */ }
+}
+
+async function clearServerCart() {
+  try {
+    await fetch("/api/cart", {
+      method: "DELETE",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+  } catch { /* best-effort */ }
+}
+
+async function isLoggedIn(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/auth/session", { credentials: "include" });
+    if (!res.ok) return false;
+    const data = await res.json() as { account?: unknown };
+    return !!data.account;
+  } catch {
+    return false;
+  }
+}
+
+// Merge server cart into local: add missing items, keep local quantity for conflicts
+function mergeCarts(local: CartItem[], server: CartItem[]): CartItem[] {
+  const result = [...local];
+  for (const serverItem of server) {
+    const exists = result.find((i) => i.id === serverItem.id);
+    if (!exists) result.push(serverItem);
+    // local quantity wins when item exists in both
+  }
+  return result;
+}
+
+// ── Provider ──────────────────────────────────────────────────────────────────
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  // Prevent push-back during the initial server merge
+  const mergingRef = useRef(false);
+  // Debounce timer for syncing local changes to server
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Read from localStorage once on mount
+  // ── Step 1: Load localStorage, check session, merge with server ───────────
   useEffect(() => {
-    const saved = window.localStorage.getItem("raghul-snacks-cart");
-    if (saved) {
+    async function init() {
+      // Load local storage
+      let local: CartItem[] = [];
       try {
-        setItems(JSON.parse(saved) as CartItem[]);
-      } catch {
-        // corrupted data — start fresh
+        const saved = window.localStorage.getItem("raghul-snacks-cart");
+        if (saved) local = JSON.parse(saved) as CartItem[];
+      } catch { /* corrupted — start fresh */ }
+
+      const loggedInNow = await isLoggedIn();
+      setLoggedIn(loggedInNow);
+
+      if (loggedInNow) {
+        mergingRef.current = true;
+        const server = await fetchServerCart();
+        const merged = mergeCarts(local, server);
+        setItems(merged);
+        // Push merged state back to server (fills in local-only items)
+        await pushServerCart(merged);
+        mergingRef.current = false;
+      } else {
+        setItems(local);
       }
+
+      setHydrated(true);
     }
-    setHydrated(true);
+    init();
   }, []);
 
-  // Write to localStorage only after hydration to avoid overwriting saved data
+  // ── Step 2: Persist to localStorage after hydration ───────────────────────
   useEffect(() => {
     if (!hydrated) return;
     window.localStorage.setItem("raghul-snacks-cart", JSON.stringify(items));
   }, [items, hydrated]);
 
-  const value = useMemo(() => ({
+  // ── Step 3: Debounce-sync full cart state to server on every change ────────
+  const scheduleSync = useCallback((nextItems: CartItem[]) => {
+    if (!loggedIn || mergingRef.current) return;
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+    syncTimerRef.current = setTimeout(() => {
+      pushServerCart(nextItems);
+    }, 600);
+  }, [loggedIn]);
+
+  // ── Cart mutations ────────────────────────────────────────────────────────
+  const value = useMemo<CartContextValue>(() => ({
     items,
-    count: items.reduce((total, item) => total + item.quantity, 0),
-    subtotal: items.reduce((total, item) => total + item.offerPrice * item.quantity, 0),
-    addItem: (product: Product, quantity = 1) => setItems((current) => {
-      const existing = current.find((item) => item.id === product.id);
-      return existing ? current.map((item) => item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item) : [...current, { ...product, quantity }];
-    }),
-    updateQuantity: (id: string, quantity: number) => setItems((current) => quantity < 1 ? current.filter((item) => item.id !== id) : current.map((item) => item.id === id ? { ...item, quantity } : item)),
-    removeItem: (id: string) => setItems((current) => current.filter((item) => item.id !== id)),
-    clearCart: () => setItems([]),
+    count: items.reduce((t, i) => t + i.quantity, 0),
+    subtotal: items.reduce((t, i) => t + i.offerPrice * i.quantity, 0),
+
+    addItem: (product: Product, quantity = 1) => {
+      setItems((current) => {
+        const existing = current.find((i) => i.id === product.id);
+        const next = existing
+          ? current.map((i) => i.id === product.id ? { ...i, quantity: i.quantity + quantity } : i)
+          : [...current, { ...product, quantity }];
+        scheduleSync(next);
+        return next;
+      });
+    },
+
+    updateQuantity: (id: string, quantity: number) => {
+      setItems((current) => {
+        const next = quantity < 1
+          ? current.filter((i) => i.id !== id)
+          : current.map((i) => i.id === id ? { ...i, quantity } : i);
+        if (quantity < 1 && loggedIn) removeServerItem(id);
+        else scheduleSync(next);
+        return next;
+      });
+    },
+
+    removeItem: (id: string) => {
+      setItems((current) => {
+        const next = current.filter((i) => i.id !== id);
+        if (loggedIn) removeServerItem(id);
+        return next;
+      });
+    },
+
+    clearCart: () => {
+      setItems([]);
+      if (loggedIn) clearServerCart();
+    },
+
     getItemQuantity: (id: string | number) => {
-      const item = items.find((item) => item.id === id || item.id === String(id));
+      const item = items.find((i) => i.id === id || i.id === String(id));
       return item ? item.quantity : 0;
     },
-  }), [items]);
+  }), [items, loggedIn, scheduleSync]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
