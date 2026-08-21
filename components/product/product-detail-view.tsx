@@ -33,7 +33,6 @@ export function ProductDetailView({ product }: { product: any }) {
   const cartQuantity = getItemQuantity(product.id);
   const inCart = cartQuantity > 0;
   const isAdded = inCart || added;
-
   const displayPrice = cartProduct.offerPrice;
   const originalPrice = cartProduct.price;
   const categoryName =
@@ -127,24 +126,22 @@ export function ProductDetailView({ product }: { product: any }) {
           </div>
         </div>
 
-        {/* Row 1: Quantity selector + Add to Cart */}
+        {/* Purchase row: quantity + Add to Cart + Buy Now */}
         <div className="product-purchase-row">
-          {!isAdded && (
-            <div className="quantity-selector-compact">
-              <button
-                type="button"
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                disabled={quantity <= 1}
-                aria-label="Decrease quantity"
-              >−</button>
-              <span>{quantity}</span>
-              <button
-                type="button"
-                onClick={() => setQuantity(quantity + 1)}
-                aria-label="Increase quantity"
-              >+</button>
-            </div>
-          )}
+          <div className="quantity-selector-compact">
+            <button
+              type="button"
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              disabled={quantity <= 1}
+              aria-label="Decrease quantity"
+            >−</button>
+            <span>{quantity}</span>
+            <button
+              type="button"
+              onClick={() => setQuantity(quantity + 1)}
+              aria-label="Increase quantity"
+            >+</button>
+          </div>
           <button
             className={`button wide-button ${isAdded ? "button-success" : "button-dark"}`}
             onClick={handleAddToCart}
@@ -155,19 +152,16 @@ export function ProductDetailView({ product }: { product: any }) {
           </button>
         </div>
 
-        {/* Row 2: Buy Now — full width below */}
-        {!isAdded && (
-          <div className="product-buy-now-row">
-            <button
-              type="button"
-              className="button buy-now-button wide-button"
-              onClick={handleBuyNow}
-              disabled={redirecting}
-            >
-              {redirecting ? "Redirecting…" : "Buy Now"}
-            </button>
-          </div>
-        )}
+        <div className="product-buy-now-row">
+          <button
+            type="button"
+            className="button buy-now-button wide-button"
+            onClick={handleBuyNow}
+            disabled={redirecting}
+          >
+            {redirecting ? "Redirecting…" : "Buy Now"}
+          </button>
+        </div>
       </div>
     </section>
   );

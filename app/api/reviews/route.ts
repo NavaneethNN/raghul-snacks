@@ -97,38 +97,4 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ success: true });
 }
 
-// PATCH /api/reviews
-// Body: { productId, orderId, rating, content }
-// Edits a review for a specific order+product (repurchase edit scenario).
-export async function PATCH(request: NextRequest) {
-  const cookieStore = await cookies();
-  const session = getCustomerSession(cookieStore.get(customerCookieName())?.value);
-  if (!session) return NextResponse.json({ error: "Sign in to edit your review." }, { status: 401 });
 
-  const body = await request.json() as { productId: number; orderId: number; rating: number; content: string };
-  const { productId, orderId, rating, content } = body;
-
-  if (!productId || !orderId || !rating || !content?.trim()) {
-    return NextResponse.json({ error: "Product, order, rating and review text are required." }, { status: 400 });
-  }
-  if (rating < 1 || rating > 5) {
-    return NextResponse.json({ error: "Rating must be between 1 and 5." }, { status: 400 });
-  }
-
-  const db = getDb();
-
-  // Find the review for the specified prior order (not the current one)
-  const existing = await db.select({ id: reviews.id }).from(reviews)
-    .where(and(eq(reviews.productId, productId), eq(reviews.accountId, session.id), eq(reviews.orderId, orderId)))
-    .limit(1);
-
-  if (existing.length === 0) {
-    return NextResponse.json({ error: "No existing review found to edit." }, { status: 404 });
-  }
-
-  await db.update(reviews)
-    .set({ rating, content: content.trim(), approved: false })
-    .where(eq(reviews.id, existing[0].id));
-
-  return NextResponse.json({ success: true });
-}

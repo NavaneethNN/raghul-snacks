@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Script from "next/script";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCart } from "@/components/cart/cart-provider";
 import { formatPrice } from "@/lib/catalog";
 import { clearBuyNowItem, readBuyNowItem, type BuyNowItem } from "@/lib/buy-now";
@@ -16,7 +16,7 @@ type PublicCoupon = { id: number; code: string; name: string | null; description
 const steps = ["Contact", "Delivery"];
 
 export function CheckoutWizard() {
-  const { items: cartItems, subtotal: cartSubtotal, clearCart } = useCart();
+  const { items: cartItems, subtotal: cartSubtotal, clearCart, addItem } = useCart();
   const [buyNowItem, setBuyNowItemState] = useState<BuyNowItem | null>(null);
   const [buyNowChecked, setBuyNowChecked] = useState(false);
   const items = buyNowItem ? [buyNowItem] : cartItems;
@@ -62,9 +62,28 @@ export function CheckoutWizard() {
 
   // ── Bootstrap ──────────────────────────────────────────────────────────────
 
+  // Track whether payment was successfully completed
+  const orderPlacedRef = useRef(false);
+
   useEffect(() => {
     setBuyNowItemState(readBuyNowItem());
     setBuyNowChecked(true);
+  }, []);
+
+  // When the user leaves checkout without placing the order, add the buy-now
+  // item to their cart so they don't lose it.
+  useEffect(() => {
+    return () => {
+      if (!orderPlacedRef.current) {
+        const item = readBuyNowItem();
+        if (item) {
+          addItem(item, item.quantity);
+          clearBuyNowItem();
+        }
+      }
+    };
+    // addItem is stable (memoised); intentionally run only on unmount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -306,6 +325,7 @@ export function CheckoutWizard() {
         JSON.stringify({ orderNumber: verified.orderNumber, phone: form.phone }),
       );
       if (buyNowItem) clearBuyNowItem(); else clearCart();
+      orderPlacedRef.current = true;
       window.location.assign("/orders");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to continue to payment.");
