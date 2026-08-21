@@ -74,6 +74,9 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
     try {
       const response = await fetch("/api/auth/session", { method: "DELETE" });
       if (response.ok) {
+        // Clear the local cart so it doesn't persist to the next user on this browser
+        window.localStorage.removeItem("raghul-snacks-cart");
+        window.localStorage.removeItem("raghul-snacks-cart-account");
         router.push("/");
         router.refresh();
       }

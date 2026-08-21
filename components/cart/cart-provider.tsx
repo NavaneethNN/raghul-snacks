@@ -143,12 +143,38 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (loggedInNow) {
         mergingRef.current = true;
         const server = await fetchServerCart();
-        const merged = mergeCarts(local, server);
+
+        // Only carry over local items if they were added as a guest (no account stamp).
+        // If localStorage belonged to a different account, discard it.
+        const savedAccount = window.localStorage.getItem("raghul-snacks-cart-account");
+        const sessionRes = await fetch("/api/auth/session", { credentials: "include" });
+        const sessionData = await sessionRes.json() as { account?: { email: string } };
+        const currentEmail = sessionData.account?.email ?? "";
+
+        const localIsGuest = !savedAccount;
+        const localBelongsToThisAccount = savedAccount === currentEmail;
+
+        let merged: CartItem[];
+        if (localIsGuest) {
+          // Guest had items — merge them with server cart (server wins for existing items)
+          merged = mergeCarts(server, local);
+        } else if (localBelongsToThisAccount) {
+          // Same account — merge normally, local quantity wins
+          merged = mergeCarts(local, server);
+        } else {
+          // Different account's cart in localStorage — use server cart only
+          merged = server;
+        }
+
+        // Stamp localStorage with current account
+        window.localStorage.setItem("raghul-snacks-cart-account", currentEmail);
         setItems(merged);
-        // Push merged state back to server (fills in local-only items)
+        // Push merged state back to server
         await pushServerCart(merged);
         mergingRef.current = false;
       } else {
+        // Not logged in — clear account stamp so next login treats this as guest cart
+        window.localStorage.removeItem("raghul-snacks-cart-account");
         setItems(local);
       }
 
