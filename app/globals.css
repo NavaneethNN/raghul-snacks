@@ -3920,14 +3920,68 @@ footer {
   flex-wrap: wrap;
 }
 
-/* Add to Cart and Buy Now sit in the same row */
+/* Both buttons share space equally, never break text */
 .product-purchase-row .wide-button {
-  flex: 1;
+  flex: 1 1 120px;
   min-width: 120px;
   width: auto;
   padding: 12px 18px;
   font-size: 15px;
   white-space: nowrap;
+}
+
+/* Ensure button-dark keeps its colours inside the purchase row */
+.product-purchase-row .button-dark {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+
+.product-purchase-row .button-dark:hover {
+  background: var(--terracotta);
+  border-color: var(--terracotta);
+}
+
+/* Ensure buy-now-button keeps its outline style inside the purchase row */
+.product-purchase-row .buy-now-button {
+  background: transparent;
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  box-shadow: none;
+}
+
+.product-purchase-row .buy-now-button:hover {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+
+/* Ensure button-success (added to cart) keeps green inside the purchase row */
+.product-purchase-row .button-success {
+  background: #16a34a;
+  color: #fff;
+  border-color: #16a34a;
+}
+
+.product-purchase-row .button-success:hover,
+.product-purchase-row .button-success:disabled {
+  background: #15803d;
+  border-color: #15803d;
+  transform: none;
+  box-shadow: none;
+}
+@media (max-width: 400px) {
+  .product-purchase-row {
+    flex-direction: column;
+  }
+  .quantity-selector-compact {
+    align-self: flex-start;
+  }
+  .product-purchase-row .wide-button {
+    flex: 1 1 auto;
+    min-width: unset;
+    width: 100%;
+  }
 }
 
 
