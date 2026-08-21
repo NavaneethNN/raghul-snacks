@@ -3919,7 +3919,7 @@ footer {
   gap: 10px;
 }
 
-/* Add to Cart inside the row fills available space */
+/* Add to Cart and Buy Now sit in the same row */
 .product-purchase-row .wide-button {
   flex: 1;
   width: auto;
@@ -3927,10 +3927,7 @@ footer {
   font-size: 15px;
 }
 
-/* Buy Now sits below as its own full-width row */
-.product-buy-now-row {
-  margin-top: 10px;
-}
+
 
 .product-buy-now-row .wide-button {
   width: 100%;

@@ -126,7 +126,7 @@ export function ProductDetailView({ product }: { product: any }) {
           </div>
         </div>
 
-        {/* Purchase row: quantity + Add to Cart + Buy Now */}
+        {/* Purchase row: quantity + Add to Cart + Buy Now all in one line */}
         <div className="product-purchase-row">
           <div className="quantity-selector-compact">
             <button
@@ -150,9 +150,6 @@ export function ProductDetailView({ product }: { product: any }) {
           >
             {isAdded ? "✓ Added to Cart" : "Add to Cart"}
           </button>
-        </div>
-
-        <div className="product-buy-now-row">
           <button
             type="button"
             className="button buy-now-button wide-button"
