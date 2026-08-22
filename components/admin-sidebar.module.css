@@ -10,6 +10,25 @@
   left: 0;
   top: 0;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 95, 59, 0.35) transparent;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(201, 95, 59, 0.35);
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 95, 59, 0.6);
 }
 
 .brand {
