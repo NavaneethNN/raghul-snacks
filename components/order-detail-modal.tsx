@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 /* ── Types ──────────────────────────────────────────── */
@@ -253,19 +254,43 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
           <section style={{ marginBottom: 20 }}>
             <p style={{ margin: "0 0 12px", fontSize: 11, fontFamily: "'DM Mono',monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "#9ca3af" }}>Items</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {order.items.map((item) => (
-                <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, padding: "12px 14px" }}>
-                  {item.product?.image && (
-                    <img src={item.product.image} alt={item.name} style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 6, border: "1px solid var(--line)", flexShrink: 0 }} />
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>{item.name}</p>
-                    {item.product?.weight && <p style={{ margin: "2px 0 0", fontSize: 11, color: "#9ca3af", fontFamily: "'DM Mono',monospace" }}>{item.product.weight}</p>}
-                    <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>Qty {item.quantity}</p>
+              {order.items.map((item) => {
+                const itemContent = (
+                  <>
+                    {item.product?.image && (
+                      <img src={item.product.image} alt={item.name} style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 6, border: "1px solid var(--line)", flexShrink: 0 }} />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>{item.name}</p>
+                      {item.product?.weight && <p style={{ margin: "2px 0 0", fontSize: 11, color: "#9ca3af", fontFamily: "'DM Mono',monospace" }}>{item.product.weight}</p>}
+                      <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>Qty {item.quantity}</p>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                      <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{fmt(parseFloat(item.price) * item.quantity)}</p>
+                      {item.product?.slug && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                      )}
+                    </div>
+                  </>
+                );
+                const sharedStyle: React.CSSProperties = { display: "flex", alignItems: "center", gap: 12, background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, padding: "12px 14px", width: "100%", textAlign: "left", transition: "border-color 0.15s" };
+                return item.product?.slug ? (
+                  <Link
+                    key={item.id}
+                    href={`/product/${item.product.slug}`}
+                    onClick={onClose}
+                    style={{ ...sharedStyle, textDecoration: "none" }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--terracotta)"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--line)"; }}
+                  >
+                    {itemContent}
+                  </Link>
+                ) : (
+                  <div key={item.id} style={sharedStyle}>
+                    {itemContent}
                   </div>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{fmt(parseFloat(item.price) * item.quantity)}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
 
@@ -409,12 +434,6 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
             </section>
           )}
 
-          {/* ── All reviewed banner ── */}
-          {isDelivered && reviewingPid === null && reviewableItems.length === 0 && order.items.some((i) => i.product?.id) && (
-            <div style={{ background: "#dcfce7", border: "1px solid #bbf7d0", borderRadius: 8, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: "#166534", fontWeight: 500 }}>
-              You&apos;ve reviewed all products in this order. Thank you!
-            </div>
-          )}
 
           {/* ── Action buttons ── */}
           <div style={{ display: "flex", gap: 10 }}>

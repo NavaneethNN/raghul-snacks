@@ -91,7 +91,6 @@ export function CustomerAuthForm({ mode }: { mode: "login" | "signup" }) {
       const data = await response.json() as { error?: string };
       if (!response.ok) throw new Error(data.error || "Unable to continue.");
       router.replace(returnTo);
-      router.refresh();
     } catch (caught) {
       setErrors({ form: caught instanceof Error ? caught.message : "Unable to continue." });
       setLoading(false);
