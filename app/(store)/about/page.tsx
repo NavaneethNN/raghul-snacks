@@ -188,7 +188,7 @@ export default function AboutPage() {
             <Link href="/shop" className="button button-dark">
               Shop All Snacks
             </Link>
-            <Link href="#contact" className="button button-outline">
+            <Link href="/contact" className="button button-outline">
               Get in Touch
             </Link>
           </div>
