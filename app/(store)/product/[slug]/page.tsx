@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductDetailView } from "@/components/product/product-detail-view";
@@ -83,9 +82,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     <>
       <ProductDetailView product={product} />
 
-      <Suspense>
-        <ProductReviews productId={product.id} />
-      </Suspense>
+      <ProductReviews productId={product.id} />
 
       <section className="section shop-page">
         <div className="section-heading">

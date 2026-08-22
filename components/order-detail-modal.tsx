@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 /* ── Types ──────────────────────────────────────────── */
 type Order = {
@@ -47,6 +46,26 @@ interface Props {
   onBuyAgain: (order: Order) => void;
 }
 
+/* ── Star picker ─────────────────────────────────────── */
+function StarPicker({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  const [hover, setHover] = useState(0);
+  return (
+    <div style={{ display: "flex", gap: 4 }}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          onMouseEnter={() => setHover(n)}
+          onMouseLeave={() => setHover(0)}
+          onClick={() => onChange(n)}
+          style={{ background: "none", border: "none", fontSize: 32, cursor: "pointer", color: n <= (hover || value) ? "#e5a52f" : "#ddd", padding: "0 2px", lineHeight: 1 }}
+          aria-label={`${n} star`}
+        >★</button>
+      ))}
+    </div>
+  );
+}
+
 /* ── Price helpers ───────────────────────────────────── */
 const INR = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 const fmt = (n: number) => INR.format(n);
@@ -72,8 +91,15 @@ function Badge({ label }: { label: string }) {
 
 /* ── Main component ──────────────────────────────────── */
 export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain }: Props) {
-  const router = useRouter();
   const [reviewStates, setReviewStates] = useState<Record<string, ReviewState>>({});
+  // Which product is currently being reviewed (productId), null = none
+  const [reviewingPid, setReviewingPid] = useState<number | null>(null);
+  const [rating, setRating] = useState(0);
+  const [content, setContent] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  // Set of productIds that have been reviewed in this session
+  const [donePids, setDonePids] = useState<Set<number>>(new Set());
 
   const isDelivered = order.orderStatus === "delivered";
 
@@ -95,10 +121,10 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
 
   // Close on Escape
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") { if (reviewingPid !== null) { cancelReview(); } else { onClose(); } } };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [onClose]);
+  }, [onClose, reviewingPid]);
 
   // Prevent body scroll
   useEffect(() => {
@@ -112,25 +138,62 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
   const total = parseFloat(order.total);
   const shipping = total - subtotal + discount;
 
-  // Items that have not been reviewed for this order yet
+  // Items that have not been reviewed for this order yet (excluding session-submitted)
   const reviewableItems = order.items.filter((item) => {
     const pid = item.product?.id;
     if (!pid) return false;
-    const s = reviewStates[pid];
-    return s?.canReview === true;
+    if (donePids.has(pid)) return false;
+    return reviewStates[pid]?.canReview === true;
   });
 
-  // Navigate to the product page with the write-review form pre-opened
-  function openReview(item: Order["items"][number]) {
-    if (!item.product?.slug) return;
-    onClose();
-    router.push(`/product/${item.product.slug}?writeReview=1&orderId=${order.id}#reviews`);
+  function startReview(pid: number) {
+    setReviewingPid(pid);
+    setRating(0);
+    setContent("");
+    setReviewError("");
   }
+
+  function cancelReview() {
+    setReviewingPid(null);
+    setRating(0);
+    setContent("");
+    setReviewError("");
+  }
+
+  async function submitReview() {
+    if (!reviewingPid) return;
+    if (!rating) { setReviewError("Please choose a star rating."); return; }
+    if (!content.trim()) { setReviewError("Please write something about this product."); return; }
+
+    setSubmitting(true);
+    setReviewError("");
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: reviewingPid, orderId: order.id, rating, content }),
+      });
+      const data = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed to submit review.");
+      setDonePids((prev) => new Set([...prev, reviewingPid]));
+      setReviewingPid(null);
+      setRating(0);
+      setContent("");
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : "Failed to submit review.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const reviewingItem = reviewingPid !== null
+    ? order.items.find((i) => i.product?.id === reviewingPid)
+    : null;
 
   return (
     <div
       style={{ position: "fixed", inset: 0, background: "rgba(36,49,39,0.55)", zIndex: 10002, display: "flex", alignItems: "flex-end", justifyContent: "center", backdropFilter: "blur(3px)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => { if (e.target === e.currentTarget) { if (reviewingPid !== null) cancelReview(); else onClose(); } }}
     >
       <div className="order-detail-sheet" style={{
         background: "var(--paper)",
@@ -161,7 +224,7 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
                 {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
               </p>
               {order.paymentMethod && (
-                <p style={{ margin: 0, fontSize: 12, color: "#6b7280", display: "flex", alignItems: "center", gap: 4 }}>
+                <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>
                   {({ upi: "UPI", card: "Credit / Debit Card", netbanking: "Net Banking", wallet: "Wallet", emi: "EMI", online: "Online Payment", cod: "Cash on Delivery" } as Record<string, string>)[order.paymentMethod]
                     ?? order.paymentMethod.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                 </p>
@@ -183,29 +246,19 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
           <section style={{ marginBottom: 20 }}>
             <p style={{ margin: "0 0 12px", fontSize: 11, fontFamily: "'DM Mono',monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "#9ca3af" }}>Items</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {order.items.map((item) => {
-                const pid = item.product?.id;
-                const state = pid ? reviewStates[pid] : undefined;
-                const existingRating = state?.existingRating ?? 0;
-                return (
-                  <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, padding: "12px 14px" }}>
-                    {item.product?.image && (
-                      <img src={item.product.image} alt={item.name} style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 6, border: "1px solid var(--line)", flexShrink: 0 }} />
-                    )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>{item.name}</p>
-                      {item.product?.weight && <p style={{ margin: "2px 0 0", fontSize: 11, color: "#9ca3af", fontFamily: "'DM Mono',monospace" }}>{item.product.weight}</p>}
-                      <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>Qty {item.quantity}</p>
-                    </div>
-                    <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{fmt(parseFloat(item.price) * item.quantity)}</p>
-                      {existingRating > 0 && (
-                        <p style={{ margin: "4px 0 0", fontSize: 11, color: "#e5a52f" }}>{"★".repeat(existingRating)}</p>
-                      )}
-                    </div>
+              {order.items.map((item) => (
+                <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, padding: "12px 14px" }}>
+                  {item.product?.image && (
+                    <img src={item.product.image} alt={item.name} style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 6, border: "1px solid var(--line)", flexShrink: 0 }} />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>{item.name}</p>
+                    {item.product?.weight && <p style={{ margin: "2px 0 0", fontSize: 11, color: "#9ca3af", fontFamily: "'DM Mono',monospace" }}>{item.product.weight}</p>}
+                    <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>Qty {item.quantity}</p>
                   </div>
-                );
-              })}
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{fmt(parseFloat(item.price) * item.quantity)}</p>
+                </div>
+              ))}
             </div>
           </section>
 
@@ -228,19 +281,17 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
             </div>
           </section>
 
-          {/* ── Write a review — delivered orders only ── */}
-          {isDelivered && reviewableItems.length > 0 && (
+          {/* ── Write a review — delivered, unreviewed products ── */}
+          {isDelivered && reviewingPid === null && reviewableItems.length > 0 && (
             <section style={{ background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 10, padding: "16px 18px", marginBottom: 20 }}>
               <p style={{ margin: "0 0 4px", fontSize: 11, fontFamily: "'DM Mono',monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--terracotta)" }}>Write a Review</p>
-              <p style={{ margin: "0 0 14px", fontSize: 13, color: "#687267" }}>
-                Tap a product to share your experience.
-              </p>
+              <p style={{ margin: "0 0 14px", fontSize: 13, color: "#687267" }}>Tap a product to share your experience.</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {reviewableItems.map((item) => (
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => openReview(item)}
+                    onClick={() => startReview(item.product!.id)}
                     style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--paper)", border: "1px solid var(--line)", borderRadius: 8, padding: "11px 14px", cursor: "pointer", textAlign: "left", width: "100%", transition: "border-color 0.15s" }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--terracotta)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
@@ -249,19 +300,70 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
                       <img src={item.product.image} alt={item.name} style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6, flexShrink: 0 }} />
                     )}
                     <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>{item.name}</span>
-                    <span style={{ fontSize: 11, color: "var(--terracotta)", fontWeight: 600, whiteSpace: "nowrap" }}>
-                      Write review →
-                    </span>
+                    <span style={{ fontSize: 11, color: "var(--terracotta)", fontWeight: 600, whiteSpace: "nowrap" }}>Write review →</span>
                   </button>
                 ))}
               </div>
             </section>
           )}
 
+          {/* ── Inline review form ── */}
+          {isDelivered && reviewingPid !== null && reviewingItem && (
+            <section style={{ background: "var(--cream)", border: "1.5px solid var(--terracotta)", borderRadius: 10, padding: "20px 18px", marginBottom: 20 }}>
+              {/* Product being reviewed */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18, padding: "10px 12px", background: "var(--paper)", border: "1px solid var(--line)", borderRadius: 8 }}>
+                {reviewingItem.product?.image && (
+                  <img src={reviewingItem.product.image} alt={reviewingItem.name} style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6, flexShrink: 0 }} />
+                )}
+                <span style={{ fontWeight: 600, fontSize: 14, color: "var(--ink)" }}>{reviewingItem.name}</span>
+              </div>
+
+              <p style={{ margin: "0 0 12px", fontSize: 11, fontFamily: "'DM Mono',monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--terracotta)" }}>Your Review</p>
+
+              <div style={{ marginBottom: 14 }}>
+                <p style={{ margin: "0 0 8px", fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>Rating</p>
+                <StarPicker value={rating} onChange={setRating} />
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <p style={{ margin: "0 0 8px", fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>Review</p>
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="What did you think of this product?"
+                  rows={4}
+                  style={{ width: "100%", padding: "12px 14px", border: "1.5px solid var(--line)", borderRadius: 8, font: "14px 'DM Sans',sans-serif", resize: "vertical", outline: "none", boxSizing: "border-box", background: "var(--paper)" }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "var(--terracotta)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
+                />
+              </div>
+
+              {reviewError && <p style={{ margin: "0 0 10px", fontSize: 13, color: "#dc2626" }}>{reviewError}</p>}
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={submitReview}
+                  disabled={submitting}
+                  style={{ flex: 1, background: "var(--terracotta)", color: "#fff", border: "none", borderRadius: 8, padding: "12px", font: "600 14px 'DM Sans',sans-serif", cursor: submitting ? "not-allowed" : "pointer", opacity: submitting ? 0.7 : 1 }}
+                >
+                  {submitting ? "Submitting…" : "Submit Review"}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelReview}
+                  style={{ background: "none", border: "1.5px solid var(--line)", borderRadius: 8, padding: "12px 18px", font: "600 14px 'DM Sans',sans-serif", cursor: "pointer", color: "var(--ink)" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </section>
+          )}
+
           {/* ── All reviewed banner ── */}
-          {isDelivered && reviewableItems.length === 0 && order.items.some((i) => i.product?.id) && (
+          {isDelivered && reviewingPid === null && reviewableItems.length === 0 && order.items.some((i) => i.product?.id) && (
             <div style={{ background: "#dcfce7", border: "1px solid #bbf7d0", borderRadius: 8, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: "#166534", fontWeight: 500 }}>
-              ✓ You&apos;ve reviewed all products in this order. Thank you!
+              You&apos;ve reviewed all products in this order. Thank you!
             </div>
           )}
 
