@@ -21,6 +21,35 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
+/** Renders 5 SVG stars with partial fill based on a decimal rating (e.g. 4.3) */
+function AggregateStars({ rating }: { rating: number }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+      {[1, 2, 3, 4, 5].map((n) => {
+        const fill = Math.min(1, Math.max(0, rating - (n - 1)));
+        const id = `star-grad-${n}-${Math.round(rating * 10)}`;
+        return (
+          <svg key={n} width="18" height="18" viewBox="0 0 24 24" style={{ display: "block" }}>
+            <defs>
+              <linearGradient id={id} x1="0" x2="1" y1="0" y2="0">
+                <stop offset={`${fill * 100}%`} stopColor="#e5a52f" />
+                <stop offset={`${fill * 100}%`} stopColor="#e0e0e0" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+              fill={`url(#${id})`}
+              stroke="#e5a52f"
+              strokeWidth="1"
+              strokeLinejoin="round"
+            />
+          </svg>
+        );
+      })}
+    </span>
+  );
+}
+
 export function ProductReviews({ productId }: { productId: number }) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,13 +73,15 @@ export function ProductReviews({ productId }: { productId: number }) {
     <section id="reviews" style={{ maxWidth: 820, margin: "48px auto 0", padding: "0 20px 48px" }}>
 
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginBottom: 24, borderBottom: "1px solid var(--line)", paddingBottom: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24, borderBottom: "1px solid var(--line)", paddingBottom: 14, flexWrap: "wrap" }}>
         <h2 style={{ margin: 0, fontFamily: "'Playfair Display', serif", fontSize: 24, letterSpacing: "-0.03em" }}>
           Customer Reviews
         </h2>
-        <span style={{ color: "#9ca3af", fontSize: 13 }}>
-          {avg} / 5 · {reviews.length} review{reviews.length !== 1 ? "s" : ""}
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <AggregateStars rating={avg} />
+          <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{avg}</span>
+          <span style={{ fontSize: 13, color: "#9ca3af" }}>· {reviews.length} review{reviews.length !== 1 ? "s" : ""}</span>
+        </div>
       </div>
 
       {/* Review list */}
