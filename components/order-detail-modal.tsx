@@ -281,6 +281,48 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
             </div>
           </section>
 
+          {/* ── Savings banner ── */}
+          {discount > 0 && (
+            <div style={{
+              background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+              border: "1.5px solid #f59e0b",
+              borderRadius: 10,
+              padding: "14px 16px",
+              marginBottom: 20,
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}>
+              <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                {/* Sparkle / celebration SVG */}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z"/>
+                  <path d="M5 16l.8 2.4L8 19.2l-2.2.8L5 22.4l-.8-2.4L2 19.2l2.2-.8L5 16z"/>
+                  <path d="M19 2l.6 1.8L21.4 4.4l-1.8.6L19 6.8l-.6-1.8L16.6 4.4l1.8-.6L19 2z"/>
+                </svg>
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#92400e" }}>
+                  You saved {fmt(discount)} on this order!
+                </p>
+                <p style={{ margin: "2px 0 0", fontSize: 12, color: "#b45309" }}>
+                  Great deal — keep saving with more orders.
+                </p>
+              </div>
+              <div style={{ fontSize: 20, flexShrink: 0, display: "flex", gap: 2 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#f59e0b" stroke="none">
+                  <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z"/>
+                </svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#fbbf24" stroke="none" style={{ alignSelf: "flex-end", marginBottom: 2 }}>
+                  <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z"/>
+                </svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#f59e0b" stroke="none">
+                  <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z"/>
+                </svg>
+              </div>
+            </div>
+          )}
+
           {/* ── Write a review — delivered, unreviewed products ── */}
           {isDelivered && reviewingPid === null && reviewableItems.length > 0 && (
             <section style={{ background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 10, padding: "16px 18px", marginBottom: 20 }}>
