@@ -215,13 +215,14 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
         `}</style>
 
         {/* ── Header ── */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "20px 20px 0", position: "sticky", top: 0, background: "var(--paper)", zIndex: 1, borderBottom: "1px solid var(--line)", paddingBottom: 16 }}>
-          <div>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "20px 20px 0", position: "sticky", top: 0, background: "var(--paper)", zIndex: 1, borderBottom: "1px solid var(--line)", paddingBottom: 16 }}>
+          {/* Left: order info — shrinks if needed */}
+          <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ margin: "0 0 4px", fontSize: 11, fontFamily: "'DM Mono',monospace", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--terracotta)" }}>Order Details</p>
-            <h2 style={{ margin: 0, fontFamily: "'DM Sans',sans-serif", fontSize: 20, fontWeight: 700, letterSpacing: "0.01em" }}>{order.orderNumber}</h2>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px", marginTop: 6 }}>
-              <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>
-                {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+            <h2 style={{ margin: 0, fontFamily: "'DM Sans',sans-serif", fontSize: 20, fontWeight: 700, letterSpacing: "0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{order.orderNumber}</h2>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px", marginTop: 5 }}>
+              <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>
+                {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
               </p>
               {order.paymentMethod && (
                 <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>
@@ -230,14 +231,20 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
                 </p>
               )}
             </div>
+            {/* Badges on their own line so they never crowd the close button */}
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+              <Badge label={order.orderStatus} />
+              <Badge label={order.paymentStatus} />
+            </div>
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <Badge label={order.orderStatus} />
-            <Badge label={order.paymentStatus} />
-            <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af", padding: 4, display: "flex" }} aria-label="Close">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            </button>
-          </div>
+          {/* Close button — always visible, never pushed out */}
+          <button
+            onClick={onClose}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af", padding: 6, display: "flex", flexShrink: 0, marginTop: 2 }}
+            aria-label="Close"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
         </div>
 
         <div style={{ padding: "20px" }}>
