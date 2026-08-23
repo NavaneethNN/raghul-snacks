@@ -31,8 +31,9 @@ export function AdminMessages({ messages: initial }: { messages: Message[] }) {
   const [messages, setMessages] = useState(initial);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [busy, setBusy] = useState<number | null>(null);
-  // per-message reply draft
+  // per-message reply draft — only set when editing
   const [replyDrafts, setReplyDrafts] = useState<Record<number, string>>({});
+  const [editing, setEditing] = useState<number | null>(null); // which message is in edit mode
   const [replying, setReplying] = useState<number | null>(null);
 
   const unread = messages.filter((m) => !m.read).length;
@@ -63,7 +64,18 @@ export function AdminMessages({ messages: initial }: { messages: Message[] }) {
         m.id === msg.id ? { ...m, adminReply: text, replyAt: new Date().toISOString(), read: true } : m
       ));
       setReplyDrafts((prev) => { const n = { ...prev }; delete n[msg.id]; return n; });
+      setEditing(null); // exit edit mode after save
     } finally { setReplying(null); }
+  }
+
+  function startEdit(msg: Message) {
+    setReplyDrafts((prev) => ({ ...prev, [msg.id]: msg.adminReply ?? "" }));
+    setEditing(msg.id);
+  }
+
+  function cancelEdit(msg: Message) {
+    setReplyDrafts((prev) => { const n = { ...prev }; delete n[msg.id]; return n; });
+    setEditing(null);
   }
 
   async function deleteReply(msg: Message) {
@@ -156,39 +168,67 @@ export function AdminMessages({ messages: initial }: { messages: Message[] }) {
                       <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: "14px 16px", marginBottom: 14 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                           <span style={{ fontSize: 11, fontFamily: "'DM Mono',monospace", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#166534" }}>Your Reply</span>
-                          {msg.replyAt && <span style={{ fontSize: 11, color: "#4ade80" }}>{new Date(msg.replyAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>}
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            {msg.replyAt && <span style={{ fontSize: 11, color: "#4ade80" }}>{new Date(msg.replyAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>}
+                            {/* Edit icon — only shown when NOT currently editing */}
+                            {editing !== msg.id && (
+                              <button
+                                onClick={() => startEdit(msg)}
+                                title="Edit reply"
+                                style={{ background: "none", border: "none", cursor: "pointer", color: "#166534", padding: 2, display: "flex", alignItems: "center" }}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                              </button>
+                            )}
+                          </div>
                         </div>
                         <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: "#166534", whiteSpace: "pre-wrap" }}>{msg.adminReply}</p>
                       </div>
                     )}
 
-                    {/* Reply form */}
-                    <div style={{ marginBottom: 12 }}>
-                      <p style={{ margin: "0 0 8px", fontSize: 12, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.06em", color: "#6b7280", fontWeight: 600 }}>
-                        {msg.adminReply ? "Edit Reply" : "Reply to Customer"}
-                      </p>
-                      <textarea
-                        rows={4}
-                        placeholder={`Reply to ${msg.name}…`}
-                        value={replyDrafts[msg.id] ?? msg.adminReply ?? ""}
-                        onChange={(e) => setReplyDrafts((prev) => ({ ...prev, [msg.id]: e.target.value }))}
-                        style={{ width: "100%", padding: "12px 14px", border: "1.5px solid var(--line)", borderRadius: 8, font: "14px 'DM Sans',sans-serif", resize: "vertical", outline: "none", boxSizing: "border-box", background: "var(--paper)", color: "var(--ink)" }}
-                        onFocus={(e) => { e.currentTarget.style.borderColor = "var(--terracotta)"; }}
-                        onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
-                      />
-                    </div>
+                    {/* Reply form — shown when editing or when no reply exists yet */}
+                    {(!msg.adminReply || editing === msg.id) && (
+                      <div style={{ marginBottom: 12 }}>
+                        {!msg.adminReply && (
+                          <p style={{ margin: "0 0 8px", fontSize: 12, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.06em", color: "#6b7280", fontWeight: 600 }}>
+                            Reply to Customer
+                          </p>
+                        )}
+                        <textarea
+                          rows={4}
+                          placeholder={`Reply to ${msg.name}…`}
+                          value={replyDrafts[msg.id] ?? ""}
+                          onChange={(e) => setReplyDrafts((prev) => ({ ...prev, [msg.id]: e.target.value }))}
+                          style={{ width: "100%", padding: "12px 14px", border: "1.5px solid var(--line)", borderRadius: 8, font: "14px 'DM Sans',sans-serif", resize: "vertical", outline: "none", boxSizing: "border-box", background: "var(--paper)", color: "var(--ink)" }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--terracotta)"; }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
+                          autoFocus={editing === msg.id}
+                        />
+                      </div>
+                    )}
 
                     {/* Actions */}
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      <button
-                        onClick={() => sendReply(msg)}
-                        disabled={busy === msg.id || replying === msg.id || !(replyDrafts[msg.id] ?? "").trim()}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--terracotta)", color: "#fff", borderRadius: 7, padding: "9px 16px", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", opacity: (!(replyDrafts[msg.id] ?? "").trim() || replying === msg.id) ? 0.5 : 1 }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                        {replying === msg.id ? "Sending…" : msg.adminReply ? "Update Reply" : "Send Reply"}
-                      </button>
-                      {msg.adminReply && (
+                      {(!msg.adminReply || editing === msg.id) && (
+                        <button
+                          onClick={() => sendReply(msg)}
+                          disabled={busy === msg.id || replying === msg.id || !(replyDrafts[msg.id] ?? "").trim()}
+                          style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--terracotta)", color: "#fff", borderRadius: 7, padding: "9px 16px", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", opacity: (!(replyDrafts[msg.id] ?? "").trim() || replying === msg.id) ? 0.5 : 1 }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                          {replying === msg.id ? "Sending…" : msg.adminReply ? "Update Reply" : "Send Reply"}
+                        </button>
+                      )}
+                      {editing === msg.id && (
+                        <button onClick={() => cancelEdit(msg)}
+                          style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--cream)", border: "1px solid var(--line)", color: "var(--ink)", borderRadius: 7, padding: "9px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                          Cancel
+                        </button>
+                      )}
+                      {msg.adminReply && editing !== msg.id && (
                         <button onClick={() => deleteReply(msg)} disabled={busy === msg.id}
                           style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fff0f0", border: "1px solid #fecaca", color: "#dc2626", borderRadius: 7, padding: "9px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                           Remove Reply
