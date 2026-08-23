@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-table.module.css";
 
 type Review = {
@@ -72,13 +73,13 @@ export function AdminReviews() {
         </div>
         {pendingCount > 0 && (
           <div style={{ background: "#fef3c7", border: "1px solid #fde047", borderRadius: 10, padding: "12px 20px", display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 22 }}>⏳</span>
             <div>
               <p style={{ margin: 0, fontWeight: 700, fontSize: 16, color: "#92400e" }}>{pendingCount} review{pendingCount !== 1 ? "s" : ""} awaiting approval</p>
               <p style={{ margin: 0, fontSize: 13, color: "#a16207" }}>Click Approve to make them visible on the site.</p>
             </div>
           </div>
         )}
+        <AdminHeaderActions />
       </header>
 
       <section className={styles.workspace}>

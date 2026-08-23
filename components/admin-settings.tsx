@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-table.module.css";
 
 export function AdminSettings() {
@@ -15,9 +16,7 @@ export function AdminSettings() {
           <h1>Settings</h1>
           <p>Configure your store settings and preferences.</p>
         </div>
-        <div className={styles.headerActions}>
-          
-        </div>
+        <AdminHeaderActions />
       </header>
 
       <section className={styles.workspace}>
