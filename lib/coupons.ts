@@ -53,10 +53,9 @@ export async function validateCoupon(rawCode: string, subtotal: number, lines: P
   }
 
   // ── BOGO (Buy 1 Get 1 Free) ───────────────────────────────────────────────
-  // Rule: in each pair the customer pays for the higher-priced unit and gets
-  // the lower-priced unit free. We expand every eligible line into individual
-  // unit prices, sort highest → lowest, then every second unit (index 1, 3, 5…)
-  // is free. This correctly handles both same-product and cross-product BOGOs.
+  // Rule: for every complete pair of eligible units, the cheaper one is free.
+  // freeCount = floor(totalEligibleUnits / 2)
+  // The cheapest freeCount units are selected as free.
   if (coupon.discountType === "bogo") {
     const bogoSlugs = coupon.applicableProducts?.length ? coupon.applicableProducts : null;
     const eligibleLines = bogoSlugs
@@ -66,21 +65,26 @@ export async function validateCoupon(rawCode: string, subtotal: number, lines: P
     if (eligibleLines.length === 0)
       return { ok: false, error: "This coupon isn't applicable to the items in your cart." };
 
-    // Expand into individual unit prices and sort descending (pay the dearest first)
+    // Expand into individual unit prices
     const unitPrices: number[] = [];
     for (const line of eligibleLines) {
       const unitPrice = line.lineTotal / line.quantity;
       for (let i = 0; i < line.quantity; i++) unitPrices.push(unitPrice);
     }
-    unitPrices.sort((a, b) => b - a);
+
+    const totalUnits = unitPrices.length;
 
     // Need at least 2 units for BOGO to give anything free
-    if (unitPrices.length < 2)
-      return { ok: false, error: "Buy 1 Get 1 requires at least 2 units of the eligible product in your cart." };
+    if (totalUnits < 2)
+      return { ok: false, error: "Buy 1 Get 1 requires at least 2 eligible units in your cart." };
 
-    // Every odd index (0-based) is the free unit in each pair
+    // Sort ascending — cheapest first
+    unitPrices.sort((a, b) => a - b);
+
+    // The cheapest floor(totalUnits / 2) units are free
+    const freeCount = Math.floor(totalUnits / 2);
     let discountAmount = 0;
-    for (let i = 1; i < unitPrices.length; i += 2) {
+    for (let i = 0; i < freeCount; i++) {
       discountAmount += unitPrices[i];
     }
     discountAmount = Math.round(discountAmount * 100) / 100;

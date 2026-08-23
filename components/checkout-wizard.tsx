@@ -11,7 +11,7 @@ type CheckoutForm = { customerName: string; phone: string; email: string; passwo
 type ShippingQuote = { charge: number; courierName: string; estimatedDeliveryDays: string | null };
 type PaymentOrder = { orderId: string; paymentSessionId: string; environment: "sandbox" | "production"; error?: string };
 type AppliedCoupon = { code: string; name: string | null; discountType: string; value: string; discountAmount: number };
-type PublicCoupon = { id: number; code: string; name: string | null; description: string | null; discountType: string; value: string; maxDiscount: string | null; minOrderValue: string };
+type PublicCoupon = { id: number; code: string; name: string | null; description: string | null; discountType: string; value: string; maxDiscount: string | null; minOrderValue: string; applyTo: string; applicableProducts: string[] | null; applicableCategories: string[] | null };
 
 const steps = ["Contact", "Delivery"];
 
@@ -410,11 +410,24 @@ export function CheckoutWizard() {
                 {publicCoupons.map((c) => {
                   const meetsMin = subtotal >= parseFloat(c.minOrderValue || "0");
 
-                  // For BOGO: need total eligible units >= 2
-                  const totalUnits = items.reduce((sum, item) => sum + item.quantity, 0);
-                  const bogoClear = c.discountType !== "bogo" || totalUnits >= 2;
+                  // Work out eligible item slugs for product-restricted coupons
+                  const itemSlugs = items.map((i) => i.slug ?? i.id);
+                  const hasEligibleProducts = c.applyTo === "products" && c.applicableProducts?.length
+                    ? c.applicableProducts.some((slug) => itemSlugs.includes(slug))
+                    : true; // entire_store or category — optimistic (server validates anyway)
 
-                  const eligible = meetsMin && bogoClear;
+                  // For BOGO: count eligible units specifically
+                  const eligibleUnits = c.discountType === "bogo"
+                    ? (() => {
+                        const bogoSlugs = c.applicableProducts?.length ? c.applicableProducts : null;
+                        return items
+                          .filter((item) => !bogoSlugs || bogoSlugs.includes(item.slug ?? item.id))
+                          .reduce((sum, item) => sum + item.quantity, 0);
+                      })()
+                    : 0;
+                  const bogoClear = c.discountType !== "bogo" || eligibleUnits >= 2;
+
+                  const eligible = meetsMin && bogoClear && hasEligibleProducts;
 
                   return (
                     <div
@@ -432,12 +445,12 @@ export function CheckoutWizard() {
                       </div>
                       <div className={styles.couponDetails}>
                         {c.description && <span>{c.description}</span>}
-                        {/* BOGO — always show the min-2 requirement */}
+                        {/* BOGO — show eligible units and how many will be free */}
                         {c.discountType === "bogo" && (
                           <span style={{ fontWeight: 600, color: bogoClear ? "#15803d" : "#92400e" }}>
                             {bogoClear
-                              ? "✓ Eligible — 1 unit will be free"
-                              : "Min. 2 products required · Add 1 more to use this offer"}
+                              ? `✓ Eligible — ${Math.floor(eligibleUnits / 2)} unit${Math.floor(eligibleUnits / 2) > 1 ? "s" : ""} will be free`
+                              : `Min. 2 eligible units required · Add ${2 - eligibleUnits} more`}
                           </span>
                         )}
                         {/* Min order value hint (non-BOGO) */}
