@@ -8,6 +8,7 @@ import styles from "./admin-sidebar.module.css";
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg> },
   { href: "/admin/orders", label: "Orders", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg> },
+  { href: "/admin/messages", label: "Messages", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> },
   { href: "/admin/products", label: "Products", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="6"></circle><path d="M15.5 13.5c-1.5-1-3.5-1-5 0"></path><path d="M8.5 17.5c1.5 1.5 3 2 5.5 2s4-0.5 5.5-2"></path></svg> },
   { href: "/admin/categories", label: "Categories", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg> },
   { href: "/admin/combos", label: "Combos", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="8" width="18" height="12" rx="2"></rect><path d="M12 8v-4"></path><path d="M8 4h8"></path></svg> },
@@ -24,20 +25,39 @@ export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [pendingReviews, setPendingReviews] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [newOrders, setNewOrders] = useState(0);
 
   useEffect(() => {
+    // Pending reviews
     fetch("/api/admin/reviews")
       .then((r) => r.json())
       .then((data: Array<{ approved: boolean }>) => {
-        if (Array.isArray(data)) {
-          setPendingReviews(data.filter((r) => !r.approved).length);
-        }
+        if (Array.isArray(data)) setPendingReviews(data.filter((r) => !r.approved).length);
+      })
+      .catch(() => {});
+
+    // Unread messages
+    fetch("/api/admin/messages")
+      .then((r) => r.json())
+      .then((data: Array<{ read: boolean }>) => {
+        if (Array.isArray(data)) setUnreadMessages(data.filter((m) => !m.read).length);
+      })
+      .catch(() => {});
+
+    // New orders (placed + paid)
+    fetch("/api/admin/notifications/orders")
+      .then((r) => r.json())
+      .then((data: { newOrders?: number }) => {
+        if (data.newOrders !== undefined) setNewOrders(data.newOrders);
       })
       .catch(() => {});
   }, []);
 
   useEffect(() => {
     if (pathname === "/admin/reviews") setPendingReviews(0);
+    if (pathname === "/admin/messages") setUnreadMessages(0);
+    if (pathname === "/admin/orders") setNewOrders(0);
   }, [pathname]);
 
   async function signOut() {
@@ -57,7 +77,10 @@ export function AdminSidebar() {
       <nav className={styles.nav}>
         {navItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
-          const badge = item.href === "/admin/reviews" && pendingReviews > 0 ? pendingReviews : null;
+          const badge = item.href === "/admin/reviews" && pendingReviews > 0 ? pendingReviews
+            : item.href === "/admin/messages" && unreadMessages > 0 ? unreadMessages
+            : item.href === "/admin/orders" && newOrders > 0 ? newOrders
+            : null;
           return (
             <Link
               key={item.href}

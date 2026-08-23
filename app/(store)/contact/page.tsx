@@ -1,13 +1,50 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+
 export default function ContactPage() {
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    const form = e.currentTarget;
+    const data = {
+      name: (form.elements.namedItem("name") as HTMLInputElement).value,
+      email: (form.elements.namedItem("email") as HTMLInputElement).value,
+      phone: (form.elements.namedItem("phone") as HTMLInputElement).value,
+      subject: (form.elements.namedItem("subject") as HTMLSelectElement).value,
+      message: (form.elements.namedItem("message") as HTMLTextAreaElement).value,
+    };
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Something went wrong.");
+      setSent(true);
+      form.reset();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send message.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <>
-      {/* Hero Section */}
+      {/* Hero */}
       <section className="contact-page-hero">
         <div className="contact-page-hero-content">
           <p className="eyebrow">Get in Touch</p>
-          <h1>
-            We're here to <i>help.</i>
-          </h1>
+          <h1>We&apos;re here to <i>help.</i></h1>
           <p className="hero-description">
             Have questions about our snacks, need help with an order, or interested in bulk purchases?
             Our team is ready to assist you.
@@ -15,77 +52,93 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Main Contact Section */}
+      {/* Main */}
       <section className="contact-page-main">
         <div className="contact-page-container">
-          {/* Contact Form */}
+
+          {/* Form */}
           <div className="contact-page-form-wrapper">
             <div className="contact-form-header">
               <h2>Send us a message</h2>
-              <p>Fill out the form below and we'll get back to you within 24 hours.</p>
+              <p>Fill out the form and we&apos;ll get back to you within 24 hours.</p>
             </div>
 
-            <form className="contact-page-form">
-              <div className="form-row">
-                <label>
-                  <span>Your Name *</span>
-                  <input type="text" name="name" placeholder="Full name" required />
-                </label>
-
-                <label>
-                  <span>Email Address *</span>
-                  <input type="email" name="email" placeholder="you@example.com" required />
-                </label>
+            {sent ? (
+              <div style={{ background: "#dcfce7", border: "1px solid #bbf7d0", borderRadius: 12, padding: "28px 24px", textAlign: "center" }}>
+                <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <h3 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 700, color: "#166534" }}>Message sent!</h3>
+                <p style={{ margin: "0 0 20px", fontSize: 14, color: "#166534" }}>We&apos;ll get back to you within 24 hours.</p>
+                <button onClick={() => setSent(false)} style={{ background: "#166534", color: "#fff", border: "none", borderRadius: 8, padding: "10px 24px", font: "600 14px 'DM Sans',sans-serif", cursor: "pointer" }}>
+                  Send another message
+                </button>
               </div>
+            ) : (
+              <form className="contact-page-form" onSubmit={handleSubmit} noValidate>
+                <div className="form-row">
+                  <label>
+                    <span>Your Name *</span>
+                    <input type="text" name="name" placeholder="Full name" required />
+                  </label>
+                  <label>
+                    <span>Email Address *</span>
+                    <input type="email" name="email" placeholder="you@example.com" required />
+                  </label>
+                </div>
 
-              <label>
-                <span>Phone Number</span>
-                <input type="tel" name="phone" placeholder="10-digit mobile number" />
-              </label>
+                <label>
+                  <span>Phone Number</span>
+                  <input type="tel" name="phone" placeholder="10-digit mobile number" />
+                </label>
 
-              <label>
-                <span>Subject *</span>
-                <select name="subject" required>
-                  <option value="">Select a topic</option>
-                  <option value="order">Order Inquiry</option>
-                  <option value="product">Product Question</option>
-                  <option value="bulk">Bulk Orders</option>
-                  <option value="feedback">Feedback</option>
-                  <option value="other">Other</option>
-                </select>
-              </label>
+                <label>
+                  <span>Subject *</span>
+                  <select name="subject" required>
+                    <option value="">Select a topic</option>
+                    <option value="order">Order Inquiry</option>
+                    <option value="product">Product Question</option>
+                    <option value="bulk">Bulk Orders</option>
+                    <option value="feedback">Feedback</option>
+                    <option value="other">Other</option>
+                  </select>
+                </label>
 
-              <label>
-                <span>Message *</span>
-                <textarea name="message" rows={6} placeholder="How can we help you?" required></textarea>
-              </label>
+                <label>
+                  <span>Message *</span>
+                  <textarea name="message" rows={6} placeholder="How can we help you?" required></textarea>
+                </label>
 
-              <button type="submit" className="button button-dark">
-                Send Message
-              </button>
+                {error && (
+                  <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#dc2626" }}>
+                    {error}
+                  </div>
+                )}
 
-              <p className="form-note">
-                * Required fields. We respect your privacy and will never share your information.
-              </p>
-            </form>
+                <button type="submit" className="button button-dark" disabled={loading}>
+                  {loading ? "Sending…" : "Send Message"}
+                </button>
+
+                <p className="form-note">* Required fields. We respect your privacy.</p>
+              </form>
+            )}
           </div>
 
-          {/* Contact Information */}
+          {/* Info */}
           <div className="contact-page-info">
             <div className="contact-info-card">
               <h3>Contact Information</h3>
-
               <div className="contact-info-items">
                 <div className="contact-info-item">
                   <div className="info-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                     </svg>
                   </div>
                   <div>
                     <h4>Phone</h4>
                     <a href="tel:+918667829041">+91 86678 29041</a>
-                    <p>Mon-Sat, 9 AM - 6 PM</p>
+                    <p>Mon–Sat, 9 AM – 6 PM</p>
                   </div>
                 </div>
 
@@ -97,7 +150,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h4>Follow us</h4>
-                    <div style={{ display: "flex", gap: 16, marginTop: 8 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 8 }}>
                       <a href="https://www.instagram.com/raghul_delights?igsh=emg3b3plYmkxeWlo" target="_blank" rel="noopener noreferrer" aria-label="Instagram" style={{ color: "var(--ink)", display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
                         Instagram
@@ -113,32 +166,22 @@ export default function ContactPage() {
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
 
             <div className="contact-info-card">
               <h3>Business Hours</h3>
               <div className="business-hours">
-                <div className="hours-row">
-                  <span>Monday - Friday</span>
-                  <strong>9:00 AM - 6:00 PM</strong>
-                </div>
-                <div className="hours-row">
-                  <span>Saturday</span>
-                  <strong>9:00 AM - 2:00 PM</strong>
-                </div>
-                <div className="hours-row">
-                  <span>Sunday</span>
-                  <strong>Closed</strong>
-                </div>
+                <div className="hours-row"><span>Monday – Friday</span><strong>9:00 AM – 6:00 PM</strong></div>
+                <div className="hours-row"><span>Saturday</span><strong>9:00 AM – 2:00 PM</strong></div>
+                <div className="hours-row"><span>Sunday</span><strong>Closed</strong></div>
               </div>
             </div>
 
             <div className="contact-info-card">
               <h3>Quick Links</h3>
               <div className="quick-links">
-                <a href="/orders">Track Your Order</a>
+                <a href="/track">Track Your Order</a>
                 <a href="/shop">Browse Products</a>
                 <a href="/about">Our Story</a>
               </div>
@@ -146,7 +189,6 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
-
     </>
   );
 }

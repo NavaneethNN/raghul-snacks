@@ -2492,26 +2492,6 @@ h2 i {
     padding: 80px 24px;
   }
 
-  .contact-page-hero {
-    padding: 80px 24px 60px;
-  }
-
-  .contact-page-hero-content h1 {
-    font-size: 42px;
-  }
-
-  .contact-page-main {
-    padding: 60px 24px;
-  }
-
-  .contact-page-form-wrapper {
-    padding: 36px 28px;
-  }
-
-  .contact-form-header h2 {
-    font-size: 28px;
-  }
-
   .product-page {
     padding: 0 24px 60px;
     gap: 32px;
@@ -2637,30 +2617,6 @@ h2 i {
 
   .cta-actions .button {
     width: 100%;
-  }
-
-  .contact-page-hero {
-    padding: 60px 16px 40px;
-  }
-
-  .contact-page-hero-content h1 {
-    font-size: 36px;
-  }
-
-  .contact-page-main {
-    padding: 40px 16px;
-  }
-
-  .contact-page-form-wrapper {
-    padding: 28px 20px;
-  }
-
-  .contact-form-header h2 {
-    font-size: 24px;
-  }
-
-  .contact-info-card {
-    padding: 24px 20px;
   }
 
   .product-page {
@@ -3115,7 +3071,7 @@ h2 i {
 /* Contact Page Styles */
 .contact-page-hero {
   background: linear-gradient(135deg, var(--cream) 0%, var(--paper) 100%);
-  padding: 100px 24px 80px;
+  padding: 60px 20px 48px;
   text-align: center;
   border-bottom: 1px solid var(--line);
 }
@@ -3134,7 +3090,7 @@ h2 i {
 }
 
 .contact-page-hero-content h1 {
-  font: 700 42px 'Playfair Display', serif;
+  font: 700 clamp(28px, 6vw, 42px) 'Playfair Display', serif;
   letter-spacing: -0.03em;
   margin: 0 0 20px;
   line-height: 1.15;
@@ -3147,7 +3103,7 @@ h2 i {
 }
 
 .contact-page-main {
-  padding: 80px 24px;
+  padding: 40px 16px;
   background: var(--paper);
 }
 
@@ -3156,29 +3112,29 @@ h2 i {
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 60px;
+  gap: 32px;
 }
 
 .contact-page-form-wrapper {
   background: var(--cream);
-  padding: 48px;
-  border-radius: 20px;
+  padding: 24px 20px;
+  border-radius: 16px;
   border: 1px solid var(--line);
 }
 
 .contact-form-header {
-  margin-bottom: 40px;
+  margin-bottom: 28px;
 }
 
 .contact-form-header h2 {
-  font: 700 28px 'Playfair Display', serif;
+  font: 700 24px 'Playfair Display', serif;
   color: var(--ink);
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   letter-spacing: -0.02em;
 }
 
 .contact-form-header p {
-  font-size: 16px;
+  font-size: 15px;
   color: #687267;
   margin: 0;
   line-height: 1.6;
@@ -3186,13 +3142,13 @@ h2 i {
 
 .contact-page-form {
   display: grid;
-  gap: 24px;
+  gap: 20px;
 }
 
 .contact-page-form .form-row {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 24px;
+  gap: 20px;
 }
 
 .contact-page-form label {
@@ -3211,7 +3167,7 @@ h2 i {
   width: 100%;
   border: 1.5px solid var(--line);
   background: var(--paper);
-  padding: 14px 16px;
+  padding: 12px 14px;
   font: 15px 'DM Sans', sans-serif;
   color: var(--ink);
   border-radius: 10px;
@@ -3229,16 +3185,16 @@ h2 i {
 
 .contact-page-form textarea {
   resize: vertical;
-  min-height: 140px;
+  min-height: 120px;
   font-family: inherit;
 }
 
 .contact-page-form button {
   width: 100%;
   justify-content: center;
-  padding: 16px;
-  font-size: 16px;
-  margin-top: 8px;
+  padding: 14px;
+  font-size: 15px;
+  margin-top: 4px;
 }
 
 .form-note {
@@ -3255,8 +3211,8 @@ h2 i {
 
 .contact-info-card {
   background: var(--cream);
-  padding: 32px;
-  border-radius: 20px;
+  padding: 24px 20px;
+  border-radius: 16px;
   border: 1px solid var(--line);
 }
 
@@ -4694,10 +4650,27 @@ footer {
 
   .contact-page-container {
     grid-template-columns: 1.5fr 1fr;
+    gap: 48px;
+  }
+
+  .contact-page-main {
+    padding: 60px 24px;
+  }
+
+  .contact-page-form-wrapper {
+    padding: 40px;
+  }
+
+  .contact-info-card {
+    padding: 32px;
   }
 
   .contact-page-form .form-row {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .contact-page-hero {
+    padding: 80px 24px 60px;
   }
 
   footer {
