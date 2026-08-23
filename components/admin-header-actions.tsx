@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import styles from "./admin-dashboard.module.css";
 
@@ -106,26 +107,35 @@ export function AdminHeaderActions() {
         </button>
       </div>
 
-      {/* Backdrop */}
-      {open && (
-        <div
-          style={{ position: "fixed", inset: 0, background: "rgba(36,49,39,0.25)", zIndex: 10000, backdropFilter: "blur(1px)" }}
-          onClick={() => setOpen(false)}
-        />
-      )}
+      {/* Portal — renders backdrop + panel directly on body, escaping any parent stacking context */}
+      {typeof window !== "undefined" && createPortal(
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setOpen(false)}
+            style={{
+              position: "fixed", inset: 0,
+              background: "rgba(36,49,39,0.25)",
+              zIndex: 10000,
+              backdropFilter: "blur(1px)",
+              pointerEvents: open ? "auto" : "none",
+              opacity: open ? 1 : 0,
+              transition: "opacity 0.25s",
+            }}
+          />
 
-      {/* Notification panel */}
-      <div
-        ref={panelRef}
-        style={{
-          position: "fixed", top: 0, right: 0, bottom: 0, width: 360,
-          background: "var(--paper)", borderLeft: "1px solid var(--line)",
-          zIndex: 10001, display: "flex", flexDirection: "column",
-          transform: open ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)",
-          boxShadow: open ? "-8px 0 32px rgba(0,0,0,0.12)" : "none",
-        }}
-      >
+          {/* Slide-in panel */}
+          <div
+            ref={panelRef}
+            style={{
+              position: "fixed", top: 0, right: 0, bottom: 0, width: 360,
+              background: "var(--paper)", borderLeft: "1px solid var(--line)",
+              zIndex: 10001, display: "flex", flexDirection: "column",
+              transform: open ? "translateX(0)" : "translateX(100%)",
+              transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)",
+              boxShadow: "-8px 0 32px rgba(0,0,0,0.12)",
+            }}
+          >
         {/* Panel header */}
         <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
@@ -214,6 +224,9 @@ export function AdminHeaderActions() {
           </Link>
         </div>
       </div>
+        </>,
+        document.body
+      )}
     </>
   );
 }
