@@ -16,7 +16,7 @@ type PublicCoupon = { id: number; code: string; name: string | null; description
 const steps = ["Contact", "Delivery"];
 
 export function CheckoutWizard() {
-  const { items: cartItems, subtotal: cartSubtotal, clearCart, addItem } = useCart();
+  const { items: cartItems, subtotal: cartSubtotal, clearCart } = useCart();
   const [buyNowItem, setBuyNowItemState] = useState<BuyNowItem | null>(null);
   const [buyNowChecked, setBuyNowChecked] = useState(false);
   const items = buyNowItem ? [buyNowItem] : cartItems;
@@ -70,20 +70,14 @@ export function CheckoutWizard() {
     setBuyNowChecked(true);
   }, []);
 
-  // When the user leaves checkout without placing the order, add the buy-now
-  // item to their cart so they don't lose it.
+  // Clear the buy-now item from sessionStorage when leaving checkout
+  // without completing payment — prevents it bleeding into future sessions.
   useEffect(() => {
     return () => {
       if (!orderPlacedRef.current) {
-        const item = readBuyNowItem();
-        if (item) {
-          addItem(item, item.quantity);
-          clearBuyNowItem();
-        }
+        clearBuyNowItem();
       }
     };
-    // addItem is stable (memoised); intentionally run only on unmount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
