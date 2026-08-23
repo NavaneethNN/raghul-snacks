@@ -2,6 +2,7 @@ import { StoreHeader } from "@/components/store-header";
 import { AnnouncementBar } from "@/components/announcement-bar";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { DeliveryNotification } from "@/components/delivery-notification";
+import { ReplyNotification } from "@/components/reply-notification";
 import Link from "next/link";
 
 export default function StoreLayout({ children }: { children: React.ReactNode }) {
@@ -11,6 +12,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
       <AnnouncementBar />
       <StoreHeader />
       <DeliveryNotification />
+      <ReplyNotification />
       <main>{children}</main>
       <footer>
         <div className="footer-container">
@@ -33,6 +35,26 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
                   <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
                   <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/>
                   <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                </svg>
+              </a>
+              <a
+                href="https://www.facebook.com/share/1Be8hDcm56/"
+                aria-label="Facebook"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="12" cy="12" r="11" />
+                  <path
+                    d="M13.5 8H15V5.5H13.2C10.9 5.5 9.5 6.9 9.5 9.2V11H7.5V13.5H9.5V19H12.5V13.5H14.5L15 11H12.5V9.5C12.5 8.5 12.8 8 13.5 8Z"
+                    fill="currentColor"
+                    stroke="none"
+                  />
                 </svg>
               </a>
             </div>
