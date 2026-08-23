@@ -17,8 +17,14 @@ const steps = ["Contact", "Delivery"];
 
 export function CheckoutWizard() {
   const { items: cartItems, subtotal: cartSubtotal, clearCart } = useCart();
-  const [buyNowItem, setBuyNowItemState] = useState<BuyNowItem | null>(null);
-  const [buyNowChecked, setBuyNowChecked] = useState(false);
+  // Read buy-now item synchronously with lazy useState initialiser.
+  // This avoids the React Strict Mode double-invoke problem that plagued
+  // the previous useEffect-based approach (effect cleanup cleared sessionStorage
+  // before the second mount could read it).
+  const [buyNowItem] = useState<BuyNowItem | null>(() =>
+    typeof window !== "undefined" ? readBuyNowItem() : null
+  );
+  const buyNowChecked = true; // always ready — synchronous read, no async needed
   const items = buyNowItem ? [buyNowItem] : cartItems;
   const subtotal = buyNowItem ? buyNowItem.offerPrice * buyNowItem.quantity : cartSubtotal;
   const [step, setStep] = useState(1);
@@ -64,21 +70,6 @@ export function CheckoutWizard() {
 
   // Track whether payment was successfully completed
   const orderPlacedRef = useRef(false);
-
-  useEffect(() => {
-    setBuyNowItemState(readBuyNowItem());
-    setBuyNowChecked(true);
-  }, []);
-
-  // Clear the buy-now item from sessionStorage when leaving checkout
-  // without completing payment — prevents it bleeding into future sessions.
-  useEffect(() => {
-    return () => {
-      if (!orderPlacedRef.current) {
-        clearBuyNowItem();
-      }
-    };
-  }, []);
 
   useEffect(() => {
     const savedPincode = window.localStorage.getItem("raghul-snacks-pincode");
