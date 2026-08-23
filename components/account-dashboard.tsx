@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart/cart-provider";
 import { OrderDetailModal } from "@/components/order-detail-modal";
 import styles from "./account-dashboard.module.css";
-
 type Order = {
   id: number;
   orderNumber: string;
@@ -62,6 +61,20 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   const [nameError, setNameError] = useState("");
   const [detailOrder, setDetailOrder] = useState<Order | null>(null);
   const [showOrders, setShowOrders] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
+
+  type UserMessage = { id: number; subject: string; message: string; adminReply: string | null; replyAt: string | null; createdAt: string };
+  const [userMessages, setUserMessages] = useState<UserMessage[]>([]);
+  const [messagesLoaded, setMessagesLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!showMessages || messagesLoaded) return;
+    fetch("/api/messages/mine", { credentials: "include" })
+      .then((r) => r.json())
+      .then((d: { messages: UserMessage[] }) => setUserMessages(d.messages ?? []))
+      .catch(() => {})
+      .finally(() => setMessagesLoaded(true));
+  }, [showMessages, messagesLoaded]);
 
   const price = new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -256,7 +269,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
           </div>
 
           {/* My Orders button */}
-          <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--line)" }}>
+          <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--line)", display: "flex", gap: 10, flexWrap: "wrap" }}>
             <button
               type="button"
               onClick={() => setShowOrders((p) => !p)}
@@ -284,6 +297,31 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                 </span>
               )}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transition: "transform 0.2s", transform: showOrders ? "rotate(180deg)" : "none" }}>
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </button>
+
+            {/* Messages button */}
+            <button
+              type="button"
+              onClick={() => setShowMessages((p) => !p)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 10,
+                background: showMessages ? "var(--ink)" : "var(--cream)",
+                color: showMessages ? "#fff" : "var(--ink)",
+                border: "1.5px solid var(--line)",
+                borderRadius: 10, padding: "12px 20px",
+                font: "600 14px 'DM Sans', sans-serif",
+                cursor: "pointer", transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => { if (!showMessages) { e.currentTarget.style.borderColor = "var(--terracotta)"; e.currentTarget.style.color = "var(--terracotta)"; } }}
+              onMouseLeave={(e) => { if (!showMessages) { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--ink)"; } }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              My Messages
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transition: "transform 0.2s", transform: showMessages ? "rotate(180deg)" : "none" }}>
                 <path d="M6 9l6 6 6-6"/>
               </svg>
             </button>
@@ -391,6 +429,73 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ── Messages section ── */}
+        {showMessages && (
+          <section className={styles.card} style={{ padding: 0, overflow: "hidden" }}>
+            <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid var(--line)" }}>
+              <h2 style={{ margin: 0, font: "700 20px 'Playfair Display', serif", color: "var(--ink)" }}>
+                Your Messages
+              </h2>
+            </div>
+
+            {!messagesLoaded ? (
+              <div style={{ padding: 32, textAlign: "center", color: "#9ca3af", fontSize: 14 }}>Loading…</div>
+            ) : userMessages.length === 0 ? (
+              <div className={styles.emptyState} style={{ padding: "40px 24px" }}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ margin: "0 auto 12px", display: "block", color: "#9ca3af" }}>
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <p style={{ margin: 0, color: "#9ca3af", fontSize: 14 }}>No messages yet.</p>
+                <Link href="/contact" className={styles.button} style={{ marginTop: 16, display: "inline-flex" }}>Send a Message</Link>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {userMessages.map((msg, idx) => {
+                  const subjectLabels: Record<string, string> = { order: "Order Inquiry", product: "Product Question", bulk: "Bulk Orders", feedback: "Feedback", other: "Other" };
+                  return (
+                    <div key={msg.id} style={{ padding: "18px 24px", borderBottom: idx < userMessages.length - 1 ? "1px solid var(--line)" : "none" }}>
+                      {/* Header */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ background: "#fef3c7", color: "#92400e", borderRadius: 4, padding: "2px 8px", fontSize: 11, fontWeight: 700, fontFamily: "'DM Mono',monospace" }}>
+                            {subjectLabels[msg.subject] ?? msg.subject}
+                          </span>
+                          {msg.adminReply && (
+                            <span style={{ background: "#dcfce7", color: "#166534", borderRadius: 4, padding: "2px 8px", fontSize: 11, fontWeight: 700, fontFamily: "'DM Mono',monospace" }}>
+                              Replied
+                            </span>
+                          )}
+                        </div>
+                        <span style={{ fontSize: 12, color: "#9ca3af" }}>
+                          {new Date(msg.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                        </span>
+                      </div>
+
+                      {/* Your message */}
+                      <div style={{ background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, padding: "12px 14px", marginBottom: msg.adminReply ? 10 : 0, fontSize: 14, lineHeight: 1.7, color: "var(--ink)", whiteSpace: "pre-wrap" }}>
+                        {msg.message}
+                      </div>
+
+                      {/* Admin reply */}
+                      {msg.adminReply && (
+                        <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "12px 14px" }}>
+                          <p style={{ margin: "0 0 6px", fontSize: 11, fontFamily: "'DM Mono',monospace", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#166534" }}>
+                            Reply from Raghul Delights
+                            {msg.replyAt && <span style={{ marginLeft: 8, fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
+                              · {new Date(msg.replyAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                            </span>}
+                          </p>
+                          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: "#166534", whiteSpace: "pre-wrap" }}>{msg.adminReply}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>

@@ -23,6 +23,8 @@ export default async function AdminMessagesPage() {
     const messages = rows.map((r) => ({
       ...r,
       phone: r.phone ?? null,
+      adminReply: r.adminReply ?? null,
+      replyAt: r.replyAt ? r.replyAt.toISOString() : null,
       createdAt: r.createdAt.toISOString(),
     }));
 
