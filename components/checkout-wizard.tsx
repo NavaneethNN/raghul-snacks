@@ -154,10 +154,10 @@ export function CheckoutWizard() {
     return () => { controller.abort(); window.clearTimeout(timer); };
   }, [form.pincode, itemPayload]);
 
-  // Load public coupons once we know the subtotal (so we can show min-order hints)
+  // Load eligible coupons for this user (server filters firstPurchase, perCustomer limits)
   useEffect(() => {
     if (subtotal <= 0) return;
-    fetch("/api/coupons?public=1")
+    fetch("/api/coupons/eligible")
       .then(async (res) => {
         if (!res.ok) return;
         const data = (await res.json()) as { coupons?: PublicCoupon[] };
