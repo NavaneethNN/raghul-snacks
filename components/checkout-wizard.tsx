@@ -72,10 +72,6 @@ export function CheckoutWizard() {
   const orderPlacedRef = useRef(false);
 
   useEffect(() => {
-    const savedPincode = window.localStorage.getItem("raghul-snacks-pincode");
-    if (savedPincode && /^\d{6}$/.test(savedPincode))
-      setForm((c) => ({ ...c, pincode: savedPincode }));
-
     // Pre-fill contact details for logged-in users; guests can proceed without signing in
     fetch("/api/auth/session")
       .then(async (res) => {

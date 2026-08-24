@@ -132,10 +132,34 @@ export default function CartPage() {
 
         <aside className="order-summary">
           <h2>Order summary</h2>
-          <p>
-            <span>Subtotal</span>
-            <strong>{formatPrice(subtotal)}</strong>
-          </p>
+
+          {/* Item breakdown */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+            {items.map((item) => (
+              <div key={item.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#6b7280" }}>
+                <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginRight: 8 }}>
+                  {item.name} <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11 }}>×{item.quantity}</span>
+                </span>
+                <span style={{ flexShrink: 0, fontWeight: 600, color: "var(--ink)" }}>{formatPrice(item.offerPrice * item.quantity)}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12, marginBottom: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+            <p style={{ display: "flex", justifyContent: "space-between", margin: 0, fontSize: 14 }}>
+              <span>Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} item{items.reduce((s, i) => s + i.quantity, 0) !== 1 ? "s" : ""})</span>
+              <strong>{formatPrice(subtotal)}</strong>
+            </p>
+            <p style={{ display: "flex", justifyContent: "space-between", margin: 0, fontSize: 13, color: "#6b7280" }}>
+              <span>Shipping</span>
+              <span>Calculated at checkout</span>
+            </p>
+          </div>
+
+          <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12, marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontWeight: 700, fontSize: 15 }}>Total</span>
+            <strong style={{ fontSize: 18, fontFamily: "'DM Sans',sans-serif" }}>{formatPrice(subtotal)}</strong>
+          </div>
           <button
             onClick={() => { clearBuyNowItem(); router.push("/checkout"); }}
             className="button button-dark wide-button"
