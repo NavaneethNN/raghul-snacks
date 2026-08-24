@@ -6,11 +6,14 @@ import { useCart } from "@/components/cart/cart-provider";
 import { useWishlist } from "@/components/wishlist/wishlist-provider";
 import { formatPrice, formatWeight } from "@/lib/catalog";
 import { AddToCart } from "@/components/product/add-to-cart";
+import { clearBuyNowItem } from "@/lib/buy-now";
+import { useRouter } from "next/navigation";
 
 type CartItem = ReturnType<typeof useCart>["items"][number];
 
 export default function CartPage() {
   const { items, subtotal, updateQuantity, removeItem } = useCart();
+  const router = useRouter();
   const { addItem: addToWishlist, isInWishlist } = useWishlist();
   const [upsellProduct, setUpsellProduct] = useState<any>(null);
   // the item pending removal — null means sheet is closed
@@ -133,9 +136,12 @@ export default function CartPage() {
             <span>Subtotal</span>
             <strong>{formatPrice(subtotal)}</strong>
           </p>
-          <Link href="/checkout" className="button button-dark wide-button">
+          <button
+            onClick={() => { clearBuyNowItem(); router.push("/checkout"); }}
+            className="button button-dark wide-button"
+          >
             Secure checkout →
-          </Link>
+          </button>
           <small>Safe payments powered by Cashfree</small>
 
           {upsellProduct && (
