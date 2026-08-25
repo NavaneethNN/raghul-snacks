@@ -132,6 +132,11 @@ export default async function HomePage() {
             </div>
           </div>
 
+          {/* Banner visible only on mobile — sits above CTA buttons */}
+          <div className="hero-banner-mobile">
+            <HeroBanner initialBanners={banners} />
+          </div>
+
           <div className="hero-actions">
             <Link className="button button-dark" href="/shop">
               Shop all snacks

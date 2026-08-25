@@ -1495,6 +1495,20 @@ h2 i {
 }
 
 
+/* Mobile-only banner slot inside hero-content (above CTA buttons) */
+.hero-banner-mobile {
+  display: block;
+  margin: 4px 0;
+}
+@media (min-width: 768px) {
+  .hero-banner-mobile { display: none; }
+}
+
+/* Hide the visual column's banner on mobile (shown there on desktop) */
+@media (max-width: 767px) {
+  .hero-image-wrapper .hero-banner-track { display: none; }
+}
+
 .hero-visual {
   display: flex;
   flex-direction: column;
