@@ -129,7 +129,7 @@ export function AdminHeaderActions() {
                   title="New Orders"
                   description={`${data.newOrders} paid order${data.newOrders > 1 ? "s" : ""} placed in the last 24 hours.`}
                   href="/admin/orders" actionLabel="View Orders"
-                  onClick={() => setOpen(false)}
+                  onClick={() => { setData((p) => ({ ...p, newOrders: 0 })); setOpen(false); }}
                 />
               )}
               {data.unreadMessages > 0 && (
@@ -140,7 +140,7 @@ export function AdminHeaderActions() {
                   title="Unread Messages"
                   description={`${data.unreadMessages} contact enquir${data.unreadMessages > 1 ? "ies" : "y"} awaiting reply.`}
                   href="/admin/messages" actionLabel="View Messages"
-                  onClick={() => setOpen(false)}
+                  onClick={() => { setData((p) => ({ ...p, unreadMessages: 0 })); setOpen(false); }}
                 />
               )}
               {data.pendingReviews > 0 && (
@@ -151,7 +151,7 @@ export function AdminHeaderActions() {
                   title="Pending Reviews"
                   description={`${data.pendingReviews} review${data.pendingReviews > 1 ? "s" : ""} waiting for approval.`}
                   href="/admin/reviews" actionLabel="Approve Reviews"
-                  onClick={() => setOpen(false)}
+                  onClick={() => { setData((p) => ({ ...p, pendingReviews: 0 })); setOpen(false); }}
                 />
               )}
             </>

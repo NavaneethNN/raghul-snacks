@@ -72,8 +72,16 @@ export function ReplyNotification() {
   }, [pathname]);
 
   function dismiss() {
+    // Mark all current replied messages as seen so popup doesn't reappear
+    fetch("/api/messages/mine", { credentials: "include" })
+      .then((r) => r.json())
+      .then((d: { messages: Message[] }) => {
+        const repliedIds = (d.messages ?? []).filter((m) => m.adminReply).map((m) => m.id);
+        if (repliedIds.length) markAsSeen(repliedIds);
+      })
+      .catch(() => {});
     setVisible(false);
-    // Don't mark as seen on dismiss — popup will reappear next page load until they visit account
+    setUnseenCount(0);
   }
 
   if (!visible || unseenCount === 0) return null;
