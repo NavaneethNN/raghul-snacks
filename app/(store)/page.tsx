@@ -209,10 +209,10 @@ export default async function HomePage() {
         </ScrollAnimate>
       </section>
 
-       {/* Combo Box Section */}
+      {/* Combo Box Section */}
       {featuredCombo && featuredCombo.title && (
-        <ScrollAnimate animation="left">
-          <section className="combo">
+        <section className="combo">
+          <ScrollAnimate animation="left">
             <div>
               <p className="eyebrow">Special Combo</p>
               <h2>
@@ -245,7 +245,9 @@ export default async function HomePage() {
                 </Link>
               </div>
             </div>
+          </ScrollAnimate>
 
+          <ScrollAnimate animation="right">
             <div className="combo-visual">
               <span>{featuredCombo.items?.length || 0}</span>
               <p>
@@ -254,8 +256,8 @@ export default async function HomePage() {
                 items
               </p>
             </div>
-          </section>
-        </ScrollAnimate>
+          </ScrollAnimate>
+        </section>
       )}
       {/* Values Section */}
       <ScrollAnimate>
