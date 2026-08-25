@@ -212,13 +212,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   margin-top: 28px;
   padding-top: 22px;
   border-top: 1px solid var(--line);
+  flex-wrap: nowrap;
 }
 
 .actions :global(.button) {
-  min-width: 150px;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
   padding: 12px 18px;
 }
 
@@ -227,6 +231,10 @@
   background: none;
   color: #687267;
   font: 14px 'DM Sans', sans-serif;
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 12px 8px;
+  cursor: pointer;
 }
 
 /* ── Order summary sidebar ───────────────────── */
@@ -515,7 +523,6 @@
   .panelHead h2 { font-size: 24px; }
 
   .actions :global(.button) {
-    min-width: 0;
     padding: 11px 14px;
     font-size: 13px;
   }
