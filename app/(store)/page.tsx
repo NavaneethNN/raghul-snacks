@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import { ProductCard } from "@/components/product/product-card";
+import { BestsellersSlider } from "@/components/bestsellers-slider";
 import { HeroBanner } from "@/components/hero-banner";
 import { ScrollAnimate } from "@/components/scroll-animate";
 import { getDb } from "@/lib/db";
@@ -191,7 +192,24 @@ export default async function HomePage() {
         </ScrollAnimate>
       </section>
 
-      {/* Combo Box Section */}
+      {/* Bestsellers Section */}
+      <section className="section" id="bestsellers">
+        <ScrollAnimate>
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Loved by many</p>
+              <h2>Our bestsellers.</h2>
+            </div>
+            <Link href="/shop" className="text-link">
+              View all →
+            </Link>
+          </div>
+
+          <BestsellersSlider products={products} />
+        </ScrollAnimate>
+      </section>
+
+       {/* Combo Box Section */}
       {featuredCombo && featuredCombo.title && (
         <ScrollAnimate animation="left">
           <section className="combo">
@@ -239,28 +257,6 @@ export default async function HomePage() {
           </section>
         </ScrollAnimate>
       )}
-
-      {/* Bestsellers Section */}
-      <section className="section" id="bestsellers">
-        <ScrollAnimate>
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Loved by many</p>
-              <h2>Our bestsellers.</h2>
-            </div>
-            <Link href="/shop" className="text-link">
-              View all →
-            </Link>
-          </div>
-
-          <div className="product-grid">
-            {products.map((product: any) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </ScrollAnimate>
-      </section>
-
       {/* Values Section */}
       <ScrollAnimate>
         <section className="values">
@@ -329,11 +325,7 @@ export default async function HomePage() {
 
               </div>
 
-              <div className="contact-hours">
-                <h4>Business Hours</h4>
-                <p>Monday - Saturday: 9:00 AM - 6:00 PM</p>
-                <p>Sunday: Closed</p>
-              </div>
+      
             </div>
 
             <div className="contact-form-wrapper">

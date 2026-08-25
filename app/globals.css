@@ -1608,9 +1608,10 @@ h2 i {
 
 .section#bestsellers {
   background: linear-gradient(to bottom, transparent 0%, rgba(247, 244, 236, 0.6) 100%);
-  padding: 40px 16px;
+  padding: 40px 36px;
   border-radius: 16px;
   margin-top: 24px;
+  overflow: visible;
 }
 
 .section-heading {
