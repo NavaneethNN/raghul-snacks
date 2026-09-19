@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-table.module.css";
+import { ConfirmDialog } from "./admin-confirm-dialog";
 
 type Category = {
   id: number;
@@ -21,6 +21,7 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [imageInputType, setImageInputType] = useState<"url" | "file">("url");
   const [imagePreview, setImagePreview] = useState<string>("");
   const [categoryName, setCategoryName] = useState("");
@@ -113,8 +114,6 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm("Are you sure you want to delete this category?")) return;
-
     try {
       const response = await fetch(`/api/admin/categories/${id}`, {
         method: "DELETE",
@@ -151,9 +150,9 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
             <thead>
               <tr>
                 <th>Category Name</th>
-                <th>Slug</th>
-                <th>Product Count</th>
-                <th>Created</th>
+                <th className={styles.colHide}>Slug</th>
+                <th>Products</th>
+                <th className={styles.colHide}>Created</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -177,9 +176,9 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
                 categories.map((category) => (
                   <tr key={category.id}>
                     <td><strong>{category.name}</strong></td>
-                    <td><code style={{ background: "#f3f4f6", padding: "2px 8px", borderRadius: "4px", fontSize: "13px" }}>{category.slug}</code></td>
+                    <td className={styles.colHide}><code style={{ background: "#f3f4f6", padding: "2px 8px", borderRadius: "4px", fontSize: "13px" }}>{category.slug}</code></td>
                     <td>{category.productCount} products</td>
-                    <td>{new Date(category.createdAt).toLocaleDateString("en-IN")}</td>
+                    <td className={styles.colHide}>{new Date(category.createdAt).toLocaleDateString("en-IN")}</td>
                     <td>
                       <div className={styles.actionButtons}>
                         <button
@@ -194,7 +193,7 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
                         </button>
                         <button
                           className={styles.iconButton}
-                          onClick={() => handleDelete(category.id)}
+                          onClick={() => setConfirmDeleteId(category.id)}
                           title="Delete"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -350,6 +349,14 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
             </form>
           </div>
         </div>
+      )}
+
+      {confirmDeleteId !== null && (
+        <ConfirmDialog
+          message="Delete this category? This cannot be undone."
+          onConfirm={() => { const id = confirmDeleteId; setConfirmDeleteId(null); handleDelete(id); }}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
       )}
     </div>
   );

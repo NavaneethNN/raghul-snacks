@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
+import { ConfirmDialog } from "./admin-confirm-dialog";
 import styles from "./admin-table.module.css";
 
 type Announcement = {
@@ -25,6 +26,7 @@ export function AdminAnnouncements() {
   const [formError, setFormError] = useState("");
   const [busyId, setBusyId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   useEffect(() => { load(); }, []);
 
@@ -104,7 +106,6 @@ export function AdminAnnouncements() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm("Delete this announcement?")) return;
     setBusyId(id);
     try {
       await fetch(`/api/admin/announcements/${id}`, { method: "DELETE" });
@@ -267,7 +268,7 @@ export function AdminAnnouncements() {
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                           </svg>
                         </button>
-                        <button className={styles.iconButton} onClick={() => handleDelete(item.id)} title="Delete">
+                        <button className={styles.iconButton} onClick={() => setConfirmDeleteId(item.id)} title="Delete">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <polyline points="3 6 5 6 21 6" />
                             <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
@@ -356,6 +357,14 @@ export function AdminAnnouncements() {
             </form>
           </div>
         </div>
+      )}
+
+      {confirmDeleteId !== null && (
+        <ConfirmDialog
+          message="Delete this announcement? This cannot be undone."
+          onConfirm={() => { const id = confirmDeleteId; setConfirmDeleteId(null); handleDelete(id); }}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
       )}
     </div>
   );

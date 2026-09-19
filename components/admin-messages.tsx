@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ConfirmDialog } from "./admin-confirm-dialog";
 import { useRouter } from "next/navigation";
 import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-table.module.css";
@@ -35,6 +36,7 @@ export function AdminMessages({ messages: initial }: { messages: Message[] }) {
   const [replyDrafts, setReplyDrafts] = useState<Record<number, string>>({});
   const [editing, setEditing] = useState<number | null>(null); // which message is in edit mode
   const [replying, setReplying] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const unread = messages.filter((m) => !m.read).length;
 
@@ -84,7 +86,6 @@ export function AdminMessages({ messages: initial }: { messages: Message[] }) {
   }
 
   async function deleteMessage(id: number) {
-    if (!confirm("Delete this message?")) return;
     setBusy(id);
     try {
       await fetch(`/api/admin/messages/${id}`, { method: "DELETE" });
@@ -245,7 +246,7 @@ export function AdminMessages({ messages: initial }: { messages: Message[] }) {
                         style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--cream)", border: "1px solid var(--line)", color: "var(--ink)", borderRadius: 7, padding: "9px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                         {msg.read ? "Mark unread" : "Mark read"}
                       </button>
-                      <button onClick={() => deleteMessage(msg.id)} disabled={busy === msg.id}
+                      <button onClick={() => setConfirmDeleteId(msg.id)} disabled={busy === msg.id}
                         style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fff0f0", border: "1px solid #fecaca", color: "#dc2626", borderRadius: 7, padding: "9px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                         Delete
                       </button>
@@ -257,6 +258,14 @@ export function AdminMessages({ messages: initial }: { messages: Message[] }) {
           </div>
         )}
       </section>
+
+      {confirmDeleteId !== null && (
+        <ConfirmDialog
+          message="Delete this message? This cannot be undone."
+          onConfirm={() => { const id = confirmDeleteId; setConfirmDeleteId(null); deleteMessage(id); }}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
+      )}
     </div>
   );
 }

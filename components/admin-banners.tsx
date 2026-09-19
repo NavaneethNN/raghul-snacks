@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
+import { ConfirmDialog } from "./admin-confirm-dialog";
 import styles from "./admin-table.module.css";
 
 type Banner = {
@@ -152,7 +153,6 @@ export function AdminBanners() {
   }
 
   async function deleteBanner(id: number) {
-    if (!confirm("Are you sure you want to delete this banner?")) return;
     try {
       const res = await fetch(`/api/banners/${id}`, { method: "DELETE" });
       if (res.ok) {

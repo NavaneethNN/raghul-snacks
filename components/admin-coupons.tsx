@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AdminHeaderActions } from "./admin-header-actions";
+import { ConfirmDialog } from "./admin-confirm-dialog";
 import styles from "./admin-table.module.css";
 
 type Coupon = {
@@ -38,6 +39,7 @@ export function AdminCoupons() {
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     code: "",
     name: "",
@@ -216,8 +218,6 @@ export function AdminCoupons() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm("Are you sure you want to delete this coupon?")) return;
-
     try {
       const response = await fetch(`/api/admin/coupons/${id}`, {
         method: "DELETE",
@@ -257,10 +257,10 @@ export function AdminCoupons() {
             <thead>
               <tr>
                 <th>Coupon Code</th>
-                <th>Discount Type</th>
+                <th className={styles.colHide}>Discount Type</th>
                 <th>Value</th>
                 <th>Status</th>
-                <th>Created</th>
+                <th className={styles.colHide}>Created</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -298,7 +298,7 @@ export function AdminCoupons() {
                         {coupon.code}
                       </code>
                     </td>
-                    <td style={{ textTransform: "capitalize" }}>
+                    <td className={styles.colHide} style={{ textTransform: "capitalize" }}>
                       {coupon.discountType === "bogo" ? "BOGO" : coupon.discountType}
                     </td>
                     <td>
@@ -315,7 +315,7 @@ export function AdminCoupons() {
                         {coupon.active ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td>{new Date(coupon.createdAt).toLocaleDateString("en-IN")}</td>
+                    <td className={styles.colHide}>{new Date(coupon.createdAt).toLocaleDateString("en-IN")}</td>
                     <td>
                       <div className={styles.actionButtons}>
                         <button
@@ -330,7 +330,7 @@ export function AdminCoupons() {
                         </button>
                         <button
                           className={styles.iconButton}
-                          onClick={() => handleDelete(coupon.id)}
+                          onClick={() => setConfirmDeleteId(coupon.id)}
                           title="Delete"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AdminHeaderActions } from "./admin-header-actions";
+import { ConfirmDialog } from "./admin-confirm-dialog";
 import styles from "./admin-table.module.css";
 
 type Product = {
@@ -37,6 +38,7 @@ export function AdminCombos() {
   const [editingCombo, setEditingCombo] = useState<Combo | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
@@ -226,8 +228,6 @@ export function AdminCombos() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm("Are you sure you want to delete this combo?")) return;
-
     try {
       const response = await fetch(`/api/admin/combos/${id}`, {
         method: "DELETE",
@@ -343,7 +343,7 @@ export function AdminCombos() {
                         </button>
                         <button
                           className={styles.iconButton}
-                          onClick={() => handleDelete(combo.id)}
+                          onClick={() => setConfirmDeleteId(combo.id)}
                           title="Delete"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
