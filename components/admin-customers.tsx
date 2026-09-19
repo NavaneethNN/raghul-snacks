@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useEffect, useState } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-table.module.css";
@@ -102,7 +103,7 @@ export function AdminCustomers() {
               ) : filtered.map((c) => {
                 const isOpen = expanded === c.id;
                 return (
-                  <>
+                  <React.Fragment key={c.id}>
                     {/* Main row — always visible on all screen sizes */}
                     <tr
                       key={`row-${c.id}`}
@@ -150,7 +151,7 @@ export function AdminCustomers() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 );
               })}
             </tbody>

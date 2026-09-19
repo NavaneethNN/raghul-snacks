@@ -642,9 +642,11 @@
     padding: 20px 24px;
   }
 
+  /* Deterministic 4-column metrics at tablet — avoids auto-fit guesswork */
   .metrics {
+    grid-template-columns: repeat(4, 1fr);
     padding: 24px;
-    gap: 16px;
+    gap: 12px;
   }
 
   .workspace {
@@ -797,18 +799,5 @@
     gap: 2px;
   }
 
-  /* On very small screens show toggle button, collapse search until toggled */
-  .searchToggleBtn {
-    display: flex;
-  }
 
-  .searchCollapsed {
-    display: none;
-  }
-
-  .searchExpanded {
-    display: block;
-    flex: 1;
-    min-width: 0;
-  }
 }

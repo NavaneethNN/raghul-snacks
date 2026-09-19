@@ -131,6 +131,9 @@
   flex: 1;
   min-width: 0;
   position: relative;
+  /* works both as direct child of .toolbar and inside .toolbarTop */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .toolbarSearch input {
@@ -173,7 +176,6 @@
 /* Legacy label-based search (kept for backward compat) */
 .toolbar label {
   flex: 1;
-  max-width: 400px;
   min-width: 0;
 }
 

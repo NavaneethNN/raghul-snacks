@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "./admin-confirm-dialog";
 import styles from "./admin-table.module.css";
@@ -141,7 +142,7 @@ export function AdminReviews() {
               ) : filtered.map((r) => {
                 const isOpen = expanded === r.id;
                 return (
-                  <>
+                  <React.Fragment key={r.id}>
                     {/* Main row */}
                     <tr
                       key={`row-${r.id}`}
@@ -212,7 +213,7 @@ export function AdminReviews() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 );
               })}
             </tbody>
