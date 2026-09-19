@@ -186,6 +186,14 @@ export function AdminSidebar() {
         {desktopNav}
       </aside>
 
+      {/* ── Mobile top bar (brand name, ≤768px) ── */}
+      <header className={styles.mobileTopBar}>
+        <Link href="/admin" className={styles.mobileBrand}>
+          <img src="/logo-footer.png" alt="Raghul Delights" style={{ height: "30px", width: "auto" }} />
+          <span>Raghul Delights</span>
+        </Link>
+      </header>
+
       {/* ── Mobile bottom nav bar (≤768px) ── */}
       <nav className={styles.bottomNav} aria-label="Main navigation">
         {primaryNav.map((item) => {

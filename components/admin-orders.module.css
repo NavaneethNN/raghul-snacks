@@ -665,7 +665,7 @@
     flex-direction: column;
     align-items: flex-start;
     padding: 14px 16px;
-    top: 0;
+    top: 52px;
   }
 
   .header h1 {

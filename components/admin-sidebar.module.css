@@ -274,7 +274,6 @@
 .moreSheet {
   display: none;
 }
-
 /* ─────────────────────────────────────────
    Tablet  ≤1024px
    ───────────────────────────────────────── */
@@ -308,13 +307,42 @@
 }
 
 /* ─────────────────────────────────────────
-   Mobile  ≤768px  — bottom nav + more sheet
+   Mobile  ≤768px  — top bar + bottom nav + more sheet
    ───────────────────────────────────────── */
 @media (max-width: 768px) {
 
   /* Hide desktop sidebar */
   .sidebar {
     display: none;
+  }
+
+  /* ── Mobile top bar ── */
+  .mobileTopBar {
+    display: flex;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 52px;
+    background: var(--ink);
+    border-bottom: 1px solid rgba(201, 95, 59, 0.2);
+    padding: 0 16px;
+    z-index: 300;
+  }
+
+  .mobileBrand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--cream);
+    font: 700 16px / 1 'Playfair Display', serif;
+    letter-spacing: -0.01em;
+  }
+
+  .mobileBrand span {
+    white-space: nowrap;
   }
 
   /* ── Overlay (behind more sheet) ── */

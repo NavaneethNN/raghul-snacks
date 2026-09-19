@@ -19,7 +19,7 @@
 }
 
 /* ── Mobile ≤768px ── */
-/* Sidebar gone; fixed 60px bottom nav takes its place */
+/* Desktop sidebar gone; fixed 52px top bar + 60px bottom nav */
 @media (max-width: 768px) {
   .adminLayout {
     flex-direction: column;
@@ -27,8 +27,9 @@
 
   .mainContent {
     margin-left: 0;
-    /* No top padding needed — sticky headers handle their own offset */
-    /* Bottom padding so content isn't hidden under the bottom nav */
+    /* Push content below the fixed top bar */
+    padding-top: 52px;
+    /* Push content above the fixed bottom nav */
     padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
   }
 }
