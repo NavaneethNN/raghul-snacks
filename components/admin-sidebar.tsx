@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import styles from "./admin-sidebar.module.css";
 
+// ── Nav groups (used in desktop sidebar + more sheet) ──────────────────────
 const navGroups = [
   {
     label: "Store",
@@ -41,60 +42,65 @@ const navGroups = [
   },
 ];
 
+// ── 5 primary bottom-nav tabs ───────────────────────────────────────────────
+const primaryNav = [
+  { href: "/admin",           label: "Home",     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> },
+  { href: "/admin/orders",    label: "Orders",   icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> },
+  { href: "/admin/products",  label: "Products", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5c-1.5-1-3.5-1-5 0"/><path d="M8.5 17.5c1.5 1.5 3 2 5.5 2s4-.5 5.5-2"/></svg> },
+  { href: "/admin/customers", label: "Customers",icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+];
+
 const badgeRoutes = { orders: "/admin/orders", messages: "/admin/messages", reviews: "/admin/reviews" };
 
 export function AdminSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const [pendingReviews, setPendingReviews]   = useState(0);
-  const [unreadMessages, setUnreadMessages]   = useState(0);
-  const [newOrders,      setNewOrders]        = useState(0);
-  const [drawerOpen,     setDrawerOpen]       = useState(false);
-  const [confirmSignOut, setConfirmSignOut]   = useState(false);
+  const router   = useRouter();
+
+  const [pendingReviews,  setPendingReviews]  = useState(0);
+  const [unreadMessages,  setUnreadMessages]  = useState(0);
+  const [newOrders,       setNewOrders]       = useState(0);
+  const [moreOpen,        setMoreOpen]        = useState(false);
+  const [confirmSignOut,  setConfirmSignOut]  = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/reviews")
       .then((r) => r.json())
-      .then((data: Array<{ approved: boolean }>) => {
-        if (Array.isArray(data)) setPendingReviews(data.filter((r) => !r.approved).length);
-      })
-      .catch(() => {});
+      .then((d: Array<{ approved: boolean }>) => {
+        if (Array.isArray(d)) setPendingReviews(d.filter((r) => !r.approved).length);
+      }).catch(() => {});
 
     fetch("/api/admin/messages")
       .then((r) => r.json())
-      .then((data: Array<{ read: boolean }>) => {
-        if (Array.isArray(data)) setUnreadMessages(data.filter((m) => !m.read).length);
-      })
-      .catch(() => {});
+      .then((d: Array<{ read: boolean }>) => {
+        if (Array.isArray(d)) setUnreadMessages(d.filter((m) => !m.read).length);
+      }).catch(() => {});
 
     fetch("/api/admin/notifications/orders")
       .then((r) => r.json())
-      .then((data: { newOrders?: number }) => {
-        if (data.newOrders !== undefined) setNewOrders(data.newOrders);
-      })
-      .catch(() => {});
+      .then((d: { newOrders?: number }) => {
+        if (d.newOrders !== undefined) setNewOrders(d.newOrders);
+      }).catch(() => {});
   }, []);
 
   useEffect(() => {
-    setDrawerOpen(false);
+    setMoreOpen(false);
     setConfirmSignOut(false);
     if (pathname === "/admin/reviews")  setPendingReviews(0);
     if (pathname === "/admin/messages") setUnreadMessages(0);
     if (pathname === "/admin/orders")   setNewOrders(0);
   }, [pathname]);
 
+  // Lock body scroll when more sheet is open
   useEffect(() => {
-    document.body.style.overflow = drawerOpen ? "hidden" : "";
+    document.body.style.overflow = moreOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
-  }, [drawerOpen]);
+  }, [moreOpen]);
 
   async function doSignOut() {
     await fetch("/api/admin/session", { method: "DELETE" });
     router.replace("/admin/login");
     router.refresh();
   }
-
-  const totalBadges = pendingReviews + unreadMessages + newOrders;
 
   function getBadge(href: string) {
     if (href === badgeRoutes.orders   && newOrders > 0)      return newOrders;
@@ -103,23 +109,36 @@ export function AdminSidebar() {
     return null;
   }
 
-  const navContent = (
+  function isActive(href: string) {
+    return pathname === href || (href !== "/admin" && pathname.startsWith(href + "/")) || (href !== "/admin" && pathname === href);
+  }
+
+  // All nav items flat (for more sheet)
+  const allItems = navGroups.flatMap((g) => g.items);
+  // Items that are NOT in primaryNav
+  const moreItems = allItems.filter((item) => !primaryNav.some((p) => p.href === item.href));
+  // Rebuild groups with only more-items
+  const moreGroups = navGroups
+    .map((g) => ({ ...g, items: g.items.filter((item) => !primaryNav.some((p) => p.href === item.href)) }))
+    .filter((g) => g.items.length > 0);
+
+  // Badge total for the More button
+  const moreBadge = (unreadMessages > 0 ? unreadMessages : 0) + (pendingReviews > 0 ? pendingReviews : 0);
+
+  // ── Desktop sidebar nav content ───────────────────────────────────────────
+  const desktopNav = (
     <>
       <nav className={styles.nav}>
         {navGroups.map((group) => (
           <div key={group.label} className={styles.navGroup}>
             <span className={styles.groupLabel}>{group.label}</span>
             {group.items.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                (item.href !== "/admin" && pathname.startsWith(item.href + "/")) ||
-                (item.href !== "/admin" && pathname === item.href);
               const badge = getBadge(item.href);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`${styles.navItem} ${isActive ? styles.active : ""}`}
+                  className={`${styles.navItem} ${isActive(item.href) ? styles.active : ""}`}
                 >
                   <span className={styles.icon}>{item.icon as React.ReactNode}</span>
                   <span className={styles.label}>{item.label}</span>
@@ -136,12 +155,8 @@ export function AdminSidebar() {
           <div className={styles.signOutConfirm}>
             <p>Sign out?</p>
             <div className={styles.signOutConfirmActions}>
-              <button className={styles.signOutCancelBtn} onClick={() => setConfirmSignOut(false)}>
-                Cancel
-              </button>
-              <button className={styles.signOutConfirmBtn} onClick={doSignOut}>
-                Sign out
-              </button>
+              <button className={styles.signOutCancelBtn} onClick={() => setConfirmSignOut(false)}>Cancel</button>
+              <button className={styles.signOutConfirmBtn} onClick={doSignOut}>Sign out</button>
             </div>
           </div>
         ) : (
@@ -160,7 +175,7 @@ export function AdminSidebar() {
 
   return (
     <>
-      {/* ── Desktop sidebar ── */}
+      {/* ── Desktop sidebar (≥769px) ── */}
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
           <Link href="/admin" className={styles.brandName}>
@@ -168,48 +183,104 @@ export function AdminSidebar() {
             <span className={styles.shopName}>Raghul Delights</span>
           </Link>
         </div>
-        {navContent}
+        {desktopNav}
       </aside>
 
-      {/* ── Mobile top bar ── */}
-      <header className={styles.mobileTopBar}>
-        <Link href="/admin" className={styles.mobileBrand}>
-          <img src="/logo-footer.png" alt="Raghul Delights" style={{ height: "36px", width: "auto" }} />
-          <span>Raghul Delights</span>
-        </Link>
-        <div className={styles.mobileTopBarActions}>
-          {totalBadges > 0 && <span className={styles.mobileGlobalBadge}>{totalBadges}</span>}
-          <button className={styles.hamburger} onClick={() => setDrawerOpen(true)} aria-label="Open menu" aria-expanded={drawerOpen}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <line x1="3" y1="12" x2="21" y2="12"/>
-              <line x1="3" y1="18" x2="21" y2="18"/>
-            </svg>
-          </button>
-        </div>
-      </header>
+      {/* ── Mobile bottom nav bar (≤768px) ── */}
+      <nav className={styles.bottomNav} aria-label="Main navigation">
+        {primaryNav.map((item) => {
+          const badge = getBadge(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`${styles.bottomNavItem} ${isActive(item.href) ? styles.active : ""}`}
+            >
+              <span className={styles.bottomNavIcon}>
+                {item.icon as React.ReactNode}
+                {badge && <span className={styles.bottomNavBadge}>{badge}</span>}
+              </span>
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
 
-      {/* ── Overlay ── */}
-      {drawerOpen && (
-        <div className={styles.overlay} onClick={() => setDrawerOpen(false)} aria-hidden="true" />
+        {/* More button */}
+        <button
+          className={`${styles.bottomNavItem} ${moreOpen ? styles.active : ""}`}
+          onClick={() => setMoreOpen((o) => !o)}
+          aria-label="More options"
+          aria-expanded={moreOpen}
+        >
+          <span className={styles.bottomNavIcon}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+            </svg>
+            {moreBadge > 0 && <span className={styles.bottomNavBadge}>{moreBadge}</span>}
+          </span>
+          <span>More</span>
+        </button>
+      </nav>
+
+      {/* ── Overlay (behind more sheet) ── */}
+      {moreOpen && (
+        <div className={styles.overlay} onClick={() => setMoreOpen(false)} aria-hidden="true" />
       )}
 
-      {/* ── Mobile drawer ── */}
-      <aside className={`${styles.drawer} ${drawerOpen ? styles.drawerOpen : ""}`}>
-        <div className={styles.drawerHeader}>
-          <Link href="/admin" className={styles.brandName} onClick={() => setDrawerOpen(false)}>
-            <img src="/logo-footer.png" alt="Raghul Delights" style={{ height: "48px", width: "auto" }} />
-            <span className={styles.shopName}>Raghul Delights</span>
-          </Link>
-          <button className={styles.closeButton} onClick={() => setDrawerOpen(false)} aria-label="Close menu">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
+      {/* ── More sheet ── */}
+      <div
+        className={`${styles.moreSheet} ${moreOpen ? styles.moreSheetOpen : ""}`}
+        role="dialog"
+        aria-label="More navigation options"
+      >
+        <div className={styles.moreSheetHandle} />
+        <p className={styles.moreSheetTitle}>More</p>
+
+        <div className={styles.moreSheetNav}>
+          {moreGroups.map((group) => (
+            <>
+              <span key={group.label} className={styles.moreGroupLabel}>{group.label}</span>
+              {group.items.map((item) => {
+                const badge = getBadge(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`${styles.moreSheetNavItem} ${isActive(item.href) ? styles.active : ""}`}
+                    onClick={() => setMoreOpen(false)}
+                  >
+                    <span className={styles.icon}>{item.icon as React.ReactNode}</span>
+                    <span>{item.label}</span>
+                    {badge && <span className={styles.badge}>{badge}</span>}
+                  </Link>
+                );
+              })}
+            </>
+          ))}
         </div>
-        {navContent}
-      </aside>
+
+        {/* Sign-out inside more sheet */}
+        <div className={styles.moreSheetFooter}>
+          {confirmSignOut ? (
+            <div className={styles.signOutConfirm}>
+              <p>Sign out?</p>
+              <div className={styles.signOutConfirmActions}>
+                <button className={styles.signOutCancelBtn} onClick={() => setConfirmSignOut(false)}>Cancel</button>
+                <button className={styles.signOutConfirmBtn} onClick={doSignOut}>Sign out</button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setConfirmSignOut(true)} className={styles.signOutButton}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Sign Out
+            </button>
+          )}
+        </div>
+      </div>
     </>
   );
 }

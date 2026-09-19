@@ -8,7 +8,6 @@
   flex: 1;
   margin-left: 260px;
   min-height: 100vh;
-  /* Prevent content from going under the fixed sidebar */
   min-width: 0;
 }
 
@@ -20,7 +19,7 @@
 }
 
 /* ── Mobile ≤768px ── */
-/* Sidebar is gone; fixed 60px top bar takes its place */
+/* Sidebar gone; fixed 60px bottom nav takes its place */
 @media (max-width: 768px) {
   .adminLayout {
     flex-direction: column;
@@ -28,8 +27,15 @@
 
   .mainContent {
     margin-left: 0;
-    /* Push content below the fixed mobile top bar */
-    padding-top: 60px;
-    min-height: calc(100vh - 60px);
+    /* No top padding needed — sticky headers handle their own offset */
+    /* Bottom padding so content isn't hidden under the bottom nav */
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ── Small mobile ≤480px ── */
+@media (max-width: 480px) {
+  .mainContent {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
   }
 }

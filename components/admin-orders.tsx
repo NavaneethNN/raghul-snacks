@@ -29,13 +29,12 @@ type AdminOrder = {
 type Status = "all" | "placed" | "packed" | "shipped" | "delivered" | "cancelled";
 const statuses: Status[] = ["all", "placed", "packed", "shipped", "delivered", "cancelled"];
 
-// Status transitions: keys are current status, values are allowed next statuses
 const allowedTransitions: Record<string, string[]> = {
   placed:    ["packed", "cancelled"],
   packed:    ["shipped", "cancelled"],
   shipped:   ["delivered"],
-  delivered: [],      // terminal — no changes allowed
-  cancelled: [],      // terminal — no changes allowed
+  delivered: [],
+  cancelled: [],
 };
 
 const fmt = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
@@ -47,11 +46,20 @@ const paymentLabels: Record<string, string> = {
 export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
   const router = useRouter();
   const [busy, setBusy] = useState<number | null>(null);
-  // Per-card feedback: id → { ok: boolean; msg: string }
   const [feedback, setFeedback] = useState<Record<number, { ok: boolean; msg: string }>>({});
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Status>("all");
   const [searchOpen, setSearchOpen] = useState(false);
+  // Set of expanded order IDs
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+
+  function toggleExpand(id: number) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
 
   const filtered = useMemo(
     () =>
@@ -66,19 +74,16 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
     [filter, orders, query]
   );
 
-  // Count per status for filter button badges
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const o of orders) {
-      counts[o.orderStatus] = (counts[o.orderStatus] ?? 0) + 1;
-    }
+    for (const o of orders) counts[o.orderStatus] = (counts[o.orderStatus] ?? 0) + 1;
     return counts;
   }, [orders]);
 
-  const paid      = orders.filter((o) => o.paymentStatus === "paid");
-  const pending   = statusCounts["placed"] ?? 0;
+  const paid       = orders.filter((o) => o.paymentStatus === "paid");
+  const pending    = statusCounts["placed"] ?? 0;
   const dispatched = statusCounts["shipped"] ?? 0;
-  const revenue   = paid.reduce((s, o) => s + o.total, 0);
+  const revenue    = paid.reduce((s, o) => s + o.total, 0);
 
   async function setStatus(id: number, orderStatus: string) {
     setBusy(id);
@@ -91,7 +96,7 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
       });
       const result = await res.json() as { error?: string };
       if (!res.ok) throw new Error(result.error ?? "Unable to update order.");
-      setFeedback((prev) => ({ ...prev, [id]: { ok: true, msg: "✓ Status updated" } }));
+      setFeedback((prev) => ({ ...prev, [id]: { ok: true, msg: "✓ Updated" } }));
       router.refresh();
     } catch (err) {
       setFeedback((prev) => ({
@@ -100,7 +105,6 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
       }));
     } finally {
       setBusy(null);
-      // Auto-clear feedback after 3s
       setTimeout(() => setFeedback((prev) => { const n = { ...prev }; delete n[id]; return n; }), 3000);
     }
   }
@@ -112,7 +116,7 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
         <div>
           <p className={styles.eyebrow}>Orders Management</p>
           <h1>Orders</h1>
-          <p>Review payments, delivery details and fulfilment at a glance.</p>
+          <p>Tap an order to see details and update its status.</p>
         </div>
       </header>
 
@@ -144,7 +148,6 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
       <section id="orders-list" className={styles.workspace}>
         {/* Toolbar */}
         <div className={styles.toolbar}>
-          {/* Search row */}
           <div className={styles.toolbarTop}>
             <div className={`${styles.toolbarSearch} ${searchOpen ? styles.searchExpanded : styles.searchCollapsed}`}>
               <span className={styles.searchIcon}>
@@ -159,12 +162,10 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
                 aria-label="Search orders"
               />
             </div>
-            {/* Search toggle — only visible on small screens when collapsed */}
             <button
               className={styles.searchToggleBtn}
               onClick={() => setSearchOpen((o) => !o)}
               aria-label={searchOpen ? "Close search" : "Search orders"}
-              title="Search"
             >
               {searchOpen
                 ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -173,17 +174,11 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
             </button>
           </div>
 
-          {/* Filter buttons */}
           <div className={styles.filters}>
             {statuses.map((s) => {
               const count = s === "all" ? orders.length : (statusCounts[s] ?? 0);
               return (
-                <button
-                  key={s}
-                  type="button"
-                  className={filter === s ? styles.activeFilter : ""}
-                  onClick={() => setFilter(s)}
-                >
+                <button key={s} type="button" className={filter === s ? styles.activeFilter : ""} onClick={() => setFilter(s)}>
                   {s === "all" ? "All" : s}
                   <span className={styles.filterCount}>{count}</span>
                 </button>
@@ -206,103 +201,116 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
         ) : (
           <div className={styles.list}>
             {filtered.map((order) => {
-              const fb = feedback[order.id];
+              const isOpen     = expanded.has(order.id);
+              const fb         = feedback[order.id];
               const isTerminal = allowedTransitions[order.orderStatus]?.length === 0;
 
               return (
-                <article className={styles.order} key={order.id}>
-                  {/* Top row */}
-                  <div className={styles.orderTop}>
-                    <div>
-                      <div className={styles.orderMeta}>
-                        <strong>{order.orderNumber}</strong>
-                        <span className={`${styles.badge} ${styles[order.orderStatus] ?? ""}`}>
-                          {order.orderStatus}
-                        </span>
-                        <span className={styles.paid}>{order.paymentStatus}</span>
-                      </div>
-                      <p>{new Date(order.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</p>
-                    </div>
-                    <strong className={styles.total}>{fmt.format(order.total)}</strong>
-                  </div>
+                <article key={order.id} className={`${styles.order} ${isOpen ? styles.orderOpen : ""}`}>
 
-                  {/* Items */}
-                  <div className={styles.orderItems}>
-                    <span>Order Items</span>
-                    <ul>
-                      {order.items?.length > 0
-                        ? order.items.map((item) => (
-                            <li key={item.id}>
-                              <strong>{item.name}</strong>
-                              <span>
-                                {item.quantity} × {fmt.format(item.price)} = {fmt.format(item.quantity * item.price)}
-                              </span>
-                            </li>
-                          ))
-                        : <li><em>No items found</em></li>}
-                    </ul>
-                  </div>
-
-                  {/* Details grid */}
-                  <div className={styles.details}>
-                    <div>
-                      <span>Customer</span>
-                      <strong>{order.customerName}</strong>
-                      <a href={`tel:${order.phone}`}>{order.phone}</a>
-                    </div>
-                    <div>
-                      <span>Delivery address</span>
-                      <strong>{order.address}</strong>
-                      <p>{order.city}, {order.state} · {order.pincode}</p>
-                    </div>
-                    <div>
-                      <span>Shipment</span>
-                      <strong>{order.awbCode ?? "AWB pending"}</strong>
-                      <p>
-                        {order.shippingStatus === "created"
-                          ? `Shipment ${order.shipmentId ?? "created"}`
-                          : "Shipment creation pending"}
-                      </p>
-                    </div>
-                    <div>
-                      <span>Payment mode</span>
-                      <strong>{paymentLabels[order.paymentMethod ?? "online"] ?? (order.paymentMethod ?? "Online Payment")}</strong>
-                    </div>
-                  </div>
-
-                  {/* Footer: fulfilment + inline feedback */}
-                  <div className={styles.orderFooter}>
-                    <label>
-                      Fulfilment status
-                      {isTerminal ? (
-                        <span className={styles.terminalStatus}>
-                          {order.orderStatus === "delivered" ? "✓ Delivered" : "✗ Cancelled"}
-                        </span>
-                      ) : (
-                        <select
-                          value={order.orderStatus}
-                          disabled={busy === order.id}
-                          onChange={(e) => setStatus(order.id, e.target.value)}
-                        >
-                          {/* Current status always first */}
-                          <option value={order.orderStatus}>{order.orderStatus}</option>
-                          {allowedTransitions[order.orderStatus]?.map((s) => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </select>
-                      )}
-                    </label>
-
-                    {/* Inline feedback */}
-                    {busy === order.id && (
-                      <span className={styles.savingSpinner}>Saving…</span>
-                    )}
-                    {fb?.msg && (
-                      <span className={fb.ok ? styles.feedbackOk : styles.feedbackError}>
-                        {fb.msg}
+                  {/* ── Collapsed summary row (always visible) ── */}
+                  <button
+                    className={styles.orderSummary}
+                    onClick={() => toggleExpand(order.id)}
+                    aria-expanded={isOpen}
+                  >
+                    {/* Left: order number + date */}
+                    <div className={styles.summaryLeft}>
+                      <span className={styles.orderNumber}>{order.orderNumber}</span>
+                      <span className={styles.orderDate}>
+                        {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                       </span>
-                    )}
-                  </div>
+                    </div>
+
+                    {/* Center: status badges */}
+                    <div className={styles.summaryBadges}>
+                      <span className={`${styles.badge} ${styles[order.orderStatus] ?? ""}`}>
+                        {order.orderStatus}
+                      </span>
+                      <span className={styles.paid}>{order.paymentStatus}</span>
+                    </div>
+
+                    {/* Right: total + chevron */}
+                    <div className={styles.summaryRight}>
+                      <strong className={styles.total}>{fmt.format(order.total)}</strong>
+                      <svg
+                        className={`${styles.chevron} ${isOpen ? styles.chevronUp : ""}`}
+                        width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                      >
+                        <polyline points="6 9 12 15 18 9"/>
+                      </svg>
+                    </div>
+                  </button>
+
+                  {/* ── Expanded detail panel ── */}
+                  {isOpen && (
+                    <div className={styles.orderDetail}>
+                      {/* Items */}
+                      <div className={styles.orderItems}>
+                        <span>Order Items</span>
+                        <ul>
+                          {order.items?.length > 0
+                            ? order.items.map((item) => (
+                                <li key={item.id}>
+                                  <strong>{item.name}</strong>
+                                  <span>{item.quantity} × {fmt.format(item.price)} = {fmt.format(item.quantity * item.price)}</span>
+                                </li>
+                              ))
+                            : <li><em>No items found</em></li>}
+                        </ul>
+                      </div>
+
+                      {/* Details grid */}
+                      <div className={styles.details}>
+                        <div>
+                          <span>Customer</span>
+                          <strong>{order.customerName}</strong>
+                          <a href={`tel:${order.phone}`}>{order.phone}</a>
+                        </div>
+                        <div>
+                          <span>Delivery address</span>
+                          <strong>{order.address}</strong>
+                          <p>{order.city}, {order.state} · {order.pincode}</p>
+                        </div>
+                        <div>
+                          <span>Shipment</span>
+                          <strong>{order.awbCode ?? "AWB pending"}</strong>
+                          <p>{order.shippingStatus === "created" ? `Shipment ${order.shipmentId ?? "created"}` : "Shipment creation pending"}</p>
+                        </div>
+                        <div>
+                          <span>Payment mode</span>
+                          <strong>{paymentLabels[order.paymentMethod ?? "online"] ?? (order.paymentMethod ?? "Online Payment")}</strong>
+                        </div>
+                      </div>
+
+                      {/* Fulfilment footer */}
+                      <div className={styles.orderFooter}>
+                        <label>
+                          Fulfilment status
+                          {isTerminal ? (
+                            <span className={styles.terminalStatus}>
+                              {order.orderStatus === "delivered" ? "✓ Delivered" : "✗ Cancelled"}
+                            </span>
+                          ) : (
+                            <select
+                              value={order.orderStatus}
+                              disabled={busy === order.id}
+                              onChange={(e) => setStatus(order.id, e.target.value)}
+                            >
+                              <option value={order.orderStatus}>{order.orderStatus}</option>
+                              {allowedTransitions[order.orderStatus]?.map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                          )}
+                        </label>
+                        {busy === order.id && <span className={styles.savingSpinner}>Saving…</span>}
+                        {fb?.msg && (
+                          <span className={fb.ok ? styles.feedbackOk : styles.feedbackError}>{fb.msg}</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </article>
               );
             })}
