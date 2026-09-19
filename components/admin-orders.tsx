@@ -51,6 +51,7 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
   const [feedback, setFeedback] = useState<Record<number, { ok: boolean; msg: string }>>({});
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Status>("all");
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const filtered = useMemo(
     () =>
@@ -120,7 +121,7 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
         <div>
           <span>Total orders</span>
           <strong>{orders.length}</strong>
-          <small>Last 100 orders</small>
+          <small>All time</small>
         </div>
         <div>
           <span>To pack</span>
@@ -143,14 +144,36 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
       <section id="orders-list" className={styles.workspace}>
         {/* Toolbar */}
         <div className={styles.toolbar}>
-          <label>
-            <span>Search orders</span>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Order no., customer, phone or PIN"
-            />
-          </label>
+          {/* Search row */}
+          <div className={styles.toolbarTop}>
+            <div className={`${styles.toolbarSearch} ${searchOpen ? styles.searchExpanded : styles.searchCollapsed}`}>
+              <span className={styles.searchIcon}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </span>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Order no., customer, phone or PIN"
+                aria-label="Search orders"
+              />
+            </div>
+            {/* Search toggle — only visible on small screens when collapsed */}
+            <button
+              className={styles.searchToggleBtn}
+              onClick={() => setSearchOpen((o) => !o)}
+              aria-label={searchOpen ? "Close search" : "Search orders"}
+              title="Search"
+            >
+              {searchOpen
+                ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              }
+            </button>
+          </div>
+
+          {/* Filter buttons */}
           <div className={styles.filters}>
             {statuses.map((s) => {
               const count = s === "all" ? orders.length : (statusCounts[s] ?? 0);
