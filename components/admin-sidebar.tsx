@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import styles from "./admin-sidebar.module.css";
 
-// ── Nav groups (used in desktop sidebar + more sheet) ──────────────────────
+// All nav items flat — used in desktop sidebar AND mobile scroll nav
 const navGroups = [
   {
     label: "Store",
@@ -42,13 +42,8 @@ const navGroups = [
   },
 ];
 
-// ── 5 primary bottom-nav tabs ───────────────────────────────────────────────
-const primaryNav = [
-  { href: "/admin",           label: "Home",     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> },
-  { href: "/admin/orders",    label: "Orders",   icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> },
-  { href: "/admin/products",  label: "Products", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5c-1.5-1-3.5-1-5 0"/><path d="M8.5 17.5c1.5 1.5 3 2 5.5 2s4-.5 5.5-2"/></svg> },
-  { href: "/admin/customers", label: "Customers",icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
-];
+// Flat list for the scrollable bottom nav
+const allNavItems = navGroups.flatMap((g) => g.items);
 
 const badgeRoutes = { orders: "/admin/orders", messages: "/admin/messages", reviews: "/admin/reviews" };
 
@@ -59,7 +54,6 @@ export function AdminSidebar() {
   const [pendingReviews,  setPendingReviews]  = useState(0);
   const [unreadMessages,  setUnreadMessages]  = useState(0);
   const [newOrders,       setNewOrders]       = useState(0);
-  const [moreOpen,        setMoreOpen]        = useState(false);
   const [confirmSignOut,  setConfirmSignOut]  = useState(false);
 
   useEffect(() => {
@@ -83,18 +77,11 @@ export function AdminSidebar() {
   }, []);
 
   useEffect(() => {
-    setMoreOpen(false);
     setConfirmSignOut(false);
     if (pathname === "/admin/reviews")  setPendingReviews(0);
     if (pathname === "/admin/messages") setUnreadMessages(0);
     if (pathname === "/admin/orders")   setNewOrders(0);
   }, [pathname]);
-
-  // Lock body scroll when more sheet is open
-  useEffect(() => {
-    document.body.style.overflow = moreOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [moreOpen]);
 
   async function doSignOut() {
     await fetch("/api/admin/session", { method: "DELETE" });
@@ -109,23 +96,15 @@ export function AdminSidebar() {
     return null;
   }
 
-  function isActive(href: string) {
-    return pathname === href || (href !== "/admin" && pathname.startsWith(href + "/")) || (href !== "/admin" && pathname === href);
+  function isItemActive(href: string) {
+    return (
+      pathname === href ||
+      (href !== "/admin" && pathname.startsWith(href + "/")) ||
+      (href !== "/admin" && pathname === href)
+    );
   }
 
-  // All nav items flat (for more sheet)
-  const allItems = navGroups.flatMap((g) => g.items);
-  // Items that are NOT in primaryNav
-  const moreItems = allItems.filter((item) => !primaryNav.some((p) => p.href === item.href));
-  // Rebuild groups with only more-items
-  const moreGroups = navGroups
-    .map((g) => ({ ...g, items: g.items.filter((item) => !primaryNav.some((p) => p.href === item.href)) }))
-    .filter((g) => g.items.length > 0);
-
-  // Badge total for the More button
-  const moreBadge = (unreadMessages > 0 ? unreadMessages : 0) + (pendingReviews > 0 ? pendingReviews : 0);
-
-  // ── Desktop sidebar nav content ───────────────────────────────────────────
+  // ── Desktop sidebar ────────────────────────────────────────────────────────
   const desktopNav = (
     <>
       <nav className={styles.nav}>
@@ -138,7 +117,7 @@ export function AdminSidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`${styles.navItem} ${isActive(item.href) ? styles.active : ""}`}
+                  className={`${styles.navItem} ${isItemActive(item.href) ? styles.active : ""}`}
                 >
                   <span className={styles.icon}>{item.icon as React.ReactNode}</span>
                   <span className={styles.label}>{item.label}</span>
@@ -186,7 +165,7 @@ export function AdminSidebar() {
         {desktopNav}
       </aside>
 
-      {/* ── Mobile top bar (brand name, ≤768px) ── */}
+      {/* ── Mobile top bar — brand only (≤768px) ── */}
       <header className={styles.mobileTopBar}>
         <Link href="/admin" className={styles.mobileBrand}>
           <img src="/logo-footer.png" alt="Raghul Delights" style={{ height: "30px", width: "auto" }} />
@@ -194,101 +173,28 @@ export function AdminSidebar() {
         </Link>
       </header>
 
-      {/* ── Mobile bottom nav bar (≤768px) ── */}
+      {/* ── Mobile bottom nav — horizontally scrollable, all items (≤768px) ── */}
       <nav className={styles.bottomNav} aria-label="Main navigation">
-        {primaryNav.map((item) => {
-          const badge = getBadge(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`${styles.bottomNavItem} ${isActive(item.href) ? styles.active : ""}`}
-            >
-              <span className={styles.bottomNavIcon}>
-                {item.icon as React.ReactNode}
-                {badge && <span className={styles.bottomNavBadge}>{badge}</span>}
-              </span>
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-
-        {/* More button */}
-        <button
-          className={`${styles.bottomNavItem} ${moreOpen ? styles.active : ""}`}
-          onClick={() => setMoreOpen((o) => !o)}
-          aria-label="More options"
-          aria-expanded={moreOpen}
-        >
-          <span className={styles.bottomNavIcon}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
-            </svg>
-            {moreBadge > 0 && <span className={styles.bottomNavBadge}>{moreBadge}</span>}
-          </span>
-          <span>More</span>
-        </button>
+        <div className={styles.bottomNavScroll}>
+          {allNavItems.map((item) => {
+            const badge  = getBadge(item.href);
+            const active = isItemActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`${styles.bottomNavItem} ${active ? styles.active : ""}`}
+              >
+                <span className={styles.bottomNavIcon}>
+                  {item.icon as React.ReactNode}
+                  {badge && <span className={styles.bottomNavBadge}>{badge}</span>}
+                </span>
+                <span className={styles.bottomNavLabel}>{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
       </nav>
-
-      {/* ── Overlay (behind more sheet) ── */}
-      {moreOpen && (
-        <div className={styles.overlay} onClick={() => setMoreOpen(false)} aria-hidden="true" />
-      )}
-
-      {/* ── More sheet ── */}
-      <div
-        className={`${styles.moreSheet} ${moreOpen ? styles.moreSheetOpen : ""}`}
-        role="dialog"
-        aria-label="More navigation options"
-      >
-        <div className={styles.moreSheetHandle} />
-        <p className={styles.moreSheetTitle}>More</p>
-
-        <div className={styles.moreSheetNav}>
-          {moreGroups.map((group) => (
-            <>
-              <span key={group.label} className={styles.moreGroupLabel}>{group.label}</span>
-              {group.items.map((item) => {
-                const badge = getBadge(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`${styles.moreSheetNavItem} ${isActive(item.href) ? styles.active : ""}`}
-                    onClick={() => setMoreOpen(false)}
-                  >
-                    <span className={styles.icon}>{item.icon as React.ReactNode}</span>
-                    <span>{item.label}</span>
-                    {badge && <span className={styles.badge}>{badge}</span>}
-                  </Link>
-                );
-              })}
-            </>
-          ))}
-        </div>
-
-        {/* Sign-out inside more sheet */}
-        <div className={styles.moreSheetFooter}>
-          {confirmSignOut ? (
-            <div className={styles.signOutConfirm}>
-              <p>Sign out?</p>
-              <div className={styles.signOutConfirmActions}>
-                <button className={styles.signOutCancelBtn} onClick={() => setConfirmSignOut(false)}>Cancel</button>
-                <button className={styles.signOutConfirmBtn} onClick={doSignOut}>Sign out</button>
-              </div>
-            </div>
-          ) : (
-            <button onClick={() => setConfirmSignOut(true)} className={styles.signOutButton}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
-              Sign Out
-            </button>
-          )}
-        </div>
-      </div>
     </>
   );
 }
