@@ -106,6 +106,13 @@
       "when": 1786598692086,
       "tag": "0014_tough_junta",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1787389032013,
+      "tag": "0015_classy_garia",
+      "breakpoints": true
     }
   ]
 }

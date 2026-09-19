@@ -350,7 +350,6 @@ export default async function HomePage() {
                 Go to Contact Page →
               </Link>
             </div>
-
           </div>
         </section>
       </ScrollAnimate>
