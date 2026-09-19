@@ -52,7 +52,7 @@ export function AdminSettings() {
                   </label>
                   <input
                     type="email"
-                    placeholder="contact@raghulsnacks.com"
+                    placeholder="Store email address"
                     style={{
                       width: '100%',
                       padding: '10px 14px',
