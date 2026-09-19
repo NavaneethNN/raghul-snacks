@@ -49,7 +49,6 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
   const [feedback, setFeedback] = useState<Record<number, { ok: boolean; msg: string }>>({});
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Status>("all");
-  const [searchOpen, setSearchOpen] = useState(false);
   // Set of expanded order IDs
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
@@ -148,8 +147,10 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
       <section id="orders-list" className={styles.workspace}>
         {/* Toolbar */}
         <div className={styles.toolbar}>
-          <div className={styles.toolbarTop}>
-            <div className={`${styles.toolbarSearch} ${searchOpen ? styles.searchExpanded : styles.searchCollapsed}`}>
+          {/* ── Single row: search + filter dropdown (used on all screen sizes) ── */}
+          <div className={styles.toolbarRow}>
+            {/* Search */}
+            <div className={styles.toolbarSearch}>
               <span className={styles.searchIcon}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -158,22 +159,35 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Order no., customer, phone or PIN"
+                placeholder="Search orders…"
                 aria-label="Search orders"
               />
             </div>
-            <button
-              className={styles.searchToggleBtn}
-              onClick={() => setSearchOpen((o) => !o)}
-              aria-label={searchOpen ? "Close search" : "Search orders"}
-            >
-              {searchOpen
-                ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              }
-            </button>
+
+            {/* Filter dropdown (visible on all sizes) */}
+            <div className={styles.filterDropdownWrap}>
+              <svg className={styles.filterDropdownIcon} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+              </svg>
+              <select
+                className={styles.filterDropdown}
+                value={filter}
+                onChange={(e) => setFilter(e.target.value as Status)}
+                aria-label="Filter by status"
+              >
+                {statuses.map((s) => {
+                  const count = s === "all" ? orders.length : (statusCounts[s] ?? 0);
+                  return (
+                    <option key={s} value={s}>
+                      {s === "all" ? `All (${count})` : `${s.charAt(0).toUpperCase() + s.slice(1)} (${count})`}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
           </div>
 
+          {/* ── Desktop filter button row (hidden on mobile) ── */}
           <div className={styles.filters}>
             {statuses.map((s) => {
               const count = s === "all" ? orders.length : (statusCounts[s] ?? 0);
