@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useEffect, useState } from "react";
+import { AdminHeaderActions } from "./admin-header-actions";
 import { ConfirmDialog } from "./admin-confirm-dialog";
 import styles from "./admin-table.module.css";
 
@@ -87,6 +88,7 @@ export function AdminReviews() {
           <h1>Customer Reviews</h1>
           <p>Approve or remove product reviews.</p>
         </div>
+        <AdminHeaderActions />
         {pendingCount > 0 && (
           <div style={{ background: "#fef3c7", border: "1px solid #fde047", borderRadius: 8, padding: "10px 16px" }}>
             <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#92400e" }}>{pendingCount} pending</p>

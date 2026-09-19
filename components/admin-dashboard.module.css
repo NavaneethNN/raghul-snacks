@@ -49,18 +49,9 @@
   gap: 10px;
 }
 
+/* Sign-out is handled by the sidebar — hide it in the page header bell component */
 .signOutButton {
-  background: var(--paper);
-  border: 1.5px solid var(--line);
-  color: var(--ink);
-  padding: 8px 16px;
-  border-radius: 8px;
-  font: 600 13px 'DM Sans', sans-serif;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: none;
 }
 
 .signOutButton:hover {

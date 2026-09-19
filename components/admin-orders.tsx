@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-orders.module.css";
 
 type OrderItem = { id: number; name: string; quantity: number; price: number };
@@ -117,6 +118,7 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
           <h1>Orders</h1>
           <p>Tap an order to see details and update its status.</p>
         </div>
+        <AdminHeaderActions />
       </header>
 
       {/* ── Metrics ── */}
