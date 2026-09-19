@@ -456,6 +456,65 @@
   cursor: not-allowed;
 }
 
+/* Filter count badge */
+.filterCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  background: rgba(36, 49, 39, 0.08);
+  color: #6b7280;
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  line-height: 18px;
+}
+
+.activeFilter .filterCount {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+/* Terminal status label (delivered / cancelled — no select) */
+.terminalStatus {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font: 600 13px 'DM Sans', sans-serif;
+  background: var(--cream);
+  border: 1.5px solid var(--line);
+  color: #6b7280;
+}
+
+/* Inline feedback */
+.savingSpinner {
+  font-size: 13px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.feedbackOk {
+  font-size: 13px;
+  font-weight: 600;
+  color: #16a34a;
+  animation: fadeSlideIn 0.2s ease;
+}
+
+.feedbackError {
+  font-size: 13px;
+  font-weight: 600;
+  color: #dc2626;
+  animation: fadeSlideIn 0.2s ease;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Empty State */
 .empty {
   padding: 80px 24px;
@@ -503,29 +562,38 @@
   .header {
     flex-direction: column;
     align-items: flex-start;
-    padding: 20px;
-    position: relative;
+    padding: 16px;
+    top: 60px;
   }
 
   .header h1 {
-    font-size: 28px;
+    font-size: 22px;
+  }
+
+  .signOutButton {
+    display: none;
   }
 
   .metrics {
     grid-template-columns: repeat(2, 1fr);
-    padding: 20px;
-    gap: 12px;
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .metrics strong {
+    font-size: 24px;
   }
 
   .workspace {
-    margin: 0 20px 20px;
+    margin: 0 12px 12px;
     border-radius: 8px;
   }
 
   .toolbar {
     flex-direction: column;
     align-items: stretch;
-    padding: 20px;
+    padding: 14px;
+    gap: 10px;
   }
 
   .toolbar label {
@@ -538,8 +606,8 @@
 
   .details {
     grid-template-columns: 1fr;
-    gap: 16px;
-    padding: 12px;
+    gap: 12px;
+    padding: 10px;
   }
 
   .orderFooter {
@@ -562,38 +630,48 @@
 
 @media (max-width: 480px) {
   .header {
-    padding: 16px;
+    padding: 12px;
   }
 
   .metrics {
-    grid-template-columns: 1fr;
-    padding: 16px;
+    grid-template-columns: repeat(2, 1fr);
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .metrics strong {
+    font-size: 20px;
   }
 
   .workspace {
-    margin: 0 16px 16px;
+    margin: 0 10px 10px;
   }
 
   .toolbar {
-    padding: 16px;
+    padding: 12px;
   }
 
   .order {
-    padding: 16px;
+    padding: 12px;
   }
 
   .orderTop {
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
   }
 
   .total {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .orderMeta {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: wrap;
     gap: 6px;
+  }
+
+  .filters button {
+    padding: 6px 10px;
+    font-size: 12px;
   }
 }

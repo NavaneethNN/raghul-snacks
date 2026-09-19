@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AdminHeaderActions } from "./admin-header-actions";
 import { formatWeight } from "@/lib/catalog";
 import styles from "./admin-table.module.css";
+import productStyles from "./admin-products.module.css";
 
 type Product = {
   id: number;
@@ -37,6 +37,9 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [imageInputType, setImageInputType] = useState<"url" | "file">("url");
   const [imagePreview, setImagePreview] = useState<string>("");
@@ -44,15 +47,19 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
   const [productName, setProductName] = useState("");
   const [productSlug, setProductSlug] = useState("");
 
+  function showToast(msg: string, ok = true) {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3500);
+  }
 
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setImagePreview(base64String);
-        setImageData(base64String);
+        const b64 = reader.result as string;
+        setImagePreview(b64);
+        setImageData(b64);
       };
       reader.readAsDataURL(file);
     }
@@ -66,6 +73,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     setImageInputType(product.image?.startsWith("data:") ? "file" : "url");
     setImagePreview(product.image || "");
     setImageData(product.image || "");
+    setError("");
   }
 
   function handleCloseForm() {
@@ -80,12 +88,9 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
 
   function handleNameChange(name: string) {
     setProductName(name);
-    // Auto-generate slug from name
-    const slug = name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-    setProductSlug(slug);
+    setProductSlug(
+      name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+    );
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -111,55 +116,61 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     };
 
     try {
-      const url = editingProduct
-        ? `/api/admin/products/${editingProduct.id}`
-        : "/api/admin/products";
+      const url = editingProduct ? `/api/admin/products/${editingProduct.id}` : "/api/admin/products";
       const method = editingProduct ? "PATCH" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || `Failed to ${editingProduct ? 'update' : 'create'} product`);
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.error || `Failed to ${editingProduct ? "update" : "create"} product`);
       }
-
       handleCloseForm();
+      showToast(editingProduct ? `"${data.name}" updated successfully` : `"${data.name}" added to catalog`);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : `Failed to ${editingProduct ? 'update' : 'create'} product`);
+      setError(err instanceof Error ? err.message : `Failed to ${editingProduct ? "update" : "create"} product`);
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("Are you sure you want to delete this product?")) return;
-
+  async function confirmDelete() {
+    if (confirmDeleteId === null) return;
+    setDeleting(true);
+    const name = products.find((p) => p.id === confirmDeleteId)?.name ?? "Product";
     try {
-      const response = await fetch(`/api/admin/products/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) throw new Error("Failed to delete product");
-
+      const res = await fetch(`/api/admin/products/${confirmDeleteId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete product");
+      setConfirmDeleteId(null);
+      showToast(`"${name}" deleted`);
       router.refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete product");
+      setConfirmDeleteId(null);
+      showToast(err instanceof Error ? err.message : "Failed to delete product", false);
+    } finally {
+      setDeleting(false);
     }
   }
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const price = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" });
+  const fmt = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" });
 
   return (
     <div className={styles.page}>
+      {/* ── Toast ── */}
+      {toast && (
+        <div className={`${productStyles.toast} ${toast.ok ? productStyles.toastOk : productStyles.toastError}`}>
+          {toast.ok
+            ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          }
+          {toast.msg}
+        </div>
+      )}
+
+      {/* ── Header ── */}
       <header className={styles.header}>
         <div>
           <p className={styles.eyebrow}>Product Management</p>
@@ -175,13 +186,14 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
         </button>
       </header>
 
+      {/* ── Table ── */}
       <section className={styles.workspace}>
         <div className={styles.toolbar}>
           <label>
             <span>Search products</span>
             <input
               type="text"
-              placeholder="Search by name..."
+              placeholder="Search by name…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -193,9 +205,9 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
             <thead>
               <tr>
                 <th>Product</th>
-                <th>Category</th>
+                <th className={productStyles.hideOnMobile}>Category</th>
                 <th>Price</th>
-                <th>Status</th>
+                <th className={productStyles.hideOnMobile}>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -210,9 +222,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                       </svg>
                       <h3>No products yet</h3>
                       <p>Add your first product to get started.</p>
-                      <button className={styles.primaryButton} onClick={() => setShowForm(true)}>
-                        Add Product
-                      </button>
+                      <button className={styles.primaryButton} onClick={() => setShowForm(true)}>Add Product</button>
                     </div>
                   </td>
                 </tr>
@@ -220,45 +230,45 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                 filteredProducts.map((product) => (
                   <tr key={product.id}>
                     <td>
-                      <strong>{product.name}</strong>
-                      <br />
+                      <strong>{product.name}</strong><br />
                       <small style={{ color: "#6b7280" }}>{formatWeight(product.weight)}</small>
+                      {/* Show category + status inline on mobile */}
+                      <div className={productStyles.mobileSubtext}>
+                        {product.categoryName && <span>{product.categoryName}</span>}
+                        {product.featured   && <span className={productStyles.mobileBadge}>Featured</span>}
+                        {product.bestseller && <span className={productStyles.mobileBadge}>Bestseller</span>}
+                      </div>
                     </td>
-                    <td>{product.categoryName || "—"}</td>
+                    <td className={productStyles.hideOnMobile}>{product.categoryName ?? "—"}</td>
                     <td>
                       {product.offerPrice ? (
                         <>
-                          <strong>{price.format(Number(product.offerPrice))}</strong>
-                          <br />
+                          <strong>{fmt.format(Number(product.offerPrice))}</strong><br />
                           <small style={{ color: "#6b7280", textDecoration: "line-through" }}>
-                            {price.format(Number(product.price))}
+                            {fmt.format(Number(product.price))}
                           </small>
                         </>
                       ) : (
-                        <strong>{price.format(Number(product.price))}</strong>
+                        <strong>{fmt.format(Number(product.price))}</strong>
                       )}
                     </td>
-                    <td>
-                      {product.featured && <span className={`${styles.badge} ${styles.info}`}>Featured</span>}
-                      {product.bestseller && <span className={`${styles.badge} ${styles.success}`}>Bestseller</span>}
+                    <td className={productStyles.hideOnMobile}>
+                      {product.featured   && <span className={`${styles.badge} ${styles.info}`}>Featured</span>}
+                      {product.bestseller && <span className={`${styles.badge} ${styles.success}`} style={{ marginLeft: product.featured ? 6 : 0 }}>Bestseller</span>}
                       {!product.featured && !product.bestseller && "—"}
                     </td>
                     <td>
                       <div className={styles.actionButtons}>
-                        <button
-                          className={styles.iconButton}
-                          onClick={() => handleEdit(product)}
-                          title="Edit"
-                        >
+                        <button className={styles.iconButton} onClick={() => handleEdit(product)} title="Edit product">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                           </svg>
                         </button>
                         <button
-                          className={styles.iconButton}
-                          onClick={() => handleDelete(product.id)}
-                          title="Delete"
+                          className={`${styles.iconButton} ${productStyles.deleteBtn}`}
+                          onClick={() => setConfirmDeleteId(product.id)}
+                          title="Delete product"
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <polyline points="3 6 5 6 21 6"></polyline>
@@ -275,11 +285,39 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
         </div>
       </section>
 
+      {/* ── Inline delete confirmation dialog ── */}
+      {confirmDeleteId !== null && (
+        <div className={styles.modal}>
+          <div className={`${styles.modalContent} ${productStyles.confirmDialog}`}>
+            <div className={productStyles.confirmIcon}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </div>
+            <h3>Delete product?</h3>
+            <p>
+              <strong>&ldquo;{products.find((p) => p.id === confirmDeleteId)?.name}&rdquo;</strong> will be
+              permanently removed from your catalog. This cannot be undone.
+            </p>
+            <div className={productStyles.confirmActions}>
+              <button className={styles.secondaryButton} onClick={() => setConfirmDeleteId(null)} disabled={deleting}>
+                Cancel
+              </button>
+              <button className={productStyles.dangerButton} onClick={confirmDelete} disabled={deleting}>
+                {deleting ? "Deleting…" : "Yes, delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Add / Edit modal ── */}
       {showForm && (
         <div className={styles.modal}>
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
-              <h2>{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
+              <h2>{editingProduct ? "Edit Product" : "Add New Product"}</h2>
               <button className={styles.closeButton} onClick={handleCloseForm}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -296,45 +334,27 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
               <div className={styles.formGrid}>
                 <div className={styles.field}>
                   <label>Product Name</label>
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="e.g., Thinai Laddu"
-                    value={productName}
-                    onChange={(e) => handleNameChange(e.target.value)}
-                    required
-                  />
+                  <input type="text" name="name" placeholder="e.g., Thinai Laddu" value={productName} onChange={(e) => handleNameChange(e.target.value)} required />
                 </div>
                 <div className={styles.field}>
                   <label>Slug (URL)</label>
-                  <input
-                    type="text"
-                    name="slug"
-                    placeholder="e.g., thinai-laddu"
-                    value={productSlug}
-                    onChange={(e) => setProductSlug(e.target.value)}
-                    required
-                  />
-                  <small style={{ color: '#6b7280', fontSize: '12px' }}>Auto-generated from name</small>
+                  <input type="text" name="slug" placeholder="e.g., thinai-laddu" value={productSlug} onChange={(e) => setProductSlug(e.target.value)} required />
+                  <small style={{ color: "#6b7280", fontSize: "12px" }}>Auto-generated from name</small>
                 </div>
                 <div className={styles.field}>
                   <label>Category</label>
-                  <select name="categoryId" defaultValue={editingProduct?.categoryId || ""}>
+                  <select name="categoryId" defaultValue={editingProduct?.categoryId ?? ""}>
                     <option value="">Select category</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
+                    {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                   </select>
                 </div>
                 <div className={styles.field}>
                   <label>Price (₹)</label>
-                  <input type="number" name="price" step="0.01" placeholder="0.00" defaultValue={editingProduct?.price} required />
+                  <input type="number" name="price" step="0.01" min="0" placeholder="0.00" defaultValue={editingProduct?.price} required />
                 </div>
                 <div className={styles.field}>
-                  <label>Offer Price (₹)</label>
-                  <input type="number" name="offerPrice" step="0.01" placeholder="Optional" defaultValue={editingProduct?.offerPrice || ""} />
+                  <label>Offer Price (₹) <small style={{ color: "#9ca3af", fontWeight: 400 }}>optional</small></label>
+                  <input type="number" name="offerPrice" step="0.01" min="0" placeholder="Leave blank if no discount" defaultValue={editingProduct?.offerPrice ?? ""} />
                 </div>
                 <div className={styles.field}>
                   <label>Weight</label>
@@ -343,66 +363,43 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
               </div>
               <div className={styles.field}>
                 <label>Description</label>
-                <textarea name="description" rows={4} placeholder="Product description..." defaultValue={editingProduct?.description} required></textarea>
+                <textarea name="description" rows={4} placeholder="Product description…" defaultValue={editingProduct?.description} required></textarea>
               </div>
               <div className={styles.field}>
                 <label>Ingredients</label>
-                <textarea name="ingredients" rows={3} placeholder="List ingredients..." defaultValue={editingProduct?.ingredients || ""}></textarea>
+                <textarea name="ingredients" rows={3} placeholder="List ingredients…" defaultValue={editingProduct?.ingredients ?? ""}></textarea>
               </div>
               <div className={styles.field}>
                 <label>Product Image</label>
                 <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
-                  <button
-                    type="button"
-                    onClick={() => { setImageInputType("url"); setImagePreview(""); setImageData(""); }}
-                    style={{
-                      padding: "6px 12px",
-                      fontSize: "13px",
-                      border: "1.5px solid var(--line)",
-                      background: imageInputType === "url" ? "var(--terracotta)" : "var(--paper)",
-                      color: imageInputType === "url" ? "white" : "var(--ink)",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    URL
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setImageInputType("file"); }}
-                    style={{
-                      padding: "6px 12px",
-                      fontSize: "13px",
-                      border: "1.5px solid var(--line)",
-                      background: imageInputType === "file" ? "var(--terracotta)" : "var(--paper)",
-                      color: imageInputType === "file" ? "white" : "var(--ink)",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Upload File
-                  </button>
+                  {(["url", "file"] as const).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => { setImageInputType(type); if (type === "url") { setImagePreview(""); setImageData(""); } }}
+                      style={{
+                        padding: "6px 14px", fontSize: "13px",
+                        border: "1.5px solid var(--line)",
+                        background: imageInputType === type ? "var(--terracotta)" : "var(--paper)",
+                        color: imageInputType === type ? "white" : "var(--ink)",
+                        borderRadius: "6px", cursor: "pointer",
+                      }}
+                    >
+                      {type === "url" ? "URL" : "Upload File"}
+                    </button>
+                  ))}
                 </div>
                 {imageInputType === "url" ? (
-                  <input type="text" name="image" placeholder="https://..." />
+                  <input type="text" name="image" placeholder="https://…" defaultValue={editingProduct?.image?.startsWith("data:") ? "" : (editingProduct?.image ?? "")} />
                 ) : (
                   <>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      style={{ marginBottom: "8px" }}
-                    />
+                    <input type="file" accept="image/*" onChange={handleImageUpload} style={{ marginBottom: "8px" }} />
                     {imagePreview && (
-                      <div style={{ position: "relative", display: "inline-block", marginTop: "8px", borderRadius: "8px", overflow: "hidden", width: "fit-content" }}>
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          style={{ maxWidth: "200px", maxHeight: "200px", borderRadius: "8px", display: "block" }}
-                        />
+                      <div style={{ position: "relative", display: "inline-block", marginTop: "8px", borderRadius: "8px", overflow: "hidden" }}>
+                        <img src={imagePreview} alt="Preview" style={{ maxWidth: "200px", maxHeight: "200px", borderRadius: "8px", display: "block" }} />
                         <button
                           type="button"
-                          onClick={(e) => { e.preventDefault(); setImagePreview(""); setImageData(""); }}
+                          onClick={() => { setImagePreview(""); setImageData(""); }}
                           className={styles.imageDeleteButton}
                           title="Remove image"
                         >
@@ -427,11 +424,9 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                 </label>
               </div>
               <div className={styles.formActions}>
-                <button type="button" className={styles.secondaryButton} onClick={handleCloseForm}>
-                  Cancel
-                </button>
+                <button type="button" className={styles.secondaryButton} onClick={handleCloseForm}>Cancel</button>
                 <button type="submit" className={styles.primaryButton} disabled={loading}>
-                  {loading ? (editingProduct ? "Updating..." : "Adding...") : (editingProduct ? "Update Product" : "Add Product")}
+                  {loading ? (editingProduct ? "Updating…" : "Adding…") : (editingProduct ? "Update Product" : "Add Product")}
                 </button>
               </div>
             </form>

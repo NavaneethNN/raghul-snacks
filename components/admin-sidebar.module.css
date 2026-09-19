@@ -1,9 +1,12 @@
+/* ─────────────────────────────────────────
+   Desktop sidebar
+   ───────────────────────────────────────── */
 .sidebar {
   width: 260px;
   height: 100vh;
   max-height: 100vh;
   background: var(--ink);
-  border-right: 1px solid var(--line);
+  border-right: 1px solid rgba(201, 95, 59, 0.15);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -12,28 +15,19 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(201, 95, 59, 0.35) transparent;
+  z-index: 200;
 }
 
-.sidebar::-webkit-scrollbar {
-  width: 4px;
-}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(201, 95, 59, 0.35); border-radius: 4px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: rgba(201, 95, 59, 0.6); }
 
-.sidebar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-  background: rgba(201, 95, 59, 0.35);
-  border-radius: 4px;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover {
-  background: rgba(201, 95, 59, 0.6);
-}
-
+/* Brand */
 .brand {
   padding: 32px 24px 24px;
   border-bottom: 1px solid rgba(201, 95, 59, 0.15);
+  flex-shrink: 0;
 }
 
 .brandName {
@@ -43,6 +37,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  text-decoration: none;
   margin-bottom: 4px;
 }
 
@@ -64,6 +59,25 @@
   letter-spacing: 0.08em;
 }
 
+/* Nav groups */
+.navGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.groupLabel {
+  display: block;
+  padding: 10px 16px 4px;
+  font: 700 10px 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(184, 198, 167, 0.45);
+  user-select: none;
+}
+
+/* Nav */
 .nav {
   flex: 1;
   padding: 16px 12px;
@@ -117,20 +131,32 @@
   flex-shrink: 0;
 }
 
-.icon svg {
-  display: block;
+.icon svg { display: block; }
+
+.label { flex: 1; }
+
+/* Badge */
+.badge {
+  margin-left: auto;
+  background: #f59e0b;
+  color: #fff;
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  min-width: 18px;
+  text-align: center;
 }
 
-.label {
-  flex: 1;
-}
-
+/* Footer */
 .footer {
   padding: 20px 16px;
   border-top: 1px solid rgba(201, 95, 59, 0.15);
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .signOutButton {
@@ -154,6 +180,58 @@
   color: white;
 }
 
+/* Sign-out confirm inline */
+.signOutConfirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.signOutConfirm p {
+  margin: 0;
+  font: 600 13px 'DM Sans', sans-serif;
+  color: var(--cream);
+  text-align: center;
+}
+
+.signOutConfirmActions {
+  display: flex;
+  gap: 8px;
+}
+
+.signOutCancelBtn {
+  flex: 1;
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  color: var(--sage);
+  padding: 8px 0;
+  border-radius: 8px;
+  font: 600 13px 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.signOutCancelBtn:hover {
+  background: rgba(255,255,255,0.12);
+  color: var(--cream);
+}
+
+.signOutConfirmBtn {
+  flex: 1;
+  background: var(--terracotta);
+  border: 1.5px solid var(--terracotta);
+  color: white;
+  padding: 8px 0;
+  border-radius: 8px;
+  font: 600 13px 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.signOutConfirmBtn:hover {
+  background: #b84e2e;
+}
+
 .version {
   margin: 0;
   color: var(--sage);
@@ -162,7 +240,30 @@
   opacity: 0.7;
 }
 
-/* Responsive */
+/* ─────────────────────────────────────────
+   Mobile top bar  (hidden on desktop)
+   ───────────────────────────────────────── */
+.mobileTopBar {
+  display: none;
+}
+
+/* ─────────────────────────────────────────
+   Overlay  (mobile drawer backdrop)
+   ───────────────────────────────────────── */
+.overlay {
+  display: none;
+}
+
+/* ─────────────────────────────────────────
+   Mobile drawer  (hidden on desktop)
+   ───────────────────────────────────────── */
+.drawer {
+  display: none;
+}
+
+/* ─────────────────────────────────────────
+   Tablet  ≤1024px
+   ───────────────────────────────────────── */
 @media (max-width: 1024px) {
   .sidebar {
     width: 220px;
@@ -192,34 +293,202 @@
   }
 }
 
+/* ─────────────────────────────────────────
+   Mobile  ≤768px  — drawer mode
+   ───────────────────────────────────────── */
 @media (max-width: 768px) {
+
+  /* Hide desktop sidebar */
   .sidebar {
-    width: 100%;
-    min-height: auto;
-    position: relative;
-    border-right: none;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .brand {
-    padding: 20px;
-  }
-
-  .nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-    padding: 12px;
-  }
-
-  .navItem {
-    flex: 0 0 auto;
-  }
-
-  .label {
     display: none;
   }
 
-  .footer {
-    display: none;
+  /* ── Mobile top bar ── */
+  .mobileTopBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--ink);
+    border-bottom: 1px solid rgba(201, 95, 59, 0.2);
+    padding: 0 16px;
+    z-index: 300;
+    gap: 12px;
+  }
+
+  .mobileBrand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--cream);
+    font: 700 17px / 1 'Playfair Display', serif;
+    letter-spacing: -0.01em;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .mobileBrand span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobileTopBarActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .mobileGlobalBadge {
+    background: #f59e0b;
+    color: #fff;
+    border-radius: 999px;
+    padding: 1px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 20px;
+    min-width: 20px;
+    text-align: center;
+  }
+
+  .hamburger {
+    background: none;
+    border: 1.5px solid rgba(201, 95, 59, 0.4);
+    color: var(--cream);
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .hamburger:hover {
+    border-color: var(--terracotta);
+    background: rgba(201, 95, 59, 0.1);
+  }
+
+  /* ── Overlay ── */
+  .overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 400;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* ── Drawer ── */
+  .drawer {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    background: var(--ink);
+    z-index: 500;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201, 95, 59, 0.35) transparent;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .drawer::-webkit-scrollbar { width: 4px; }
+  .drawer::-webkit-scrollbar-thumb { background: rgba(201, 95, 59, 0.35); border-radius: 4px; }
+
+  .drawerOpen {
+    transform: translateX(0);
+  }
+
+  /* Drawer header with close button */
+  .drawerHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 16px 16px 20px;
+    border-bottom: 1px solid rgba(201, 95, 59, 0.15);
+    flex-shrink: 0;
+  }
+
+  .closeButton {
+    background: none;
+    border: 1.5px solid rgba(201, 95, 59, 0.3);
+    color: var(--sage);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .closeButton:hover {
+    border-color: var(--terracotta);
+    color: var(--cream);
+    background: rgba(201, 95, 59, 0.1);
+  }
+
+  /* Nav inside drawer */
+  .drawer .nav {
+    padding: 12px 10px;
+    gap: 2px;
+  }
+
+  .drawer .navItem {
+    padding: 13px 16px;
+    font-size: 15px;
+    border-radius: 8px;
+  }
+
+  .drawer .icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .drawer .icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Footer inside drawer */
+  .drawer .footer {
+    padding: 16px;
+    margin-top: auto;
+  }
+}
+
+/* ─────────────────────────────────────────
+   Small mobile  ≤480px
+   ───────────────────────────────────────── */
+@media (max-width: 480px) {
+  .drawer {
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .mobileTopBar {
+    padding: 0 12px;
   }
 }

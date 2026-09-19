@@ -1,0 +1,164 @@
+/* ── Toast notification ── */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font: 600 14px 'DM Sans', sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  animation: toastIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-width: 360px;
+}
+
+.toastOk {
+  background: #166534;
+  color: #fff;
+}
+
+.toastError {
+  background: #991b1b;
+  color: #fff;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* ── Inline delete confirmation ── */
+.confirmDialog {
+  max-width: 420px !important;
+  padding: 36px 32px 28px;
+  text-align: center;
+}
+
+.confirmIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.confirmDialog h3 {
+  margin: 0 0 10px;
+  font: 700 20px 'Playfair Display', serif;
+  color: var(--ink);
+}
+
+.confirmDialog p {
+  margin: 0 0 28px;
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.confirmActions button {
+  min-width: 110px;
+}
+
+/* ── Danger button (delete) ── */
+.dangerButton {
+  background: #dc2626;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font: 600 13px 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dangerButton:hover:not(:disabled) {
+  background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.dangerButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Delete icon button — red tint on hover ── */
+.deleteBtn:hover {
+  border-color: #dc2626 !important;
+  color: #dc2626 !important;
+  background: #fee2e2 !important;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .toast {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+    max-width: none;
+  }
+
+  .confirmDialog {
+    padding: 24px 20px 20px;
+  }
+
+  .confirmActions {
+    flex-direction: column;
+  }
+
+  .confirmActions button {
+    width: 100%;
+  }
+}
+
+/* ── Mobile table helpers ── */
+.hideOnMobile {
+  display: table-cell;
+}
+
+.mobileSubtext {
+  display: none;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.mobileBadge {
+  font: 600 10px 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(201, 95, 59, 0.1);
+  color: var(--terracotta);
+  border: 1px solid rgba(201, 95, 59, 0.2);
+}
+
+@media (max-width: 600px) {
+  .hideOnMobile {
+    display: none;
+  }
+
+  .mobileSubtext {
+    display: flex;
+  }
+
+  .mobileSubtext span:first-child {
+    font-size: 12px;
+    color: #6b7280;
+  }
+}

@@ -8,15 +8,19 @@
   flex: 1;
   margin-left: 260px;
   min-height: 100vh;
+  /* Prevent content from going under the fixed sidebar */
+  min-width: 0;
 }
 
-/* Responsive */
+/* ── Tablet ≤1024px ── */
 @media (max-width: 1024px) {
   .mainContent {
     margin-left: 220px;
   }
 }
 
+/* ── Mobile ≤768px ── */
+/* Sidebar is gone; fixed 60px top bar takes its place */
 @media (max-width: 768px) {
   .adminLayout {
     flex-direction: column;
@@ -24,5 +28,8 @@
 
   .mainContent {
     margin-left: 0;
+    /* Push content below the fixed mobile top bar */
+    padding-top: 60px;
+    min-height: calc(100vh - 60px);
   }
 }
