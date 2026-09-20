@@ -865,3 +865,14 @@ div:has(> img + .imageDeleteButton):hover img {
     display: none;
   }
 }
+
+/* Show only on mobile — complementary to colHide */
+.mobileOnly {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .mobileOnly {
+    display: inline;
+  }
+}

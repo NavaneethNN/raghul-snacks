@@ -163,11 +163,11 @@ export function AdminHeaderActions({ variant = "light" }: { variant?: "light" | 
 
   /* ── Bell button — colors adapt to background ── */
   const isDark = variant === "dark";
-  const btnBg        = isDark ? "rgba(201,95,59,0.12)"        : "var(--paper)";
-  const btnBorder    = isDark ? "rgba(201,95,59,0.3)"         : "var(--line)";
+  const btnBg        = isDark ? "transparent"                 : "var(--paper)";
+  const btnBorder    = isDark ? "none"                        : "1.5px solid var(--line)";
   const btnColor     = isDark ? "var(--cream)"                : "var(--ink)";
-  const btnBgHover   = isDark ? "rgba(201,95,59,0.25)"        : "var(--cream)";
-  const btnBdrHover  = isDark ? "var(--terracotta)"           : "var(--terracotta)";
+  const btnBgHover   = isDark ? "transparent"                 : "var(--cream)";
+  const btnBdrHover  = isDark ? "none"                        : "1.5px solid var(--terracotta)";
   const btnClrHover  = isDark ? "var(--terracotta)"           : "var(--terracotta)";
   const badgeBorder  = isDark ? "var(--ink)"                  : "var(--paper)";
 
@@ -179,26 +179,29 @@ export function AdminHeaderActions({ variant = "light" }: { variant?: "light" | 
         onClick={() => setOpen((p) => !p)}
         style={{
           position: "relative",
-          width: 38, height: 38,
+          width: isDark ? 32 : 38,
+          height: isDark ? 32 : 38,
           display: "flex", alignItems: "center", justifyContent: "center",
           background: btnBg,
-          border: `1.5px solid ${btnBorder}`,
+          border: btnBorder,
           borderRadius: 8,
           cursor: "pointer",
           color: btnColor,
-          transition: "background 0.2s, border-color 0.2s, color 0.2s",
+          transition: "color 0.2s",
           flexShrink: 0,
+          marginLeft: isDark ? "auto" : undefined,
+          padding: 0,
         }}
         onMouseEnter={(e) => {
           const b = e.currentTarget as HTMLButtonElement;
-          b.style.background = btnBgHover;
-          b.style.borderColor = btnBdrHover;
+          if (!isDark) b.style.background = btnBgHover;
+          if (!isDark) b.style.borderColor = btnBdrHover;
           b.style.color = btnClrHover;
         }}
         onMouseLeave={(e) => {
           const b = e.currentTarget as HTMLButtonElement;
-          b.style.background = btnBg;
-          b.style.borderColor = btnBorder;
+          if (!isDark) b.style.background = btnBg;
+          if (!isDark) b.style.borderColor = btnBorder;
           b.style.color = btnColor;
         }}
       >

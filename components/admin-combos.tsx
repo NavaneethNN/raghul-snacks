@@ -267,9 +267,9 @@ export function AdminCombos() {
             <thead>
               <tr>
                 <th>Combo Name</th>
-                <th>Products</th>
+                <th className={styles.colHide}>Products</th>
                 <th>Price</th>
-                <th>Offer Price</th>
+                <th className={styles.colHide}>Offer Price</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -308,8 +308,18 @@ export function AdminCombos() {
                       <code style={{ background: "#f3f4f6", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", color: "#6b7280" }}>
                         {combo.slug}
                       </code>
+                      {/* Products shown inline on mobile where the column is hidden */}
+                      {combo.items && combo.items.length > 0 && (
+                        <div className={styles.mobileOnly} style={{ marginTop: 4 }}>
+                          {combo.items.map((item) => (
+                            <span key={item.id} style={{ display: "block", fontSize: "12px", color: "#6b7280" }}>
+                              {item.productName} — {item.quantity}g
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </td>
-                    <td>
+                    <td className={styles.colHide}>
                       {combo.items && combo.items.length > 0 ? (
                         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                           {combo.items.map((item) => (
@@ -323,7 +333,7 @@ export function AdminCombos() {
                       )}
                     </td>
                     <td><strong>{price.format(Number(combo.price))}</strong></td>
-                    <td>
+                    <td className={styles.colHide}>
                       {Number(combo.discount) > 0 ? (
                         <strong style={{ color: "#10b981" }}>{price.format(Number(combo.discount))}</strong>
                       ) : (

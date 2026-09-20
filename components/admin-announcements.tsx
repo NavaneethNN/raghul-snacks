@@ -190,8 +190,8 @@ export function AdminAnnouncements() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th style={{ width: 72 }}>Order</th>
-                  <th style={{ width: 48 }}>Icon</th>
+                  <th className={styles.colHide} style={{ width: 72 }}>Order</th>
+                  <th className={styles.colHide} style={{ width: 48 }}>Icon</th>
                   <th>Text</th>
                   <th style={{ width: 100 }}>Status</th>
                   <th style={{ width: 120 }}>Actions</th>
@@ -200,7 +200,7 @@ export function AdminAnnouncements() {
               <tbody>
                 {sorted.map((item, idx) => (
                   <tr key={item.id} style={{ opacity: busyId === item.id ? 0.5 : 1, transition: "opacity 0.2s" }}>
-                    <td>
+                    <td className={styles.colHide}>
                       <div style={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "center" }}>
                         <button
                           className={styles.iconButton}
@@ -219,12 +219,14 @@ export function AdminAnnouncements() {
                         >▼</button>
                       </div>
                     </td>
-                    <td>
+                    <td className={styles.colHide}>
                       {item.icon
                         ? <span style={{ fontSize: 20 }}>{item.icon}</span>
                         : <span style={{ color: "#9ca3af" }}>—</span>}
                     </td>
                     <td>
+                      {/* Show icon inline on mobile since that column is hidden */}
+                      {item.icon && <span className={styles.mobileOnly} style={{ marginRight: 6 }}>{item.icon}</span>}
                       <strong style={{ fontSize: 14 }}>{item.text}</strong>
                     </td>
                     <td>
