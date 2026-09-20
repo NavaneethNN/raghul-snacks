@@ -12,10 +12,10 @@ type NotifData = {
 
 /**
  * AdminBell — the notification bell button + slide-in panel.
- * Rendered once in the sidebar (desktop) and once in the mobile top bar.
- * Uses only self-contained inline styles so it works on any page.
+ * variant="light" (default) — for light page headers (var(--paper) bg)
+ * variant="dark"            — for dark top bar (var(--ink) bg)
  */
-export function AdminHeaderActions() {
+export function AdminHeaderActions({ variant = "light" }: { variant?: "light" | "dark" }) {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<NotifData>({ newOrders: 0, unreadMessages: 0, pendingReviews: 0 });
   const [loading, setLoading] = useState(true);
@@ -161,7 +161,16 @@ export function AdminHeaderActions() {
     </>
   );
 
-  /* ── Bell button — light background (page header is var(--paper)) ── */
+  /* ── Bell button — colors adapt to background ── */
+  const isDark = variant === "dark";
+  const btnBg        = isDark ? "rgba(201,95,59,0.12)"        : "var(--paper)";
+  const btnBorder    = isDark ? "rgba(201,95,59,0.3)"         : "var(--line)";
+  const btnColor     = isDark ? "var(--cream)"                : "var(--ink)";
+  const btnBgHover   = isDark ? "rgba(201,95,59,0.25)"        : "var(--cream)";
+  const btnBdrHover  = isDark ? "var(--terracotta)"           : "var(--terracotta)";
+  const btnClrHover  = isDark ? "var(--terracotta)"           : "var(--terracotta)";
+  const badgeBorder  = isDark ? "var(--ink)"                  : "var(--paper)";
+
   return (
     <>
       <button
@@ -170,30 +179,30 @@ export function AdminHeaderActions() {
         onClick={() => setOpen((p) => !p)}
         style={{
           position: "relative",
-          width: 40, height: 40,
+          width: 38, height: 38,
           display: "flex", alignItems: "center", justifyContent: "center",
-          background: "var(--paper)",
-          border: "1.5px solid var(--line)",
+          background: btnBg,
+          border: `1.5px solid ${btnBorder}`,
           borderRadius: 8,
           cursor: "pointer",
-          color: "var(--ink)",
-          transition: "background 0.2s, border-color 0.2s",
+          color: btnColor,
+          transition: "background 0.2s, border-color 0.2s, color 0.2s",
           flexShrink: 0,
         }}
         onMouseEnter={(e) => {
           const b = e.currentTarget as HTMLButtonElement;
-          b.style.background = "var(--cream)";
-          b.style.borderColor = "var(--terracotta)";
-          b.style.color = "var(--terracotta)";
+          b.style.background = btnBgHover;
+          b.style.borderColor = btnBdrHover;
+          b.style.color = btnClrHover;
         }}
         onMouseLeave={(e) => {
           const b = e.currentTarget as HTMLButtonElement;
-          b.style.background = "var(--paper)";
-          b.style.borderColor = "var(--line)";
-          b.style.color = "var(--ink)";
+          b.style.background = btnBg;
+          b.style.borderColor = btnBorder;
+          b.style.color = btnColor;
         }}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
         </svg>
@@ -205,7 +214,7 @@ export function AdminHeaderActions() {
             fontSize: 9, fontWeight: 700, fontFamily: "'DM Mono',monospace",
             display: "flex", alignItems: "center", justifyContent: "center",
             padding: "0 4px", lineHeight: 1,
-            border: "2px solid var(--paper)",
+            border: `2px solid ${badgeBorder}`,
           }}>
             {total > 99 ? "99+" : total}
           </span>

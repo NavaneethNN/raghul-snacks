@@ -172,7 +172,7 @@ export function AdminSidebar() {
           <img src="/logo-footer.png" alt="Raghul Delights" style={{ height: "30px", width: "auto" }} />
           <span>Raghul Delights</span>
         </Link>
-        <AdminHeaderActions />
+        <AdminHeaderActions variant="dark" />
       </header>
 
       {/* ── Mobile bottom nav — horizontally scrollable, all items (≤768px) ── */}
