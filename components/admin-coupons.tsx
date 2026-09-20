@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { AdminHeaderActions } from "./admin-header-actions";
 import { ConfirmDialog } from "./admin-confirm-dialog";
 import styles from "./admin-table.module.css";
 
@@ -247,7 +246,6 @@ export function AdminCoupons() {
             </svg>
             Create Coupon
           </button>
-          <AdminHeaderActions />
         </div>
       </header>
 

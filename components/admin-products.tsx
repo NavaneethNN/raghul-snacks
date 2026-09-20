@@ -1,8 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AdminHeaderActions } from "./admin-header-actions";
 import { formatWeight } from "@/lib/catalog";
 import styles from "./admin-table.module.css";
 import productStyles from "./admin-products.module.css";
@@ -178,7 +177,6 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
           <h1>Products</h1>
           <p>Add, edit, and manage your product catalog.</p>
         </div>
-        <AdminHeaderActions />
         <button className={styles.primaryButton} onClick={() => setShowForm(true)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="12" y1="5" x2="12" y2="19"></line>

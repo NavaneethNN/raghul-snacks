@@ -1,8 +1,7 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-dashboard.module.css";
 
 const statusLabel: Record<string, string> = {
@@ -72,7 +71,6 @@ export function AdminDashboard() {
           <h1>Welcome back!</h1>
           <p>Here's what's happening in your store today.</p>
         </div>
-        <AdminHeaderActions />
       </header>
 
       {/* ── Metrics ── */}

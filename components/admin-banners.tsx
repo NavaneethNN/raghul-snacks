@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { AdminHeaderActions } from "./admin-header-actions";
 import { ConfirmDialog } from "./admin-confirm-dialog";
 import styles from "./admin-table.module.css";
 
@@ -213,7 +212,6 @@ export function AdminBanners() {
             </svg>
             Add Banner
           </button>
-          <AdminHeaderActions />
         </div>
       </header>
 

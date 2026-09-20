@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-sidebar.module.css";
 
 // All nav items flat — used in desktop sidebar AND mobile scroll nav
@@ -161,16 +162,20 @@ export function AdminSidebar() {
             <img src="/logo-footer.png" alt="Raghul Delights" style={{ height: "60px", width: "auto" }} />
             <span className={styles.shopName}>Raghul Delights</span>
           </Link>
+          {/* Bell in top-right of sidebar brand area */}
+          <AdminHeaderActions />
         </div>
         {desktopNav}
       </aside>
 
-      {/* ── Mobile top bar — brand only (≤768px) ── */}
+      {/* ── Mobile top bar — brand + bell (≤768px) ── */}
       <header className={styles.mobileTopBar}>
         <Link href="/admin" className={styles.mobileBrand}>
           <img src="/logo-footer.png" alt="Raghul Delights" style={{ height: "30px", width: "auto" }} />
           <span>Raghul Delights</span>
         </Link>
+        {/* Bell in mobile top bar */}
+        <AdminHeaderActions />
       </header>
 
       {/* ── Mobile bottom nav — horizontally scrollable, all items (≤768px) ── */}

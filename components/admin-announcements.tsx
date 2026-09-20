@@ -1,7 +1,6 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
-import { AdminHeaderActions } from "./admin-header-actions";
 import { ConfirmDialog } from "./admin-confirm-dialog";
 import styles from "./admin-table.module.css";
 
@@ -158,7 +157,6 @@ export function AdminAnnouncements() {
             </svg>
             Add Announcement
           </button>
-          <AdminHeaderActions />
         </div>
       </header>
 
