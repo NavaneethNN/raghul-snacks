@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "./admin-confirm-dialog";
@@ -39,6 +39,7 @@ export function AdminCombos() {
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
@@ -271,20 +272,19 @@ export function AdminCombos() {
                 <th>Price</th>
                 <th className={styles.colHide}>Offer Price</th>
                 <th>Actions</th>
+                <th className={styles.colHideDesktop} style={{ width: 28 }} />
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className={styles.emptyState}>
-                    <div>
-                      <p>Loading combos...</p>
-                    </div>
+                  <td colSpan={6} className={styles.emptyState}>
+                    <div><p>Loading combos...</p></div>
                   </td>
                 </tr>
               ) : combos.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className={styles.emptyState}>
+                  <td colSpan={6} className={styles.emptyState}>
                     <div>
                       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                         <rect x="3" y="8" width="18" height="12" rx="2"></rect>
@@ -300,72 +300,109 @@ export function AdminCombos() {
                   </td>
                 </tr>
               ) : (
-                combos.map((combo) => (
-                  <tr key={combo.id}>
-                    <td>
-                      <strong>{combo.title}</strong>
-                      <br />
-                      <code style={{ background: "#f3f4f6", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", color: "#6b7280" }}>
-                        {combo.slug}
-                      </code>
-                      {/* Products shown inline on mobile where the column is hidden */}
-                      {combo.items && combo.items.length > 0 && (
-                        <div className={styles.mobileOnly} style={{ marginTop: 4 }}>
-                          {combo.items.map((item) => (
-                            <span key={item.id} style={{ display: "block", fontSize: "12px", color: "#6b7280" }}>
-                              {item.productName} — {item.quantity}g
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </td>
-                    <td className={styles.colHide}>
-                      {combo.items && combo.items.length > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                          {combo.items.map((item) => (
-                            <span key={item.id} style={{ fontSize: "13px", color: "#6b7280" }}>
-                              {item.productName} - {item.quantity}g
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span style={{ color: "#9ca3af", fontSize: "13px" }}>No products</span>
-                      )}
-                    </td>
-                    <td><strong>{price.format(Number(combo.price))}</strong></td>
-                    <td className={styles.colHide}>
-                      {Number(combo.discount) > 0 ? (
-                        <strong style={{ color: "#10b981" }}>{price.format(Number(combo.discount))}</strong>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td>
-                      <div className={styles.actionButtons}>
-                        <button
-                          className={styles.iconButton}
-                          onClick={() => handleEdit(combo)}
-                          title="Edit"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                combos.map((combo) => {
+                  const isOpen = expanded === combo.id;
+                  return (
+                    <React.Fragment key={combo.id}>
+                      {/* ── Main row ── */}
+                      <tr
+                        onClick={() => setExpanded(isOpen ? null : combo.id)}
+                        style={{ cursor: "pointer" }}
+                        className={isOpen ? styles.rowOpen : ""}
+                      >
+                        <td>
+                          <strong>{combo.title}</strong>
+                          <br />
+                          <code style={{ background: "#f3f4f6", padding: "2px 6px", borderRadius: "4px", fontSize: "11px", color: "#6b7280" }}>
+                            {combo.slug}
+                          </code>
+                        </td>
+                        <td className={styles.colHide}>
+                          {combo.items && combo.items.length > 0 ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                              {combo.items.map((item) => (
+                                <span key={item.id} style={{ fontSize: "13px", color: "#6b7280" }}>
+                                  {item.productName} — {item.quantity}g
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span style={{ color: "#9ca3af", fontSize: "13px" }}>No products</span>
+                          )}
+                        </td>
+                        <td><strong>{price.format(Number(combo.price))}</strong></td>
+                        <td className={styles.colHide}>
+                          {Number(combo.discount) > 0
+                            ? <strong style={{ color: "#10b981" }}>{price.format(Number(combo.discount))}</strong>
+                            : "—"}
+                        </td>
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <div className={styles.actionButtons}>
+                            <button className={styles.iconButton} onClick={() => handleEdit(combo)} title="Edit">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                              </svg>
+                            </button>
+                            <button className={styles.iconButton} onClick={() => setConfirmDeleteId(combo.id)} title="Delete">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                        <td className={styles.colHideDesktop} style={{ textAlign: "center", padding: "0 4px" }}>
+                          <svg
+                            className={`${styles.rowChevron} ${isOpen ? styles.rowChevronUp : ""}`}
+                            width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                          >
+                            <polyline points="6 9 12 15 18 9"/>
                           </svg>
-                        </button>
-                        <button
-                          className={styles.iconButton}
-                          onClick={() => setConfirmDeleteId(combo.id)}
-                          title="Delete"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                        </td>
+                      </tr>
+
+                      {/* ── Expanded detail row ── */}
+                      {isOpen && (
+                        <tr className={styles.detailRowWrapper}>
+                          <td colSpan={6} style={{ padding: 0 }}>
+                            <div className={styles.rowDetail}>
+                              {/* Products */}
+                              {combo.items && combo.items.length > 0 && (
+                                <div className={styles.detailRow}>
+                                  <span className={styles.detailLabel}>Products</span>
+                                  <div className={styles.detailValue}>
+                                    {combo.items.map((item) => (
+                                      <div key={item.id} style={{ fontSize: 13, color: "var(--ink)", lineHeight: 1.8 }}>
+                                        {item.productName} — <span style={{ color: "#6b7280" }}>{item.quantity}g</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {/* Offer price */}
+                              {Number(combo.discount) > 0 && (
+                                <div className={styles.detailRow}>
+                                  <span className={styles.detailLabel}>Offer</span>
+                                  <span className={styles.detailValue} style={{ color: "#10b981", fontWeight: 700 }}>
+                                    {price.format(Number(combo.discount))}
+                                  </span>
+                                </div>
+                              )}
+                              {/* Slug */}
+                              <div className={styles.detailRow}>
+                                <span className={styles.detailLabel}>Slug</span>
+                                <code className={styles.detailValue} style={{ fontSize: 12, background: "#f3f4f6", padding: "1px 6px", borderRadius: 4 }}>
+                                  {combo.slug}
+                                </code>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })
               )}
             </tbody>
           </table>
