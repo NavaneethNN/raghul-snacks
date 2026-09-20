@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useMemo, useState } from "react";
+import { AdminHeaderActions } from "./admin-header-actions";
 import { useRouter } from "next/navigation";
 import styles from "./admin-orders.module.css";
 
@@ -117,6 +118,7 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
           <h1>Orders</h1>
           <p>Tap an order to see details and update its status.</p>
         </div>
+        <AdminHeaderActions />
       </header>
 
       {/* ── Metrics ── */}

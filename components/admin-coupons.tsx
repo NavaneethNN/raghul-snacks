@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect } from "react";
+import { AdminHeaderActions } from "./admin-header-actions";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "./admin-confirm-dialog";
 import styles from "./admin-table.module.css";
@@ -247,6 +248,7 @@ export function AdminCoupons() {
             Create Coupon
           </button>
         </div>
+        <AdminHeaderActions />
       </header>
 
       <section className={styles.workspace}>

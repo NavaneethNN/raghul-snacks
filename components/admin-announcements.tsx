@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
+import { AdminHeaderActions } from "./admin-header-actions";
 import { ConfirmDialog } from "./admin-confirm-dialog";
 import styles from "./admin-table.module.css";
 
@@ -158,22 +159,11 @@ export function AdminAnnouncements() {
             Add Announcement
           </button>
         </div>
+        <AdminHeaderActions />
       </header>
 
       {message && <p className={styles.message}>{message}</p>}
 
-      {/* Live preview strip */}
-      {sorted.filter((i) => i.active).length > 0 && (
-        <div style={{ background: "#243127", color: "#e5a52f", padding: "10px 16px", borderRadius: 8, marginBottom: 24, fontSize: 12, fontFamily: "'DM Mono',monospace", textAlign: "center", letterSpacing: "0.04em" }}>
-          {sorted.filter((i) => i.active).map((i, idx) => (
-            <span key={i.id} style={{ marginRight: idx < sorted.filter((x) => x.active).length - 1 ? "0" : "0" }}>
-              {idx > 0 && <span style={{ opacity: 0.4, margin: "0 16px" }}>·</span>}
-              {i.icon && <span style={{ marginRight: 6 }}>{i.icon}</span>}
-              {i.text}
-            </span>
-          ))}
-        </div>
-      )}
 
       <section className={styles.workspace}>
         {loading ? (
@@ -337,14 +327,6 @@ export function AdminAnnouncements() {
                   </select>
                 </div>
               </div>
-
-              {/* Live preview */}
-              {form.text && (
-                <div style={{ background: "#243127", color: "#e5a52f", padding: "10px 16px", borderRadius: 8, fontSize: 12, fontFamily: "'DM Mono',monospace", textAlign: "center", letterSpacing: "0.04em" }}>
-                  {form.icon && <span style={{ marginRight: 8 }}>{form.icon}</span>}
-                  {form.text}
-                </div>
-              )}
 
               <div className={styles.formActions}>
                 <button type="button" className={styles.secondaryButton} onClick={closeForm}>Cancel</button>

@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState } from "react";
+import { AdminHeaderActions } from "./admin-header-actions";
 import { useRouter } from "next/navigation";
 import { formatWeight } from "@/lib/catalog";
 import styles from "./admin-table.module.css";
@@ -184,6 +185,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
           </svg>
           Add Product
         </button>
+        <AdminHeaderActions />
       </header>
 
       {/* ── Table ── */}

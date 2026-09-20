@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState } from "react";
+import { AdminHeaderActions } from "./admin-header-actions";
 import { ConfirmDialog } from "./admin-confirm-dialog";
 import { useRouter } from "next/navigation";
 import styles from "./admin-table.module.css";
@@ -107,6 +108,7 @@ export function AdminMessages({ messages: initial }: { messages: Message[] }) {
           <h1>Messages {unread > 0 && <span style={{ fontSize: 16, fontWeight: 600, color: "var(--terracotta)", marginLeft: 8 }}>({unread} unread)</span>}</h1>
           <p>Contact form submissions from the website.</p>
         </div>
+        <AdminHeaderActions />
       </header>
 
       <section className={styles.workspace}>

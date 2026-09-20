@@ -161,7 +161,7 @@ export function AdminHeaderActions() {
     </>
   );
 
-  /* ── Bell button (self-contained inline styles) ── */
+  /* ── Bell button — light background (page header is var(--paper)) ── */
   return (
     <>
       <button
@@ -172,16 +172,26 @@ export function AdminHeaderActions() {
           position: "relative",
           width: 40, height: 40,
           display: "flex", alignItems: "center", justifyContent: "center",
-          background: "rgba(201, 95, 59, 0.08)",
-          border: "1.5px solid rgba(201, 95, 59, 0.25)",
+          background: "var(--paper)",
+          border: "1.5px solid var(--line)",
           borderRadius: 8,
           cursor: "pointer",
-          color: "var(--cream)",
+          color: "var(--ink)",
           transition: "background 0.2s, border-color 0.2s",
           flexShrink: 0,
         }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(201,95,59,0.18)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--terracotta)"; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(201,95,59,0.08)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(201,95,59,0.25)"; }}
+        onMouseEnter={(e) => {
+          const b = e.currentTarget as HTMLButtonElement;
+          b.style.background = "var(--cream)";
+          b.style.borderColor = "var(--terracotta)";
+          b.style.color = "var(--terracotta)";
+        }}
+        onMouseLeave={(e) => {
+          const b = e.currentTarget as HTMLButtonElement;
+          b.style.background = "var(--paper)";
+          b.style.borderColor = "var(--line)";
+          b.style.color = "var(--ink)";
+        }}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -195,7 +205,7 @@ export function AdminHeaderActions() {
             fontSize: 9, fontWeight: 700, fontFamily: "'DM Mono',monospace",
             display: "flex", alignItems: "center", justifyContent: "center",
             padding: "0 4px", lineHeight: 1,
-            border: "2px solid var(--ink)",
+            border: "2px solid var(--paper)",
           }}>
             {total > 99 ? "99+" : total}
           </span>

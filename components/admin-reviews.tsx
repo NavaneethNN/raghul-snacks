@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import React from "react";
+import { AdminHeaderActions } from "./admin-header-actions";
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "./admin-confirm-dialog";
 import styles from "./admin-table.module.css";
@@ -92,6 +93,7 @@ export function AdminReviews() {
             <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#92400e" }}>{pendingCount} pending</p>
           </div>
         )}
+        <AdminHeaderActions />
       </header>
 
       <section className={styles.workspace}>

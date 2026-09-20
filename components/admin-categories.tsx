@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./admin-table.module.css";
+import { AdminHeaderActions } from "./admin-header-actions";
 import { ConfirmDialog } from "./admin-confirm-dialog";
 
 type Category = {
@@ -142,6 +143,7 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
           </svg>
           Add Category
         </button>
+        <AdminHeaderActions />
       </header>
 
       <section className={styles.workspace}>

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-table.module.css";
 
 export function AdminShipping() {
@@ -75,6 +76,7 @@ export function AdminShipping() {
           <h1>Shipping Settings</h1>
           <p>Configure shipping rates and delivery zones.</p>
         </div>
+        <AdminHeaderActions />
       </header>
 
       <section className={styles.workspace}>

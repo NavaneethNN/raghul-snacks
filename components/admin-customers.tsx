@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import React from "react";
+import { AdminHeaderActions } from "./admin-header-actions";
 import { useEffect, useState } from "react";
 import styles from "./admin-table.module.css";
 
@@ -49,6 +50,7 @@ export function AdminCustomers() {
           <h1>Customers</h1>
           <p>View and manage your customer database.</p>
         </div>
+        <AdminHeaderActions />
       </header>
 
       <section className={styles.workspace}>
