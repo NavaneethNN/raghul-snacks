@@ -16,7 +16,7 @@ export function AdminSettings() {
           <h1>Settings</h1>
           <p>Configure your store settings and preferences.</p>
         </div>
-        <AdminHeaderActions />
+        <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
       <section className={styles.workspace}>

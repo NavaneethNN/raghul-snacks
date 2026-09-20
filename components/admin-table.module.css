@@ -851,3 +851,17 @@ div:has(> img + .imageDeleteButton):hover img {
     display: table-row;
   }
 }
+
+/* ── Notification bell visibility ──
+   Desktop: show in page header.
+   Mobile: hide from page header (bell is in the fixed top bar instead).
+   ───────────────────────────────── */
+.headerBell {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  .headerBell {
+    display: none;
+  }
+}

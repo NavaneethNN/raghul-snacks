@@ -143,7 +143,7 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
           </svg>
           Add Category
         </button>
-        <AdminHeaderActions />
+        <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
       <section className={styles.workspace}>

@@ -50,7 +50,7 @@ export function AdminCustomers() {
           <h1>Customers</h1>
           <p>View and manage your customer database.</p>
         </div>
-        <AdminHeaderActions />
+        <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
       <section className={styles.workspace}>

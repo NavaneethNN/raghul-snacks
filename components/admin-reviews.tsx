@@ -93,7 +93,7 @@ export function AdminReviews() {
             <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#92400e" }}>{pendingCount} pending</p>
           </div>
         )}
-        <AdminHeaderActions />
+        <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
       <section className={styles.workspace}>

@@ -118,7 +118,7 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
           <h1>Orders</h1>
           <p>Tap an order to see details and update its status.</p>
         </div>
-        <AdminHeaderActions />
+        <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
       {/* ── Metrics ── */}

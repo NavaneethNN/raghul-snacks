@@ -72,7 +72,7 @@ export function AdminDashboard() {
           <h1>Welcome back!</h1>
           <p>Here's what's happening in your store today.</p>
         </div>
-        <AdminHeaderActions />
+        <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
       {/* ── Metrics ── */}

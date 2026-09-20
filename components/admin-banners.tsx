@@ -214,7 +214,7 @@ export function AdminBanners() {
             Add Banner
           </button>
         </div>
-        <AdminHeaderActions />
+        <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
       <section className={styles.workspace}>

@@ -248,7 +248,7 @@ export function AdminCoupons() {
             Create Coupon
           </button>
         </div>
-        <AdminHeaderActions />
+        <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
       <section className={styles.workspace}>

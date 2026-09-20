@@ -159,7 +159,7 @@ export function AdminAnnouncements() {
             Add Announcement
           </button>
         </div>
-        <AdminHeaderActions />
+        <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
       {message && <p className={styles.message}>{message}</p>}

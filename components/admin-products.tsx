@@ -185,7 +185,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
           </svg>
           Add Product
         </button>
-        <AdminHeaderActions />
+        <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
       {/* ── Table ── */}

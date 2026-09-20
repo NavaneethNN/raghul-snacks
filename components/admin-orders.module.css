@@ -801,3 +801,14 @@
 
 
 }
+
+/* Bell hidden from page header on mobile — shown in fixed top bar instead */
+.headerBell {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  .headerBell {
+    display: none;
+  }
+}

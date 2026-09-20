@@ -76,7 +76,7 @@ export function AdminShipping() {
           <h1>Shipping Settings</h1>
           <p>Configure shipping rates and delivery zones.</p>
         </div>
-        <AdminHeaderActions />
+        <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
       <section className={styles.workspace}>

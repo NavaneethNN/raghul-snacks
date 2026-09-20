@@ -258,7 +258,7 @@ export function AdminCombos() {
           </svg>
           Create Combo
         </button>
-        <AdminHeaderActions />
+        <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
       <section className={styles.workspace}>
