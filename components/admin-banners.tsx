@@ -59,6 +59,12 @@ export function AdminBanners() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+
+  function showToast(msg: string, ok = true) {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3500);
+  }
   const [editingId, setEditingId] = useState<number | null>(null);
   const [imageInputType, setImageInputType] = useState<"url" | "file">("url");
   const [imagePreview, setImagePreview] = useState<string>("");
@@ -143,11 +149,11 @@ export function AdminBanners() {
         fetchBanners();
       } else {
         const error = await res.json();
-        alert(error.error || "Failed to save banner");
+        showToast(error.error || "Failed to save banner", false);
       }
     } catch (error) {
       console.error("Error saving banner:", error);
-      alert("Failed to save banner");
+      showToast("Failed to save banner.", false);
     } finally {
       setSaving(false);
     }
@@ -199,6 +205,22 @@ export function AdminBanners() {
 
   return (
     <div className={styles.page}>
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: 24, right: 24, zIndex: 2000,
+          background: toast.ok ? "#166534" : "#991b1b", color: "#fff",
+          padding: "12px 20px", borderRadius: 10,
+          font: "600 14px 'DM Sans',sans-serif",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.14)",
+          display: "flex", alignItems: "center", gap: 8,
+        }}>
+          {toast.ok
+            ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          }
+          {toast.msg}
+        </div>
+      )}
       <header className={styles.header}>
         <div>
           <p className={styles.eyebrow}>Banner Management</p>
@@ -226,9 +248,9 @@ export function AdminBanners() {
               <thead>
                 <tr>
                   <th>Title</th>
-                  <th>Coupon</th>
+                  <th className={styles.colHide}>Coupon</th>
                   <th>Status</th>
-                  <th>Created</th>
+                  <th className={styles.colHide}>Created</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -257,7 +279,7 @@ export function AdminBanners() {
                         <strong>{banner.title}</strong>
                         {banner.eyebrow && <p style={{ margin: 0, fontSize: "12px", color: "#6b7280" }}>{banner.eyebrow}</p>}
                       </td>
-                      <td>{banner.couponCode || "—"}</td>
+                      <td className={styles.colHide}>{banner.couponCode || "—"}</td>
                       <td>
                         <span
                           style={{
@@ -272,7 +294,7 @@ export function AdminBanners() {
                           {banner.active ? "Active" : "Inactive"}
                         </span>
                       </td>
-                      <td>{new Date(banner.createdAt).toLocaleDateString()}</td>
+                      <td className={styles.colHide}>{new Date(banner.createdAt).toLocaleDateString()}</td>
                       <td>
                         <div className={styles.actionButtons}>
                           <button className={styles.iconButton} onClick={() => openEdit(banner)} title="Edit">

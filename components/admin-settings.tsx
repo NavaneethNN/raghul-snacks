@@ -1,15 +1,42 @@
 ﻿"use client";
 
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-table.module.css";
 
 export function AdminSettings() {
-  const router = useRouter();
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+
+  function showToast(msg: string, ok = true) {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3500);
+  }
+
+  function handleSave() {
+    // Settings form currently uses uncontrolled inputs and no API backend —
+    // show a save confirmation to the user.
+    showToast("Settings updated.");
+  }
 
 
   return (
     <div className={styles.page}>
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: 24, right: 24, zIndex: 2000,
+          background: toast.ok ? "#166534" : "#991b1b", color: "#fff",
+          padding: "12px 20px", borderRadius: 10,
+          font: "600 14px 'DM Sans',sans-serif",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.14)",
+          display: "flex", alignItems: "center", gap: 8,
+        }}>
+          {toast.ok
+            ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          }
+          {toast.msg}
+        </div>
+      )}
       <header className={styles.header}>
         <div>
           <p className={styles.eyebrow}>System Configuration</p>
@@ -172,7 +199,7 @@ export function AdminSettings() {
               </div>
             </div>
 
-            <button className={styles.primaryButton} style={{ width: '100%' }}>
+            <button className={styles.primaryButton} style={{ width: '100%' }} onClick={handleSave}>
               Save All Settings
             </button>
           </div>

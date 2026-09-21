@@ -868,11 +868,26 @@ div:has(> img + .imageDeleteButton):hover img {
 
 /* Show only on mobile — complementary to colHide */
 .mobileOnly {
-  display: none;
+  display: none !important;
 }
 
 @media (max-width: 600px) {
   .mobileOnly {
-    display: inline;
+    display: inline-flex !important;
+  }
+}
+
+/* Expandable rows — pointer cursor only on mobile where expand is meaningful */
+.expandableRow {
+  cursor: default;
+}
+
+@media (max-width: 600px) {
+  .expandableRow {
+    cursor: pointer;
+  }
+
+  .expandableRow:hover {
+    background: var(--cream);
   }
 }

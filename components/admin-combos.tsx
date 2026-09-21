@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
-import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "./admin-confirm-dialog";
 import styles from "./admin-table.module.css";
 
@@ -30,7 +29,6 @@ type Combo = {
 };
 
 export function AdminCombos() {
-  const router = useRouter();
   const [combos, setCombos] = useState<Combo[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -238,7 +236,7 @@ export function AdminCombos() {
 
       fetchCombos();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete combo");
+      console.error(err instanceof Error ? err.message : "Failed to delete combo");
     }
   }
 
@@ -307,8 +305,7 @@ export function AdminCombos() {
                       {/* ── Main row ── */}
                       <tr
                         onClick={() => setExpanded(isOpen ? null : combo.id)}
-                        style={{ cursor: "pointer" }}
-                        className={isOpen ? styles.rowOpen : ""}
+                        className={`${styles.expandableRow} ${isOpen ? styles.rowOpen : ""}`}
                       >
                         <td>
                           <strong>{combo.title}</strong>

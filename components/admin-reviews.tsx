@@ -146,12 +146,11 @@ export function AdminReviews() {
                 return (
                   <React.Fragment key={r.id}>
                     {/* Main row */}
-                    <tr
-                      key={`row-${r.id}`}
-                      onClick={() => toggle(r.id)}
-                      style={{ cursor: "pointer" }}
-                      className={isOpen ? styles.rowOpen : ""}
-                    >
+                      <tr
+                        key={`row-${r.id}`}
+                        onClick={() => toggle(r.id)}
+                        className={`${styles.expandableRow} ${isOpen ? styles.rowOpen : ""}`}
+                      >
                       <td><strong>{r.customerName}</strong></td>
                       <td>
                         <span style={{ color: "#e5a52f" }}>{STARS.slice(0, r.rating)}</span>
@@ -183,7 +182,7 @@ export function AdminReviews() {
                             </button>
                           )}
                           <button className={styles.iconButton} title="Delete" disabled={busy === r.id} onClick={() => setConfirmDeleteId(r.id)}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                           </button>
                         </div>
                       </td>

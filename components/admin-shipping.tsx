@@ -1,14 +1,13 @@
 ﻿"use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-table.module.css";
 
 export function AdminShipping() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [settings, setSettings] = useState({
     standardShippingRate: "50",
     shiprocketApiKey: ""
@@ -59,10 +58,12 @@ export function AdminShipping() {
           })
         })
       ]);
-      alert("Settings saved successfully!");
+      setToast({ msg: "Settings saved.", ok: true });
+      setTimeout(() => setToast(null), 3500);
     } catch (error) {
       console.error("Error saving settings:", error);
-      alert("Failed to save settings");
+      setToast({ msg: "Failed to save settings.", ok: false });
+      setTimeout(() => setToast(null), 3500);
     } finally {
       setSaving(false);
     }
@@ -70,6 +71,22 @@ export function AdminShipping() {
 
   return (
     <div className={styles.page}>
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: 24, right: 24, zIndex: 2000,
+          background: toast.ok ? "#166534" : "#991b1b", color: "#fff",
+          padding: "12px 20px", borderRadius: 10,
+          font: "600 14px 'DM Sans',sans-serif",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.14)",
+          display: "flex", alignItems: "center", gap: 8,
+        }}>
+          {toast.ok
+            ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          }
+          {toast.msg}
+        </div>
+      )}
       <header className={styles.header}>
         <div>
           <p className={styles.eyebrow}>Shipping Configuration</p>

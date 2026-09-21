@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
-import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "./admin-confirm-dialog";
 import styles from "./admin-table.module.css";
 
@@ -30,7 +29,6 @@ type Coupon = {
 };
 
 export function AdminCoupons() {
-  const router = useRouter();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -227,7 +225,7 @@ export function AdminCoupons() {
 
       fetchCoupons();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete coupon");
+      console.error(err instanceof Error ? err.message : "Failed to delete coupon");
     }
   }
 

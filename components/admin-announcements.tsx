@@ -252,6 +252,23 @@ export function AdminAnnouncements() {
                     </td>
                     <td>
                       <div className={styles.actionButtons}>
+                        {/* Reorder buttons — shown only on mobile (desktop has the Order column) */}
+                        <button
+                          className={`${styles.iconButton} ${styles.mobileOnly}`}
+                          onClick={() => moveOrder(item, -1)}
+                          disabled={idx === 0 || busyId === item.id}
+                          title="Move up"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                        </button>
+                        <button
+                          className={`${styles.iconButton} ${styles.mobileOnly}`}
+                          onClick={() => moveOrder(item, 1)}
+                          disabled={idx === sorted.length - 1 || busyId === item.id}
+                          title="Move down"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
                         <button className={styles.iconButton} onClick={() => openEdit(item)} title="Edit">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -260,9 +277,8 @@ export function AdminAnnouncements() {
                         </button>
                         <button className={styles.iconButton} onClick={() => setConfirmDeleteId(item.id)} title="Delete">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                            <path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                           </svg>
                         </button>
                       </div>
