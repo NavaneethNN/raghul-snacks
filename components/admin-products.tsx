@@ -272,7 +272,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                           </svg>
                         </button>
                         <button
-                          className={`${styles.iconButton} ${productStyles.deleteBtn}`}
+                          className={styles.iconButton}
                           onClick={() => setConfirmDeleteId(product.id)}
                           title="Delete product"
                         >
