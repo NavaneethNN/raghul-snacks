@@ -10,6 +10,8 @@ import { validateCoupon } from "@/lib/coupons";
 import { createCashfreeOrder } from "@/lib/cashfree";
 import { getShiprocketQuote } from "@/lib/shiprocket";
 
+const isManual = process.env.DELIVERY_MODE === "manual";
+
 export async function POST(request: Request) {
   const payload = checkoutSchema.safeParse(await request.json());
   if (!payload.success) return NextResponse.json({ error: "Please check the delivery details and cart." }, { status: 400 });
@@ -34,13 +36,25 @@ export async function POST(request: Request) {
       discount = couponResult.discountAmount;
     }
 
-    const quote = await getShiprocketQuote(payload.data.pincode, weight, subtotal - discount);
-    if (!quote) return NextResponse.json({ error: "Shiprocket delivery configuration is incomplete." }, { status: 503 });
-    const total = Math.round((subtotal - discount + quote.charge) * 100) / 100;
+    let shippingCharge = 0;
+    let courierId: number | null = null;
+    let courierName = "Manual delivery";
+    let estimatedDeliveryDays: string | null = "3–7 business days";
+
+    if (!isManual) {
+      const quote = await getShiprocketQuote(payload.data.pincode, weight, subtotal - discount);
+      if (!quote) return NextResponse.json({ error: "Shiprocket delivery configuration is incomplete." }, { status: 503 });
+      shippingCharge = quote.charge;
+      courierId = quote.courierId;
+      courierName = quote.courierName;
+      estimatedDeliveryDays = quote.estimatedDeliveryDays;
+    }
+
+    const total = Math.round((subtotal - discount + shippingCharge) * 100) / 100;
     const orderId = `RS${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
     const origin = new URL(request.url).origin;
-    const payment = await createCashfreeOrder({ orderId, amount: total, customerName: payload.data.customerName, customerPhone: payload.data.phone, customerEmail: payload.data.email, returnUrl: `${origin}/orders`, shipping: quote.charge, courierId: quote.courierId });
-    return NextResponse.json({ orderId: payment.orderId, paymentSessionId: payment.paymentSessionId, environment: payment.environment, shipping: quote.charge, courierName: quote.courierName, estimatedDeliveryDays: quote.estimatedDeliveryDays });
+    const payment = await createCashfreeOrder({ orderId, amount: total, customerName: payload.data.customerName, customerPhone: payload.data.phone, customerEmail: payload.data.email, returnUrl: `${origin}/orders`, shipping: shippingCharge, courierId });
+    return NextResponse.json({ orderId: payment.orderId, paymentSessionId: payment.paymentSessionId, environment: payment.environment, shipping: shippingCharge, courierName, estimatedDeliveryDays });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to start payment.";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -10,6 +10,8 @@ import { validateCoupon } from "@/lib/coupons";
 import { getCashfreeOrder, getCashfreePaymentMethod } from "@/lib/cashfree";
 import { createShiprocketShipment } from "@/lib/shiprocket";
 
+const isManual = process.env.DELIVERY_MODE === "manual";
+
 export async function POST(request: Request) {
   const payload = cashfreeVerifiedOrderSchema.safeParse(await request.json());
   if (!payload.success) return NextResponse.json({ error: "Invalid payment verification payload." }, { status: 400 });
@@ -94,8 +96,10 @@ export async function POST(request: Request) {
     );
 
     try {
-      const shipment = await createShiprocketShipment({ orderNumber, customerName: payload.data.customerName, phone: payload.data.phone, email: payload.data.email || null, address: payload.data.address, city: payload.data.city, state: payload.data.state, pincode: payload.data.pincode, subtotal, shipping, courierId: Number.isFinite(courierId) ? courierId : null, lines });
-      if (shipment) await db.update(orders).set({ shiprocketOrderId: String(shipment.order_id), shipmentId: shipment.shipment_id ? String(shipment.shipment_id) : null, awbCode: shipment.awb_code ?? null, shippingStatus: "created" }).where(eq(orders.id, order.id));
+      if (!isManual) {
+        const shipment = await createShiprocketShipment({ orderNumber, customerName: payload.data.customerName, phone: payload.data.phone, email: payload.data.email || null, address: payload.data.address, city: payload.data.city, state: payload.data.state, pincode: payload.data.pincode, subtotal, shipping, courierId: Number.isFinite(courierId) ? courierId : null, lines });
+        if (shipment) await db.update(orders).set({ shiprocketOrderId: String(shipment.order_id), shipmentId: shipment.shipment_id ? String(shipment.shipment_id) : null, awbCode: shipment.awb_code ?? null, shippingStatus: "created" }).where(eq(orders.id, order.id));
+      }
     } catch {
       await db.update(orders).set({ shippingStatus: "failed" }).where(eq(orders.id, order.id));
     }
