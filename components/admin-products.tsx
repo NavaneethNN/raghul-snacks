@@ -164,8 +164,17 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
         const result = await res.json();
         throw new Error(result.error || `Failed to ${editingProduct ? "update" : "create"} product`);
       }
-      handleCloseForm();
-      showToast(editingProduct ? `"${data.name}" updated successfully` : `"${data.name}" added to catalog`);
+      const saved = await res.json() as Product;
+
+      if (!editingProduct) {
+        // After creating, switch to edit mode so variants section becomes available
+        showToast(`"${data.name}" added — you can now add weight variants below`);
+        setEditingProduct(saved);
+        setVariants([]);
+      } else {
+        handleCloseForm();
+        showToast(`"${data.name}" updated successfully`);
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : `Failed to ${editingProduct ? "update" : "create"} product`);
