@@ -8,7 +8,17 @@ import { setBuyNowItem } from "@/lib/buy-now";
 import { useRouter } from "next/navigation";
 import { WishlistButton } from "@/components/wishlist-button";
 
-export function ProductDetailView({ product }: { product: any }) {
+type Variant = {
+  id: number;
+  productId: number;
+  weight: string;
+  price: string;
+  offerPrice: string | null;
+  sortOrder: number;
+  active: boolean;
+};
+
+export function ProductDetailView({ product, variants = [] }: { product: any; variants?: Variant[] }) {
   const router = useRouter();
   const { addItem, getItemQuantity } = useCart();
   const { show } = useToast();
@@ -16,36 +26,58 @@ export function ProductDetailView({ product }: { product: any }) {
   const [added, setAdded] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
 
+  // If variants exist, default to the first one
+  const hasVariants = variants.length > 0;
+  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(hasVariants ? variants[0] : null);
+
+  // Prices come from selected variant when available, otherwise fall back to product
+  const basePrice = selectedVariant
+    ? parseFloat(selectedVariant.price)
+    : parseFloat(product.price) || 0;
+  const displayPrice = selectedVariant
+    ? (selectedVariant.offerPrice ? parseFloat(selectedVariant.offerPrice) : basePrice)
+    : (product.offerPrice ? parseFloat(product.offerPrice) : basePrice);
+  const displayWeight = selectedVariant ? selectedVariant.weight : product.weight;
+
+  // Cart item ID is unique per product+variant to allow multiple variants in cart
+  const cartItemId = selectedVariant
+    ? `${product.id}-v${selectedVariant.id}`
+    : String(product.id);
+
   const cartProduct = {
     ...product,
-    id: String(product.id),
+    id: cartItemId,
     slug: product.slug || "",
     name: product.name || "",
-    price: parseFloat(product.price) || 0,
-    offerPrice: product.offerPrice ? parseFloat(product.offerPrice) : parseFloat(product.price),
-    weight: product.weight || "",
+    price: basePrice,
+    offerPrice: displayPrice,
+    weight: displayWeight,
     description: product.description || "",
     ingredients: product.ingredients || "",
     category: product.categorySlug || product.category || "",
     image: product.image || "",
   };
 
-  const cartQuantity = getItemQuantity(product.id);
+  const cartQuantity = getItemQuantity(cartItemId);
   const inCart = cartQuantity > 0;
   const isAdded = inCart || added;
-  const displayPrice = cartProduct.offerPrice;
-  const originalPrice = cartProduct.price;
+  const hasDiscount = displayPrice < basePrice;
+
   const categoryName =
     product.categoryName ||
     product.categorySlug?.replace("-", " ") ||
     product.category?.replace("-", " ") ||
     "";
-  const hasDiscount = product.offerPrice && displayPrice < originalPrice;
+
+  function handleVariantSelect(variant: Variant) {
+    setSelectedVariant(variant);
+    setAdded(false); // reset added state when switching variant
+  }
 
   function handleAddToCart() {
     if (isAdded) return;
     addItem(cartProduct, quantity);
-    show(`✓ ${product.name} added to cart`);
+    show(`✓ ${product.name} (${formatWeight(displayWeight)}) added to cart`);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 2200);
   }
@@ -85,12 +117,31 @@ export function ProductDetailView({ product }: { product: any }) {
         <div className="price-section">
           <div className="price">
             <strong>{formatPrice(displayPrice)}</strong>
-            {hasDiscount && <s>{formatPrice(originalPrice)}</s>}
+            {hasDiscount && <s>{formatPrice(basePrice)}</s>}
           </div>
           {hasDiscount && (
-            <span className="savings">Save {formatPrice(originalPrice - displayPrice)}</span>
+            <span className="savings">Save {formatPrice(basePrice - displayPrice)}</span>
           )}
         </div>
+
+        {/* Weight / variant selector */}
+        {hasVariants ? (
+          <div className="variant-selector">
+            <p className="variant-label">Size</p>
+            <div className="variant-options">
+              {variants.map((v) => (
+                <button
+                  key={v.id}
+                  type="button"
+                  className={`variant-btn${selectedVariant?.id === v.id ? " variant-btn--active" : ""}`}
+                  onClick={() => handleVariantSelect(v)}
+                >
+                  {formatWeight(v.weight)}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <p className="description">{product.description}</p>
 
@@ -101,7 +152,7 @@ export function ProductDetailView({ product }: { product: any }) {
             </svg>
             <div>
               <span>Weight</span>
-              <strong>{formatWeight(product.weight)}</strong>
+              <strong>{formatWeight(displayWeight)}</strong>
             </div>
           </div>
           <div className="detail-item">
@@ -126,7 +177,7 @@ export function ProductDetailView({ product }: { product: any }) {
           </div>
         </div>
 
-        {/* Purchase row: quantity + Add to Cart + Buy Now all in one line */}
+        {/* Purchase row */}
         <div className="product-purchase-row">
           <div className="quantity-selector-compact">
             <button

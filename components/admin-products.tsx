@@ -1,11 +1,14 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
 import { useRouter } from "next/navigation";
 import { formatWeight } from "@/lib/catalog";
 import styles from "./admin-table.module.css";
 import productStyles from "./admin-products.module.css";
+
+type Variant = { id: number; weight: string; price: string; offerPrice: string | null; sortOrder: number; active: boolean };
+type NewVariant = { weight: string; price: string; offerPrice: string; active: boolean };
 
 type Product = {
   id: number;
@@ -48,6 +51,39 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
   const [productName, setProductName] = useState("");
   const [productSlug, setProductSlug] = useState("");
 
+  // Variants
+  const [variants, setVariants] = useState<Variant[]>([]);
+  const [newVariant, setNewVariant] = useState<NewVariant>({ weight: "", price: "", offerPrice: "", active: true });
+  const [variantLoading, setVariantLoading] = useState(false);
+
+  async function loadVariants(productId: number) {
+    try {
+      const res = await fetch(`/api/admin/products/${productId}/variants`);
+      if (res.ok) setVariants(await res.json());
+    } catch { setVariants([]); }
+  }
+
+  async function addVariant(productId: number) {
+    if (!newVariant.weight.trim() || !newVariant.price) return;
+    setVariantLoading(true);
+    try {
+      const res = await fetch(`/api/admin/products/${productId}/variants`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weight: newVariant.weight, price: parseFloat(newVariant.price), offerPrice: newVariant.offerPrice ? parseFloat(newVariant.offerPrice) : null }),
+      });
+      if (res.ok) {
+        await loadVariants(productId);
+        setNewVariant({ weight: "", price: "", offerPrice: "", active: true });
+      }
+    } finally { setVariantLoading(false); }
+  }
+
+  async function deleteVariant(productId: number, variantId: number) {
+    await fetch(`/api/admin/products/${productId}/variants/${variantId}`, { method: "DELETE" });
+    await loadVariants(productId);
+  }
+
   function showToast(msg: string, ok = true) {
     setToast({ msg, ok });
     setTimeout(() => setToast(null), 3500);
@@ -75,6 +111,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     setImagePreview(product.image || "");
     setImageData(product.image || "");
     setError("");
+    setVariants([]);
+    loadVariants(product.id);
   }
 
   function handleCloseForm() {
@@ -85,6 +123,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     setImagePreview("");
     setImageData("");
     setError("");
+    setVariants([]);
+    setNewVariant({ weight: "", price: "", offerPrice: "", active: true });
   }
 
   function handleNameChange(name: string) {
@@ -419,6 +459,62 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                   </>
                 )}
               </div>
+
+              {/* ── Variants section — only shown when editing an existing product ── */}
+              {editingProduct && (
+                <div style={{ borderTop: "1px solid var(--line)", paddingTop: 20, marginTop: 4 }}>
+                  <p style={{ margin: "0 0 12px", font: "600 13px 'DM Sans',sans-serif", color: "var(--ink)" }}>
+                    Weight Variants
+                    <small style={{ fontWeight: 400, color: "#6b7280", marginLeft: 8 }}>Allow customers to choose a size with its own price</small>
+                  </p>
+
+                  {/* Existing variants */}
+                  {variants.length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+                      {variants.map((v) => (
+                        <div key={v.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--cream)", borderRadius: 8, border: "1px solid var(--line)" }}>
+                          <span style={{ flex: 1, font: "600 14px 'DM Sans',sans-serif" }}>{v.weight}</span>
+                          <span style={{ fontSize: 13, color: "#6b7280" }}>₹{v.price}{v.offerPrice ? ` → ₹${v.offerPrice}` : ""}</span>
+                          <button
+                            type="button"
+                            className={styles.iconButton}
+                            onClick={() => deleteVariant(editingProduct.id, v.id)}
+                            title="Remove variant"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add new variant */}
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr auto", gap: 8, alignItems: "end" }}>
+                    <div className={styles.field}>
+                      <label>Weight</label>
+                      <input type="text" placeholder="e.g. 250g" value={newVariant.weight} onChange={(e) => setNewVariant({ ...newVariant, weight: e.target.value })} />
+                    </div>
+                    <div className={styles.field}>
+                      <label>Price (₹)</label>
+                      <input type="number" min="0" step="0.01" placeholder="0.00" value={newVariant.price} onChange={(e) => setNewVariant({ ...newVariant, price: e.target.value })} />
+                    </div>
+                    <div className={styles.field}>
+                      <label>Offer Price</label>
+                      <input type="number" min="0" step="0.01" placeholder="Optional" value={newVariant.offerPrice} onChange={(e) => setNewVariant({ ...newVariant, offerPrice: e.target.value })} />
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.primaryButton}
+                      disabled={variantLoading || !newVariant.weight.trim() || !newVariant.price}
+                      onClick={() => addVariant(editingProduct.id)}
+                      style={{ marginBottom: 0, alignSelf: "flex-end" }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className={styles.checkboxGroup}>
                 <label className={styles.checkbox}>
                   <input type="checkbox" name="featured" defaultChecked={editingProduct?.featured} />

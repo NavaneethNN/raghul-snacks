@@ -3,8 +3,8 @@ import { ProductCard } from "@/components/product/product-card";
 import { ProductDetailView } from "@/components/product/product-detail-view";
 import { ProductReviews } from "@/components/product/product-reviews";
 import { getDb } from "@/lib/db";
-import { products, categories } from "@/drizzle/schema";
-import { eq } from "drizzle-orm";
+import { products, categories, productVariants } from "@/drizzle/schema";
+import { and, eq } from "drizzle-orm";
 
 export const dynamic = 'force-dynamic';
 
@@ -37,6 +37,19 @@ async function getProduct(slug: string) {
   } catch (error) {
     console.error('Error fetching product:', error);
     return null;
+  }
+}
+
+async function getVariants(productId: number) {
+  try {
+    const db = getDb();
+    return await db
+      .select()
+      .from(productVariants)
+      .where(and(eq(productVariants.productId, productId), eq(productVariants.active, true)))
+      .orderBy(productVariants.sortOrder);
+  } catch {
+    return [];
   }
 }
 
@@ -75,12 +88,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   if (!product) notFound();
 
-  const products = await getProducts();
-  const recommendations = products.filter((item: any) => item.id !== product.id).slice(0, 3);
+  const variants = await getVariants(product.id);
+  const allProducts = await getProducts();
+  const recommendations = allProducts.filter((item: any) => item.id !== product.id).slice(0, 3);
 
   return (
     <>
-      <ProductDetailView product={product} />
+      <ProductDetailView product={product} variants={variants} />
 
       <ProductReviews productId={product.id} />
 
