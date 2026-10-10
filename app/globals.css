@@ -3728,11 +3728,6 @@ footer {
   background: var(--terracotta);
   color: #fff;
 }
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--line);
-}
 
 .price-section .price {
   display: flex;
