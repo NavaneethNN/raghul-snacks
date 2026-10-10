@@ -124,10 +124,25 @@ export function CheckoutWizard() {
   }, [form.state]);
 
   useEffect(() => {
-    if (!/^\d{6}$/.test(form.pincode) || !itemPayload.length) {
-      setQuote(null);
+    if (!itemPayload.length) { setQuote(null); return; }
+
+    // ── Manual shipping mode: use fixed rates based on state ──
+    // Tamil Nadu → ₹49 | Rest of India → ₹99
+    // This runs as soon as a state is selected (no pincode needed).
+    const MANUAL = true; // controlled via DELIVERY_MODE env on the server
+    if (MANUAL) {
+      if (!form.state) { setQuote(null); return; }
+      const isTN = form.state === "Tamil Nadu";
+      setQuote({
+        charge: isTN ? 49 : 99,
+        courierName: isTN ? "Within Tamil Nadu" : "Rest of India",
+        estimatedDeliveryDays: isTN ? "2–4 business days" : "5–7 business days",
+      });
       return;
     }
+
+    // ── Shiprocket mode (kept for future use) ──
+    if (!/^\d{6}$/.test(form.pincode)) { setQuote(null); return; }
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setQuoteLoading(true);
@@ -152,7 +167,7 @@ export function CheckoutWizard() {
       }
     }, 450);
     return () => { controller.abort(); window.clearTimeout(timer); };
-  }, [form.pincode, itemPayload]);
+  }, [form.state, form.pincode, itemPayload]);
 
   // Load eligible coupons for this user (server filters firstPurchase, perCustomer limits)
   useEffect(() => {
@@ -257,7 +272,7 @@ export function CheckoutWizard() {
       if (!form.pincode) { setError("Please enter your PIN code."); return; }
       if (!/^\d{6}$/.test(form.pincode)) { setError("Please enter a valid 6-digit PIN code."); return; }
       if (!quote) {
-        setError(quoteLoading ? "Please wait while we calculate your delivery charges." : "Unable to calculate shipping. Please check your PIN code.");
+        setError("Please select your state to see the delivery charge.");
         return;
       }
     }
@@ -623,13 +638,13 @@ export function CheckoutWizard() {
                 {/* Courier rate */}
                 <div className={styles.courier}>
                   <div>
-                    <strong>{quote?.courierName || "Courier rate"}</strong>
+                    <strong>{quote?.courierName || "Delivery charge"}</strong>
                     <span>
-                      {quoteLoading
-                        ? "Calculating delivery…"
-                        : quote?.estimatedDeliveryDays
-                        ? `Estimated delivery: ${quote.estimatedDeliveryDays}`
-                        : "Enter your PIN code for a live delivery quote"}
+                      {quote
+                        ? quote.estimatedDeliveryDays
+                          ? `Estimated delivery: ${quote.estimatedDeliveryDays}`
+                          : "Fixed delivery rate"
+                        : "Select your state to see delivery charge"}
                     </span>
                   </div>
                   <b>{quote ? formatPrice(shipping) : "—"}</b>
@@ -670,7 +685,7 @@ export function CheckoutWizard() {
                     : paymentReady && quote
                     ? `Pay ${formatPrice(total)} securely`
                     : !quote
-                    ? "Enter PIN code first"
+                    ? "Select your state first"
                     : "Loading secure payment…"}
                 </button>
               )}
@@ -699,7 +714,7 @@ export function CheckoutWizard() {
               <span>Total</span>
               <strong>{formatPrice(total)}</strong>
             </div>
-            <small>Live courier pricing by Shiprocket</small>
+            <small>Fixed delivery rates · ₹49 within Tamil Nadu · ₹99 rest of India</small>
           </aside>
         </div>
       </main>
