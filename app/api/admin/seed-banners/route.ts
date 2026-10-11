@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { getDb } from "@/lib/db";
 import { banners } from "@/drizzle/schema";
+import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 
 export async function POST() {
+  const cookieStore = await cookies();
+  if (!isValidAdminSession(cookieStore.get(adminCookieName())?.value)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const db = getDb();
     

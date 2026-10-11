@@ -1,9 +1,15 @@
 import { desc, count, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { orders, products, customers } from "@/drizzle/schema";
 import { getDb } from "@/lib/db";
+import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 
 export async function GET() {
+  const cookieStore = await cookies();
+  if (!isValidAdminSession(cookieStore.get(adminCookieName())?.value)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const db = getDb();
 

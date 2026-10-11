@@ -498,7 +498,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                   )}
 
                   {/* Add new variant */}
-                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr auto", gap: 8, alignItems: "end" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 8, alignItems: "end" }}>
                     <div className={styles.field}>
                       <label>Weight</label>
                       <input type="text" placeholder="e.g. 250g" value={newVariant.weight} onChange={(e) => setNewVariant({ ...newVariant, weight: e.target.value })} />
@@ -516,7 +516,6 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                       className={styles.primaryButton}
                       disabled={variantLoading || !newVariant.weight.trim() || !newVariant.price}
                       onClick={() => addVariant(editingProduct.id)}
-                      style={{ marginBottom: 0, alignSelf: "flex-end" }}
                     >
                       Add
                     </button>
