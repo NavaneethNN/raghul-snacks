@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, ilike, or } from "drizzle-orm";
 import { products, categories } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const filter = searchParams.get("filter");
 
     const db = getDb();
-    let productList = db
+    let productQuery = db
       .select({
         id: products.id,
         name: products.name,
@@ -35,13 +35,21 @@ export async function GET(request: NextRequest) {
         image: products.image,
         featured: products.featured,
         bestseller: products.bestseller,
+        shelfLife: products.shelfLife,
         createdAt: products.createdAt,
       })
       .from(products)
       .leftJoin(categories, eq(products.categoryId, categories.id))
-      .orderBy(desc(products.createdAt));
+      .orderBy(desc(products.createdAt))
+      .$dynamic();
 
-    const result = await productList;
+    if (query) {
+      productQuery = productQuery.where(
+        or(ilike(products.name, `%${query}%`), ilike(products.slug, `%${query}%`))
+      );
+    }
+
+    const result = await productQuery;
 
     return NextResponse.json(result);
   } catch (error) {
@@ -94,6 +102,7 @@ export async function POST(request: NextRequest) {
       image: image || null,
       featured: featured || false,
       bestseller: bestseller || false,
+      shelfLife: body.shelfLife || null,
     }).returning();
 
     return NextResponse.json(newProduct, { status: 201 });

@@ -21,7 +21,7 @@ export async function PATCH(
     const { id: idParam } = await params;
     const id = parseInt(idParam);
     const body = await request.json();
-    const { title, slug, price, offerPrice, image, items } = body;
+    const { title, slug, price, offerPrice, description, image, items } = body;
 
     if (!title || !slug || !price) {
       return NextResponse.json(
@@ -40,6 +40,7 @@ export async function PATCH(
         slug,
         price: price.toString(),
         discount: offerPrice ? offerPrice.toString() : "0",
+        description: description || null,
         image: image || null,
       })
       .where(eq(combos.id, id));

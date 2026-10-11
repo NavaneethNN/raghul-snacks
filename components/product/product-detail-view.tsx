@@ -166,7 +166,7 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
             </svg>
             <div>
               <span>Shelf life</span>
-              <strong>30 days</strong>
+              <strong>{product.shelfLife || '30 days'}</strong>
             </div>
           </div>
           <div className="detail-item">

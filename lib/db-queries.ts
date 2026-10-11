@@ -34,6 +34,7 @@ export async function getProductsWithVariants(db: any) {
       image: products.image,
       featured: products.featured,
       bestseller: products.bestseller,
+      shelfLife: products.shelfLife,
       createdAt: products.createdAt,
     })
     .from(products)

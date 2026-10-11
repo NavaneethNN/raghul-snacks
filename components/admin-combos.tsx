@@ -43,6 +43,7 @@ export function AdminCombos() {
     slug: "",
     price: "",
     offerPrice: "",
+    description: "",
     image: "",
   });
   const [selectedItems, setSelectedItems] = useState<ComboItem[]>([]);
@@ -114,6 +115,7 @@ export function AdminCombos() {
       slug: combo.slug,
       price: combo.price,
       offerPrice: combo.discount, // Map discount to offerPrice
+      description: (combo as any).description || "",
       image: combo.image || "",
     });
     setSelectedItems(combo.items?.map(item => ({
@@ -129,7 +131,7 @@ export function AdminCombos() {
   function handleCloseForm() {
     setShowForm(false);
     setEditingCombo(null);
-    setFormData({ title: "", slug: "", price: "", offerPrice: "", image: "" });
+    setFormData({ title: "", slug: "", price: "", offerPrice: "", description: "", image: "" });
     setSelectedItems([]);
     setShowProductList(false);
     setImagePreview("");
@@ -207,6 +209,7 @@ export function AdminCombos() {
           slug: formData.slug,
           price: parseFloat(formData.price),
           offerPrice: formData.offerPrice ? parseFloat(formData.offerPrice) : null,
+          description: formData.description || null,
           image: imageValue || null,
           items: selectedItems,
         }),
@@ -444,6 +447,16 @@ export function AdminCombos() {
                   required
                 />
                 <small style={{ color: '#6b7280', fontSize: '12px' }}>Auto-generated from title</small>
+              </div>
+              <div className={styles.field}>
+                <label>Description <small style={{ color: "#9ca3af", fontWeight: 400 }}>optional</small></label>
+                <textarea
+                  rows={3}
+                  placeholder="Describe what's special about this combo…"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange("description", e.target.value)}
+                  style={{ resize: "vertical" }}
+                />
               </div>
               <div className={styles.formGrid}>
                 <div className={styles.field}>

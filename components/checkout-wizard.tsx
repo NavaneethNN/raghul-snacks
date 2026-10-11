@@ -7,7 +7,7 @@ import { useCart } from "@/components/cart/cart-provider";
 import { formatPrice } from "@/lib/catalog";
 import { clearBuyNowItem, readBuyNowItem, type BuyNowItem } from "@/lib/buy-now";
 import styles from "./checkout-wizard.module.css";
-type CheckoutForm = { customerName: string; phone: string; email: string; password: string; confirmPassword: string; address: string; city: string; state: string; pincode: string };
+type CheckoutForm = { customerName: string; phone: string; email: string; address: string; city: string; state: string; pincode: string };
 type ShippingQuote = { charge: number; courierName: string; estimatedDeliveryDays: string | null };
 type PaymentOrder = { orderId: string; paymentSessionId: string; environment: "sandbox" | "production"; error?: string };
 type AppliedCoupon = { code: string; name: string | null; discountType: string; value: string; discountAmount: number };
@@ -34,8 +34,6 @@ export function CheckoutWizard() {
     customerName: "",
     phone: "",
     email: "",
-    password: "",
-    confirmPassword: "",
     address: "",
     city: "",
     state: "",

@@ -243,6 +243,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
       image: imageValue,
       featured: formData.get("featured") === "on",
       bestseller: formData.get("bestseller") === "on",
+      shelfLife: (formData.get("shelfLife") as string) || null,
     };
 
     try {
@@ -607,6 +608,10 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
               <div className={styles.field}>
                 <label>Ingredients</label>
                 <textarea name="ingredients" rows={3} placeholder="List ingredients…" defaultValue={editingProduct?.ingredients ?? ""}></textarea>
+              </div>
+              <div className={styles.field}>
+                <label>Shelf Life <small style={{ color: "#9ca3af", fontWeight: 400 }}>optional</small></label>
+                <input type="text" name="shelfLife" placeholder="e.g., 30 days" defaultValue={(editingProduct as any)?.shelfLife ?? ""} />
               </div>
 
               {/* Image */}

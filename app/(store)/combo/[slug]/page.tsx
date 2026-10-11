@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { ComboActions } from "@/components/combo-actions";
 import { getDb } from "@/lib/db";
 import { combos, comboItems, products } from "@/drizzle/schema";
@@ -12,7 +11,7 @@ async function getCombo(slug: string) {
     const db = getDb();
     const result = await db.select().from(combos).where(eq(combos.slug, slug)).limit(1);
     if (!result || result.length === 0) return null;
-    
+
     const combo = result[0];
     const items = await db
       .select({
@@ -24,7 +23,7 @@ async function getCombo(slug: string) {
       .from(comboItems)
       .leftJoin(products, eq(comboItems.productId, products.id))
       .where(eq(comboItems.comboId, combo.id));
-    
+
     return { ...combo, items };
   } catch (error) {
     console.error('Error fetching combo:', error);
@@ -63,41 +62,16 @@ export default async function ComboDetailPage({ params }: { params: Promise<{ sl
             <strong>₹{displayPrice}</strong>
             {hasDiscount && <s>₹{originalPrice}</s>}
           </div>
-          {hasDiscount && <span className="savings">Save ₹{savings}</span>}
+          {hasDiscount && <span className="savings">Save ₹{savings.toFixed(0)}</span>}
         </div>
 
         <p className="description">
-          A carefully curated combo of {combo.items?.length || 0} delicious items,
-          perfect for gifting or enjoying with family.
+          {combo.description || 'A carefully curated combo, perfect for gifting or enjoying with family.'}
         </p>
 
-        <div className="detail-list">
-          <div className="detail-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-            </svg>
-            <div>
-              <span>Items Included</span>
-              <strong>{combo.items?.length || 0} products</strong>
-            </div>
-          </div>
-          <div className="detail-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M12 6v6l4 2"></path>
-            </svg>
-            <div>
-              <span>Freshness</span>
-              <strong>Made to order</strong>
-            </div>
-          </div>
-        </div>
-
-        <ComboActions combo={combo} />
-
         {combo.items && combo.items.length > 0 && (
-          <div style={{ marginTop: '32px' }}>
-            <h3 style={{ fontSize: '20px', marginBottom: '16px', fontFamily: 'Playfair Display, serif' }}>
+          <div style={{ marginTop: '8px', marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '18px', marginBottom: '12px', fontFamily: 'Playfair Display, serif' }}>
               What&apos;s in this combo
             </h3>
             <ul style={{
@@ -105,30 +79,32 @@ export default async function ComboDetailPage({ params }: { params: Promise<{ sl
               padding: 0,
               display: 'flex',
               flexDirection: 'column',
-              gap: '12px'
+              gap: '10px'
             }}>
               {combo.items.map((item: any, index: number) => (
                 <li key={index} style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '12px',
-                  padding: '12px',
+                  padding: '10px 14px',
                   background: 'var(--cream)',
                   borderRadius: '8px',
                   border: '1px solid var(--line)'
                 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--terracotta)" strokeWidth="2.5">
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
-                  <span style={{ flex: 1, fontWeight: 500 }}>{item.name || 'Product'}</span>
-                  <span style={{ fontSize: '14px', color: '#6b7280' }}>
-                    ×{item.quantity}
+                  <span style={{ flex: 1, fontWeight: 500, fontSize: '15px' }}>{item.name || 'Product'}</span>
+                  <span style={{ fontSize: '13px', color: '#6b7280', fontFamily: "'DM Mono', monospace" }}>
+                    {item.quantity}g
                   </span>
                 </li>
               ))}
             </ul>
           </div>
         )}
+
+        <ComboActions combo={combo} />
       </div>
     </section>
   );
