@@ -39,6 +39,9 @@ export async function priceOrder(items: RequestedItem[]) {
   const lines = parsed.map((item) => {
     const product = dbProducts.find((p) => p.id === item.baseId);
     if (!product) throw new Error("One or more products are no longer available.");
+    if (typeof product.stock === "number" && product.stock < item.quantity) {
+      throw new Error(`"${product.name}" is currently out of stock or has insufficient stock to fill your order.`);
+    }
 
     let offerPrice: number;
     let name = product.name;

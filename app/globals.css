@@ -2047,20 +2047,6 @@ h2 i {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.variant-icon {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 253, 248, 0.90);
-  border-radius: 4px;
-  padding: 3px 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.10);
-}
-
 .product-copy {
   padding: 16px;
 }
@@ -2187,11 +2173,6 @@ h2 i {
   .product-visual b {
     font-size: 8px;
     padding: 2px 4px;
-  }
-
-  .variant-icon svg {
-    width: 12px;
-    height: 12px;
   }
 
   .placeholder-icon {
@@ -3776,6 +3757,30 @@ footer {
   border: 1px solid var(--sage);
 }
 
+.out-of-stock-badge {
+  display: inline-block;
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  padding: 6px 14px;
+  border-radius: 24px;
+  font: 600 13px 'DM Sans', sans-serif;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+/* Out-of-stock label on product cards */
+.product-visual .out-of-stock-label {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(220, 38, 38, 0.9);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font: 600 11px 'DM Sans', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .description {
   font-size: 15px;
   line-height: 1.6;
@@ -4973,6 +4978,10 @@ footer {
   .detail-list {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .detail-list .detail-item:last-child {
+    grid-column: 1 / -1;
+  }
 }
 
 /* ===== POLICY PAGES ===== */
@@ -5099,3 +5108,47 @@ footer {
   .empty-state h1 {
     font-size: 64px;
   }
+/* ── Variant / pack-size flag (corner of the product visual) ───────────────── */
+.product-visual .variant-flag {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.95);
+  border: 1px solid rgba(201, 95, 59, 0.3);
+  color: var(--terracotta);
+  font: 600 10px 'DM Mono', monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.product-visual .variant-flag svg {
+  flex-shrink: 0;
+}
+
+.product-visual .variant-flag-count {
+  line-height: 1;
+}
+
+@media (max-width: 480px) {
+  .product-visual .variant-flag {
+    right: 8px;
+    bottom: 8px;
+    padding: 2px 6px;
+    font-size: 9px;
+  }
+
+  .product-visual .variant-flag svg {
+    width: 11px;
+    height: 11px;
+  }
+}

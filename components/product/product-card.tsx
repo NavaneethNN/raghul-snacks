@@ -1,47 +1,55 @@
 import Link from "next/link";
-import { formatPrice, formatWeight } from "@/lib/catalog";
+import { formatPrice } from "@/lib/catalog";
+import {
+  formatDisplayWeight,
+  getDefaultVariant,
+  resolveCardPricing,
+  sortVariants,
+} from "@/lib/product-pricing";
 import { AddToCart } from "@/components/product/add-to-cart";
+import { VariantStackFlag } from "@/components/product/variant-stack-flag";
 import { WishlistButton } from "@/components/wishlist-button";
 
 export function ProductCard({ product }: { product: any }) {
-  const variants: any[] = Array.isArray(product.variants) ? product.variants : [];
-  const activeVariants = variants.filter((v: any) => v.active !== false);
-  // Already sorted by the API; use first item as representative
-  const firstVariant = activeVariants[0] ?? null;
+  const pricing = resolveCardPricing(product);
+  const variants = sortVariants(product.variants);
+  const firstVariant = getDefaultVariant(product.variants);
 
-  const displayPrice = firstVariant
-    ? (firstVariant.offerPrice && parseFloat(firstVariant.offerPrice) > 0
-        ? parseFloat(firstVariant.offerPrice)
-        : parseFloat(firstVariant.price))
-    : (product.offerPrice && parseFloat(product.offerPrice) > 0
-        ? parseFloat(product.offerPrice)
-        : parseFloat(product.price));
+  const categoryName =
+    product.categoryName ||
+    product.categorySlug?.replace("-", " ") ||
+    product.category?.replace("-", " ") ||
+    "";
+  const badge = product.bestseller ? "Bestseller" : product.featured ? "Featured" : null;
+  const isOutOfStock = typeof product.stock === "number" && product.stock <= 0;
 
-  const originalPrice = firstVariant
-    ? parseFloat(firstVariant.price)
-    : parseFloat(product.price);
-
-  const displayWeight = firstVariant ? firstVariant.weight : product.weight;
-
-  const hasDiscount = displayPrice < originalPrice;
-  const priceLabel = activeVariants.length >= 2 ? 'from ' : '';
-
-  const categoryName = product.categoryName || product.categorySlug?.replace("-", " ") || product.category?.replace("-", " ") || '';
-  const badge = product.bestseller ? 'Bestseller' : product.featured ? 'Featured' : null;
-
-  // Ensure product has the correct structure for cart
+  // The card advertises the first variant, so its cart entry is that variant too —
+  // the same id the product page uses, so both add to a single cart line.
   const cartProduct = {
     ...product,
+    id: firstVariant ? `${product.id}-v${firstVariant.id}` : String(product.id),
+    slug: product.slug || "",
+    name: product.name || "",
+    price: pricing.originalPrice,
+    offerPrice: pricing.hasPrice ? pricing.displayPrice : pricing.originalPrice,
+    weight: formatDisplayWeight(firstVariant ? firstVariant.weight : product.weight),
+    description: product.description || "",
+    ingredients: product.ingredients || "",
+    category: product.categorySlug || product.category || "",
+    image: product.image || "",
+  };
+
+  // The wishlist is keyed by product, not by variant, so it keeps its own id.
+  const wishlistProduct = {
+    ...cartProduct,
     id: String(product.id),
-    slug: product.slug || '',
-    name: product.name || '',
-    price: originalPrice,
-    offerPrice: displayPrice,
-    weight: displayWeight || '',
-    description: product.description || '',
-    ingredients: product.ingredients || '',
-    category: product.categorySlug || product.category || '',
-    image: product.image || '',
+    variants: variants.map((variant) => ({
+      id: variant.id,
+      weight: variant.weight,
+      price: variant.price,
+      offerPrice: variant.offerPrice,
+      sortOrder: variant.sortOrder,
+    })),
   };
 
   return (
@@ -56,29 +64,27 @@ export function ProductCard({ product }: { product: any }) {
         )}
         <span className="category-label">{categoryName}</span>
         {badge && <b>{badge}</b>}
-        {activeVariants.length > 0 && (
-          <span className="variant-icon" aria-label="Multiple sizes available">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <rect x="2" y="7" width="20" height="14" rx="2"/>
-              <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-              <line x1="12" y1="12" x2="12" y2="17"/>
-              <line x1="9.5" y1="14.5" x2="14.5" y2="14.5"/>
-            </svg>
-          </span>
-        )}
+        {isOutOfStock && <b className="out-of-stock-label">Out of Stock</b>}
+        {variants.length > 0 && <VariantStackFlag count={variants.length} />}
       </Link>
-      <WishlistButton product={cartProduct} />
+      <WishlistButton product={wishlistProduct} />
       <div className="product-copy">
-        <p>{formatWeight(displayWeight)}</p>
+        {pricing.displayWeight && <p>{pricing.displayWeight}</p>}
         <Link href={`/product/${product.slug}`}>
           <h3>{product.name}</h3>
         </Link>
-        <div className="price">
-          <strong>{priceLabel}{formatPrice(displayPrice)}</strong>
-          {hasDiscount && <s>{formatPrice(originalPrice)}</s>}
-        </div>
+        {pricing.hasPrice && (
+          <div className="price">
+            <strong>{formatPrice(pricing.displayPrice)}</strong>
+            {pricing.hasDiscount && <s>{formatPrice(pricing.originalPrice)}</s>}
+          </div>
+        )}
         <div className="product-actions">
-          <AddToCart product={cartProduct} showModal={true} />
+          {isOutOfStock ? (
+            <button className="button button-dark" disabled style={{ opacity: 0.5, cursor: "not-allowed" }}>Out of Stock</button>
+          ) : (
+            <AddToCart product={cartProduct} showModal={true} />
+          )}
         </div>
       </div>
     </article>

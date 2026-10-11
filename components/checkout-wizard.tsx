@@ -188,6 +188,15 @@ export function CheckoutWizard() {
       .catch(() => { /* non-critical */ });
   }, [subtotal]);
 
+  // Clear stale buy-now item on unmount if payment was not completed
+  useEffect(() => {
+    return () => {
+      if (buyNowItem && !orderPlacedRef.current) {
+        clearBuyNowItem();
+      }
+    };
+  }, [buyNowItem]);
+
   // ── Coupon helpers ─────────────────────────────────────────────────────────
 
   const applyCoupon = useCallback(
@@ -329,7 +338,7 @@ export function CheckoutWizard() {
       );
       if (buyNowItem) clearBuyNowItem(); else clearCart();
       orderPlacedRef.current = true;
-      window.location.assign("/orders");
+      window.location.assign("/orders?success=true");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to continue to payment.");
       setLoading(false);

@@ -62,6 +62,7 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
   const inCart = cartQuantity > 0;
   const isAdded = inCart || added;
   const hasDiscount = displayPrice < basePrice;
+  const isOutOfStock = typeof product.stock === "number" && product.stock <= 0;
 
   const categoryName =
     product.categoryName ||
@@ -121,6 +122,9 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
           </div>
           {hasDiscount && (
             <span className="savings">Save {formatPrice(basePrice - displayPrice)}</span>
+          )}
+          {isOutOfStock && (
+            <span className="out-of-stock-badge">Out of Stock</span>
           )}
         </div>
 
@@ -194,18 +198,18 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
             >+</button>
           </div>
           <button
-            className={`button wide-button ${isAdded ? "button-success" : "button-dark"}`}
+            className={`button wide-button ${isOutOfStock ? "button-disabled" : isAdded ? "button-success" : "button-dark"}`}
             onClick={handleAddToCart}
-            disabled={isAdded}
-            style={isAdded ? { opacity: 1, cursor: "default" } : undefined}
+            disabled={isAdded || isOutOfStock}
+            style={isAdded || isOutOfStock ? { opacity: isOutOfStock ? 0.5 : 1, cursor: "default" } : undefined}
           >
-            {isAdded ? "✓ Added to Cart" : "Add to Cart"}
+            {isOutOfStock ? "Out of Stock" : isAdded ? "✓ Added to Cart" : "Add to Cart"}
           </button>
           <button
             type="button"
             className="button buy-now-button wide-button"
             onClick={handleBuyNow}
-            disabled={redirecting}
+            disabled={redirecting || isOutOfStock}
           >
             {redirecting ? "Redirecting…" : "Buy Now"}
           </button>
