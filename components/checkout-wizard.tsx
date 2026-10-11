@@ -142,8 +142,8 @@ export function CheckoutWizard() {
 
       setQuote({
         charge,
-        courierName: isTN ? "Within Tamil Nadu" : "Rest of India",
-        estimatedDeliveryDays: isTN ? "2–4 business days" : "5–7 business days",
+        courierName: "Delivery",
+        estimatedDeliveryDays: null,
       });
       return;
     }
@@ -642,15 +642,11 @@ export function CheckoutWizard() {
                   </label>
                 </div>
 
-                {/* Courier rate */}
+                {/* Delivery charge */}
                 <div className={styles.courier}>
                   <div>
                     <strong>Delivery</strong>
-                    <span>
-                      {quote
-                        ? quote.estimatedDeliveryDays ?? "Delivered to your door"
-                        : "Select your state to see delivery charge"}
-                    </span>
+                    <span>{quote ? "Delivered to your door" : "Select your state to see delivery charge"}</span>
                   </div>
                   <b>{quote ? formatPrice(shipping) : "—"}</b>
                 </div>
