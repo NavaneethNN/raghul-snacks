@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { eq } from "drizzle-orm";
-import { products } from "@/drizzle/schema";
+import { products, comboItems, orderItems, reviews } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
 
@@ -68,6 +68,12 @@ export async function DELETE(
     const id = parseInt(idParam);
     const db = getDb();
 
+    // Remove references in child tables that don't cascade
+    await db.delete(comboItems).where(eq(comboItems.productId, id));
+    await db.update(orderItems).set({ productId: null }).where(eq(orderItems.productId, id));
+    await db.update(reviews).set({ productId: null }).where(eq(reviews.productId, id));
+
+    // Now delete the product (productVariants cascade automatically)
     await db.delete(products).where(eq(products.id, id));
 
     return NextResponse.json({ success: true });
