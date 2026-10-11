@@ -427,15 +427,17 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
               </div>
 
               {/* ── Has variants toggle ── */}
-              <label style={{ display: "flex", alignItems: "center", gap: 10, margin: "0 0 20px", cursor: "pointer", userSelect: "none" }}>
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, margin: "0 0 20px", cursor: "pointer", userSelect: "none" }}>
                 <input
                   type="checkbox"
                   checked={hasVariants}
                   onChange={(e) => { setHasVariants(e.target.checked); setDraftVariants([]); }}
-                  style={{ width: 18, height: 18, cursor: "pointer", accentColor: "var(--terracotta)" }}
+                  style={{ width: 18, height: 18, marginTop: 2, cursor: "pointer", accentColor: "var(--terracotta)", flexShrink: 0 }}
                 />
-                <span style={{ font: "600 14px 'DM Sans',sans-serif", color: "var(--ink)" }}>Has variants</span>
-                <small style={{ color: "#6b7280", fontWeight: 400 }}>(e.g. different weights or sizes with different prices)</small>
+                <div>
+                  <span style={{ font: "600 14px 'DM Sans',sans-serif", color: "var(--ink)", display: "block" }}>Has variants</span>
+                  <span style={{ fontSize: 12, color: "#6b7280" }}>e.g. different weights or sizes with different prices</span>
+                </div>
               </label>
 
               {/* ── Single price/weight (shown when NO variants) ── */}
@@ -460,8 +462,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
               {hasVariants && (
                 <div style={{ marginBottom: 20, padding: "16px", background: "var(--cream)", borderRadius: 10, border: "1px solid var(--line)" }}>
                   {/* Variant type selector */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-                    <span style={{ font: "600 12px 'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.07em", color: "#6b7280" }}>Variant type:</span>
+                  <div style={{ marginBottom: 14 }}>
+                    <span style={{ display: "block", marginBottom: 8, font: "600 12px 'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.07em", color: "#6b7280" }}>Variant type</span>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {VARIANT_TYPES.map(t => (
                         <button
@@ -469,13 +471,14 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                           type="button"
                           onClick={() => setVariantType(t)}
                           style={{
-                            padding: "5px 12px",
+                            padding: "6px 14px",
                             borderRadius: 6,
                             border: "1.5px solid var(--line)",
                             background: variantType === t ? "var(--ink)" : "var(--paper)",
                             color: variantType === t ? "#fff" : "var(--ink)",
-                            font: "600 12px 'DM Sans',sans-serif",
+                            font: "600 13px 'DM Sans',sans-serif",
                             cursor: "pointer",
+                            whiteSpace: "nowrap",
                           }}
                         >
                           {t}
@@ -520,8 +523,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                   <p style={{ margin: "0 0 8px", fontSize: 12, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     Add a {variantType.toLowerCase()}
                   </p>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 8 }}>
-                    <div className={styles.field}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end" }}>
+                    <div className={styles.field} style={{ flex: "1 1 100px", minWidth: 90 }}>
                       <label>{variantType}</label>
                       <input
                         type="text"
@@ -530,37 +533,35 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                         onChange={(e) => setDraftLabel(e.target.value)}
                       />
                     </div>
-                    <div className={styles.field}>
+                    <div className={styles.field} style={{ flex: "1 1 90px", minWidth: 80 }}>
                       <label>Price (₹)</label>
                       <input type="number" min="0" step="0.01" placeholder="0.00" value={draftPrice} onChange={(e) => setDraftPrice(e.target.value)} />
                     </div>
-                    <div className={styles.field}>
+                    <div className={styles.field} style={{ flex: "1 1 90px", minWidth: 80 }}>
                       <label>Offer Price</label>
                       <input type="number" min="0" step="0.01" placeholder="Optional" value={draftOffer} onChange={(e) => setDraftOffer(e.target.value)} />
                     </div>
-                    <div style={{ display: "flex", alignItems: "flex-end" }}>
-                      {editingProduct ? (
-                        <button
-                          type="button"
-                          className={styles.primaryButton}
-                          disabled={variantSaving || !draftLabel.trim() || !draftPrice}
-                          onClick={() => addSavedVariant(editingProduct.id)}
-                          style={{ width: "100%" }}
-                        >
-                          {variantSaving ? "Saving…" : "Add"}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className={styles.primaryButton}
-                          disabled={!draftLabel.trim() || !draftPrice}
-                          onClick={addDraftVariant}
-                          style={{ width: "100%" }}
-                        >
-                          Add
-                        </button>
-                      )}
-                    </div>
+                    {editingProduct ? (
+                      <button
+                        type="button"
+                        className={styles.primaryButton}
+                        disabled={variantSaving || !draftLabel.trim() || !draftPrice}
+                        onClick={() => addSavedVariant(editingProduct.id)}
+                        style={{ flexShrink: 0, whiteSpace: "nowrap" }}
+                      >
+                        {variantSaving ? "Saving…" : `+ Add`}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.primaryButton}
+                        disabled={!draftLabel.trim() || !draftPrice}
+                        onClick={addDraftVariant}
+                        style={{ flexShrink: 0, whiteSpace: "nowrap" }}
+                      >
+                        + Add
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
