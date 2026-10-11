@@ -2047,6 +2047,20 @@ h2 i {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.variant-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 253, 248, 0.90);
+  border-radius: 4px;
+  padding: 3px 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.10);
+}
+
 .product-copy {
   padding: 16px;
 }
@@ -2173,6 +2187,11 @@ h2 i {
   .product-visual b {
     font-size: 8px;
     padding: 2px 4px;
+  }
+
+  .variant-icon svg {
+    width: 12px;
+    height: 12px;
   }
 
   .placeholder-icon {

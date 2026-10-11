@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
-import { products, categories } from "@/drizzle/schema";
 import { getDb } from "@/lib/db";
+import { getProductsWithVariants } from "@/lib/db-queries";
 
 export const dynamic = "force-dynamic";
 
@@ -14,43 +13,21 @@ export async function GET(request: NextRequest) {
     const bestseller = searchParams.get("bestseller");
 
     const db = getDb();
-    let query = db
-      .select({
-        id: products.id,
-        name: products.name,
-        slug: products.slug,
-        description: products.description,
-        ingredients: products.ingredients,
-        price: products.price,
-        offerPrice: products.offerPrice,
-        weight: products.weight,
-        categoryId: products.categoryId,
-        categoryName: categories.name,
-        categorySlug: categories.slug,
-        image: products.image,
-        featured: products.featured,
-        bestseller: products.bestseller,
-        createdAt: products.createdAt,
-      })
-      .from(products)
-      .leftJoin(categories, eq(products.categoryId, categories.id))
-      .orderBy(desc(products.createdAt));
-
-    let result = await query;
+    let result = await getProductsWithVariants(db);
 
     // Filter by category slug if provided
     if (categorySlug) {
-      result = result.filter((p) => p.categorySlug === categorySlug);
+      result = result.filter((p: any) => p.categorySlug === categorySlug);
     }
 
     // Filter by featured if provided
     if (featured === "true") {
-      result = result.filter((p) => p.featured === true);
+      result = result.filter((p: any) => p.featured === true);
     }
 
     // Filter by bestseller if provided
     if (bestseller === "true") {
-      result = result.filter((p) => p.bestseller === true);
+      result = result.filter((p: any) => p.bestseller === true);
     }
 
     return NextResponse.json(result);

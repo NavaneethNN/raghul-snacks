@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/product/product-card";
 import { getDb } from "@/lib/db";
-import { products, categories } from "@/drizzle/schema";
+import { categories } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
+import { getProductsWithVariants } from "@/lib/db-queries";
 
 export const dynamic = 'force-dynamic';
 
@@ -22,28 +23,9 @@ async function getProducts(categorySlug: string) {
     const db = getDb();
     const category = await db.select().from(categories).where(eq(categories.slug, categorySlug)).limit(1);
     if (!category || category.length === 0) return [];
-    
-    return await db
-      .select({
-        id: products.id,
-        name: products.name,
-        slug: products.slug,
-        description: products.description,
-        ingredients: products.ingredients,
-        price: products.price,
-        offerPrice: products.offerPrice,
-        weight: products.weight,
-        categoryId: products.categoryId,
-        categoryName: categories.name,
-        categorySlug: categories.slug,
-        image: products.image,
-        featured: products.featured,
-        bestseller: products.bestseller,
-        createdAt: products.createdAt,
-      })
-      .from(products)
-      .leftJoin(categories, eq(products.categoryId, categories.id))
-      .where(eq(products.categoryId, category[0].id));
+
+    const allProducts = await getProductsWithVariants(db);
+    return allProducts.filter((p: any) => p.categoryId === category[0].id);
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];

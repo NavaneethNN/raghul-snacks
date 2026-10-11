@@ -5,8 +5,9 @@ import { BestsellersSlider } from "@/components/bestsellers-slider";
 import { HeroBanner } from "@/components/hero-banner";
 import { ScrollAnimate } from "@/components/scroll-animate";
 import { getDb } from "@/lib/db";
-import { products, categories, combos, comboItems } from "@/drizzle/schema";
+import { categories, combos, comboItems, products } from "@/drizzle/schema";
 import { getBannersWithValidity } from "@/lib/banners";
+import { getProductsWithVariants } from "@/lib/db-queries";
 
 export const dynamic = 'force-dynamic';
 
@@ -32,27 +33,7 @@ async function getCategories() {
 async function getProducts() {
   try {
     const db = getDb();
-    return await db
-      .select({
-        id: products.id,
-        name: products.name,
-        slug: products.slug,
-        description: products.description,
-        ingredients: products.ingredients,
-        price: products.price,
-        offerPrice: products.offerPrice,
-        weight: products.weight,
-        categoryId: products.categoryId,
-        categoryName: categories.name,
-        categorySlug: categories.slug,
-        image: products.image,
-        featured: products.featured,
-        bestseller: products.bestseller,
-        createdAt: products.createdAt,
-      })
-      .from(products)
-      .leftJoin(categories, eq(products.categoryId, categories.id))
-      .orderBy(desc(products.createdAt));
+    return await getProductsWithVariants(db);
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];
