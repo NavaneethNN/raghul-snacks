@@ -114,16 +114,16 @@ export function AdminSettings() {
             {/* Payment Settings */}
             <div style={{ marginBottom: '48px' }}>
               <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 600, color: 'var(--ink)' }}>Payment Gateway</h3>
-              <p style={{ margin: '0 0 24px', color: '#6b7280', fontSize: '14px' }}>Configure Razorpay payment integration.</p>
+              <p style={{ margin: '0 0 24px', color: '#6b7280', fontSize: '14px' }}>Configure Cashfree payment integration.</p>
 
               <div style={{ background: '#fafbfc', border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '24px' }}>
                 <div style={{ marginBottom: '20px' }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#374151' }}>
-                    Razorpay Key ID
+                    Cashfree Client ID
                   </label>
                   <input
                     type="text"
-                    placeholder="rzp_test_xxxxxxxxxxxx"
+                    placeholder="TEST_xxxxxxxxxx_cf"
                     style={{
                       width: '100%',
                       padding: '10px 14px',
@@ -137,7 +137,7 @@ export function AdminSettings() {
 
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#374151' }}>
-                    Razorpay Key Secret
+                    Cashfree Client Secret
                   </label>
                   <input
                     type="password"

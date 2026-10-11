@@ -12,7 +12,7 @@ export default function PrivacyPage() {
         <h3>Personal Information</h3>
         <ul>
           <li><strong>Name and contact details:</strong> Name, email address, phone number, and shipping address for order delivery</li>
-          <li><strong>Payment information:</strong> Payment details are processed securely through Razorpay. We do not store your complete credit card information</li>
+          <li><strong>Payment information:</strong> Payment details are processed securely through Cashfree. We do not store your complete credit card information</li>
           <li><strong>Account information:</strong> If you create an account, we store your username and password (encrypted)</li>
         </ul>
         
@@ -40,7 +40,7 @@ export default function PrivacyPage() {
         <p>We do not sell, rent, or trade your personal information. We may share your information only with:</p>
         <ul>
           <li><strong>Shipping partners:</strong> Delivery services to ship your orders</li>
-          <li><strong>Payment processors:</strong> Razorpay for secure payment processing</li>
+          <li><strong>Payment processors:</strong> Cashfree for secure payment processing</li>
           <li><strong>Service providers:</strong> Trusted partners who help us operate our website (e.g., hosting, analytics)</li>
           <li><strong>Legal requirements:</strong> When required by law or to protect our rights</li>
         </ul>
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
         <p>We implement industry-standard security measures to protect your information:</p>
         <ul>
           <li>SSL encryption for all data transmission</li>
-          <li>Secure payment processing through Razorpay</li>
+          <li>Secure payment processing through Cashfree</li>
           <li>Regular security audits</li>
           <li>Restricted access to personal data</li>
           <li>Secure password storage (encrypted)</li>
@@ -80,7 +80,7 @@ export default function PrivacyPage() {
         <h2>Third-Party Links</h2>
         <p>Our website may contain links to third-party sites. We are not responsible for the privacy practices of these external sites. We encourage you to read their privacy policies.</p>
         
-        <h2>Children's Privacy</h2>
+        <h2>Children&apos;s Privacy</h2>
         <p>Our services are not intended for children under 13. We do not knowingly collect personal information from children under 13.</p>
         
         <h2>Changes to This Policy</h2>

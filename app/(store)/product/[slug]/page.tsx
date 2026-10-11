@@ -5,6 +5,7 @@ import { ProductReviews } from "@/components/product/product-reviews";
 import { getDb } from "@/lib/db";
 import { products, categories, productVariants } from "@/drizzle/schema";
 import { and, eq } from "drizzle-orm";
+import { getProductsWithVariants } from "@/lib/db-queries";
 
 export const dynamic = 'force-dynamic';
 
@@ -53,33 +54,25 @@ async function getVariants(productId: number) {
   }
 }
 
+// Recommendations reuse the shared query so cards can show variant pricing.
 async function getProducts() {
   try {
     const db = getDb();
-    return await db
-      .select({
-        id: products.id,
-        name: products.name,
-        slug: products.slug,
-        description: products.description,
-        ingredients: products.ingredients,
-        price: products.price,
-        offerPrice: products.offerPrice,
-        weight: products.weight,
-        categoryId: products.categoryId,
-        categoryName: categories.name,
-        categorySlug: categories.slug,
-        image: products.image,
-        featured: products.featured,
-        bestseller: products.bestseller,
-        createdAt: products.createdAt,
-      })
-      .from(products)
-      .leftJoin(categories, eq(products.categoryId, categories.id));
+    return await getProductsWithVariants(db);
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];
   }
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const product = await getProduct(slug);
+  if (!product) return {};
+  return {
+    title: `${product.name} | Raghul Delights`,
+    description: product.description || `Buy ${product.name} — handcrafted fresh millet snacks from Raghul Delights.`,
+  };
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {

@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const returnTo = searchParams.get("state") || "/account";
+  const safeReturnTo = (returnTo.startsWith('/') && !returnTo.includes('://')) ? returnTo : '/account';
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
 
   function loginError(reason: string) {
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
       await db.update(customerAccounts).set({ googleId: profile.sub }).where(eq(customerAccounts.id, account.id));
     }
 
-    const response = NextResponse.redirect(new URL(returnTo, appUrl));
+    const response = NextResponse.redirect(new URL(safeReturnTo, appUrl));
     response.cookies.set(customerCookieName(), createCustomerSession(account), {
       httpOnly: true,
       sameSite: "lax",

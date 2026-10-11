@@ -74,8 +74,6 @@ export default async function HomePage() {
   const bestsellers = allProducts.filter((p: any) => p.bestseller).slice(0, 4);
   const products = bestsellers.length > 0 ? bestsellers : allProducts.slice(0, 4);
 
-  console.log('Combos fetched:', combos);
-  console.log('Featured combo:', featuredCombo);
   return (
     <>
       {/* Hero Section */}
@@ -217,13 +215,13 @@ export default async function HomePage() {
               {featuredCombo.items && featuredCombo.items.length > 0 && (
                 <ul>
                   {featuredCombo.items.map((item: any, index: number) => (
-                    <li key={index}>{item.name || 'Product'} ({item.quantity}g)</li>
+                    <li key={index}>{item.name || 'Product'} (×{item.quantity})</li>
                   ))}
                 </ul>
               )}
 
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <Link href="/shop" className="button button-light">
+                <Link href={`/combo/${featuredCombo.slug}`} className="button button-light">
                   Get this combo · ₹{featuredCombo.discount && parseFloat(featuredCombo.discount) > 0 ? featuredCombo.discount : featuredCombo.price}
                 </Link>
                 <Link href="/shop?tab=combos" className="button button-outline">

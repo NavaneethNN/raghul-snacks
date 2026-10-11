@@ -8,7 +8,7 @@ export default function TermsPage() {
         <h2>General</h2>
         <p>
           By placing an order on this website, you agree to these terms. Product availability, prices, and delivery
-          timelines may change without prior notice. Payments are processed securely by Razorpay.
+          timelines may change without prior notice. Payments are processed securely by Cashfree.
         </p>
 
         <h2>All Sales Are Final</h2>

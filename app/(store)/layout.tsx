@@ -92,7 +92,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
         </div>
 
         <div className="footer-bottom">
-          <p>&copy; 2024 Raghul Delights. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Raghul Delights. All rights reserved.</p>
           
         </div>
       </footer>

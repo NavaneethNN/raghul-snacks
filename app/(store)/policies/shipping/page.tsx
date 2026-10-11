@@ -9,7 +9,7 @@ export default function ShippingPage() {
         <p>We deliver across India. Our snacks are packed and shipped from our kitchen in Coimbatore, Tamil Nadu.</p>
 
         <h2>Processing Time</h2>
-        <p>Orders are processed within 1-2 business days. Since our snacks are made in small batches to ensure freshness, some items may require additional preparation time.</p>
+        <p>All our snacks are freshly prepared after your order is placed, in small batches to ensure the best quality and flavour. Please allow <strong>2–3 additional business days</strong> for preparation before your order is dispatched. Total delivery time = preparation time (2–3 days) + the transit times listed below.</p>
 
         <h2>Delivery Timeline</h2>
         <ul>

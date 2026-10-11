@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { formatWeight } from "@/lib/catalog";
 import { ComboActions } from "@/components/combo-actions";
 import { getDb } from "@/lib/db";
 import { combos, comboItems, products } from "@/drizzle/schema";
@@ -99,7 +98,7 @@ export default async function ComboDetailPage({ params }: { params: Promise<{ sl
         {combo.items && combo.items.length > 0 && (
           <div style={{ marginTop: '32px' }}>
             <h3 style={{ fontSize: '20px', marginBottom: '16px', fontFamily: 'Playfair Display, serif' }}>
-              What's in this combo
+              What&apos;s in this combo
             </h3>
             <ul style={{
               listStyle: 'none',
@@ -123,7 +122,7 @@ export default async function ComboDetailPage({ params }: { params: Promise<{ sl
                   </svg>
                   <span style={{ flex: 1, fontWeight: 500 }}>{item.name || 'Product'}</span>
                   <span style={{ fontSize: '14px', color: '#6b7280' }}>
-                    {formatWeight(item.quantity.toString())}
+                    ×{item.quantity}
                   </span>
                 </li>
               ))}

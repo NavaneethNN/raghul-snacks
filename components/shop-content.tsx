@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ProductCard } from "@/components/product/product-card";
@@ -28,13 +28,12 @@ export function ShopContent({
 }) {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState<string>(tabParam || 'products');
+  const [userTab, setUserTab] = useState<string>('products');
+  const activeTab = tabParam || userTab;
 
-  useEffect(() => {
-    if (tabParam) {
-      setActiveTab(tabParam);
-    }
-  }, [tabParam]);
+  function setActiveTab(tab: string) {
+    setUserTab(tab);
+  }
 
   // Filter products based on search query
   const filteredProducts = products.filter((product: any) => {
@@ -109,10 +108,16 @@ export function ShopContent({
       </div>
 
       <div className="product-grid">
+        {activeTab === 'products' && filteredProducts.length === 0 && (
+          <p className="empty-state">No products found.</p>
+        )}
         {activeTab === 'products' && filteredProducts.map((product: any) => (
           <ProductCard key={product.id} product={product} />
         ))}
 
+        {activeTab === 'combos' && filteredCombos.length === 0 && (
+          <p className="empty-state">No combos found.</p>
+        )}
         {activeTab === 'combos' && filteredCombos.map((combo: any) => (
           <article key={combo.id} className="product-card">
             <Link href={`/combo/${combo.slug}`} className="product-visual">
@@ -144,9 +149,15 @@ export function ShopContent({
         ))}
 
         {activeTab !== 'products' && activeTab !== 'combos' &&
-          filteredProducts.filter((p: any) => p.categorySlug === activeTab).map((product: any) => (
-            <ProductCard key={product.id} product={product} />
-          ))
+          (() => {
+            const categoryProducts = filteredProducts.filter((p: any) => p.categorySlug === activeTab);
+            if (categoryProducts.length === 0) {
+              return <p className="empty-state">No products found in this category.</p>;
+            }
+            return categoryProducts.map((product: any) => (
+              <ProductCard key={product.id} product={product} />
+            ));
+          })()
         }
       </div>
     </>

@@ -1,0 +1,43 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Batch of quick content, copy, and simple code fixes: delete dead LegacyCheckoutPage (Razorpay), replace Razorpay with Cashfree in policy pages and admin settings, fix combo CTA href, fix combo quantity display ('2g' → '×2'), remove console.log from home page, fix copyright year, update shipping policy with made-to-order prep time, add generateMetadata to product page, delete dead mock data from catalog.ts, validate OAuth returnTo, add empty state to ShopContent.",
+  "status": "completed",
+  "steps": [
+    "Step 1 — C-1: Edit app/(store)/checkout/page.tsx. Delete everything except: the 'use client' directive (remove it too — CheckoutWizard handles its own client state), the import of CheckoutWizard, and the CheckoutPage default export that returns <CheckoutWizard />. Remove all unused imports: Link, Script, FormEvent, useEffect, useMemo, useState, useCart, formatPrice, styles (from ./checkout.module.css). The final file should be ~5 lines: one import statement and the exported function.",
+    "Step 2 — C-3a: Edit app/(store)/policies/terms/page.tsx. Replace 'Razorpay' with 'Cashfree' in the sentence 'Payments are processed securely by Razorpay.'",
+    "Step 3 — C-3b: Edit app/(store)/policies/privacy/page.tsx. Replace all 3 occurrences of 'Razorpay' with 'Cashfree': (1) 'Payment details are processed securely through Razorpay.' (2) 'Razorpay for secure payment processing' in Data Sharing section. (3) 'Secure payment processing through Razorpay' in Data Security section.",
+    "Step 4 — C-3c: Edit components/admin-settings.tsx. Change section description 'Configure Razorpay payment integration.' to 'Configure Cashfree payment integration.' Change label 'Razorpay Key ID' to 'Cashfree Client ID' and its placeholder from 'rzp_test_xxxxxxxxxxxx' to 'TEST_xxxxxxxxxx_cf'. Change label 'Razorpay Key Secret' to 'Cashfree Client Secret'. These match the env vars CASHFREE_CLIENT_ID and CASHFREE_CLIENT_SECRET used in lib/cashfree.ts.",
+    "Step 5 — H-2: Edit app/(store)/page.tsx. In the featuredCombo section, change <Link href=\"/shop\" className=\"button button-light\"> to <Link href={`/combo/${featuredCombo.slug}`} className=\"button button-light\">.",
+    "Step 6 — H-7/M-11: Edit app/(store)/combo/[slug]/page.tsx. Replace the span displaying {formatWeight(item.quantity.toString())} with ×{item.quantity}. Check if formatWeight is used anywhere else in this file — if not, remove its import from '@/lib/catalog'.",
+    "Step 7 — H-7/M-11: Edit app/(store)/page.tsx. Replace ({item.quantity}g) with (×{item.quantity}) in the featuredCombo items list.",
+    "Step 8 — M-8: Edit app/(store)/page.tsx. Delete the two lines: console.log('Combos fetched:', combos); and console.log('Featured combo:', featuredCombo);",
+    "Step 9 — M-9 footer: Edit app/(store)/layout.tsx. Replace &copy; 2024 Raghul Delights. with &copy; {new Date().getFullYear()} Raghul Delights.",
+    "Step 10 — M-6: Edit app/(store)/policies/shipping/page.tsx. Replace the entire Processing Time <p> with: <p>All our snacks are freshly prepared after your order is placed, in small batches to ensure the best quality and flavour. Please allow <strong>2–3 additional business days</strong> for preparation before your order is dispatched. Total delivery time = preparation time (2–3 days) + the transit times listed below.</p>",
+    "Step 11 — M-7: Edit app/(store)/product/[slug]/page.tsx. Add a generateMetadata export above the default page export: export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) { const { slug } = await params; const product = await getProduct(slug); if (!product) return {}; return { title: `${product.name} | Raghul Delights`, description: product.description || `Buy ${product.name} — handcrafted fresh millet snacks from Raghul Delights.` }; }. The getProduct function is already defined in the same file.",
+    "Step 12 — L-1: Edit lib/catalog.ts. Delete the 'export const products: Product[] = [...]' array (6 items) and the 'export const categories = [...]' array. Keep: the Product type export, the formatPrice function, and the formatWeight function. Before deleting, search the codebase for any import of 'products' or 'categories' from '@/lib/catalog' — there should be none (all data comes from the DB). If any import is found, update it to use the correct DB source instead.",
+    "Step 13 — L-3: Edit app/api/auth/google/callback/route.ts. After 'const returnTo = searchParams.get(\"state\") || \"/account\"', add: const safeReturnTo = (returnTo.startsWith('/') && !returnTo.includes('://')) ? returnTo : '/account'; Then replace 'new URL(returnTo, appUrl)' with 'new URL(safeReturnTo, appUrl)'.",
+    "Step 14 — M-9 shop-content empty state: Edit components/shop-content.tsx. After the existing filter logic, wrap each branch in the product-grid div to show empty states. When activeTab === 'products' and filteredProducts.length === 0, render <p className=\"empty-state\">No products found.</p> instead of nothing. When activeTab === 'combos' and filteredCombos.length === 0, render <p className=\"empty-state\">No combos found.</p>. When a category tab is active and the filtered category products array is empty, render <p className=\"empty-state\">No products found in this category.</p>. Keep existing rendering for non-empty lists."
+  ],
+  "acceptance_criteria": [
+    "app/(store)/checkout/page.tsx contains only the CheckoutWizard import and CheckoutPage export — no LegacyCheckoutPage, no Razorpay imports",
+    "Zero occurrences of 'Razorpay' in terms/page.tsx, privacy/page.tsx, admin-settings.tsx",
+    "Combo CTA on home page links to /combo/[slug] not /shop",
+    "Combo item quantities display as '×2' not '2g' on both home page and combo detail page",
+    "No console.log statements in app/(store)/page.tsx",
+    "Footer shows dynamic year via new Date().getFullYear()",
+    "Shipping policy Processing Time section mentions 2-3 additional business days for preparation",
+    "Product detail page exports generateMetadata returning product name as title",
+    "lib/catalog.ts has no products or categories arrays",
+    "OAuth callback validates returnTo before redirect — rejects values containing '://'",
+    "ShopContent shows 'No products found' / 'No combos found' when filtered list is empty",
+    "npm run build exits 0",
+    "npm run lint passes"
+  ],
+  "verification": [
+    "cd e:\\work\\raghul-snacks\\raghul-snacks && npm run build",
+    "cd e:\\work\\raghul-snacks\\raghul-snacks && npm run lint"
+  ],
+  "blocked_reason": null,
+  "findings": "Pre-existing lint errors exist in many untouched files (45 errors across admin/*, checkout-wizard.tsx, customer-auth-form.tsx, etc.) due to unescaped entities, setState-in-effect, and img-element warnings — these are out of scope for FEAT-001 but will block `npm run lint` for future steps. The three errors that appeared in files touched by FEAT-001 were fixed: combo/[slug]/page.tsx (unescaped apostrophe in 'What's in this combo'), policies/privacy/page.tsx (unescaped apostrophe in 'Children's Privacy'), and shop-content.tsx (setState-in-effect replaced with URL-derived activeTab pattern). FEAT-002/FEAT-003 coders should note: the full `npm run lint` still exits 1 due to pre-existing issues in other files — these need a dedicated lint-fix pass."
+}
