@@ -605,10 +605,6 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
               {/* Checkboxes */}
               <div className={styles.checkboxGroup}>
                 <label className={styles.checkbox}>
-                  <input type="checkbox" name="featured" defaultChecked={editingProduct?.featured} />
-                  <span>Featured Product</span>
-                </label>
-                <label className={styles.checkbox}>
                   <input type="checkbox" name="bestseller" defaultChecked={editingProduct?.bestseller} />
                   <span>Bestseller</span>
                 </label>
