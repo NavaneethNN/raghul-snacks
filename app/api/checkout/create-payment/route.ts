@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     const total = Math.round((subtotal - discount + shippingCharge) * 100) / 100;
     const orderId = `RS${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
     const origin = new URL(request.url).origin;
-    const payment = await createCashfreeOrder({ orderId, amount: total, customerName: payload.data.customerName, customerPhone: payload.data.phone, customerEmail: payload.data.email, returnUrl: `${origin}/orders`, shipping: shippingCharge, courierId });
+    const payment = await createCashfreeOrder({ orderId, amount: total, customerName: payload.data.customerName, customerPhone: payload.data.phone, customerEmail: payload.data.email, returnUrl: `${origin}/orders`, shipping: shippingCharge, courierId: courierId ?? undefined });
     return NextResponse.json({ orderId: payment.orderId, paymentSessionId: payment.paymentSessionId, environment: payment.environment, shipping: shippingCharge, courierName, estimatedDeliveryDays });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to start payment.";

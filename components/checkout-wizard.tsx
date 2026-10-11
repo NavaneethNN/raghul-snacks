@@ -126,15 +126,22 @@ export function CheckoutWizard() {
   useEffect(() => {
     if (!itemPayload.length) { setQuote(null); return; }
 
-    // ── Manual shipping mode: use fixed rates based on state ──
-    // Tamil Nadu → ₹49 | Rest of India → ₹99
-    // This runs as soon as a state is selected (no pincode needed).
-    const MANUAL = true; // controlled via DELIVERY_MODE env on the server
+    // ── Manual shipping: weight-based fixed rates ──
+    // Weight per unit = 0.25 kg (250g). Minimum billable = 1 kg.
+    // TN:  first 1kg = ₹60, each additional 1kg (or part) = +₹30
+    // OUT: first 1kg = ₹100, each additional 1kg (or part) = +₹30
+    const MANUAL = true;
     if (MANUAL) {
       if (!form.state) { setQuote(null); return; }
+
+      const totalWeightKg = Math.max(1, items.reduce((sum, item) => sum + item.quantity * 0.25, 0));
+      const extraKg = Math.ceil(Math.max(0, totalWeightKg - 1)); // full kg slabs above first 1kg
       const isTN = form.state === "Tamil Nadu";
+      const baseRate = isTN ? 60 : 100;
+      const charge = baseRate + extraKg * 30;
+
       setQuote({
-        charge: isTN ? 49 : 99,
+        charge,
         courierName: isTN ? "Within Tamil Nadu" : "Rest of India",
         estimatedDeliveryDays: isTN ? "2–4 business days" : "5–7 business days",
       });
@@ -167,7 +174,7 @@ export function CheckoutWizard() {
       }
     }, 450);
     return () => { controller.abort(); window.clearTimeout(timer); };
-  }, [form.state, form.pincode, itemPayload]);
+  }, [form.state, form.pincode, itemPayload, items]);
 
   // Load eligible coupons for this user (server filters firstPurchase, perCustomer limits)
   useEffect(() => {
@@ -638,12 +645,10 @@ export function CheckoutWizard() {
                 {/* Courier rate */}
                 <div className={styles.courier}>
                   <div>
-                    <strong>{quote?.courierName || "Delivery charge"}</strong>
+                    <strong>Delivery</strong>
                     <span>
                       {quote
-                        ? quote.estimatedDeliveryDays
-                          ? `Estimated delivery: ${quote.estimatedDeliveryDays}`
-                          : "Fixed delivery rate"
+                        ? quote.estimatedDeliveryDays ?? "Delivered to your door"
                         : "Select your state to see delivery charge"}
                     </span>
                   </div>
@@ -714,7 +719,7 @@ export function CheckoutWizard() {
               <span>Total</span>
               <strong>{formatPrice(total)}</strong>
             </div>
-            <small>Fixed delivery rates · ₹49 within Tamil Nadu · ₹99 rest of India</small>
+            <small>Packed fresh in small batches · Delivered across India</small>
           </aside>
         </div>
       </main>

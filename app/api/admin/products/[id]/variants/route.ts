@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { productVariants } from "@/drizzle/schema";
-import { verifyAdminSession } from "@/lib/admin-auth";
+import { isValidAdminSession, adminCookieName } from "@/lib/admin-auth";
 import { cookies } from "next/headers";
 
 async function guard() {
   const cookieStore = await cookies();
-  const session = cookieStore.get("admin_session")?.value;
-  if (!verifyAdminSession(session)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = cookieStore.get(adminCookieName())?.value;
+  if (!isValidAdminSession(session)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   return null;
 }
 

@@ -42,7 +42,7 @@ async function cashfreeRequest(path: string, init: RequestInit = {}) {
   return { data, environment: configuration.environment };
 }
 
-export async function createCashfreeOrder(input: { orderId: string; amount: number; customerName: string; customerPhone: string; customerEmail?: string; returnUrl: string; shipping: number; courierId: number }) {
+export async function createCashfreeOrder(input: { orderId: string; amount: number; customerName: string; customerPhone: string; customerEmail?: string; returnUrl: string; shipping: number; courierId?: number }) {
   const { data, environment } = await cashfreeRequest("/orders", {
     method: "POST",
     body: JSON.stringify({
