@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { eq } from "drizzle-orm";
-import { products, comboItems, orderItems, reviews } from "@/drizzle/schema";
+import { eq, like } from "drizzle-orm";
+import { products, comboItems, orderItems, reviews, cartItems, categories } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
 
@@ -36,6 +36,12 @@ export async function PATCH(
     if (body.bestseller !== undefined) updateData.bestseller = body.bestseller;
 
     const db = getDb();
+    // Validate categoryId exists before updating
+    if (updateData.categoryId !== undefined && updateData.categoryId !== null) {
+      const cat = await db.select({ id: categories.id }).from(categories).where(eq(categories.id, updateData.categoryId)).limit(1);
+      if (!cat[0]) return NextResponse.json({ error: "Category not found" }, { status: 400 });
+    }
+
     const [updated] = await db
       .update(products)
       .set(updateData)
@@ -69,6 +75,7 @@ export async function DELETE(
     const db = getDb();
 
     // Remove references in child tables that don't cascade
+    await db.delete(cartItems).where(like(cartItems.productId, `${id}%`));
     await db.delete(comboItems).where(eq(comboItems.productId, id));
     await db.update(orderItems).set({ productId: null }).where(eq(orderItems.productId, id));
     await db.update(reviews).set({ productId: null }).where(eq(reviews.productId, id));

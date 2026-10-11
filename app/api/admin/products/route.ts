@@ -77,6 +77,11 @@ export async function POST(request: NextRequest) {
     const productSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
     const db = getDb();
+    // Validate categoryId exists before inserting
+    if (categoryId) {
+      const cat = await db.select({ id: categories.id }).from(categories).where(eq(categories.id, categoryId)).limit(1);
+      if (!cat[0]) return NextResponse.json({ error: "Category not found" }, { status: 400 });
+    }
     const [newProduct] = await db.insert(products).values({
       name,
       slug: productSlug,

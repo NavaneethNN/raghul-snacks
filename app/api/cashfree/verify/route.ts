@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
-import { customerAccounts, customers, orderItems, orders } from "@/drizzle/schema";
+import { eq, sql } from "drizzle-orm";
+import { customerAccounts, customers, orderItems, orders, products } from "@/drizzle/schema";
 import { createCustomerSession, customerCookieName, getCustomerSession } from "@/lib/customer-auth";
 import { getDb } from "@/lib/db";
 import { cashfreeVerifiedOrderSchema } from "@/lib/order-input";
@@ -92,7 +92,18 @@ export async function POST(request: Request) {
       .returning({ id: orders.id });
 
     await db.insert(orderItems).values(
-      lines.map((line) => ({ orderId: order.id, name: line.product.name, quantity: line.quantity, price: String(line.product.offerPrice) }))
+      lines.map((line) => ({ orderId: order.id, name: line.product.name, quantity: line.quantity, price: String(line.product.offerPrice), weight: (line.product.weight as string) ?? null }))
+    );
+
+    // Decrement stock for each ordered product (never below 0)
+    await Promise.all(
+      lines.map((line) => {
+        const numericProductId = line.product.id as number;
+        return db
+          .update(products)
+          .set({ stock: sql`GREATEST(stock - ${line.quantity}, 0)` })
+          .where(eq(products.id, numericProductId));
+      })
     );
 
     try {

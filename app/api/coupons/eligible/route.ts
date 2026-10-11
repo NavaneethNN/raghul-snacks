@@ -1,4 +1,4 @@
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, or } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { coupons, orders } from "@/drizzle/schema";
@@ -31,11 +31,18 @@ export async function GET() {
 
   // Get the user's email and count of prior paid orders
   const userEmail = session.email;
+  const userAccountId = session.id;
+
+  // Match orders by email OR by accountId (prevents bypass via email change)
+  const orderFilter = and(
+    or(eq(orders.email, userEmail), eq(orders.accountId, userAccountId)),
+    eq(orders.paymentStatus, "paid")
+  );
 
   const [{ value: priorOrderCount }] = await db
     .select({ value: count() })
     .from(orders)
-    .where(and(eq(orders.email, userEmail), eq(orders.paymentStatus, "paid")));
+    .where(orderFilter);
 
   const priorOrders = Number(priorOrderCount);
 
@@ -43,7 +50,7 @@ export async function GET() {
   const usageRows = await db
     .select({ couponCode: orders.couponCode, value: count() })
     .from(orders)
-    .where(and(eq(orders.email, userEmail), eq(orders.paymentStatus, "paid")))
+    .where(orderFilter)
     .groupBy(orders.couponCode);
 
   const usageMap = new Map<string, number>();

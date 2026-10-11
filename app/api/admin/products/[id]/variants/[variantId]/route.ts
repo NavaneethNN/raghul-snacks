@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
-import { productVariants } from "@/drizzle/schema";
+import { cartItems, productVariants } from "@/drizzle/schema";
 import { isValidAdminSession, adminCookieName } from "@/lib/admin-auth";
 import { cookies } from "next/headers";
 
@@ -42,6 +42,8 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const vId = parseInt(variantId);
   if (isNaN(productId) || isNaN(vId)) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
   const db = getDb();
+  // Remove cart items referencing this specific variant
+  await db.delete(cartItems).where(eq(cartItems.productId, `${productId}-v${vId}`));
   await db.delete(productVariants).where(and(eq(productVariants.id, vId), eq(productVariants.productId, productId)));
   return NextResponse.json({ ok: true });
 }
