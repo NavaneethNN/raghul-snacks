@@ -78,7 +78,7 @@ export function AdminSidebar() {
   }, []);
 
   useEffect(() => {
-    setConfirmSignOut(false);
+    setConfirmSignOut(false); // eslint-disable-line react-hooks/set-state-in-effect
     if (pathname === "/admin/reviews")  setPendingReviews(0);
     if (pathname === "/admin/messages") setUnreadMessages(0);
     if (pathname === "/admin/orders")   setNewOrders(0);

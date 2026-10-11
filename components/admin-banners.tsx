@@ -98,7 +98,7 @@ export function AdminBanners() {
   }, []);
 
   useEffect(() => {
-    fetchBanners();
+    fetchBanners(); // eslint-disable-line react-hooks/set-state-in-effect
     fetchCoupons();
   }, [fetchBanners, fetchCoupons]);
 

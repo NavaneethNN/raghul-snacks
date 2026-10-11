@@ -14,29 +14,36 @@ export default async function AdminMessagesPage() {
     if (!isValidAdminSession(cookieStore.get(adminCookieName())?.value)) redirect("/admin/login");
   } catch { redirect("/admin/login"); }
 
+  type MessageRow = {
+    id: number;
+    name: string;
+    email: string;
+    phone: string | null;
+    subject: string;
+    message: string;
+    adminReply: string | null;
+    replyAt: string | null;
+    read: boolean;
+    createdAt: string;
+  };
+  let messages: MessageRow[] = [];
   try {
     const rows = await getDb()
       .select()
       .from(contactMessages)
       .orderBy(desc(contactMessages.createdAt));
 
-    const messages = rows.map((r) => ({
+    messages = rows.map((r) => ({
       ...r,
       phone: r.phone ?? null,
       adminReply: r.adminReply ?? null,
       replyAt: r.replyAt ? r.replyAt.toISOString() : null,
       createdAt: r.createdAt.toISOString(),
     }));
-
-    return <AdminMessages messages={messages} />;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to load messages.";
-    return (
-      <section style={{ padding: "48px", textAlign: "center" }}>
-        <p style={{ color: "var(--terracotta)", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", marginBottom: "12px" }}>Error</p>
-        <h1 style={{ fontSize: "32px", marginBottom: "12px" }}>Messages couldn&apos;t load.</h1>
-        <p style={{ color: "#6b7280" }}>{message}</p>
-      </section>
-    );
+    console.error("Error loading messages:", message);
   }
+
+  return <AdminMessages messages={messages} />;
 }

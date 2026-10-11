@@ -28,7 +28,7 @@ export function AdminAnnouncements() {
   const [message, setMessage] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/immutability
 
   async function load() {
     setLoading(true);

@@ -2,7 +2,15 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-type WishlistItem = {
+export type WishlistVariant = {
+  id: number;
+  weight?: string | null;
+  price?: string | number | null;
+  offerPrice?: string | number | null;
+  sortOrder?: number;
+};
+
+export type WishlistItem = {
   id: string | number;
   name: string;
   slug: string;
@@ -10,6 +18,8 @@ type WishlistItem = {
   offerPrice: number;
   weight: string;
   image: string | null;
+  /** Pack-size options, kept so the wishlist card can mirror the product card. */
+  variants?: WishlistVariant[];
 };
 
 type WishlistContextValue = {
@@ -32,7 +42,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     const saved = window.localStorage.getItem("raghul-snacks-wishlist");
     if (saved) {
       try {
-        setItems(JSON.parse(saved) as WishlistItem[]);
+        setItems(JSON.parse(saved) as WishlistItem[]); // eslint-disable-line react-hooks/set-state-in-effect
       } catch (error) {
         console.error("Failed to parse wishlist:", error);
         setItems([]);

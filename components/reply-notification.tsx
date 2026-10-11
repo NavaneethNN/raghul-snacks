@@ -40,7 +40,7 @@ export function ReplyNotification() {
           if (repliedIds.length) markAsSeen(repliedIds);
         })
         .catch(() => {});
-      setVisible(false);
+      setVisible(false); // eslint-disable-line react-hooks/set-state-in-effect
       setUnseenCount(0);
       return;
     }

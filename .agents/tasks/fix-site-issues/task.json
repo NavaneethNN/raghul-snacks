@@ -1,0 +1,7 @@
+{
+  "task_id": "task-fix-site-issues",
+  "task_description": "Fix all issues identified in the Raghul Snacks site audit: dead Razorpay code, wrong payment processor names in policy pages, broken combo CTA, missing out-of-stock UI, orders page showing only latest order, stale buy-now on navigation, missing admin auth guard, and several minor content/SEO fixes.",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}

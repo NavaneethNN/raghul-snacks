@@ -460,8 +460,8 @@ export function AdminCoupons() {
                 {formData.discountType === "bogo" && (
                   <div style={{ padding: "12px 14px", background: "#fef9c3", border: "1px solid #fde047", borderRadius: "6px", fontSize: "13px", color: "#713f12", marginBottom: "8px" }}>
                     <strong>How BOGO works:</strong> customers get one free unit for every unit they buy of the selected product(s).
-                    Buy 2 → pay for 1, buy 4 → pay for 2, etc. The free unit is always valued at the product's current offer price.
-                    Leave the product selector below set to "Entire Store" to apply BOGO to every product in the cart.
+                    Buy 2 → pay for 1, buy 4 → pay for 2, etc. The free unit is always valued at the product&apos;s current offer price.
+                    Leave the product selector below set to &ldquo;Entire Store&rdquo; to apply BOGO to every product in the cart.
                   </div>
                 )}
 

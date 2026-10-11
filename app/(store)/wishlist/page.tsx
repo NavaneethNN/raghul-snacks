@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useWishlist } from "@/components/wishlist/wishlist-provider";
-import { formatPrice, formatWeight } from "@/lib/catalog";
+import { formatPrice } from "@/lib/catalog";
+import { resolveCardPricing, sortVariants } from "@/lib/product-pricing";
+import { VariantStackFlag } from "@/components/product/variant-stack-flag";
 import { WishlistButton } from "@/components/wishlist-button";
 
 export default function WishlistPage() {
@@ -27,14 +29,14 @@ export default function WishlistPage() {
         <div>
           <p className="eyebrow">Your favorites</p>
           <h1>Wishlist ({items.length})</h1>
-          <p>Products you've saved for later</p>
+          <p>Products you&apos;ve saved for later</p>
         </div>
       </div>
 
       <div className="product-grid">
         {items.map((item) => {
-          const displayPrice = item.offerPrice || item.price;
-          const hasDiscount = item.offerPrice && item.offerPrice < item.price;
+          const pricing = resolveCardPricing(item);
+          const variants = sortVariants(item.variants);
 
           return (
             <article key={item.id} className="product-card">
@@ -46,27 +48,20 @@ export default function WishlistPage() {
                     <span className="placeholder-icon">✦</span>
                   </div>
                 )}
-                {(item as any).variants?.filter((v: any) => v.active !== false).length > 0 && (
-                  <span className="variant-icon" aria-label="Multiple sizes available">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <rect x="2" y="7" width="20" height="14" rx="2"/>
-                      <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-                      <line x1="12" y1="12" x2="12" y2="17"/>
-                      <line x1="9.5" y1="14.5" x2="14.5" y2="14.5"/>
-                    </svg>
-                  </span>
-                )}
+                {variants.length > 0 && <VariantStackFlag count={variants.length} />}
               </Link>
               <WishlistButton product={item} />
               <div className="product-copy">
-                <p>{formatWeight(item.weight)}</p>
+                {pricing.displayWeight && <p>{pricing.displayWeight}</p>}
                 <Link href={`/product/${item.slug}`}>
                   <h3>{item.name}</h3>
                 </Link>
-                <div className="price">
-                  <strong>{formatPrice(displayPrice)}</strong>
-                  {hasDiscount && <s>{formatPrice(item.price)}</s>}
-                </div>
+                {pricing.hasPrice && (
+                  <div className="price">
+                    <strong>{formatPrice(pricing.displayPrice)}</strong>
+                    {pricing.hasDiscount && <s>{formatPrice(pricing.originalPrice)}</s>}
+                  </div>
+                )}
                 <Link href={`/product/${item.slug}`} className="button button-dark">
                   View Product
                 </Link>

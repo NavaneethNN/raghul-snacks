@@ -14,9 +14,11 @@ export default async function AdminProductsPage() {
     if (!isValidAdminSession(cookieStore.get(adminCookieName())?.value)) redirect("/admin/login");
   } catch { redirect("/admin/login"); }
 
+  const db = getDb();
+  let productList: Parameters<typeof AdminProducts>[0]["products"] = [];
+  let categoryList: Parameters<typeof AdminProducts>[0]["categories"] = [];
   try {
-    const db = getDb();
-    const productList = await db
+    productList = await db
       .select({
         id: products.id,
         name: products.name,
@@ -37,11 +39,10 @@ export default async function AdminProductsPage() {
       .leftJoin(categories, eq(products.categoryId, categories.id))
       .orderBy(desc(products.createdAt));
 
-    const categoryList = await db.select().from(categories).orderBy(categories.name);
-
-    return <AdminProducts products={productList} categories={categoryList} />;
+    categoryList = await db.select().from(categories).orderBy(categories.name);
   } catch (error) {
     console.error("Error loading products:", error);
-    return <AdminProducts products={[]} categories={[]} />;
   }
+
+  return <AdminProducts products={productList} categories={categoryList} />;
 }

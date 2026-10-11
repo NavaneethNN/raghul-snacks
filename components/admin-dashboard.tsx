@@ -70,7 +70,7 @@ export function AdminDashboard() {
         <div>
           <p className={styles.eyebrow}>Admin Dashboard</p>
           <h1>Welcome back!</h1>
-          <p>Here's what's happening in your store today.</p>
+          <p>Here&apos;s what&apos;s happening in your store today.</p>
         </div>
         <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>

@@ -14,10 +14,31 @@ export default async function AdminOrdersPage() {
     if (!isValidAdminSession(cookieStore.get(adminCookieName())?.value)) redirect("/admin/login");
   } catch { redirect("/admin/login"); }
 
+  type OrderWithItems = {
+    id: number;
+    orderNumber: string;
+    customerName: string;
+    phone: string;
+    email: string | null;
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+    total: number;
+    paymentStatus: string;
+    paymentMethod: string | null;
+    orderStatus: string;
+    shippingStatus: string;
+    shipmentId: string | null;
+    awbCode: string | null;
+    createdAt: string;
+    items: { id: number; name: string; quantity: number; price: number }[];
+  };
+
+  let ordersWithItems: OrderWithItems[] = [];
   try {
     const db = getDb();
 
-    // Fetch orders
     const recentOrders = await db
       .select({
         id: orders.id,
@@ -42,8 +63,7 @@ export default async function AdminOrdersPage() {
       .orderBy(desc(orders.createdAt))
       .limit(100);
 
-    // Fetch order items for each order
-    const ordersWithItems = await Promise.all(
+    ordersWithItems = await Promise.all(
       recentOrders.map(async (order) => {
         const items = await db
           .select({
@@ -66,10 +86,9 @@ export default async function AdminOrdersPage() {
         };
       })
     );
-
-    return <AdminOrders orders={ordersWithItems} />;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to load orders.";
-    return <section style={{ padding: "48px", textAlign: "center" }}><p style={{ color: "var(--terracotta)", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", marginBottom: "12px" }}>Admin</p><h1 style={{ fontSize: "32px", marginBottom: "12px" }}>Orders are not ready.</h1><p style={{ color: "#6b7280" }}>{message}</p></section>;
+    console.error("Error loading orders:", error);
   }
+
+  return <AdminOrders orders={ordersWithItems} />;
 }

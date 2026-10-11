@@ -661,7 +661,7 @@ export function AdminCombos() {
 
                 {selectedItems.length === 0 && !showProductList && (
                   <p style={{ color: "#9ca3af", fontSize: "13px", margin: 0 }}>
-                    No products selected. Click "Add Products" to select products.
+                    No products selected. Click &ldquo;Add Products&rdquo; to select products.
                   </p>
                 )}
               </div>

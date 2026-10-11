@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 
 export type Banner = {
@@ -17,28 +17,44 @@ export type Banner = {
   active: boolean;
 };
 
+function BannerCard({ banner, onCopyCoupon }: { banner: Banner; onCopyCoupon: (code: string) => void }) {
+  return (
+    <div className="hero-banner-card">
+      <div className="hero-banner-pattern">
+        <span className="hero-banner-leaf leaf-1">🍃</span>
+        <span className="hero-banner-leaf leaf-2">🍂</span>
+        <span className="hero-banner-leaf leaf-3">🌿</span>
+      </div>
+      <div className="hero-banner-content">
+        {banner.eyebrow && <p className="hero-banner-eyebrow">{banner.eyebrow}</p>}
+        {banner.title && <h3 className="hero-banner-title">{banner.title}</h3>}
+        {banner.subtitle && <p className="hero-banner-subtitle">{banner.subtitle}</p>}
+        {banner.couponCode && (
+          <div className="hero-banner-coupon" onClick={() => onCopyCoupon(banner.couponCode!)} style={{ cursor: "pointer" }}>
+            <span className="hero-banner-coupon-text"><strong>{banner.couponCode}</strong></span>
+          </div>
+        )}
+        <Link href={banner.href || "/shop"} className="hero-banner-cta">
+          {banner.buttonText || "Shop Now"}
+        </Link>
+        {banner.validityText && <p className="hero-banner-validity">{banner.validityText}</p>}
+      </div>
+    </div>
+  );
+}
+
 export function HeroBanner({ initialBanners }: { initialBanners?: Banner[] } = {}) {
   const initialActive = (initialBanners ?? []).filter((b) => b.active);
   const [banners, setBanners] = useState<Banner[]>(initialActive);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [nextIndex, setNextIndex] = useState(0);
   const [sliding, setSliding] = useState(false);
   const [slideDir, setSlideDir] = useState<"left" | "right">("left");
   const [loading, setLoading] = useState(initialBanners === undefined);
   const [showToast, setShowToast] = useState(false);
   const nextIndexRef = useRef(0);
 
-  useEffect(() => {
-    if (initialBanners === undefined) fetchBanners();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (banners.length <= 1) return;
-    const id = setInterval(() => goTo((currentIndex + 1) % banners.length, "left"), 5000);
-    return () => clearInterval(id);
-  }, [banners.length, currentIndex]);
-
-  async function fetchBanners() {
+  const fetchBanners = useCallback(async () => {
     try {
       const res = await fetch("/api/banners");
       if (res.ok) {
@@ -48,18 +64,30 @@ export function HeroBanner({ initialBanners }: { initialBanners?: Banner[] } = {
       }
     } catch {}
     finally { setLoading(false); }
-  }
+  }, []);
 
-  function goTo(idx: number, dir: "left" | "right") {
+  const goTo = useCallback((idx: number, dir: "left" | "right") => {
     if (sliding) return;
     nextIndexRef.current = idx;
+    setNextIndex(idx);
     setSlideDir(dir);
     setSliding(true);
     setTimeout(() => {
       setCurrentIndex(idx);
       setSliding(false);
     }, 400);
-  }
+  }, [sliding]);
+
+  useEffect(() => {
+    if (initialBanners === undefined) fetchBanners(); // eslint-disable-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const id = setInterval(() => goTo((currentIndex + 1) % banners.length, "left"), 5000);
+    return () => clearInterval(id);
+  }, [banners.length, currentIndex, goTo]);
 
   async function copyCoupon(code: string) {
     try {
@@ -72,33 +100,7 @@ export function HeroBanner({ initialBanners }: { initialBanners?: Banner[] } = {
   if (loading || banners.length === 0) return null;
 
   const current = banners[currentIndex];
-  const next = banners[nextIndexRef.current];
-
-  function BannerCard({ banner }: { banner: Banner }) {
-    return (
-      <div className="hero-banner-card">
-        <div className="hero-banner-pattern">
-          <span className="hero-banner-leaf leaf-1">🍃</span>
-          <span className="hero-banner-leaf leaf-2">🍂</span>
-          <span className="hero-banner-leaf leaf-3">🌿</span>
-        </div>
-        <div className="hero-banner-content">
-          {banner.eyebrow && <p className="hero-banner-eyebrow">{banner.eyebrow}</p>}
-          {banner.title && <h3 className="hero-banner-title">{banner.title}</h3>}
-          {banner.subtitle && <p className="hero-banner-subtitle">{banner.subtitle}</p>}
-          {banner.couponCode && (
-            <div className="hero-banner-coupon" onClick={() => copyCoupon(banner.couponCode!)} style={{ cursor: "pointer" }}>
-              <span className="hero-banner-coupon-text"><strong>{banner.couponCode}</strong></span>
-            </div>
-          )}
-          <Link href={banner.href || "/shop"} className="hero-banner-cta">
-            {banner.buttonText || "Shop Now"}
-          </Link>
-          {banner.validityText && <p className="hero-banner-validity">{banner.validityText}</p>}
-        </div>
-      </div>
-    );
-  }
+  const next = banners[nextIndex];
 
   return (
     <>
@@ -113,7 +115,7 @@ export function HeroBanner({ initialBanners }: { initialBanners?: Banner[] } = {
             transition: sliding ? "transform 0.4s cubic-bezier(0.4,0,0.2,1)" : "none",
           }}
         >
-          <BannerCard banner={current} />
+          <BannerCard banner={current} onCopyCoupon={copyCoupon} />
         </div>
 
         {/* Incoming banner — only rendered during slide */}
@@ -127,7 +129,7 @@ export function HeroBanner({ initialBanners }: { initialBanners?: Banner[] } = {
               animation: `heroBannerSlideIn${slideDir === "left" ? "Left" : "Right"} 0.4s cubic-bezier(0.4,0,0.2,1) forwards`,
             }}
           >
-            <BannerCard banner={next} />
+            <BannerCard banner={next} onCopyCoupon={copyCoupon} />
           </div>
         )}
 

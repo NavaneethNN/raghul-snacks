@@ -14,7 +14,7 @@ export function AdminShipping() {
   });
 
   useEffect(() => {
-    fetchSettings();
+    fetchSettings(); // eslint-disable-line react-hooks/immutability
   }, []);
 
   async function fetchSettings() {

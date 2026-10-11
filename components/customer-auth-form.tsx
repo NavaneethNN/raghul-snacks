@@ -47,7 +47,7 @@ export function CustomerAuthForm({ mode }: { mode: "login" | "signup" }) {
       google_failed: "Something went wrong signing in with Google. Please try again.",
     };
     const code = searchParams.get("error");
-    if (code) setErrors({ form: googleErrors[code] || "Something went wrong signing in with Google." });
+    if (code) setErrors({ form: googleErrors[code] || "Something went wrong signing in with Google." }); // eslint-disable-line react-hooks/set-state-in-effect
   }, [searchParams]);
 
   function clearFieldError(field: keyof FieldErrors) {

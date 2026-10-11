@@ -1,6 +1,6 @@
 "use client";
 
-import { useWishlist } from "@/components/wishlist/wishlist-provider";
+import { useWishlist, type WishlistVariant } from "@/components/wishlist/wishlist-provider";
 
 type Product = {
   id: string | number;
@@ -10,6 +10,8 @@ type Product = {
   offerPrice: number;
   weight: string;
   image: string | null;
+  /** Pack-size options, carried along so saved cards keep their size flag. */
+  variants?: WishlistVariant[];
 };
 
 export function WishlistButton({ product, className = "" }: { product: Product; className?: string }) {
@@ -31,6 +33,7 @@ export function WishlistButton({ product, className = "" }: { product: Product; 
         offerPrice: product.offerPrice,
         weight: product.weight,
         image: product.image,
+        variants: product.variants ?? [],
       });
     }
   };

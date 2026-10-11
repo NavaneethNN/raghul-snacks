@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 export default function AboutPage() {
   return (
@@ -29,18 +29,18 @@ export default function AboutPage() {
             <p className="eyebrow">Where it began</p>
             <h2>A kitchen, a recipe book, and a promise.</h2>
             <p>
-              It started with Raghul's grandmother — a woman who believed that food was more than
+              It started with Raghul&apos;s grandmother — a woman who believed that food was more than
               sustenance. It was memory, love, and heritage wrapped in every laddu, every podi,
               every crunchy kadalai.
             </p>
             <p>
               Her recipes, passed down through generations, used millets long before they became
-              a health trend. She knew what we're only rediscovering now: that foxtail millet,
-              little millet, and kodo millet aren't just nutritious — they're delicious.
+              a health trend. She knew what we&apos;re only rediscovering now: that foxtail millet,
+              little millet, and kodo millet aren&apos;t just nutritious — they&apos;re delicious.
             </p>
             <p>
               Today, we honor her legacy by making snacks the way she did: in small batches,
-              with real ingredients, and with the kind of care that can't be rushed.
+              with real ingredients, and with the kind of care that can&apos;t be rushed.
             </p>
           </div>
           <div className="story-stats">
@@ -80,8 +80,8 @@ export default function AboutPage() {
               </div>
               <h3>Authentic Recipes</h3>
               <p>
-                Every recipe is tested against tradition. We don't innovate for the sake of it —
-                we perfect what's already been perfected over generations.
+                Every recipe is tested against tradition. We don&apos;t innovate for the sake of it —
+                we perfect what&apos;s already been perfected over generations.
               </p>
             </div>
 
@@ -94,8 +94,8 @@ export default function AboutPage() {
               </div>
               <h3>Quality First</h3>
               <p>
-                From sourcing to packaging, we never compromise. If an ingredient doesn't meet
-                our standards, it doesn't go into our snacks. Period.
+                From sourcing to packaging, we never compromise. If an ingredient doesn&apos;t meet
+                our standards, it doesn&apos;t go into our snacks. Period.
               </p>
             </div>
 
@@ -122,7 +122,7 @@ export default function AboutPage() {
               </div>
               <h3>Family Made</h3>
               <p>
-                This isn't a factory. It's a kitchen that grew. Every member of our team
+                This isn&apos;t a factory. it&apos;s a kitchen that grew. Every member of our team
                 knows your snacks by name, not by SKU.
               </p>
             </div>
@@ -151,7 +151,7 @@ export default function AboutPage() {
               <div className="step-number">02</div>
               <h3>Stone Grind</h3>
               <p>
-                Our podis are ground on stone mills, the way they've been for centuries.
+                Our podis are ground on stone mills, the way they&apos;ve been for centuries.
                 Slow, yes. Worth it? Absolutely.
               </p>
             </div>
@@ -160,7 +160,7 @@ export default function AboutPage() {
               <div className="step-number">03</div>
               <h3>Hand Roll</h3>
               <p>
-                Laddus are shaped by hand. It takes longer, but there's no machine
+                Laddus are shaped by hand. It takes longer, but there&apos;s no machine
                 that can replicate the perfect texture.
               </p>
             </div>

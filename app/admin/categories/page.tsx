@@ -14,9 +14,10 @@ export default async function AdminCategoriesPage() {
     if (!isValidAdminSession(cookieStore.get(adminCookieName())?.value)) redirect("/admin/login");
   } catch { redirect("/admin/login"); }
 
+  const db = getDb();
+  let categoryList: Parameters<typeof AdminCategories>[0]["categories"] = [];
   try {
-    const db = getDb();
-    const categoryList = await db
+    categoryList = await db
       .select({
         id: categories.id,
         name: categories.name,
@@ -30,10 +31,9 @@ export default async function AdminCategoriesPage() {
       .leftJoin(products, eq(categories.id, products.categoryId))
       .groupBy(categories.id)
       .orderBy(desc(categories.createdAt));
-
-    return <AdminCategories categories={categoryList} />;
   } catch (error) {
     console.error("Error loading categories:", error);
-    return <AdminCategories categories={[]} />;
   }
+
+  return <AdminCategories categories={categoryList} />;
 }

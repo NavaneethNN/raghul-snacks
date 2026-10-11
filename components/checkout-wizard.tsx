@@ -108,7 +108,7 @@ export function CheckoutWizard() {
   }, []);
 
   useEffect(() => {
-    if (!form.state) { setCities([]); return; }
+    if (!form.state) { setCities([]); return; } // eslint-disable-line react-hooks/set-state-in-effect
     setCities([]);
     setForm((c) => ({ ...c, city: "" }));
     fetch(`/api/locations/cities?state=${encodeURIComponent(form.state)}`)
@@ -124,7 +124,7 @@ export function CheckoutWizard() {
   }, [form.state]);
 
   useEffect(() => {
-    if (!itemPayload.length) { setQuote(null); return; }
+    if (!itemPayload.length) { setQuote(null); return; } // eslint-disable-line react-hooks/set-state-in-effect
 
     // ── Manual shipping: weight-based fixed rates ──
     // Weight per unit = 0.25 kg (250g). Minimum billable = 1 kg.

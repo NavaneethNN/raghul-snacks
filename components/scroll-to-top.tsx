@@ -11,7 +11,6 @@ function ScrollToTopInner() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   // Both pathname and searchParams changes should scroll to top
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, searchParams]);
 
   return null;

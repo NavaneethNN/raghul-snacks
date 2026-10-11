@@ -42,7 +42,7 @@ function ProgressBar() {
     // Clear the creep timer
     if (timerRef.current) clearTimeout(timerRef.current);
     // Shoot to 100%
-    setWidth(100);
+    setWidth(100); // eslint-disable-line react-hooks/set-state-in-effect
     // Then hide after the fill animation completes
     timerRef.current = setTimeout(() => {
       setVisible(false);

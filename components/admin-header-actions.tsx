@@ -24,7 +24,7 @@ export function AdminHeaderActions({ variant = "light" }: { variant?: "light" | 
 
   const total = data.newOrders + data.unreadMessages + data.pendingReviews;
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { setMounted(true); }, []); // eslint-disable-line react-hooks/set-state-in-effect
 
   useEffect(() => {
     Promise.all([

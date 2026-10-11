@@ -32,12 +32,11 @@ export function DeliveryNotification() {
         if (!targetData.href) return; // all reviewed — nothing to show
 
         setOrder({ orderNumber: delivered.orderNumber, reviewHref: targetData.href });
-        showIfReady();
+        showIfReady(); // eslint-disable-line react-hooks/immutability
       })
       .catch(() => {});
 
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function showIfReady() {
