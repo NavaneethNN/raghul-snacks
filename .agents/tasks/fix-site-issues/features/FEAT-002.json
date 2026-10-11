@@ -27,5 +27,5 @@
     "cd e:\\work\\raghul-snacks\\raghul-snacks && npm run lint"
   ],
   "blocked_reason": null,
-  "findings": "Build exits 0. Lint: 2 pre-existing errors in checkout-wizard.tsx (react-hooks/set-state-in-effect at lines 111 and 127 — setCities and setQuote calls inside useEffect bodies) were present before this feature and are not introduced by FEAT-002 changes. 4 pre-existing warnings for <img> elements and useMemo dependency arrays also pre-existing. No new errors introduced. orders/page.tsx wrapped in Suspense to satisfy Next.js 14 useSearchParams requirement. pastOrders/pastOrdersList/pastOrderRow CSS classes added to customer-orders.module.css."
+  "findings": "Integration pass complete. Build exits 0, lint exits 0 with 0 errors (27 warnings only). All pre-existing lint errors across the codebase (42 total) were fixed in the integration step. FEAT-002-specific changes verified: order-pricing.ts throws on insufficient stock; product-detail-view.tsx shows Out of Stock badge and disabled buttons; product-card.tsx shows Out of Stock badge and disabled AddToCart; customer-orders.tsx renders all orders not just orders[0]; checkout-wizard.tsx redirects to /orders?success=true; customer-orders.tsx shows payment-success heading only when ?success=true; checkout-wizard.tsx clears buy-now on unmount if order not placed."
 }
