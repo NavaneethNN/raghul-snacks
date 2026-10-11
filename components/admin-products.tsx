@@ -427,30 +427,16 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
               </div>
 
               {/* ── Has variants toggle ── */}
-              <div style={{ margin: "4px 0 20px", padding: "14px 16px", background: hasVariants ? "rgba(201,95,59,0.06)" : "var(--cream)", border: `1.5px solid ${hasVariants ? "var(--terracotta)" : "var(--line)"}`, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                <div>
-                  <p style={{ margin: 0, font: "600 14px 'DM Sans',sans-serif", color: "var(--ink)" }}>This product has variants</p>
-                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>
-                    {hasVariants ? "Customers can choose a variant (e.g. 250g / 500g)" : "Single product with one price and weight"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => { setHasVariants(v => !v); setDraftVariants([]); }}
-                  style={{
-                    padding: "8px 18px",
-                    borderRadius: 8,
-                    border: "1.5px solid var(--terracotta)",
-                    background: hasVariants ? "var(--terracotta)" : "var(--paper)",
-                    color: hasVariants ? "#fff" : "var(--terracotta)",
-                    font: "600 13px 'DM Sans',sans-serif",
-                    cursor: "pointer",
-                    flexShrink: 0,
-                  }}
-                >
-                  {hasVariants ? "✓ Yes, has variants" : "No variants"}
-                </button>
-              </div>
+              <label style={{ display: "flex", alignItems: "center", gap: 10, margin: "0 0 20px", cursor: "pointer", userSelect: "none" }}>
+                <input
+                  type="checkbox"
+                  checked={hasVariants}
+                  onChange={(e) => { setHasVariants(e.target.checked); setDraftVariants([]); }}
+                  style={{ width: 18, height: 18, cursor: "pointer", accentColor: "var(--terracotta)" }}
+                />
+                <span style={{ font: "600 14px 'DM Sans',sans-serif", color: "var(--ink)" }}>Has variants</span>
+                <small style={{ color: "#6b7280", fontWeight: 400 }}>(e.g. different weights or sizes with different prices)</small>
+              </label>
 
               {/* ── Single price/weight (shown when NO variants) ── */}
               {!hasVariants && (
