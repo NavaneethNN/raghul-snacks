@@ -103,9 +103,30 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     }
   }
 
+  async function syncProductPriceFromVariants(productId: number) {
+    // After any variant change, sync product's price/weight from first variant
+    try {
+      const res = await fetch(`/api/admin/products/${productId}/variants`);
+      if (!res.ok) return;
+      const vars = await res.json() as Variant[];
+      if (vars.length === 0) return;
+      const first = vars[0];
+      await fetch(`/api/admin/products/${productId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          price: parseFloat(first.price),
+          offerPrice: first.offerPrice ? parseFloat(first.offerPrice) : null,
+          weight: first.weight,
+        }),
+      });
+    } catch { /* non-critical */ }
+  }
+
   async function deleteSavedVariant(productId: number, variantId: number) {
     await fetch(`/api/admin/products/${productId}/variants/${variantId}`, { method: "DELETE" });
     await loadSavedVariants(productId);
+    await syncProductPriceFromVariants(productId);
   }
 
   async function addSavedVariant(productId: number) {
@@ -123,6 +144,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
         }),
       });
       await loadSavedVariants(productId);
+      await syncProductPriceFromVariants(productId);
       setDraftLabel(""); setDraftPrice(""); setDraftOffer("");
     } finally { setVariantSaving(false); }
   }
@@ -233,9 +255,20 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
       }
       const saved = await res.json() as Product;
 
-      // Save draft variants to DB if any
+      // Save draft variants to DB if any, then sync product price from first variant
       if (draftVariants.length > 0) {
         await saveDraftVariantsToDb(saved.id);
+        // Sync product price/weight from first variant so product cards show correct price
+        const first = draftVariants[0];
+        await fetch(`/api/admin/products/${saved.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            price: parseFloat(first.price),
+            offerPrice: first.offerPrice ? parseFloat(first.offerPrice) : null,
+            weight: first.label,
+          }),
+        });
       }
 
       if (!editingProduct) {

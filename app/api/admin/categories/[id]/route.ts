@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { eq } from "drizzle-orm";
-import { categories } from "@/drizzle/schema";
+import { categories, products } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
 
@@ -61,6 +61,8 @@ export async function DELETE(
     const id = parseInt(idParam);
     const db = getDb();
 
+    // Unlink products from this category before deleting
+    await db.update(products).set({ categoryId: null }).where(eq(products.categoryId, id));
     await db.delete(categories).where(eq(categories.id, id));
 
     return NextResponse.json({ success: true });
