@@ -205,14 +205,16 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
           >
             {isOutOfStock ? "Out of Stock" : isAdded ? "✓ Added to Cart" : "Add to Cart"}
           </button>
-          <button
-            type="button"
-            className="button buy-now-button wide-button"
-            onClick={handleBuyNow}
-            disabled={redirecting || isOutOfStock}
-          >
-            {redirecting ? "Redirecting…" : "Buy Now"}
-          </button>
+          {!isOutOfStock && (
+            <button
+              type="button"
+              className="button buy-now-button wide-button"
+              onClick={handleBuyNow}
+              disabled={redirecting}
+            >
+              {redirecting ? "Redirecting…" : "Buy Now"}
+            </button>
+          )}
         </div>
       </div>
     </section>

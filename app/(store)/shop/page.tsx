@@ -63,7 +63,12 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     <section className="section shop-page">
       <p className="eyebrow">The full pantry</p>
       <h1>Find your next favourite.</h1>
-      <Suspense fallback={<div>Loading…</div>}>
+      <Suspense fallback={
+        <div style={{ minHeight: "40vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: 32, height: 32, border: "3px solid var(--line)", borderTopColor: "var(--terracotta)", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        </div>
+      }>
         <ShopContent categories={categories} products={products} combos={combos} searchQuery={searchQuery} />
       </Suspense>
     </section>
