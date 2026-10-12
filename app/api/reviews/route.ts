@@ -34,18 +34,18 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/reviews
-// Body: { productId, orderId, rating, content }
-// Submits a new review for a specific order+product.
+// Body: { productId, rating, content }
+// Submits a new review; server finds the most recent paid order containing this product.
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
   const session = getCustomerSession(cookieStore.get(customerCookieName())?.value);
   if (!session) return NextResponse.json({ error: "Sign in to leave a review." }, { status: 401 });
 
-  const body = await request.json() as { productId: number; orderId: number; rating: number; content: string };
-  const { productId, orderId, rating, content } = body;
+  const body = await request.json() as { productId: number; rating: number; content: string };
+  const { productId, rating, content } = body;
 
-  if (!productId || !orderId || !rating || !content?.trim()) {
-    return NextResponse.json({ error: "Product, order, rating and review text are required." }, { status: 400 });
+  if (!productId || !rating || !content?.trim()) {
+    return NextResponse.json({ error: "Product, rating and review text are required." }, { status: 400 });
   }
   if (rating < 1 || rating > 5) {
     return NextResponse.json({ error: "Rating must be between 1 and 5." }, { status: 400 });
@@ -53,32 +53,53 @@ export async function POST(request: NextRequest) {
 
   const db = getDb();
 
-  // Verify the order belongs to this user and is paid
-  const order = (await db
+  // Find the product name for fallback matching
+  const product = (await db.select({ name: products.name }).from(products).where(eq(products.id, productId)).limit(1))[0];
+
+  // Find the most recent paid order for this user that contains this product (by productId)
+  const orderByProductId = (await db
     .select({ id: orders.id })
     .from(orders)
-    .where(and(eq(orders.id, orderId), eq(orders.accountId, session.id), eq(orders.paymentStatus, "paid")))
+    .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
+    .where(
+      and(
+        eq(orders.accountId, session.id),
+        eq(orders.paymentStatus, "paid"),
+        eq(orderItems.productId, productId)
+      )
+    )
+    .orderBy(desc(orders.createdAt))
     .limit(1))[0];
-  if (!order) return NextResponse.json({ error: "Order not found." }, { status: 403 });
 
-  // Verify the product was in this order (by productId or name)
-  const product = (await db.select({ name: products.name }).from(products).where(eq(products.id, productId)).limit(1))[0];
-  const itemById = await db.select({ id: orderItems.id }).from(orderItems)
-    .where(and(eq(orderItems.orderId, orderId), eq(orderItems.productId, productId))).limit(1);
-  const itemByName = itemById.length === 0 && product?.name
-    ? await db.select({ id: orderItems.id }).from(orderItems)
-        .where(and(eq(orderItems.orderId, orderId), eq(orderItems.name, product.name))).limit(1)
-    : [];
-  if (itemById.length === 0 && itemByName.length === 0) {
-    return NextResponse.json({ error: "This product was not in the specified order." }, { status: 403 });
+  // Fallback: match by product name if productId link is missing
+  const orderByName =
+    !orderByProductId && product?.name
+      ? (await db
+          .select({ id: orders.id })
+          .from(orders)
+          .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
+          .where(
+            and(
+              eq(orders.accountId, session.id),
+              eq(orders.paymentStatus, "paid"),
+              eq(orderItems.name, product.name)
+            )
+          )
+          .orderBy(desc(orders.createdAt))
+          .limit(1))[0]
+      : undefined;
+
+  const qualifyingOrder = orderByProductId ?? orderByName;
+  if (!qualifyingOrder) {
+    return NextResponse.json({ error: "You must purchase this product before reviewing." }, { status: 403 });
   }
 
-  // Prevent duplicate review for same order+product
+  // Prevent duplicate review for this user+product (regardless of order)
   const existing = await db.select({ id: reviews.id }).from(reviews)
-    .where(and(eq(reviews.productId, productId), eq(reviews.accountId, session.id), eq(reviews.orderId, orderId)))
+    .where(and(eq(reviews.productId, productId), eq(reviews.accountId, session.id)))
     .limit(1);
   if (existing.length > 0) {
-    return NextResponse.json({ error: "You have already reviewed this product for this order." }, { status: 409 });
+    return NextResponse.json({ error: "You have already reviewed this product." }, { status: 409 });
   }
 
   const account = (await db.select({ name: customerAccounts.name }).from(customerAccounts)
@@ -86,7 +107,7 @@ export async function POST(request: NextRequest) {
 
   await db.insert(reviews).values({
     productId,
-    orderId,
+    orderId: qualifyingOrder.id,
     accountId: session.id,
     customerName: account?.name ?? "Customer",
     rating,

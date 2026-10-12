@@ -29,13 +29,22 @@ export function CustomerOrders() {
   const [trackedOrder, setTrackedOrder] = useState<CustomerOrder | null>(null);
   const [saved, setSaved] = useState<SavedOrder | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reviewedProductIds, setReviewedProductIds] = useState<number[]>([]);
 
   useEffect(() => {
     async function loadOrder() {
       try {
         const accountResponse = await fetch("/api/orders/mine");
         const accountData = await accountResponse.json() as { orders?: CustomerOrder[] };
-        if (accountResponse.ok && accountData.orders?.length) { setOrders(accountData.orders); return; }
+        if (accountResponse.ok && accountData.orders?.length) {
+          setOrders(accountData.orders);
+          const reviewRes = await fetch('/api/reviews/mine');
+          if (reviewRes.ok) {
+            const rd = await reviewRes.json() as { reviewedProductIds?: number[] };
+            setReviewedProductIds(rd.reviewedProductIds ?? []);
+          }
+          return;
+        }
         const value = window.localStorage.getItem("raghul-snacks-last-order");
         if (!value) return;
         const parsed = JSON.parse(value) as SavedOrder;
@@ -156,15 +165,26 @@ export function CustomerOrders() {
                     </div>
                   </>
                 );
-                return item.product?.slug ? (
-                  <Link key={item.id} href={`/product/${item.product.slug}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, textDecoration: "none", transition: "border-color 0.15s" }}
+                const itemLink = item.product?.slug ? (
+                  <Link href={`/product/${item.product.slug}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, textDecoration: "none", transition: "border-color 0.15s" }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--terracotta)"; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--line)"; }}>
                     {content}
                   </Link>
                 ) : (
-                  <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8 }}>
                     {content}
+                  </div>
+                );
+                const showReviewBadge = displayOrder.paymentStatus === "paid" && item.product?.id && !reviewedProductIds.includes(item.product.id);
+                return (
+                  <div key={item.id} style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                    {itemLink}
+                    {showReviewBadge && item.product?.slug && (
+                      <Link href={`/product/${item.product.slug}#reviews`} style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, padding: "3px 10px", background: "rgba(196,79,49,0.08)", border: "1px solid rgba(196,79,49,0.25)", borderRadius: 20, fontSize: 11, fontWeight: 600, color: "var(--terracotta)", textDecoration: "none", cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                        ✍ Review
+                      </Link>
+                    )}
                   </div>
                 );
               })}

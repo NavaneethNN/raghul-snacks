@@ -7,7 +7,6 @@ import { createPortal } from "react-dom";
 type NotifData = {
   newOrders: number;
   unreadMessages: number;
-  pendingReviews: number;
 };
 
 /**
@@ -17,12 +16,12 @@ type NotifData = {
  */
 export function AdminHeaderActions({ variant = "light" }: { variant?: "light" | "dark" }) {
   const [open, setOpen] = useState(false);
-  const [data, setData] = useState<NotifData>({ newOrders: 0, unreadMessages: 0, pendingReviews: 0 });
+  const [data, setData] = useState<NotifData>({ newOrders: 0, unreadMessages: 0 });
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const total = data.newOrders + data.unreadMessages + data.pendingReviews;
+  const total = data.newOrders + data.unreadMessages;
 
   useEffect(() => { setMounted(true); }, []); // eslint-disable-line react-hooks/set-state-in-effect
 
@@ -30,13 +29,11 @@ export function AdminHeaderActions({ variant = "light" }: { variant?: "light" | 
     Promise.all([
       fetch("/api/admin/notifications/orders").then((r) => r.json()) as Promise<{ newOrders: number }>,
       fetch("/api/admin/messages").then((r) => r.json()) as Promise<Array<{ read: boolean }>>,
-      fetch("/api/admin/reviews").then((r) => r.json()) as Promise<Array<{ approved: boolean }>>,
     ])
-      .then(([orders, messages, reviews]) => {
+      .then(([orders, messages]) => {
         setData({
           newOrders: orders.newOrders ?? 0,
           unreadMessages: Array.isArray(messages) ? messages.filter((m) => !m.read).length : 0,
-          pendingReviews: Array.isArray(reviews) ? reviews.filter((r) => !r.approved).length : 0,
         });
       })
       .catch(() => {})
@@ -131,16 +128,6 @@ export function AdminHeaderActions({ variant = "light" }: { variant?: "light" | 
                   description={`${data.unreadMessages} enquir${data.unreadMessages > 1 ? "ies" : "y"} awaiting reply.`}
                   href="/admin/messages" actionLabel="View Messages"
                   onClick={() => { setData((p) => ({ ...p, unreadMessages: 0 })); setOpen(false); }}
-                />
-              )}
-              {data.pendingReviews > 0 && (
-                <NotifCard
-                  icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>}
-                  iconBg="#f3e8ff" iconColor="#7e22ce"
-                  count={data.pendingReviews} title="Pending Reviews"
-                  description={`${data.pendingReviews} review${data.pendingReviews > 1 ? "s" : ""} waiting for approval.`}
-                  href="/admin/reviews" actionLabel="Approve Reviews"
-                  onClick={() => { setData((p) => ({ ...p, pendingReviews: 0 })); setOpen(false); }}
                 />
               )}
             </>

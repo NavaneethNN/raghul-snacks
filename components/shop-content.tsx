@@ -74,20 +74,22 @@ export function ShopContent({
         >
           All Products
         </button>
-        <button
-          onClick={() => setActiveTab('combos')}
-          style={{
-            background: activeTab === 'combos' ? 'var(--ink)' : 'transparent',
-            color: activeTab === 'combos' ? 'white' : 'inherit',
-            border: '1px solid var(--line)',
-            padding: '8px 16px',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontWeight: activeTab === 'combos' ? '600' : '400',
-          }}
-        >
-          Combos
-        </button>
+        {combos.length > 0 && (
+          <button
+            onClick={() => setActiveTab('combos')}
+            style={{
+              background: activeTab === 'combos' ? 'var(--ink)' : 'transparent',
+              color: activeTab === 'combos' ? 'white' : 'inherit',
+              border: '1px solid var(--line)',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: activeTab === 'combos' ? '600' : '400',
+            }}
+          >
+            Combos
+          </button>
+        )}
         {categories.map((category) => (
           <button
             key={category.slug}

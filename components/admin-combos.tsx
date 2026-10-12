@@ -690,6 +690,14 @@ export function AdminCombos() {
           </div>
         </div>
       )}
+      {confirmDeleteId !== null && (
+        <ConfirmDialog
+          message="This combo will be permanently removed. This cannot be undone."
+          confirmLabel="Yes, delete"
+          onConfirm={() => { handleDelete(confirmDeleteId); setConfirmDeleteId(null); }}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
+      )}
     </div>
   );
 }

@@ -62,6 +62,14 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   const [detailOrder, setDetailOrder] = useState<Order | null>(null);
   const [showOrders, setShowOrders] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
+  const [reviewedProductIds, setReviewedProductIds] = useState<number[]>([]);
+
+  useEffect(() => {
+    fetch('/api/reviews/mine')
+      .then(r => r.json())
+      .then((d: { reviewedProductIds?: number[] }) => setReviewedProductIds(d.reviewedProductIds ?? []))
+      .catch(() => {});
+  }, []);
 
   type UserMessage = { id: number; subject: string; message: string; adminReply: string | null; replyAt: string | null; createdAt: string };
   const [userMessages, setUserMessages] = useState<UserMessage[]>([]);
@@ -395,46 +403,52 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                     {/* Product chips — click to open order detail modal */}
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                       {order.items.map((item) => (
-                        <div
-                          key={item.id}
-                          style={{
-                            display: "flex", alignItems: "center", gap: 10,
-                            background: "var(--cream)", border: "1px solid var(--line)",
-                            borderRadius: 8, padding: "8px 12px",
-                            textAlign: "left", transition: "border-color 0.15s, box-shadow 0.15s",
-                            maxWidth: 260,
-                          }}
-                        >
-                          {item.product?.slug ? (
-                            <Link href={`/product/${item.product.slug}`} style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", flex: 1, minWidth: 0 }}>
-                              {item.product?.image ? (
-                                <img src={item.product.image} alt={item.name} style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6, border: "1px solid var(--line)", flexShrink: 0 }} />
-                              ) : (
-                                <div style={{ width: 36, height: 36, background: "var(--line)", borderRadius: 6, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                        <div key={item.id} style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                          <div
+                            style={{
+                              display: "flex", alignItems: "center", gap: 10,
+                              background: "var(--cream)", border: "1px solid var(--line)",
+                              borderRadius: 8, padding: "8px 12px",
+                              textAlign: "left", transition: "border-color 0.15s, box-shadow 0.15s",
+                              maxWidth: 260,
+                            }}
+                          >
+                            {item.product?.slug ? (
+                              <Link href={`/product/${item.product.slug}`} style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", flex: 1, minWidth: 0 }}>
+                                {item.product?.image ? (
+                                  <img src={item.product.image} alt={item.name} style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6, border: "1px solid var(--line)", flexShrink: 0 }} />
+                                ) : (
+                                  <div style={{ width: 36, height: 36, background: "var(--line)", borderRadius: 6, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                                  </div>
+                                )}
+                                <div style={{ minWidth: 0 }}>
+                                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 160 }}>{item.name}</p>
+                                  <p style={{ margin: "2px 0 0", fontSize: 11, color: "#6b7280", fontFamily: "'DM Mono',monospace" }}>Qty {item.quantity} · {price.format(parseFloat(item.price) * item.quantity)}</p>
                                 </div>
-                              )}
-                              <div style={{ minWidth: 0 }}>
-                                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 160 }}>{item.name}</p>
-                                <p style={{ margin: "2px 0 0", fontSize: 11, color: "#6b7280", fontFamily: "'DM Mono',monospace" }}>Qty {item.quantity} · {price.format(parseFloat(item.price) * item.quantity)}</p>
-                              </div>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6"/></svg>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6"/></svg>
+                              </Link>
+                            ) : (
+                              <button type="button" onClick={() => setDetailOrder(order)} style={{ display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", cursor: "pointer", flex: 1, minWidth: 0, padding: 0 }}>
+                                {item.product?.image ? (
+                                  <img src={item.product.image} alt={item.name} style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6, border: "1px solid var(--line)", flexShrink: 0 }} />
+                                ) : (
+                                  <div style={{ width: 36, height: 36, background: "var(--line)", borderRadius: 6, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                                  </div>
+                                )}
+                                <div style={{ minWidth: 0 }}>
+                                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 160 }}>{item.name}</p>
+                                  <p style={{ margin: "2px 0 0", fontSize: 11, color: "#6b7280", fontFamily: "'DM Mono',monospace" }}>Qty {item.quantity} · {price.format(parseFloat(item.price) * item.quantity)}</p>
+                                </div>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6"/></svg>
+                              </button>
+                            )}
+                          </div>
+                          {order.paymentStatus === "paid" && item.product?.id && item.product?.slug && !reviewedProductIds.includes(item.product.id) && (
+                            <Link href={`/product/${item.product.slug}#reviews`} style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, padding: "3px 10px", background: "rgba(196,79,49,0.08)", border: "1px solid rgba(196,79,49,0.25)", borderRadius: 20, fontSize: 11, fontWeight: 600, color: "var(--terracotta)", textDecoration: "none", cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                              ✍ Review
                             </Link>
-                          ) : (
-                            <button type="button" onClick={() => setDetailOrder(order)} style={{ display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", cursor: "pointer", flex: 1, minWidth: 0, padding: 0 }}>
-                              {item.product?.image ? (
-                                <img src={item.product.image} alt={item.name} style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6, border: "1px solid var(--line)", flexShrink: 0 }} />
-                              ) : (
-                                <div style={{ width: 36, height: 36, background: "var(--line)", borderRadius: 6, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-                                </div>
-                              )}
-                              <div style={{ minWidth: 0 }}>
-                                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 160 }}>{item.name}</p>
-                                <p style={{ margin: "2px 0 0", fontSize: 11, color: "#6b7280", fontFamily: "'DM Mono',monospace" }}>Qty {item.quantity} · {price.format(parseFloat(item.price) * item.quantity)}</p>
-                              </div>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6"/></svg>
-                            </button>
                           )}
                         </div>
                       ))}
