@@ -94,7 +94,7 @@ export function ReviewForm({ productId }: { productId: number }) {
       {/* Thank you message after submission */}
       {submitted && (
         <div style={{ padding: "14px 18px", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, fontSize: 14, color: "#166534" }}>
-          Thank you! Your review is pending approval.
+          Thank you! Your review has been posted.
         </div>
       )}
 

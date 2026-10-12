@@ -6,14 +6,14 @@ import { customerCookieName, getCustomerSession } from "@/lib/customer-auth";
 import { getDb } from "@/lib/db";
 
 // GET /api/reviews?productId=123
-// Returns approved reviews for public display on the product page.
+// Returns all reviews for public display on the product page.
 export async function GET(request: NextRequest) {
   const productId = Number(new URL(request.url).searchParams.get("productId"));
   if (!productId) return NextResponse.json({ error: "productId is required" }, { status: 400 });
 
   const db = getDb();
 
-  const approvedReviews = await db
+  const allReviews = await db
     .select({
       id: reviews.id,
       customerName: reviews.customerName,
@@ -22,11 +22,11 @@ export async function GET(request: NextRequest) {
       createdAt: reviews.createdAt,
     })
     .from(reviews)
-    .where(and(eq(reviews.productId, productId), eq(reviews.approved, true)))
+    .where(eq(reviews.productId, productId))
     .orderBy(desc(reviews.createdAt));
 
   return NextResponse.json({
-    reviews: approvedReviews.map((r) => ({
+    reviews: allReviews.map((r) => ({
       ...r,
       createdAt: r.createdAt?.toISOString() ?? null,
     })),
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     customerName: account?.name ?? "Customer",
     rating,
     content: content.trim(),
-    approved: false,
+    approved: true,
   });
 
   return NextResponse.json({ success: true });
