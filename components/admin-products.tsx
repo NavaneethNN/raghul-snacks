@@ -348,18 +348,17 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
         <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
-      {/* Stat banners */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, padding: "0 32px 24px" }}>
+      {/* Stat banners — match dashboard metric card style */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16, padding: "24px 32px 8px" }}>
         {[
           { label: "Total Products", value: products.length },
           { label: "In Stock", value: products.filter(p => p.stock !== 0).length },
           { label: "Out of Stock", value: products.filter(p => p.stock === 0).length },
           { label: "With Variants", value: products.filter(p => (p.variantCount ?? 0) > 0).length },
-          { label: "Bestsellers", value: products.filter(p => p.bestseller).length },
         ].map((stat) => (
-          <div key={stat.label} style={{ background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 10, padding: "14px 18px" }}>
-            <p style={{ margin: "0 0 4px", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", fontWeight: 600 }}>{stat.label}</p>
-            <strong style={{ fontSize: 26, fontWeight: 700, color: "var(--ink)", fontFamily: "'DM Sans',sans-serif" }}>{stat.value}</strong>
+          <div key={stat.label} style={{ background: "var(--paper)", border: "1px solid var(--line)", borderRadius: 10, padding: "18px 20px" }}>
+            <span style={{ display: "block", color: "#6b7280", font: "600 10px 'DM Mono', monospace", letterSpacing: "0.08em", textTransform: "uppercase" }}>{stat.label}</span>
+            <strong style={{ display: "block", margin: "8px 0 4px", fontSize: 28, fontWeight: 700, fontFamily: "'DM Sans',sans-serif", color: "var(--ink)", letterSpacing: "-0.02em", lineHeight: 1 }}>{stat.value}</strong>
           </div>
         ))}
       </div>

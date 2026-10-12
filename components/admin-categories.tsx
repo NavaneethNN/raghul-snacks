@@ -146,19 +146,6 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
         <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
-      {/* Stat banners */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, padding: "0 32px 24px" }}>
-        {[
-          { label: "Total Categories", value: categories.length },
-          { label: "With Products", value: categories.filter(c => c.productCount > 0).length },
-          { label: "Empty", value: categories.filter(c => c.productCount === 0).length },
-        ].map((stat) => (
-          <div key={stat.label} style={{ background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 10, padding: "14px 18px" }}>
-            <p style={{ margin: "0 0 4px", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", fontWeight: 600 }}>{stat.label}</p>
-            <strong style={{ fontSize: 26, fontWeight: 700, color: "var(--ink)", fontFamily: "'DM Sans',sans-serif" }}>{stat.value}</strong>
-          </div>
-        ))}
-      </div>
 
       <section className={styles.workspace}>
         <div className={styles.tableWrapper}>
