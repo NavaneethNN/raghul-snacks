@@ -125,41 +125,48 @@ export function CheckoutWizard() {
     if (!itemPayload.length) { setQuote(null); return; } // eslint-disable-line react-hooks/set-state-in-effect
 
     // ── Manual shipping: weight-based fixed rates ──
-    // Zones (per kg base rate, +₹30 per additional kg slab):
-    //   Zone 1 — Coimbatore city:                           ₹60
-    //   Zone 2 — Tamil Nadu (rest):                         ₹60
-    //   Zone 3 — Kerala, Karnataka, Andhra Pradesh,
-    //             Telangana:                                 ₹100
-    //   Zone 4 — North India & all other states (by air):   ₹250
+    // Rates read from DB settings, falling back to hardcoded defaults.
     const MANUAL = true;
     if (MANUAL) {
       if (!form.state) { setQuote(null); return; }
 
       const ZONE3_STATES = ["Kerala", "Karnataka", "Andhra Pradesh", "Telangana"];
       const ZONE2_STATES = ["Tamil Nadu"];
-      // Everything else → Zone 4 (North India / air)
 
-      let baseRate: number;
-      let courierLabel: string;
-      if (ZONE2_STATES.includes(form.state)) {
-        baseRate = 60;
-        courierLabel = "Delivery";
-      } else if (ZONE3_STATES.includes(form.state)) {
-        baseRate = 100;
-        courierLabel = "Delivery";
-      } else {
-        baseRate = 250;
-        courierLabel = "Air Delivery";
-      }
+      // Read rates from DB asynchronously, then set quote
+      const computeQuote = async () => {
+        let tnRate = 60, southRate = 100, northRate = 250, extraRate = 30;
+        try {
+          const settingsRes = await fetch("/api/settings");
+          if (settingsRes.ok) {
+            const s = await settingsRes.json() as Record<string, string>;
+            if (s.shippingTamilNadu)  tnRate    = parseInt(s.shippingTamilNadu);
+            if (s.shippingSouthIndia) southRate  = parseInt(s.shippingSouthIndia);
+            if (s.shippingNorthIndia) northRate  = parseInt(s.shippingNorthIndia);
+            if (s.shippingExtraKg)    extraRate  = parseInt(s.shippingExtraKg);
+          }
+        } catch { /* use defaults */ }
 
-      const totalWeightKg = Math.max(1, items.reduce((sum, item) => sum + item.quantity * 0.25, 0));
-      const extraKg = Math.ceil(Math.max(0, totalWeightKg - 1)); // full kg slabs above first 1 kg
-      const charge = baseRate + extraKg * 30;
+        let baseRate: number;
+        let courierLabel: string;
+        if (ZONE2_STATES.includes(form.state)) {
+          baseRate = tnRate; courierLabel = "Delivery";
+        } else if (ZONE3_STATES.includes(form.state)) {
+          baseRate = southRate; courierLabel = "Delivery";
+        } else {
+          baseRate = northRate; courierLabel = "Air Delivery";
+        }
 
-      setQuote((prev) => {
-        if (prev?.charge === charge && prev?.courierName === courierLabel) return prev;
-        return { charge, courierName: courierLabel, estimatedDeliveryDays: null };
-      });
+        const totalWeightKg = Math.max(1, items.reduce((sum, item) => sum + item.quantity * 0.25, 0));
+        const extraKg = Math.ceil(Math.max(0, totalWeightKg - 1));
+        const charge = baseRate + extraKg * extraRate;
+
+        setQuote((prev) => {
+          if (prev?.charge === charge && prev?.courierName === courierLabel) return prev;
+          return { charge, courierName: courierLabel, estimatedDeliveryDays: null };
+        });
+      };
+      computeQuote();
       return;
     }
 

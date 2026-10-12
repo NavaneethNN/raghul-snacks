@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 
 type SessionAccount = { id: number; name: string; email: string } | null;
 
