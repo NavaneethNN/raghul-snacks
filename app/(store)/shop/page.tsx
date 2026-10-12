@@ -56,7 +56,9 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   const params = await searchParams;
   const categories = await getCategories();
   const products = await getProducts();
-  const combos = await getCombos();
+  const allCombos = await getCombos();
+  // Only show combos that have at least one item
+  const combos = allCombos.filter((c: any) => c.items && c.items.length > 0);
   const searchQuery = params.search || "";
 
   return (

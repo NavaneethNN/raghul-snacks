@@ -39,6 +39,18 @@ export default async function ComboDetailPage({ params }: { params: Promise<{ sl
     notFound();
   }
 
+  // If all items were deleted, treat the combo as unavailable
+  if (!combo.items || combo.items.length === 0) {
+    return (
+      <section className="empty-state">
+        <p className="eyebrow">Combo unavailable</p>
+        <h1>This combo is no longer available.</h1>
+        <p>The products in this combo have been removed. Check out our shop for other options.</p>
+        <a href="/shop" className="button button-dark">Browse products</a>
+      </section>
+    );
+  }
+
   const displayPrice = combo.discount && parseFloat(combo.discount) > 0
     ? parseFloat(combo.discount)
     : parseFloat(combo.price);

@@ -70,7 +70,9 @@ export default async function HomePage() {
   const allProducts = await getProducts();
   const combos = await getCombos();
   const banners = await getBanners();
-  const featuredCombo = combos && combos.length > 0 ? combos[0] : null;
+  // Only show combos that still have at least one item
+  const validCombos = combos ? combos.filter((c: any) => c.items && c.items.length > 0) : [];
+  const featuredCombo = validCombos.length > 0 ? validCombos[0] : null;
   const bestsellers = allProducts.filter((p: any) => p.bestseller).slice(0, 4);
   const products = bestsellers.length > 0 ? bestsellers : allProducts.slice(0, 4);
 
