@@ -63,21 +63,17 @@ export function ReviewForm({ productId }: { productId: number }) {
     }
   }
 
-  // Still loading session
+  // Still loading session — don't render anything yet
   if (account === undefined) return null;
+
+  // Not logged in — don't show the form or any prompt, reviews are shown by ProductReviews above
+  if (account === null) return null;
 
   return (
     <section id="write-review" style={{ maxWidth: 820, margin: "0 auto", padding: "0 20px 48px" }}>
       <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, marginBottom: 16, letterSpacing: "-0.03em" }}>
         Write a Review
       </h2>
-
-      {/* Not logged in */}
-      {account === null && (
-        <p style={{ fontSize: 14, color: "#6b7280" }}>
-          <Link href="/login" style={{ color: "var(--terracotta)", fontWeight: 600 }}>Log in</Link> to leave a review. You must have purchased this product.
-        </p>
-      )}
 
       {/* Already reviewed */}
       {account !== null && alreadyReviewed && (

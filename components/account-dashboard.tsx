@@ -418,8 +418,8 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                                 {item.product?.image ? (
                                   <img src={item.product.image} alt={item.name} style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6, border: "1px solid var(--line)", flexShrink: 0 }} />
                                 ) : (
-                                  <div style={{ width: 36, height: 36, background: "var(--line)", borderRadius: 6, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                                  <div style={{ width: 36, height: 36, background: "var(--cream)", borderRadius: 6, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--line)", fontSize: 14, fontWeight: 700, color: "var(--terracotta)", fontFamily: "'DM Sans',sans-serif" }}>
+                                    {item.name.charAt(0).toUpperCase()}
                                   </div>
                                 )}
                                 <div style={{ minWidth: 0 }}>
@@ -433,8 +433,8 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                                 {item.product?.image ? (
                                   <img src={item.product.image} alt={item.name} style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6, border: "1px solid var(--line)", flexShrink: 0 }} />
                                 ) : (
-                                  <div style={{ width: 36, height: 36, background: "var(--line)", borderRadius: 6, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                                  <div style={{ width: 36, height: 36, background: "var(--cream)", borderRadius: 6, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--line)", fontSize: 14, fontWeight: 700, color: "var(--terracotta)", fontFamily: "'DM Sans',sans-serif" }}>
+                                    {item.name.charAt(0).toUpperCase()}
                                   </div>
                                 )}
                                 <div style={{ minWidth: 0 }}>
