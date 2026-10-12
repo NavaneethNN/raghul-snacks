@@ -16,11 +16,8 @@ type PublicCoupon = { id: number; code: string; name: string | null; description
 const steps = ["Contact", "Delivery"];
 
 export function CheckoutWizard() {
-  const { items: cartItems, subtotal: cartSubtotal, clearCart, hydrated: cartHydrated } = useCart();
+  const { items: cartItems, subtotal: cartSubtotal, clearCart, addItem, hydrated: cartHydrated } = useCart();
   // Read buy-now item synchronously with lazy useState initialiser.
-  // This avoids the React Strict Mode double-invoke problem that plagued
-  // the previous useEffect-based approach (effect cleanup cleared sessionStorage
-  // before the second mount could read it).
   const [buyNowItem] = useState<BuyNowItem | null>(() =>
     typeof window !== "undefined" ? readBuyNowItem() : null
   );
@@ -210,15 +207,22 @@ export function CheckoutWizard() {
       .catch(() => { /* non-critical */ });
   }, [subtotal]);
 
-  // Clear stale buy-now item on unmount if payment was not completed
+  // Clear stale buy-now item only when navigating away (not on reload)
   useEffect(() => {
-    return () => {
-      if (buyNowItem && !orderPlacedRef.current) {
+    if (!buyNowItem) return;
+
+    // Add buy-now item to the regular cart immediately so it survives reloads
+    addItem(buyNowItem, buyNowItem.quantity);
+
+    function handlePageHide(e: PageTransitionEvent) {
+      if (!e.persisted && !orderPlacedRef.current) {
         clearBuyNowItem();
       }
-    };
-  }, [buyNowItem]);
-
+    }
+    window.addEventListener("pagehide", handlePageHide);
+    return () => window.removeEventListener("pagehide", handlePageHide);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount only
   // ── Coupon helpers ─────────────────────────────────────────────────────────
 
   const applyCoupon = useCallback(
