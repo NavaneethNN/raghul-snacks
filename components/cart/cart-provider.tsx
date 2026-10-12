@@ -107,9 +107,11 @@ async function isLoggedIn(): Promise<boolean> {
 }
 
 // Merge server cart into local: server item data wins (fresh names/prices), but local quantity wins
+// For logged-in users: server is authoritative — only items in server cart are valid.
+// Local items are added ONLY if they don't exist on server (new guest additions not yet synced).
 function mergeCarts(local: CartItem[], server: CartItem[]): CartItem[] {
   const result: CartItem[] = [];
-  // Start with server items (fresh data from DB)
+  // Start with server items (fresh data from DB, already filtered for deleted products)
   for (const serverItem of server) {
     const localItem = local.find((i) => i.id === serverItem.id);
     if (localItem) {
@@ -119,11 +121,10 @@ function mergeCarts(local: CartItem[], server: CartItem[]): CartItem[] {
       result.push(serverItem);
     }
   }
-  // Add local-only items (guest items not yet synced to server)
-  for (const localItem of local) {
-    const alreadyAdded = result.find((i) => i.id === localItem.id);
-    if (!alreadyAdded) result.push(localItem);
-  }
+  // Add local-only items ONLY if they look like recently-added guest items
+  // (i.e. not items that were on server but got deleted — those won't be in server)
+  // We skip local items whose base product ID isn't in the server cart at all,
+  // UNLESS this is a fresh guest merge (handled by caller passing server as first arg)
   return result;
 }
 
@@ -172,10 +173,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         let merged: CartItem[];
         if (localIsGuest) {
-          merged = mergeCarts(server, local);
+          // Guest had items — add any local items not yet on server (new additions)
+          merged = [...server];
+          for (const localItem of local) {
+            const onServer = server.find((s) => s.id === localItem.id);
+            if (!onServer) merged.push(localItem); // guest item not yet synced
+          }
         } else if (localBelongsToThisAccount) {
+          // Same account — server is authoritative (no deleted products),
+          // use server data but local quantity for existing items
           merged = mergeCarts(local, server);
         } else {
+          // Different account's cart in localStorage — use server cart only
           merged = server;
         }
 

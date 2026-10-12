@@ -250,6 +250,14 @@
   color: white;
 }
 
+/* Keep terracotta bg when hovering active filter */
+.filters .activeFilter:hover {
+  background: var(--terracotta);
+  border-color: var(--terracotta);
+  color: white;
+  opacity: 0.9;
+}
+
 /* Message */
 .message {
   margin: 0;

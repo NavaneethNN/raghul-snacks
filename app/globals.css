@@ -3729,6 +3729,13 @@ footer {
   color: #fff;
 }
 
+/* Keep white text when hovering the already-selected variant */
+.variant-btn--active:hover {
+  color: #fff;
+  background: var(--terracotta);
+  opacity: 0.9;
+}
+
 .price-section .price {
   display: flex;
   align-items: baseline;

@@ -1,9 +1,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { desc, eq } from "drizzle-orm";
+import { count, desc, eq } from "drizzle-orm";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
-import { products, categories } from "@/drizzle/schema";
+import { products, categories, productVariants } from "@/drizzle/schema";
 import { AdminProducts } from "@/components/admin-products";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ export default async function AdminProductsPage() {
   let productList: Parameters<typeof AdminProducts>[0]["products"] = [];
   let categoryList: Parameters<typeof AdminProducts>[0]["categories"] = [];
   try {
-    productList = await db
+    const rows = await db
       .select({
         id: products.id,
         name: products.name,
@@ -39,6 +39,20 @@ export default async function AdminProductsPage() {
       .from(products)
       .leftJoin(categories, eq(products.categoryId, categories.id))
       .orderBy(desc(products.createdAt));
+
+    // Get variant counts per product in one query
+    const variantCounts = await db
+      .select({ productId: productVariants.productId, count: count() })
+      .from(productVariants)
+      .where(eq(productVariants.active, true))
+      .groupBy(productVariants.productId);
+
+    const variantCountMap = new Map(variantCounts.map((v) => [v.productId, Number(v.count)]));
+
+    productList = rows.map((p) => ({
+      ...p,
+      variantCount: variantCountMap.get(p.id) ?? 0,
+    }));
 
     categoryList = await db.select().from(categories).orderBy(categories.name);
   } catch (error) {

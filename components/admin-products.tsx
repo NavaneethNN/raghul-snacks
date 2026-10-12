@@ -26,6 +26,7 @@ type Product = {
   featured: boolean;
   bestseller: boolean;
   stock: number;
+  variantCount?: number;
   createdAt: Date;
 };
 
@@ -347,6 +348,22 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
         <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
+      {/* Stat banners */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, padding: "0 32px 24px" }}>
+        {[
+          { label: "Total Products", value: products.length, color: "#3b82f6" },
+          { label: "In Stock", value: products.filter(p => p.stock !== 0).length, color: "#16a34a" },
+          { label: "Out of Stock", value: products.filter(p => p.stock === 0).length, color: "#dc2626" },
+          { label: "With Variants", value: products.filter(p => (p.variantCount ?? 0) > 0).length, color: "#c95f3b" },
+          { label: "Bestsellers", value: products.filter(p => p.bestseller).length, color: "#9333ea" },
+        ].map((stat) => (
+          <div key={stat.label} style={{ background: "var(--paper)", border: "1px solid var(--line)", borderRadius: 10, padding: "14px 18px" }}>
+            <p style={{ margin: "0 0 4px", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", fontWeight: 600 }}>{stat.label}</p>
+            <strong style={{ fontSize: 24, fontWeight: 700, color: stat.color, fontFamily: "'DM Sans',sans-serif" }}>{stat.value}</strong>
+          </div>
+        ))}
+      </div>
+
       {/* Table */}
       <section className={styles.workspace}>
         <div className={styles.toolbar}>
@@ -365,12 +382,13 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                 <th className={productStyles.hideOnMobile}>Category</th>
                 <th>Price</th>
                 <th className={productStyles.hideOnMobile}>Status</th>
+                <th className={productStyles.hideOnMobile}>Type</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredProducts.length === 0 ? (
-                <tr><td colSpan={5} className={styles.emptyState}><div><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5c-1.5-1-3.5-1-5 0"/></svg><h3>No products yet</h3><p>Add your first product to get started.</p><button className={styles.primaryButton} onClick={() => setShowForm(true)}>Add Product</button></div></td></tr>
+                <tr><td colSpan={6} className={styles.emptyState}><div><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5c-1.5-1-3.5-1-5 0"/></svg><h3>No products yet</h3><p>Add your first product to get started.</p><button className={styles.primaryButton} onClick={() => setShowForm(true)}>Add Product</button></div></td></tr>
               ) : filteredProducts.map((product) => (
                 <tr key={product.id}>
                   <td>
@@ -389,9 +407,26 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                       : <strong>{fmt.format(Number(product.price))}</strong>}
                   </td>
                   <td className={productStyles.hideOnMobile}>
-                    {product.stock === 0 && <span className={`${styles.badge}`} style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626", border: "1px solid rgba(220,38,38,0.2)" }}>Out of Stock</span>}
-                    {product.bestseller && <span className={`${styles.badge} ${styles.success}`} style={{ marginLeft: product.stock === 0 ? 6 : 0 }}>Bestseller</span>}
-                    {product.stock !== 0 && !product.bestseller && "—"}
+                    {product.stock === 0
+                      ? <span className={`${styles.badge}`} style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626", border: "1px solid rgba(220,38,38,0.2)" }}>Out of Stock</span>
+                      : <span className={`${styles.badge} ${styles.success}`}>In Stock</span>
+                    }
+                    {product.bestseller && <span className={`${styles.badge} ${styles.info}`} style={{ marginLeft: 6 }}>Bestseller</span>}
+                  </td>
+                  <td className={productStyles.hideOnMobile}>
+                    {(product.variantCount ?? 0) > 0 ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="7" width="20" height="14" rx="2"/>
+                          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                          <line x1="12" y1="12" x2="12" y2="17"/>
+                          <line x1="9.5" y1="14.5" x2="14.5" y2="14.5"/>
+                        </svg>
+                        {product.variantCount} variant{(product.variantCount ?? 0) !== 1 ? "s" : ""}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 13, color: "#6b7280" }}>Single</span>
+                    )}
                   </td>
                   <td>
                     <div className={styles.actionButtons}>
@@ -632,10 +667,22 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                   : (<>
                       <input type="file" accept="image/*" onChange={handleImageUpload} style={{ marginBottom: "8px" }} />
                       {imagePreview && (
-                        <div style={{ position: "relative", display: "inline-block", marginTop: "8px", borderRadius: "8px", overflow: "hidden" }}>
-                          <img src={imagePreview} alt="Preview" style={{ maxWidth: "200px", maxHeight: "200px", borderRadius: "8px", display: "block" }} />
-                          <button type="button" onClick={() => { setImagePreview(""); setImageData(""); }} className={styles.imageDeleteButton} title="Remove image">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        <div
+                          style={{ position: "relative", display: "inline-block", marginTop: "8px" }}
+                          className={productStyles.imagePreviewWrap}
+                        >
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            style={{ maxWidth: "200px", maxHeight: "200px", borderRadius: "8px", display: "block", border: "1px solid var(--line)" }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => { setImagePreview(""); setImageData(""); }}
+                            className={productStyles.imageDeleteButton}
+                            title="Remove image"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                           </button>
                         </div>
                       )}

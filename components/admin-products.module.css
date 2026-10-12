@@ -162,3 +162,36 @@
     color: #6b7280;
   }
 }
+
+/* Image preview with hover-only delete button */
+.imagePreviewWrap {
+  position: relative;
+  display: inline-block;
+}
+
+.imageDeleteButton {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  z-index: 2;
+}
+
+.imagePreviewWrap:hover .imageDeleteButton {
+  opacity: 1;
+}
+
+.imageDeleteButton:hover {
+  background: #dc2626;
+}

@@ -49,11 +49,26 @@ export async function GET() {
 
   const productMap = new Map(productRows.map((p) => [String(p.id), p]));
 
-  const enriched = rows.map((row) => ({
-    productId: row.productId,
-    quantity: row.quantity,
-    product: productMap.get(row.productId) ?? null,
-  }));
+  // Auto-clean stale cart rows where the product no longer exists
+  const staleIds = rows
+    .filter((row) => productMap.get(row.productId) === undefined && !Number.isNaN(Number(row.productId)))
+    .map((row) => row.productId);
+  if (staleIds.length > 0) {
+    // Delete stale rows in background (don't await to keep response fast)
+    Promise.all(
+      staleIds.map((pid) =>
+        db.delete(cartItems).where(and(eq(cartItems.accountId, session.id), eq(cartItems.productId, pid)))
+      )
+    ).catch(() => {});
+  }
+
+  const enriched = rows
+    .filter((row) => productMap.get(row.productId) !== undefined)
+    .map((row) => ({
+      productId: row.productId,
+      quantity: row.quantity,
+      product: productMap.get(row.productId)!,
+    }));
 
   return NextResponse.json({ items: enriched });
 }
