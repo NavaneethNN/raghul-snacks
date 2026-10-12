@@ -1,0 +1,9 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "summary": "Two FEAT-001 acceptance criteria are not met: combo item quantity still renders as 'Xg' instead of '×X' on both the home page and the combo detail page.",
+  "findings": [
+    "FEAT-001 H-7/M-11 (home page): app/(store)/page.tsx line 218 still renders `({item.quantity}g)` — should be `(×{item.quantity})` per the acceptance criteria.",
+    "FEAT-001 H-7/M-11 (combo detail): app/(store)/combo/[slug]/page.tsx line ~98 still renders `{item.quantity}g` in the 'What's in this combo' list — should be `×{item.quantity}` per the acceptance criteria. The formatWeight import removal from this file was also required if unused.",
+    "Build exits 0 and all other acceptance criteria for FEAT-001, FEAT-002, and FEAT-003 are met."
+  ]
+}

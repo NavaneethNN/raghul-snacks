@@ -21,7 +21,7 @@
   box-shadow: 0 1px 3px rgba(36, 49, 39, 0.02);
 }
 
-.header > div {
+.header > div:first-child {
   flex: 1;
 }
 

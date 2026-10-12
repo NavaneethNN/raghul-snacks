@@ -25,6 +25,7 @@ export type WishlistItem = {
 type WishlistContextValue = {
   items: WishlistItem[];
   count: number;
+  hydrated: boolean;
   addItem: (item: WishlistItem) => void;
   removeItem: (id: string | number) => void;
   isInWishlist: (id: string | number) => boolean;
@@ -80,6 +81,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const value: WishlistContextValue = {
     items,
     count: items.length,
+    hydrated,
     addItem,
     removeItem,
     isInWishlist,

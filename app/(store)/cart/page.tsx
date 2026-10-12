@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 type CartItem = ReturnType<typeof useCart>["items"][number];
 
 export default function CartPage() {
-  const { items, subtotal, updateQuantity, removeItem } = useCart();
+  const { items, subtotal, updateQuantity, removeItem, hydrated } = useCart();
   const router = useRouter();
   const { addItem: addToWishlist, isInWishlist } = useWishlist();
   const [upsellProduct, setUpsellProduct] = useState<any>(null);
@@ -35,7 +35,7 @@ export default function CartPage() {
   useEffect(() => {
     async function fetchUpsellProduct() {
       try {
-        const response = await fetch("/api/products");
+        const response = await fetch("/api/products?limit=10");
         if (!response.ok) return;
         const products = await response.json();
         const cartIds = items.map(item => String(item.id));
@@ -75,6 +75,13 @@ export default function CartPage() {
     setPendingItem(null);
   }
 
+  if (!hydrated) return (
+    <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 32, height: 32, border: "3px solid var(--line)", borderTopColor: "var(--terracotta)", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+
   if (!items.length) {
     return (
       <section className="empty-state">
@@ -97,13 +104,19 @@ export default function CartPage() {
               <article className="cart-item" key={item.id}>
                 <div className="cart-thumb">
                   {item.image ? (
-                    <img src={item.image} alt={item.name} />
+                    <Link href={`/product/${item.slug ?? item.id}`}>
+                      <img src={item.image} alt={item.name} />
+                    </Link>
                   ) : (
                     <span className="cart-placeholder">✦</span>
                   )}
                 </div>
                 <div>
-                  <h3>{item.name}</h3>
+                  <h3>
+                    {item.slug ? (
+                      <Link href={`/product/${item.slug}`} style={{ color: "inherit", textDecoration: "none" }}>{item.name}</Link>
+                    ) : item.name}
+                  </h3>
                   <p>{formatWeight(item.weight)}</p>
                   <strong>{formatPrice(item.offerPrice)}</strong>
                 </div>

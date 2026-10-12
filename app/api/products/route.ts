@@ -15,6 +15,13 @@ export async function GET(request: NextRequest) {
     const db = getDb();
     let result = await getProductsWithVariants(db);
 
+    // Filter by specific IDs if provided (?ids=1,2,3)
+    const idsParam = searchParams.get("ids");
+    if (idsParam) {
+      const ids = new Set(idsParam.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n)));
+      result = result.filter((p: any) => ids.has(p.id));
+    }
+
     // Filter by category slug if provided
     if (categorySlug) {
       result = result.filter((p: any) => p.categorySlug === categorySlug);
@@ -28,6 +35,15 @@ export async function GET(request: NextRequest) {
     // Filter by bestseller if provided
     if (bestseller === "true") {
       result = result.filter((p: any) => p.bestseller === true);
+    }
+
+    // Limit result count if ?limit=N is provided
+    const limitParam = searchParams.get("limit");
+    if (limitParam) {
+      const limit = parseInt(limitParam, 10);
+      if (!isNaN(limit) && limit > 0) {
+        result = result.slice(0, limit);
+      }
     }
 
     return NextResponse.json(result);

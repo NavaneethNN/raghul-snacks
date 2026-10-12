@@ -18,8 +18,8 @@ export default function RefundPage() {
         </p>
         <p>To request a cancellation, contact us immediately:</p>
         <ul>
-          <li>Phone: <a href="tel:+918667829041">+91 86678 29041</a></li>
           <li>WhatsApp: <a href="https://wa.me/918667829041">+91 86678 29041</a></li>
+          <li>Email: <a href="mailto:raghuldelights@gmail.com">raghuldelights@gmail.com</a></li>
         </ul>
         <p>
           Cancellation requests are reviewed on a case-by-case basis. If your order has already been processed or
@@ -44,8 +44,8 @@ export default function RefundPage() {
         <h2>Contact Us</h2>
         <p>For any questions about this policy, reach out to us:</p>
         <ul>
-          <li>Phone: <a href="tel:+918667829041">+91 86678 29041</a></li>
           <li>WhatsApp: <a href="https://wa.me/918667829041">+91 86678 29041</a></li>
+          <li>Email: <a href="mailto:raghuldelights@gmail.com">raghuldelights@gmail.com</a></li>
         </ul>
       </div>
     </section>

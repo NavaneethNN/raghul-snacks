@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         image: products.image,
         featured: products.featured,
         bestseller: products.bestseller,
-        shelfLife: products.shelfLife,
+        stock: products.stock,
         createdAt: products.createdAt,
       })
       .from(products)
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       image: image || null,
       featured: featured || false,
       bestseller: bestseller || false,
-      shelfLife: body.shelfLife || null,
+      stock: body.stock !== undefined ? body.stock : 1,
     }).returning();
 
     return NextResponse.json(newProduct, { status: 201 });

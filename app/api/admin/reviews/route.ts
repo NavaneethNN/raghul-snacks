@@ -1,20 +1,22 @@
-import { desc } from "drizzle-orm";
+import { desc, eq, and } from "drizzle-orm";
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
 import { reviews, products } from "@/drizzle/schema";
-import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const cookieStore = await cookies();
   if (!isValidAdminSession(cookieStore.get(adminCookieName())?.value)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const pending = request.nextUrl.searchParams.get("pending");
+
   const db = getDb();
-  const rows = await db
+  const query = db
     .select({
       id: reviews.id,
       customerName: reviews.customerName,
@@ -26,8 +28,11 @@ export async function GET() {
       productName: products.name,
     })
     .from(reviews)
-    .leftJoin(products, eq(reviews.productId, products.id))
-    .orderBy(desc(reviews.createdAt));
+    .leftJoin(products, eq(reviews.productId, products.id));
+
+  const rows = pending === "true"
+    ? await query.where(eq(reviews.approved, false)).orderBy(desc(reviews.createdAt))
+    : await query.orderBy(desc(reviews.createdAt));
 
   return NextResponse.json(rows.map((r) => ({ ...r, createdAt: r.createdAt?.toISOString() ?? null })));
 }

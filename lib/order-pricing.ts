@@ -30,7 +30,19 @@ export async function priceOrder(items: RequestedItem[]) {
   const uniqueVariantIds = parsed.filter((p) => p.variantId !== null).map((p) => p.variantId as number);
 
   const [dbProducts, dbVariants] = await Promise.all([
-    db.select().from(productsTable).where(inArray(productsTable.id, uniqueProductIds)),
+    db.select({
+      id: productsTable.id,
+      name: productsTable.name,
+      slug: productsTable.slug,
+      price: productsTable.price,
+      offerPrice: productsTable.offerPrice,
+      weight: productsTable.weight,
+      stock: productsTable.stock,
+      categoryId: productsTable.categoryId,
+      image: productsTable.image,
+      featured: productsTable.featured,
+      bestseller: productsTable.bestseller,
+    }).from(productsTable).where(inArray(productsTable.id, uniqueProductIds)),
     uniqueVariantIds.length
       ? db.select().from(productVariants).where(and(inArray(productVariants.id, uniqueVariantIds), eq(productVariants.active, true)))
       : Promise.resolve([]),
@@ -39,8 +51,8 @@ export async function priceOrder(items: RequestedItem[]) {
   const lines = parsed.map((item) => {
     const product = dbProducts.find((p) => p.id === item.baseId);
     if (!product) throw new Error("One or more products are no longer available.");
-    if (typeof product.stock === "number" && product.stock < item.quantity) {
-      throw new Error(`"${product.name}" is currently out of stock or has insufficient stock to fill your order.`);
+    if (typeof product.stock === "number" && product.stock === 0) {
+      throw new Error(`"${product.name}" is currently out of stock.`);
     }
 
     let offerPrice: number;

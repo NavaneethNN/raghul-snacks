@@ -16,7 +16,7 @@ type PublicCoupon = { id: number; code: string; name: string | null; description
 const steps = ["Contact", "Delivery"];
 
 export function CheckoutWizard() {
-  const { items: cartItems, subtotal: cartSubtotal, clearCart } = useCart();
+  const { items: cartItems, subtotal: cartSubtotal, clearCart, hydrated: cartHydrated } = useCart();
   // Read buy-now item synchronously with lazy useState initialiser.
   // This avoids the React Strict Mode double-invoke problem that plagued
   // the previous useEffect-based approach (effect cleanup cleared sessionStorage
@@ -125,23 +125,40 @@ export function CheckoutWizard() {
     if (!itemPayload.length) { setQuote(null); return; } // eslint-disable-line react-hooks/set-state-in-effect
 
     // ── Manual shipping: weight-based fixed rates ──
-    // Weight per unit = 0.25 kg (250g). Minimum billable = 1 kg.
-    // TN:  first 1kg = ₹60, each additional 1kg (or part) = +₹30
-    // OUT: first 1kg = ₹100, each additional 1kg (or part) = +₹30
+    // Zones (per kg base rate, +₹30 per additional kg slab):
+    //   Zone 1 — Coimbatore city:                           ₹60
+    //   Zone 2 — Tamil Nadu (rest):                         ₹60
+    //   Zone 3 — Kerala, Karnataka, Andhra Pradesh,
+    //             Telangana:                                 ₹100
+    //   Zone 4 — North India & all other states (by air):   ₹250
     const MANUAL = true;
     if (MANUAL) {
       if (!form.state) { setQuote(null); return; }
 
+      const ZONE3_STATES = ["Kerala", "Karnataka", "Andhra Pradesh", "Telangana"];
+      const ZONE2_STATES = ["Tamil Nadu"];
+      // Everything else → Zone 4 (North India / air)
+
+      let baseRate: number;
+      let courierLabel: string;
+      if (ZONE2_STATES.includes(form.state)) {
+        baseRate = 60;
+        courierLabel = "Delivery";
+      } else if (ZONE3_STATES.includes(form.state)) {
+        baseRate = 100;
+        courierLabel = "Delivery";
+      } else {
+        baseRate = 250;
+        courierLabel = "Air Delivery";
+      }
+
       const totalWeightKg = Math.max(1, items.reduce((sum, item) => sum + item.quantity * 0.25, 0));
-      const extraKg = Math.ceil(Math.max(0, totalWeightKg - 1)); // full kg slabs above first 1kg
-      const isTN = form.state === "Tamil Nadu";
-      const baseRate = isTN ? 60 : 100;
+      const extraKg = Math.ceil(Math.max(0, totalWeightKg - 1)); // full kg slabs above first 1 kg
       const charge = baseRate + extraKg * 30;
 
-      setQuote({
-        charge,
-        courierName: "Delivery",
-        estimatedDeliveryDays: null,
+      setQuote((prev) => {
+        if (prev?.charge === charge && prev?.courierName === courierLabel) return prev;
+        return { charge, courierName: courierLabel, estimatedDeliveryDays: null };
       });
       return;
     }
@@ -172,7 +189,7 @@ export function CheckoutWizard() {
       }
     }, 450);
     return () => { controller.abort(); window.clearTimeout(timer); };
-  }, [form.state, form.pincode, itemPayload, items]);
+  }, [form.state, form.pincode, itemPayload]);
 
   // Load eligible coupons for this user (server filters firstPurchase, perCustomer limits)
   useEffect(() => {
@@ -353,6 +370,13 @@ export function CheckoutWizard() {
         <p>Please wait while we verify your session.</p>
       </section>
     );
+
+  if (!cartHydrated) return (
+    <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 32, height: 32, border: "3px solid var(--line)", borderTopColor: "var(--terracotta)", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
 
   if (!items.length)
     return (

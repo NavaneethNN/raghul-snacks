@@ -350,7 +350,7 @@ export function buildInvoiceHtml(data: InvoiceData): string {
   <!-- Footer -->
   <div class="footer">
     <strong>Raghul Delights</strong><br/>
-    +91 86678 29041<br/>
+    WhatsApp: +91 86678 29041 &nbsp;·&nbsp; raghuldelights@gmail.com<br/>
     Thank you for shopping with us!
   </div>
 

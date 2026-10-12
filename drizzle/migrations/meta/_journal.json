@@ -127,6 +127,13 @@
       "when": 1791722532922,
       "tag": "0017_cold_mojo",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791731885290,
+      "tag": "0018_outgoing_maginty",
+      "breakpoints": true
     }
   ]
 }

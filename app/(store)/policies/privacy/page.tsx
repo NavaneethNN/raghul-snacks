@@ -89,8 +89,8 @@ export default function PrivacyPage() {
         <h2>Contact Us</h2>
         <p>If you have questions about this privacy policy or your personal data, contact us:</p>
         <ul>
-          <li>Phone: <a href="tel:+918667829041">+91 86678 29041</a></li>
           <li>WhatsApp: <a href="https://wa.me/918667829041">+91 86678 29041</a></li>
+          <li>Email: <a href="mailto:raghuldelights@gmail.com">raghuldelights@gmail.com</a></li>
         </ul>
       </div>
     </section>

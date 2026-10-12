@@ -8,7 +8,14 @@ import { VariantStackFlag } from "@/components/product/variant-stack-flag";
 import { WishlistButton } from "@/components/wishlist-button";
 
 export default function WishlistPage() {
-  const { items } = useWishlist();
+  const { items, hydrated } = useWishlist();
+
+  if (!hydrated) return (
+    <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 32, height: 32, border: "3px solid var(--line)", borderTopColor: "var(--terracotta)", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
 
   if (!items.length) {
     return (

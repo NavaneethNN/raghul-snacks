@@ -21,8 +21,8 @@ export default function TermsPage() {
         <p>
           Cancellations may be requested before an order is dispatched. Once shipped, orders cannot be cancelled.
           Contact us immediately at{" "}
-          <a href="tel:+918667829041">+91 86678 29041</a> or{" "}
-          <a href="https://wa.me/918667829041">WhatsApp</a> to submit a cancellation request. Approved cancellations
+          <a href="https://wa.me/918667829041">WhatsApp (+91 86678 29041)</a> or{" "}
+          <a href="mailto:raghuldelights@gmail.com">raghuldelights@gmail.com</a> to submit a cancellation request. Approved cancellations
           are refunded to the original payment method within 5–7 business days.
         </p>
 

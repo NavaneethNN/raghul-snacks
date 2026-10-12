@@ -25,6 +25,7 @@ type Product = {
   image: string | null;
   featured: boolean;
   bestseller: boolean;
+  stock: number;
   createdAt: Date;
 };
 
@@ -241,8 +242,9 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
       weight: baseWeight || "—",
       categoryId: formData.get("categoryId") ? parseInt(formData.get("categoryId") as string) : null,
       image: imageValue,
-      featured: formData.get("featured") === "on",
+      featured: false,
       bestseller: formData.get("bestseller") === "on",
+      stock: formData.get("inStock") === "on" ? 1 : 0,
       shelfLife: (formData.get("shelfLife") as string) || null,
     };
 
@@ -352,7 +354,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
             <span className={styles.searchIcon}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </span>
-            <input type="text" placeholder="Search products…" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            <input type="text" placeholder="Search products…" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ paddingLeft: "36px" }} />
           </div>
         </div>
         <div className={styles.tableWrapper}>
@@ -376,8 +378,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                     <small style={{ color: "#6b7280" }}>{formatWeight(product.weight)}</small>
                     <div className={productStyles.mobileSubtext}>
                       {product.categoryName && <span>{product.categoryName}</span>}
-                      {product.featured   && <span className={productStyles.mobileBadge}>Featured</span>}
                       {product.bestseller && <span className={productStyles.mobileBadge}>Bestseller</span>}
+                      {product.stock === 0 && <span className={productStyles.mobileBadge} style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626" }}>Out of Stock</span>}
                     </div>
                   </td>
                   <td className={productStyles.hideOnMobile}>{product.categoryName ?? "—"}</td>
@@ -387,9 +389,9 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                       : <strong>{fmt.format(Number(product.price))}</strong>}
                   </td>
                   <td className={productStyles.hideOnMobile}>
-                    {product.featured   && <span className={`${styles.badge} ${styles.info}`}>Featured</span>}
-                    {product.bestseller && <span className={`${styles.badge} ${styles.success}`} style={{ marginLeft: product.featured ? 6 : 0 }}>Bestseller</span>}
-                    {!product.featured && !product.bestseller && "—"}
+                    {product.stock === 0 && <span className={`${styles.badge}`} style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626", border: "1px solid rgba(220,38,38,0.2)" }}>Out of Stock</span>}
+                    {product.bestseller && <span className={`${styles.badge} ${styles.success}`} style={{ marginLeft: product.stock === 0 ? 6 : 0 }}>Bestseller</span>}
+                    {product.stock !== 0 && !product.bestseller && "—"}
                   </td>
                   <td>
                     <div className={styles.actionButtons}>
@@ -642,6 +644,10 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
 
               {/* Checkboxes */}
               <div className={styles.checkboxGroup}>
+                <label className={styles.checkbox}>
+                  <input type="checkbox" name="inStock" defaultChecked={(editingProduct as any)?.stock !== 0} />
+                  <span>In Stock</span>
+                </label>
                 <label className={styles.checkbox}>
                   <input type="checkbox" name="bestseller" defaultChecked={editingProduct?.bestseller} />
                   <span>Bestseller</span>

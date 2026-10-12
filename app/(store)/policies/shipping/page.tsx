@@ -25,7 +25,7 @@ export default function ShippingPage() {
         <p>Currently, we only ship within India.</p>
 
         <h2>Questions?</h2>
-        <p>Have questions about shipping? Call us at <a href="tel:+918667829041">+91 86678 29041</a> or reach us on <a href="https://wa.me/918667829041">WhatsApp</a>.</p>
+        <p>Have questions about shipping? Reach us on <a href="https://wa.me/918667829041">WhatsApp</a> or email <a href="mailto:raghuldelights@gmail.com">raghuldelights@gmail.com</a>.</p>
       </div>
     </section>
   );

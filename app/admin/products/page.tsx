@@ -33,6 +33,7 @@ export default async function AdminProductsPage() {
         image: products.image,
         featured: products.featured,
         bestseller: products.bestseller,
+        stock: products.stock,
         createdAt: products.createdAt,
       })
       .from(products)

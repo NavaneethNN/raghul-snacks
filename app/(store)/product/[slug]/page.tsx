@@ -29,7 +29,7 @@ async function getProduct(slug: string) {
         image: products.image,
         featured: products.featured,
         bestseller: products.bestseller,
-        shelfLife: products.shelfLife,
+        stock: products.stock,
         createdAt: products.createdAt,
       })
       .from(products)
@@ -85,7 +85,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const variants = await getVariants(product.id);
   const allProducts = await getProducts();
-  const recommendations = allProducts.filter((item: any) => item.id !== product.id).slice(0, 3);
+  const others = allProducts.filter((item: any) => item.id !== product.id);
+  const sameCat = product.categoryId
+    ? others.filter((item: any) => item.categoryId === product.categoryId)
+    : [];
+  const diffCat = others.filter((item: any) => item.categoryId !== product.categoryId);
+  const recommendations = [...sameCat, ...diffCat].slice(0, 3);
 
   return (
     <>

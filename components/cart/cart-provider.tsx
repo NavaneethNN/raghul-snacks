@@ -8,6 +8,7 @@ type CartContextValue = {
   items: CartItem[];
   count: number;
   subtotal: number;
+  hydrated: boolean;
   addItem: (product: Product, quantity?: number) => void;
   updateQuantity: (id: string, quantity: number) => void;
   removeItem: (id: string) => void;
@@ -105,13 +106,23 @@ async function isLoggedIn(): Promise<boolean> {
   }
 }
 
-// Merge server cart into local: add missing items, keep local quantity for conflicts
+// Merge server cart into local: server item data wins (fresh names/prices), but local quantity wins
 function mergeCarts(local: CartItem[], server: CartItem[]): CartItem[] {
-  const result = [...local];
+  const result: CartItem[] = [];
+  // Start with server items (fresh data from DB)
   for (const serverItem of server) {
-    const exists = result.find((i) => i.id === serverItem.id);
-    if (!exists) result.push(serverItem);
-    // local quantity wins when item exists in both
+    const localItem = local.find((i) => i.id === serverItem.id);
+    if (localItem) {
+      // Use server data (fresh name/price/image) but keep local quantity
+      result.push({ ...serverItem, quantity: localItem.quantity });
+    } else {
+      result.push(serverItem);
+    }
+  }
+  // Add local-only items (guest items not yet synced to server)
+  for (const localItem of local) {
+    const alreadyAdded = result.find((i) => i.id === localItem.id);
+    if (!alreadyAdded) result.push(localItem);
   }
   return result;
 }
@@ -175,7 +186,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       } else {
         // Not logged in — clear account stamp so next login treats this as guest cart
         window.localStorage.removeItem("raghul-snacks-cart-account");
+        // Show cart immediately from localStorage, then validate in background
         setItems(local);
+        setHydrated(true);
+        // Background validation — remove deleted products without blocking render
+        if (local.length > 0) {
+          const ids = [...new Set(local.map((i) => i.id.toString().split("-v")[0]))];
+          fetch(`/api/products?ids=${ids.join(",")}`)
+            .then((res) => res.ok ? res.json() : null)
+            .then((validProducts: Array<{ id: number }> | null) => {
+              if (!validProducts) return;
+              const validIds = new Set(validProducts.map((p) => String(p.id)));
+              setItems((current) => current.filter((item) => {
+                const baseId = item.id.toString().split("-v")[0];
+                return validIds.has(baseId);
+              }));
+            })
+            .catch(() => { /* best-effort */ });
+        }
+        return; // already set hydrated above
       }
 
       setHydrated(true);
@@ -203,6 +232,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     items,
     count: items.reduce((t, i) => t + i.quantity, 0),
     subtotal: items.reduce((t, i) => t + i.offerPrice * i.quantity, 0),
+    hydrated,
 
     addItem: (product: Product, quantity = 1) => {
       setItems((current) => {

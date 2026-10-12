@@ -58,10 +58,10 @@ export function AdminSidebar() {
   const [confirmSignOut,  setConfirmSignOut]  = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin/reviews")
+    fetch("/api/admin/reviews?pending=true")
       .then((r) => r.json())
       .then((d: Array<{ approved: boolean }>) => {
-        if (Array.isArray(d)) setPendingReviews(d.filter((r) => !r.approved).length);
+        if (Array.isArray(d)) setPendingReviews(d.length);
       }).catch(() => {});
 
     fetch("/api/admin/messages")

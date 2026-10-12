@@ -30,7 +30,21 @@ export async function GET() {
   // Fetch product details for numeric IDs (DB products use integer IDs stored as text)
   const numericIds = rows.map((r) => Number(r.productId)).filter((n) => !Number.isNaN(n));
   const productRows = numericIds.length
-    ? await db.select().from(products).where(inArray(products.id, numericIds))
+    ? await db.select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        description: products.description,
+        ingredients: products.ingredients,
+        price: products.price,
+        offerPrice: products.offerPrice,
+        weight: products.weight,
+        categoryId: products.categoryId,
+        image: products.image,
+        stock: products.stock,
+        featured: products.featured,
+        bestseller: products.bestseller,
+      }).from(products).where(inArray(products.id, numericIds))
     : [];
 
   const productMap = new Map(productRows.map((p) => [String(p.id), p]));

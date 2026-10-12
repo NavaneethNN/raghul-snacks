@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { customerAccounts, customers, orderItems, orders, products } from "@/drizzle/schema";
 import { createCustomerSession, customerCookieName, getCustomerSession } from "@/lib/customer-auth";
 import { getDb } from "@/lib/db";
@@ -9,6 +9,7 @@ import { priceOrder } from "@/lib/order-pricing";
 import { validateCoupon } from "@/lib/coupons";
 import { getCashfreeOrder, getCashfreePaymentMethod } from "@/lib/cashfree";
 import { createShiprocketShipment } from "@/lib/shiprocket";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 
 const isManual = process.env.DELIVERY_MODE === "manual";
 
@@ -95,16 +96,29 @@ export async function POST(request: Request) {
       lines.map((line) => ({ orderId: order.id, name: line.product.name, quantity: line.quantity, price: String(line.product.offerPrice), weight: (line.product.weight as string) ?? null }))
     );
 
-    // Decrement stock for each ordered product (never below 0)
-    await Promise.all(
-      lines.map((line) => {
-        const numericProductId = line.product.id as number;
-        return db
-          .update(products)
-          .set({ stock: sql`GREATEST(stock - ${line.quantity}, 0)` })
-          .where(eq(products.id, numericProductId));
-      })
-    );
+    // Send order confirmation email (non-fatal)
+    if (payload.data.email) {
+      sendOrderConfirmationEmail({
+        customerName: payload.data.customerName,
+        customerEmail: payload.data.email,
+        orderNumber,
+        items: lines.map((line) => ({
+          name: line.product.name,
+          weight: line.product.weight as string | null,
+          quantity: line.quantity,
+          price: line.product.offerPrice,
+        })),
+        subtotal,
+        shipping,
+        discount,
+        total: subtotal - discount + shipping,
+        couponCode: payload.data.couponCode || null,
+        address: payload.data.address,
+        city: payload.data.city,
+        state: payload.data.state,
+        pincode: payload.data.pincode,
+      }).catch((err) => console.error("[email] Unhandled error:", err));
+    }
 
     try {
       if (!isManual) {

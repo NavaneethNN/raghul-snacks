@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { OrderTracker } from "@/components/order-tracker";
 import styles from "./customer-orders.module.css";
 
-type CustomerOrder = { orderNumber: string; customerName: string; city: string; state: string; pincode: string; total: number; orderStatus: string; paymentStatus: string; shippingStatus: string; awbCode: string | null; createdAt: string };
+type CustomerOrder = { orderNumber: string; customerName: string; city: string; state: string; pincode: string; total: number; orderStatus: string; paymentStatus: string; paymentMethod?: string | null; shippingStatus: string; awbCode: string | null; createdAt: string };
 type SavedOrder = { orderNumber: string; phone: string };
 
 const statusLabels: Record<string, string> = { placed: "Order confirmed", packed: "Packed with care", shipped: "On its way", delivered: "Delivered", cancelled: "Cancelled" };
@@ -95,7 +95,15 @@ export function CustomerOrders() {
             </div>
             <span className={styles.status}>{displayOrder.orderStatus}</span>
           </div>
-          <ol className={styles.timeline}>
+          {displayOrder.orderStatus === "cancelled" && (
+            <div className={styles.cancelledBanner}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+              </svg>
+              This order has been cancelled.
+            </div>
+          )}
+          <ol className={styles.timeline} style={{ opacity: displayOrder.orderStatus === "cancelled" ? 0.4 : 1 }}>
             {stages.map((stage, index) => (
               <li className={index <= stageIndex ? styles.done : ""} key={stage}>
                 <i>{index < stageIndex ? "✓" : index + 1}</i>
@@ -116,6 +124,9 @@ export function CustomerOrders() {
         <aside className={styles.summary}>
           <p className="eyebrow">Order summary</p>
           <div><span>Payment</span><strong>{displayOrder.paymentStatus === "paid" ? "Paid · Cashfree" : displayOrder.paymentStatus}</strong></div>
+          {displayOrder.paymentMethod && (
+            <div><span>Method</span><strong>{(displayOrder.paymentMethod === "cod" || displayOrder.paymentMethod === "cash_on_delivery") ? "Cash on Delivery" : "Online Payment"}</strong></div>
+          )}
           <div><span>Delivery to</span><strong>{displayOrder.city}, {displayOrder.state} · {displayOrder.pincode}</strong></div>
           <div className={styles.total}><span>Total paid</span><strong>{price.format(displayOrder.total)}</strong></div>
           <button onClick={() => downloadInvoice(displayOrder.orderNumber)} className="button button-outline" style={{ width: "100%", marginBottom: "12px" }}>Download Invoice</button>
