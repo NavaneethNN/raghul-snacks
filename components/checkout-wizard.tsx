@@ -9,7 +9,7 @@ import { clearBuyNowItem, readBuyNowItem, type BuyNowItem } from "@/lib/buy-now"
 import styles from "./checkout-wizard.module.css";
 type CheckoutForm = { customerName: string; phone: string; email: string; address: string; city: string; state: string; pincode: string };
 type ShippingQuote = { charge: number; courierName: string; estimatedDeliveryDays: string | null };
-type PaymentOrder = { orderId: string; paymentSessionId: string; environment: "sandbox" | "production"; error?: string };
+type PaymentOrder = { razorpayOrderId: string; amount: number; currency: string; keyId: string; error?: string };
 type AppliedCoupon = { code: string; name: string | null; discountType: string; value: string; discountAmount: number };
 type PublicCoupon = { id: number; code: string; name: string | null; description: string | null; discountType: string; value: string; maxDiscount: string | null; minOrderValue: string; applyTo: string; applicableProducts: string[] | null; applicableCategories: string[] | null };
 
@@ -207,13 +207,18 @@ export function CheckoutWizard() {
       .catch(() => { /* non-critical */ });
   }, [subtotal]);
 
-  // Clear stale buy-now item only when navigating away (not on reload)
+  // When a buy-now item is present, add it to the regular cart once hydrated
+  // so it survives page reloads. Only add once (track with ref).
+  const buyNowAddedRef = useRef(false);
+  useEffect(() => {
+    if (!buyNowItem || !cartHydrated || buyNowAddedRef.current) return;
+    buyNowAddedRef.current = true;
+    addItem(buyNowItem, buyNowItem.quantity);
+  }, [buyNowItem, cartHydrated, addItem]);
+
+  // Clear buy-now from sessionStorage only when navigating away (not on reload)
   useEffect(() => {
     if (!buyNowItem) return;
-
-    // Add buy-now item to the regular cart immediately so it survives reloads
-    addItem(buyNowItem, buyNowItem.quantity);
-
     function handlePageHide(e: PageTransitionEvent) {
       if (!e.persisted && !orderPlacedRef.current) {
         clearBuyNowItem();
@@ -222,7 +227,7 @@ export function CheckoutWizard() {
     window.addEventListener("pagehide", handlePageHide);
     return () => window.removeEventListener("pagehide", handlePageHide);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run once on mount only
+  }, []);
   // ── Coupon helpers ─────────────────────────────────────────────────────────
 
   const applyCoupon = useCallback(
@@ -330,41 +335,70 @@ export function CheckoutWizard() {
         ...(appliedCoupon ? { couponCode: appliedCoupon.code } : {}),
       };
 
-      const res = await fetch("/api/checkout/create-payment", {
+      const res = await fetch("/api/razorpay/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const paymentOrder = (await res.json()) as PaymentOrder;
-      if (!res.ok || !paymentOrder.paymentSessionId)
-        throw new Error(paymentOrder.error || "Payment could not be started.");
+      if (!res.ok || !paymentOrder.razorpayOrderId)
+        throw new Error((paymentOrder as { error?: string }).error || "Payment could not be started.");
 
-      if (!window.Cashfree)
+      if (!window.Razorpay)
         throw new Error("The secure payment window is still loading. Please try again.");
 
-      const result = await window
-        .Cashfree({ mode: paymentOrder.environment })
-        .checkout({ paymentSessionId: paymentOrder.paymentSessionId, redirectTarget: "_modal" });
+      await new Promise<void>((resolve, reject) => {
+        const options = {
+          key: paymentOrder.keyId,
+          amount: paymentOrder.amount,
+          currency: paymentOrder.currency,
+          order_id: paymentOrder.razorpayOrderId,
+          name: "Raghul Delights",
+          description: "Fresh Millet Snacks",
+          prefill: {
+            name: form.customerName,
+            email: form.email,
+            contact: form.phone,
+          },
+          theme: { color: "#c95f3b" },
+          handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
+            try {
+              const verifyRes = await fetch("/api/razorpay/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  ...payload,
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature,
+                }),
+              });
+              const verified = (await verifyRes.json()) as { orderNumber?: string; error?: string };
+              if (!verifyRes.ok || !verified.orderNumber)
+                throw new Error(verified.error || "Your payment needs support review. Please contact us.");
 
-      if (result.error) throw new Error(result.error.message || "Payment was cancelled.");
-      if (!result.paymentDetails) { setLoading(false); return; }
-
-      const verifyRes = await fetch("/api/cashfree/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...payload, cashfreeOrderId: paymentOrder.orderId }),
+              window.localStorage.setItem(
+                "raghul-snacks-last-order",
+                JSON.stringify({ orderNumber: verified.orderNumber, phone: form.phone }),
+              );
+              if (buyNowItem) clearBuyNowItem(); else clearCart();
+              orderPlacedRef.current = true;
+              window.location.assign("/orders?success=true");
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          modal: {
+            ondismiss: () => {
+              setLoading(false);
+              resolve();
+            },
+          },
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.open();
       });
-      const verified = (await verifyRes.json()) as { orderNumber?: string; error?: string };
-      if (!verifyRes.ok || !verified.orderNumber)
-        throw new Error(verified.error || "Your payment needs support review. Please contact us.");
-
-      window.localStorage.setItem(
-        "raghul-snacks-last-order",
-        JSON.stringify({ orderNumber: verified.orderNumber, phone: form.phone }),
-      );
-      if (buyNowItem) clearBuyNowItem(); else clearCart();
-      orderPlacedRef.current = true;
-      window.location.assign("/orders?success=true");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to continue to payment.");
       setLoading(false);
@@ -521,7 +555,7 @@ export function CheckoutWizard() {
   return (
     <>
       <Script
-        src="https://sdk.cashfree.com/js/v3/cashfree.js"
+        src="https://checkout.razorpay.com/v1/checkout.js"
         onLoad={() => setPaymentReady(true)}
       />
       <main className={styles.page}>

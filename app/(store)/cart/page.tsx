@@ -179,7 +179,7 @@ export default function CartPage() {
           >
             Secure checkout →
           </button>
-          <small>Safe payments powered by Cashfree</small>
+          <small>Safe payments powered by Razorpay</small>
 
           {upsellProduct && (
             <div className="cart-upsell">

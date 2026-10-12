@@ -25,6 +25,12 @@ export const verifiedOrderSchema = checkoutFields.extend({
   razorpaySignature: z.string().min(1),
 });
 
+export const razorpayVerifiedOrderSchema = checkoutFields.extend({
+  razorpayOrderId: z.string().min(1),
+  razorpayPaymentId: z.string().min(1),
+  razorpaySignature: z.string().min(1),
+});
+
 export const cashfreeVerifiedOrderSchema = checkoutFields.extend({
   cashfreeOrderId: z.string().min(1),
 });

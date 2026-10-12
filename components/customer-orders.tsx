@@ -140,7 +140,7 @@ export function CustomerOrders() {
         </article>
         <aside className={styles.summary}>
           <p className="eyebrow">Order summary</p>
-          <div><span>Payment</span><strong>{displayOrder.paymentStatus === "paid" ? "Paid · Cashfree" : displayOrder.paymentStatus}</strong></div>
+          <div><span>Payment</span><strong>{displayOrder.paymentStatus === "paid" ? "Paid · Razorpay" : displayOrder.paymentStatus}</strong></div>
           {displayOrder.paymentMethod && (
             <div><span>Method</span><strong>{(displayOrder.paymentMethod === "cod" || displayOrder.paymentMethod === "cash_on_delivery") ? "Cash on Delivery" : "Online Payment"}</strong></div>
           )}
