@@ -6,7 +6,15 @@ import { useSearchParams } from "next/navigation";
 import { OrderTracker } from "@/components/order-tracker";
 import styles from "./customer-orders.module.css";
 
-type CustomerOrder = { orderNumber: string; customerName: string; city: string; state: string; pincode: string; total: number; orderStatus: string; paymentStatus: string; paymentMethod?: string | null; shippingStatus: string; awbCode: string | null; createdAt: string };
+type CustomerOrder = {
+  orderNumber: string; customerName: string; city: string; state: string; pincode: string;
+  total: number; orderStatus: string; paymentStatus: string; paymentMethod?: string | null;
+  shippingStatus: string; awbCode: string | null; createdAt: string;
+  items?: Array<{
+    id: number; name: string; quantity: number; price: string;
+    product: { id: number; name: string; slug: string; image: string | null; weight: string; } | null;
+  }>;
+};
 type SavedOrder = { orderNumber: string; phone: string };
 
 const statusLabels: Record<string, string> = { placed: "Order confirmed", packed: "Packed with care", shipped: "On its way", delivered: "Delivered", cancelled: "Cancelled" };
@@ -129,6 +137,40 @@ export function CustomerOrders() {
           )}
           <div><span>Delivery to</span><strong>{displayOrder.city}, {displayOrder.state} · {displayOrder.pincode}</strong></div>
           <div className={styles.total}><span>Total paid</span><strong>{price.format(displayOrder.total)}</strong></div>
+
+          {/* Items list with images and product links */}
+          {displayOrder.items && displayOrder.items.length > 0 && (
+            <div style={{ margin: "12px 0", display: "flex", flexDirection: "column", gap: 8 }}>
+              {displayOrder.items.map((item) => {
+                const content = (
+                  <>
+                    <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 8, overflow: "hidden", border: "1px solid var(--line)", background: "var(--cream)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {item.product?.image
+                        ? <img src={item.product.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                      }
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</p>
+                      <p style={{ margin: "2px 0 0", fontSize: 11, color: "#6b7280", fontFamily: "'DM Mono',monospace" }}>Qty {item.quantity} · {price.format(parseFloat(item.price) * item.quantity)}</p>
+                    </div>
+                  </>
+                );
+                return item.product?.slug ? (
+                  <Link key={item.id} href={`/product/${item.product.slug}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, textDecoration: "none", transition: "border-color 0.15s" }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--terracotta)"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--line)"; }}>
+                    {content}
+                  </Link>
+                ) : (
+                  <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8 }}>
+                    {content}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           <button onClick={() => downloadInvoice(displayOrder.orderNumber)} className="button button-outline" style={{ width: "100%", marginBottom: "12px" }}>Download Invoice</button>
           <Link href="/shop" className="button button-dark">Continue shopping →</Link>
         </aside>
