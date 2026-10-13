@@ -16,7 +16,7 @@ type PublicCoupon = { id: number; code: string; name: string | null; description
 const steps = ["Contact", "Delivery"];
 
 export function CheckoutWizard() {
-  const { items: cartItems, subtotal: cartSubtotal, clearCart, addItem, hydrated: cartHydrated } = useCart();
+  const { items: cartItems, subtotal: cartSubtotal, clearCart, addItem, hydrated: cartHydrated, syncing: cartSyncing } = useCart();
   // Read buy-now item synchronously with lazy useState initialiser.
   const [buyNowItem] = useState<BuyNowItem | null>(() =>
     typeof window !== "undefined" ? readBuyNowItem() : null
@@ -416,7 +416,7 @@ export function CheckoutWizard() {
       </section>
     );
 
-  if (!cartHydrated) return (
+  if (!cartHydrated || cartSyncing) return (
     <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ width: 32, height: 32, border: "3px solid var(--line)", borderTopColor: "var(--terracotta)", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>

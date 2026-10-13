@@ -9,6 +9,7 @@ type CartContextValue = {
   count: number;
   subtotal: number;
   hydrated: boolean;
+  syncing: boolean;
   addItem: (product: Product, quantity?: number) => void;
   updateQuantity: (id: string, quantity: number) => void;
   removeItem: (id: string) => void;
@@ -133,6 +134,7 @@ function mergeCarts(local: CartItem[], server: CartItem[]): CartItem[] {
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [syncing, setSyncing] = useState(false); // true while server cart merge is in progress
   const [loggedIn, setLoggedIn] = useState(false);
   // Prevent push-back during the initial server merge
   const mergingRef = useRef(false);
@@ -160,6 +162,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (loggedInNow) {
         // Fetch server cart in background and merge
         mergingRef.current = true;
+        setSyncing(true);
         const [server, sessionRes] = await Promise.all([
           fetchServerCart(),
           fetch("/api/auth/session", { credentials: "include" }),
@@ -173,18 +176,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         let merged: CartItem[];
         if (localIsGuest) {
-          // Guest had items — add any local items not yet on server (new additions)
           merged = [...server];
           for (const localItem of local) {
             const onServer = server.find((s) => s.id === localItem.id);
-            if (!onServer) merged.push(localItem); // guest item not yet synced
+            if (!onServer) merged.push(localItem);
           }
         } else if (localBelongsToThisAccount) {
-          // Same account — server is authoritative (no deleted products),
-          // use server data but local quantity for existing items
           merged = mergeCarts(local, server);
         } else {
-          // Different account's cart in localStorage — use server cart only
           merged = server;
         }
 
@@ -192,6 +191,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setItems(merged);
         await pushServerCart(merged);
         mergingRef.current = false;
+        setSyncing(false);
         return; // hydrated already set above
       } else {
         // Not logged in — clear account stamp so next login treats this as guest cart
@@ -242,6 +242,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     count: items.reduce((t, i) => t + i.quantity, 0),
     subtotal: items.reduce((t, i) => t + i.offerPrice * i.quantity, 0),
     hydrated,
+    syncing,
 
     addItem: (product: Product, quantity = 1) => {
       setItems((current) => {

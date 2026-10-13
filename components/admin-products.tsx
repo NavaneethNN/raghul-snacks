@@ -713,7 +713,9 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                 {imageInputType === "url"
                   ? <input type="text" name="image" placeholder="https://…" defaultValue={editingProduct?.image?.startsWith("data:") ? "" : (editingProduct?.image ?? "")} />
                   : (<>
-                      <input type="file" accept="image/*" onChange={handleImageUpload} style={{ marginBottom: "8px" }} />
+                      {!imagePreview && (
+                        <input type="file" accept="image/*" onChange={handleImageUpload} style={{ marginBottom: "8px" }} />
+                      )}
                       {imagePreview && (
                         <div
                           style={{ position: "relative", display: "inline-block", marginTop: "8px" }}

@@ -53,11 +53,9 @@ export async function POST(request: NextRequest) {
 
   const db = getDb();
 
-  // Find the product name for fallback matching
-  const product = (await db.select({ name: products.name }).from(products).where(eq(products.id, productId)).limit(1))[0];
-
-  // Find the most recent paid order for this user that contains this product (by productId)
-  const orderByProductId = (await db
+  // Find the most recent paid order for this user that contains this product (by productId only)
+  // No name fallback — a deleted product's nulled productId must not grant access to a new product
+  const qualifyingOrder = (await db
     .select({ id: orders.id })
     .from(orders)
     .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
@@ -71,25 +69,6 @@ export async function POST(request: NextRequest) {
     .orderBy(desc(orders.createdAt))
     .limit(1))[0];
 
-  // Fallback: match by product name if productId link is missing
-  const orderByName =
-    !orderByProductId && product?.name
-      ? (await db
-          .select({ id: orders.id })
-          .from(orders)
-          .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
-          .where(
-            and(
-              eq(orders.accountId, session.id),
-              eq(orders.paymentStatus, "paid"),
-              eq(orderItems.name, product.name)
-            )
-          )
-          .orderBy(desc(orders.createdAt))
-          .limit(1))[0]
-      : undefined;
-
-  const qualifyingOrder = orderByProductId ?? orderByName;
   if (!qualifyingOrder) {
     return NextResponse.json({ error: "You must purchase this product before reviewing." }, { status: 403 });
   }

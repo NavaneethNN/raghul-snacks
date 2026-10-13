@@ -167,6 +167,8 @@
 .imagePreviewWrap {
   position: relative;
   display: inline-block;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .imageDeleteButton {
