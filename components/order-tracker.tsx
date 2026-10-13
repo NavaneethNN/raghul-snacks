@@ -6,6 +6,92 @@ import styles from "./order-tracker.module.css";
 type Result = { orderNumber: string; orderStatus: string; paymentStatus: string; createdAt: string };
 const labels: Record<string, string> = { placed: "Order placed", packed: "Packed with care", shipped: "On the way", delivered: "Delivered", cancelled: "Cancelled" };
 
+function GuestReviewForm({ orderNumber, phone }: { orderNumber: string; phone: string }) {
+  const [name, setName] = useState("");
+  const [rating, setRating] = useState(0);
+  const [hovered, setHovered] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    if (!rating) { setError("Please select a star rating."); return; }
+    if (!name.trim()) { setError("Please enter your name."); return; }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/reviews/guest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderNumber, phone, customerName: name.trim(), rating, content: comment.trim() }),
+      });
+      const data = await res.json() as { success?: boolean; error?: string };
+      if (!res.ok) throw new Error(data.error || "Failed to submit review.");
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (submitted) return (
+    <div style={{ marginTop: 20, padding: "14px 18px", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 10, fontSize: 14, color: "#166534" }}>
+      ✓ Thank you for your review!
+    </div>
+  );
+
+  return (
+    <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--line)" }}>
+      <p style={{ margin: "0 0 4px", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", fontWeight: 600 }}>Your Experience</p>
+      <h3 style={{ margin: "0 0 16px", fontSize: 17, fontWeight: 700, color: "var(--ink)", fontFamily: "'Playfair Display',serif" }}>Leave us a review</h3>
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div>
+          <label style={{ display: "block", marginBottom: 6, fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>Your Name *</label>
+          <input
+            type="text"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="Enter your name"
+            required
+            style={{ width: "100%", padding: "9px 12px", border: "1.5px solid var(--line)", borderRadius: 8, fontSize: 14, background: "var(--paper)", color: "var(--ink)", boxSizing: "border-box" }}
+          />
+        </div>
+        <div>
+          <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>Rating *</label>
+          <div style={{ display: "flex", gap: 4 }}>
+            {[1,2,3,4,5].map(star => (
+              <button key={star} type="button"
+                onClick={() => setRating(star)}
+                onMouseEnter={() => setHovered(star)}
+                onMouseLeave={() => setHovered(0)}
+                style={{ background: "none", border: "none", fontSize: 30, cursor: "pointer", color: star <= (hovered || rating) ? "#e5a52f" : "#d1d5db", lineHeight: 1, padding: "2px", transition: "color 0.1s" }}
+                aria-label={`${star} star`}
+              >★</button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label style={{ display: "block", marginBottom: 6, fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>Comment <span style={{ fontWeight: 400, color: "#9ca3af" }}>(optional)</span></label>
+          <textarea
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            rows={3}
+            placeholder="How was your experience?"
+            style={{ width: "100%", padding: "9px 12px", border: "1.5px solid var(--line)", borderRadius: 8, fontSize: 14, background: "var(--paper)", color: "var(--ink)", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box" }}
+          />
+        </div>
+        {error && <p style={{ margin: 0, fontSize: 13, color: "#dc2626" }}>{error}</p>}
+        <button type="submit" disabled={submitting} className="button button-dark" style={{ alignSelf: "flex-start" }}>
+          {submitting ? "Submitting…" : "Submit Review"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export function OrderTracker({ initialOrder }: { initialOrder?: string }) {
   const [orderNumber, setOrderNumber] = useState(initialOrder || "");
   const [phone, setPhone] = useState("");
@@ -151,6 +237,9 @@ export function OrderTracker({ initialOrder }: { initialOrder?: string }) {
               <p className={styles.helpText}>
                 Need help with this order? Contact us with your order number.
               </p>
+              {result.orderStatus === "delivered" && result.paymentStatus === "paid" && (
+                <GuestReviewForm orderNumber={result.orderNumber} phone={phone} />
+              )}
             </div>
           </div>
         )}
