@@ -47,11 +47,10 @@ export async function POST(request: Request) {
       discount = couponResult.discountAmount;
     }
 
-    // Manual delivery mode: shipping is already calculated client-side from settings.
-    // We do not re-fetch Shiprocket here; shipping will be verified server-side in the verify step.
-    let shippingCharge = 0;
+    // Manual delivery mode: use client-calculated shipping (already verified from DB settings)
+    let shippingCharge = payload.data.shipping ?? 0;
     let courierName = "Delivery";
-    let estimatedDeliveryDays: string | null = "3\u20137 business days";
+    let estimatedDeliveryDays: string | null = "3–7 business days";
 
     if (!isManual) {
       // Shiprocket mode — import lazily to avoid bundling in manual builds

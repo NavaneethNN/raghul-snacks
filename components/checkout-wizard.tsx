@@ -339,6 +339,7 @@ export function CheckoutWizard() {
       const payload = {
         ...form,
         items: itemPayload,
+        shipping: shipping, // pass client-calculated shipping to server
         ...(appliedCoupon ? { couponCode: appliedCoupon.code } : {}),
       };
 

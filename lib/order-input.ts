@@ -15,6 +15,7 @@ const checkoutFields = z.object({
   pincode: z.string().trim().regex(/^\d{6}$/, "Enter a valid 6-digit PIN code."),
   items: z.array(orderItemSchema).min(1).max(20),
   couponCode: z.string().trim().max(40).optional(),
+  shipping: z.number().min(0).optional(), // client-calculated shipping charge
 });
 
 export const checkoutSchema = checkoutFields;

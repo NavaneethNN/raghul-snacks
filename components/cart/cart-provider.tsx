@@ -182,7 +182,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             if (!onServer) merged.push(localItem);
           }
         } else if (localBelongsToThisAccount) {
+          // Server is authoritative for item validity (no deleted products)
+          // but local items not yet synced to server should be kept
           merged = mergeCarts(local, server);
+          // Add any local items that aren't on the server yet (not synced)
+          for (const localItem of local) {
+            const onServer = server.find((s) => s.id === localItem.id);
+            const alreadyInMerged = merged.find((m) => m.id === localItem.id);
+            if (!onServer && !alreadyInMerged) merged.push(localItem);
+          }
         } else {
           merged = server;
         }
