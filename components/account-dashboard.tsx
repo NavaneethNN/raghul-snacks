@@ -283,9 +283,9 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
               onClick={() => setShowOrders((p) => !p)}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 10,
-                background: showOrders ? "var(--ink)" : "var(--cream)",
-                color: showOrders ? "#fff" : "var(--ink)",
-                border: "1.5px solid var(--line)",
+                background: showOrders ? "rgba(201,95,59,0.08)" : "var(--cream)",
+                color: showOrders ? "var(--terracotta)" : "var(--ink)",
+                border: showOrders ? "1.5px solid var(--terracotta)" : "1.5px solid var(--line)",
                 borderRadius: 10, padding: "12px 20px",
                 font: "600 14px 'DM Sans', sans-serif",
                 cursor: "pointer", transition: "all 0.2s",
@@ -315,9 +315,9 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
               onClick={() => setShowMessages((p) => !p)}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 10,
-                background: showMessages ? "var(--ink)" : "var(--cream)",
-                color: showMessages ? "#fff" : "var(--ink)",
-                border: "1.5px solid var(--line)",
+                background: showMessages ? "rgba(201,95,59,0.08)" : "var(--cream)",
+                color: showMessages ? "var(--terracotta)" : "var(--ink)",
+                border: showMessages ? "1.5px solid var(--terracotta)" : "1.5px solid var(--line)",
                 borderRadius: 10, padding: "12px 20px",
                 font: "600 14px 'DM Sans', sans-serif",
                 cursor: "pointer", transition: "all 0.2s",
