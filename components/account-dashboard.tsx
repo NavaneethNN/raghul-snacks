@@ -280,7 +280,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
           <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--line)", display: "flex", gap: 10, flexWrap: "wrap" }}>
             <button
               type="button"
-              onClick={() => setShowOrders((p) => !p)}
+              onClick={() => { setShowOrders((p) => !p); setShowMessages(false); }}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 10,
                 background: showOrders ? "rgba(201,95,59,0.08)" : "var(--cream)",
@@ -312,7 +312,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
             {/* Messages button */}
             <button
               type="button"
-              onClick={() => setShowMessages((p) => !p)}
+              onClick={() => { setShowMessages((p) => !p); setShowOrders(false); }}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 10,
                 background: showMessages ? "rgba(201,95,59,0.08)" : "var(--cream)",

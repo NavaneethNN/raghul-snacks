@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       if (account) accountEmail = account.email;
     }
 
-    const { lines, subtotal } = await priceOrder(payload.data.items);
+    const { lines, subtotal, weight } = await priceOrder(payload.data.items);
 
     let discount = 0;
     if (payload.data.couponCode) {
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     if (!isManual) {
       // Shiprocket mode — import lazily to avoid bundling in manual builds
       const { getShiprocketQuote } = await import("@/lib/shiprocket");
-      const quote = await getShiprocketQuote(payload.data.pincode, 0, subtotal - discount);
+      const quote = await getShiprocketQuote(payload.data.pincode, weight, subtotal - discount);
       if (!quote)
         return NextResponse.json(
           { error: "Shiprocket delivery configuration is incomplete." },

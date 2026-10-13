@@ -26,6 +26,7 @@ export async function createRazorpayOrder(
 ): Promise<RazorpayOrder> {
   const { keyId, keySecret } = getCredentials();
   const amountPaise = Math.round(amount * 100);
+  if (amountPaise < 100) throw new Error("Order amount must be at least ₹1.");
   const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
   const res = await fetch("https://api.razorpay.com/v1/orders", {
     method: "POST",
