@@ -163,6 +163,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Fetch server cart in background and merge
         mergingRef.current = true;
         setSyncing(true);
+        // Safety timeout — never block UI forever if server is slow
+        const syncTimeout = setTimeout(() => setSyncing(false), 5000);
         const [server, sessionRes] = await Promise.all([
           fetchServerCart(),
           fetch("/api/auth/session", { credentials: "include" }),
@@ -199,6 +201,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setItems(merged);
         await pushServerCart(merged);
         mergingRef.current = false;
+        clearTimeout(syncTimeout);
         setSyncing(false);
         return; // hydrated already set above
       } else {
