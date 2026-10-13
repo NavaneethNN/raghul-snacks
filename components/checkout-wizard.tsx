@@ -40,7 +40,9 @@ export function CheckoutWizard() {
   const [cities, setCities] = useState<string[]>([]);
   const [quote, setQuote] = useState<ShippingQuote | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
-  const [paymentReady, setPaymentReady] = useState(false);
+  const [paymentReady, setPaymentReady] = useState(
+    typeof window !== "undefined" && !!(window as any).Razorpay
+  );
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -65,6 +67,11 @@ export function CheckoutWizard() {
 
   // Track whether payment was successfully completed
   const orderPlacedRef = useRef(false);
+
+  // If Razorpay SDK already on window (cached from previous visit), mark ready immediately
+  useEffect(() => {
+    if ((window as any).Razorpay) setPaymentReady(true);
+  }, []);
 
   useEffect(() => {
     // Pre-fill contact details for logged-in users; guests can proceed without signing in
@@ -556,7 +563,9 @@ export function CheckoutWizard() {
     <>
       <Script
         src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="afterInteractive"
         onLoad={() => setPaymentReady(true)}
+        onReady={() => setPaymentReady(true)}
       />
       <main className={styles.page}>
         <Link className={styles.back} href="/cart">← Back to bag</Link>
