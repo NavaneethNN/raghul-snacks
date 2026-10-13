@@ -47,23 +47,42 @@ export async function POST(request: Request) {
       discount = couponResult.discountAmount;
     }
 
-    // Manual delivery mode: use client-calculated shipping (already verified from DB settings)
-    let shippingCharge = payload.data.shipping ?? 0;
+    // Calculate shipping server-side from DB settings (same logic as client)
+    let shippingCharge = 0;
     let courierName = "Delivery";
-    let estimatedDeliveryDays: string | null = "3–7 business days";
+    const estimatedDeliveryDays: string | null = "3–7 business days";
 
     if (!isManual) {
-      // Shiprocket mode — import lazily to avoid bundling in manual builds
+      // Shiprocket mode
       const { getShiprocketQuote } = await import("@/lib/shiprocket");
       const quote = await getShiprocketQuote(payload.data.pincode, weight, subtotal - discount);
       if (!quote)
-        return NextResponse.json(
-          { error: "Shiprocket delivery configuration is incomplete." },
-          { status: 503 }
-        );
+        return NextResponse.json({ error: "Shiprocket delivery configuration is incomplete." }, { status: 503 });
       shippingCharge = quote.charge;
       courierName = quote.courierName;
-      estimatedDeliveryDays = quote.estimatedDeliveryDays;
+    } else {
+      // Manual mode: calculate from DB settings
+      const db = getDb();
+      const { settings } = await import("@/drizzle/schema");
+      const allSettings = await db.select().from(settings);
+      const s: Record<string, string> = {};
+      allSettings.forEach(row => { s[row.key] = row.value; });
+
+      let tnRate = parseInt(s.shippingTamilNadu || "60");
+      let southRate = parseInt(s.shippingSouthIndia || "100");
+      let northRate = parseInt(s.shippingNorthIndia || "250");
+      let extraRate = parseInt(s.shippingExtraKg || "30");
+
+      const ZONE3 = ["Kerala", "Karnataka", "Andhra Pradesh", "Telangana"];
+      const ZONE2 = ["Tamil Nadu"];
+      let baseRate: number;
+      if (ZONE2.includes(payload.data.state)) { baseRate = tnRate; }
+      else if (ZONE3.includes(payload.data.state)) { baseRate = southRate; courierName = "Delivery"; }
+      else { baseRate = northRate; courierName = "Air Delivery"; }
+
+      const totalWeightKg = Math.max(1, weight);
+      const extraKg = Math.ceil(Math.max(0, totalWeightKg - 1));
+      shippingCharge = baseRate + extraKg * extraRate;
     }
 
     const total = Math.round((subtotal - discount + shippingCharge) * 100) / 100;
