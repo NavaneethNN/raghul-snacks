@@ -214,14 +214,14 @@ export function CheckoutWizard() {
       .catch(() => { /* non-critical */ });
   }, [subtotal]);
 
-  // When a buy-now item is present, add it to the regular cart once hydrated
+  // When a buy-now item is present, add it to the regular cart once fully synced
   // so it survives page reloads. Only add once (track with ref).
   const buyNowAddedRef = useRef(false);
   useEffect(() => {
-    if (!buyNowItem || !cartHydrated || buyNowAddedRef.current) return;
+    if (!buyNowItem || !cartHydrated || cartSyncing || buyNowAddedRef.current) return;
     buyNowAddedRef.current = true;
     addItem(buyNowItem, buyNowItem.quantity);
-  }, [buyNowItem, cartHydrated, addItem]);
+  }, [buyNowItem, cartHydrated, cartSyncing, addItem]);
 
   // Clear buy-now from sessionStorage only when navigating away (not on reload)
   useEffect(() => {

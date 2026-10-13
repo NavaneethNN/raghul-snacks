@@ -134,7 +134,7 @@ function mergeCarts(local: CartItem[], server: CartItem[]): CartItem[] {
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
-  const [syncing, setSyncing] = useState(false); // true while server cart merge is in progress
+  const [syncing, setSyncing] = useState(true); // start true — stays true until full init completes
   const [loggedIn, setLoggedIn] = useState(false);
   // Prevent push-back during the initial server merge
   const mergingRef = useRef(false);
@@ -199,6 +199,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Show cart immediately from localStorage, then validate in background
         setItems(local);
         setHydrated(true);
+        setSyncing(false);
         // Background validation — remove deleted products without blocking render
         if (local.length > 0) {
           const ids = [...new Set(local.map((i) => i.id.toString().split("-v")[0]))];
@@ -216,7 +217,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
         return; // already set hydrated above
       }
-      // guest path — hydrated already set at top
+      // guest path — hydrated and syncing already set above
     }
     init();
   }, []);
