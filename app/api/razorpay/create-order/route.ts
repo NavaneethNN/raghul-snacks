@@ -67,6 +67,7 @@ export async function POST(request: Request) {
     }
 
     const total = Math.round((subtotal - discount + shippingCharge) * 100) / 100;
+    console.log(`[razorpay/create-order] subtotal=${subtotal} discount=${discount} shipping=${shippingCharge} total=${total}`);
     const orderId = `RS${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
 
     const razorpayOrder = await createRazorpayOrder(total, orderId);
