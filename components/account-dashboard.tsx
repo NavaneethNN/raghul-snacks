@@ -65,6 +65,36 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   const [showOrders, setShowOrders] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
   const [reviewedProductIds, setReviewedProductIds] = useState<number[]>([]);
+  // Inline review state
+  const [reviewingItemId, setReviewingItemId] = useState<number | null>(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewHovered, setReviewHovered] = useState(0);
+  const [reviewContent, setReviewContent] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+
+  async function submitReview(productId: number) {
+    if (!reviewRating) { setReviewError("Please select a rating."); return; }
+    setReviewSubmitting(true);
+    setReviewError("");
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId, rating: reviewRating, content: reviewContent.trim() }),
+      });
+      const data = await res.json() as { success?: boolean; error?: string };
+      if (!res.ok) throw new Error(data.error || "Failed to submit review.");
+      setReviewedProductIds(prev => [...prev, productId]);
+      setReviewingItemId(null);
+      setReviewRating(0);
+      setReviewContent("");
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : "Failed to submit review.");
+    } finally {
+      setReviewSubmitting(false);
+    }
+  }
 
   useEffect(() => {
     fetch('/api/reviews/mine')
@@ -194,7 +224,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
     });
 
     if (addedCount === 0) {
-      router.push("/shop");
+      alert("These products are no longer available.");
       return;
     }
     if (skippedCount > 0) {
@@ -443,11 +473,42 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                           </div>
                           {order.paymentStatus === "paid" && order.orderStatus === "delivered" && (
                             item.product?.id && item.product?.slug && !reviewedProductIds.includes(item.product.id) ? (
-                              <Link href={`/product/${item.product.slug}#write-review`} style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, padding: "3px 10px", background: "rgba(196,79,49,0.08)", border: "1px solid rgba(196,79,49,0.25)", borderRadius: 20, fontSize: 11, fontWeight: 600, color: "var(--terracotta)", textDecoration: "none", cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
-                                ✍ Review
-                              </Link>
+                              reviewingItemId === item.id ? (
+                                // Inline review form
+                                <div style={{ marginTop: 8, padding: "12px 14px", background: "var(--cream)", border: "1.5px solid var(--terracotta)", borderRadius: 10, width: "100%", maxWidth: 280 }}>
+                                  <p style={{ margin: "0 0 8px", fontSize: 12, fontWeight: 700, color: "var(--ink)" }}>Rate {item.name}</p>
+                                  {/* Stars */}
+                                  <div style={{ display: "flex", gap: 2, marginBottom: 8 }}>
+                                    {[1,2,3,4,5].map(s => (
+                                      <button key={s} type="button" onClick={() => setReviewRating(s)}
+                                        onMouseEnter={() => setReviewHovered(s)} onMouseLeave={() => setReviewHovered(0)}
+                                        style={{ background: "none", border: "none", fontSize: 24, cursor: "pointer", color: s <= (reviewHovered || reviewRating) ? "#e5a52f" : "#d1d5db", padding: 0, lineHeight: 1 }}>★</button>
+                                    ))}
+                                  </div>
+                                  <textarea value={reviewContent} onChange={e => setReviewContent(e.target.value)}
+                                    rows={2} placeholder="Your review (optional)"
+                                    style={{ width: "100%", padding: "7px 10px", border: "1.5px solid var(--line)", borderRadius: 7, fontSize: 13, fontFamily: "inherit", resize: "none", boxSizing: "border-box", marginBottom: 8 }} />
+                                  {reviewError && <p style={{ margin: "0 0 6px", fontSize: 12, color: "#dc2626" }}>{reviewError}</p>}
+                                  <div style={{ display: "flex", gap: 8 }}>
+                                    <button type="button" onClick={() => submitReview(item.product!.id)} disabled={reviewSubmitting}
+                                      style={{ flex: 1, background: "var(--terracotta)", color: "#fff", border: "none", borderRadius: 7, padding: "7px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                                      {reviewSubmitting ? "Submitting…" : "Submit"}
+                                    </button>
+                                    <button type="button" onClick={() => { setReviewingItemId(null); setReviewRating(0); setReviewContent(""); setReviewError(""); }}
+                                      style={{ background: "none", border: "1.5px solid var(--line)", borderRadius: 7, padding: "7px 10px", fontSize: 12, cursor: "pointer", color: "var(--ink)" }}>
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button type="button" onClick={() => { setReviewingItemId(item.id); setReviewRating(0); setReviewContent(""); setReviewError(""); }}
+                                  style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, padding: "3px 10px", background: "rgba(196,79,49,0.08)", border: "1px solid rgba(196,79,49,0.25)", borderRadius: 20, fontSize: 11, fontWeight: 600, color: "var(--terracotta)", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", outline: "none" }}>
+                                  ✍ Review
+                                </button>
+                              )
                             ) : !item.product?.slug ? (
-                              <button type="button" onClick={() => setDetailOrder(order)} style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, padding: "3px 10px", background: "rgba(196,79,49,0.08)", border: "1px solid rgba(196,79,49,0.25)", borderRadius: 20, fontSize: 11, fontWeight: 600, color: "var(--terracotta)", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", outline: "none" }}>
+                              <button type="button" onClick={() => setDetailOrder(order)}
+                                style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, padding: "3px 10px", background: "rgba(196,79,49,0.08)", border: "1px solid rgba(196,79,49,0.25)", borderRadius: 20, fontSize: 11, fontWeight: 600, color: "var(--terracotta)", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", outline: "none" }}>
                                 ✍ Review
                               </button>
                             ) : null
