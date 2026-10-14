@@ -36,6 +36,9 @@ const allowedTransitions: Record<string, string[]> = {
   dispatched: ["delivered"],
   delivered:  [],
   cancelled:  [],
+  // legacy statuses from old flow
+  shipped:    ["delivered"],
+  preparing:  ["dispatched", "cancelled"],
 };
 
 const fmt = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
@@ -223,7 +226,7 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
             {filtered.map((order) => {
               const isOpen     = expanded.has(order.id);
               const fb         = feedback[order.id];
-              const isTerminal = allowedTransitions[order.orderStatus]?.length === 0;
+              const isTerminal = (allowedTransitions[order.orderStatus] ?? []).length === 0;
 
               return (
                 <article key={order.id} className={`${styles.order} ${isOpen ? styles.orderOpen : ""}`}>
