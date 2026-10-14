@@ -67,7 +67,7 @@ export function DeliveryReviewNudge() {
           // Fallback: order delivered but items have no linked product (deleted products)
           // Show generic review nudge linking to orders page
           if ((order.items ?? []).length > 0) {
-            const firstName = (order.items?.[0]?.name ?? "your order");
+            const firstName = (order.items?.[0]?.product?.name ?? "your recent order");
             setItem({
               orderNumber: order.orderNumber,
               productName: firstName,
