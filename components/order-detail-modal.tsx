@@ -274,20 +274,33 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
                   </>
                 );
                 const sharedStyle: React.CSSProperties = { display: "flex", alignItems: "center", gap: 12, background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, padding: "12px 14px", width: "100%", textAlign: "left", transition: "border-color 0.15s" };
-                return item.product?.slug ? (
-                  <Link
-                    key={item.id}
-                    href={`/product/${item.product.slug}`}
-                    onClick={onClose}
-                    style={{ ...sharedStyle, textDecoration: "none" }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--terracotta)"; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--line)"; }}
-                  >
-                    {itemContent}
-                  </Link>
-                ) : (
-                  <div key={item.id} style={sharedStyle}>
-                    {itemContent}
+                return (
+                  <div key={item.id} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {item.product?.slug ? (
+                      <Link
+                        href={`/product/${item.product.slug}`}
+                        onClick={onClose}
+                        style={{ ...sharedStyle, textDecoration: "none" }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--terracotta)"; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--line)"; }}
+                      >
+                        {itemContent}
+                      </Link>
+                    ) : (
+                      <div style={sharedStyle}>
+                        {itemContent}
+                      </div>
+                    )}
+                    {/* Review button — only for delivered orders with existing products */}
+                    {isDelivered && item.product?.slug && !donePids.has(item.product.id) && (
+                      <Link
+                        href={`/product/${item.product.slug}#write-review`}
+                        onClick={onClose}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 5, alignSelf: "flex-start", padding: "4px 12px", background: "rgba(196,79,49,0.08)", border: "1px solid rgba(196,79,49,0.25)", borderRadius: 20, fontSize: 11, fontWeight: 600, color: "var(--terracotta)", textDecoration: "none", fontFamily: "'DM Sans',sans-serif" }}
+                      >
+                        ✍ Review this product
+                      </Link>
+                    )}
                   </div>
                 );
               })}
