@@ -166,7 +166,7 @@ export function CustomerOrders() {
                     {content}
                   </div>
                 );
-                const showReviewBadge = displayOrder.paymentStatus === "paid" && item.product?.id && !reviewedProductIds.includes(item.product.id);
+                const showReviewBadge = displayOrder.paymentStatus === "paid" && displayOrder.orderStatus === "delivered" && item.product?.id && !reviewedProductIds.includes(item.product.id);
                 return (
                   <div key={item.id} style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
                     {itemLink}
