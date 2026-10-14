@@ -431,10 +431,16 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
                             </button>
                           </div>
-                          {order.paymentStatus === "paid" && order.orderStatus === "delivered" && item.product?.id && item.product?.slug && !reviewedProductIds.includes(item.product.id) && (
-                            <Link href={`/product/${item.product.slug}#reviews`} style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, padding: "3px 10px", background: "rgba(196,79,49,0.08)", border: "1px solid rgba(196,79,49,0.25)", borderRadius: 20, fontSize: 11, fontWeight: 600, color: "var(--terracotta)", textDecoration: "none", cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
-                              ✍ Review
-                            </Link>
+                          {order.paymentStatus === "paid" && order.orderStatus === "delivered" && (
+                            item.product?.id && item.product?.slug && !reviewedProductIds.includes(item.product.id) ? (
+                              <Link href={`/product/${item.product.slug}#write-review`} style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, padding: "3px 10px", background: "rgba(196,79,49,0.08)", border: "1px solid rgba(196,79,49,0.25)", borderRadius: 20, fontSize: 11, fontWeight: 600, color: "var(--terracotta)", textDecoration: "none", cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                                ✍ Review
+                              </Link>
+                            ) : !item.product?.slug ? (
+                              <button type="button" onClick={() => setDetailOrder(order)} style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, padding: "3px 10px", background: "rgba(196,79,49,0.08)", border: "1px solid rgba(196,79,49,0.25)", borderRadius: 20, fontSize: 11, fontWeight: 600, color: "var(--terracotta)", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", outline: "none" }}>
+                                ✍ Review
+                              </button>
+                            ) : null
                           )}
                         </div>
                       ))}
