@@ -35,7 +35,7 @@ const allowedTransitions: Record<string, string[]> = {
   packed:     ["dispatched", "cancelled"],
   dispatched: ["delivered"],
   delivered:  [],
-  cancelled:  [],
+  cancelled:  ["placed"], // allow admin to revert accidental cancellation
   // legacy statuses from old flow
   shipped:    ["delivered"],
   preparing:  ["dispatched", "cancelled"],
@@ -226,7 +226,7 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
             {filtered.map((order) => {
               const isOpen     = expanded.has(order.id);
               const fb         = feedback[order.id];
-              const isTerminal = (allowedTransitions[order.orderStatus] ?? []).length === 0;
+              const isTerminal = order.orderStatus === "delivered";
 
               return (
                 <article key={order.id} className={`${styles.order} ${isOpen ? styles.orderOpen : ""}`}>

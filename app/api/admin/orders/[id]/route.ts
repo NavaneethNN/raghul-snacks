@@ -6,7 +6,7 @@ import { orders } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
 
-const statusSchema = z.object({ orderStatus: z.enum(["placed", "packed", "shipped", "delivered", "cancelled"]) });
+const statusSchema = z.object({ orderStatus: z.enum(["placed", "packed", "dispatched", "delivered", "cancelled"]) });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

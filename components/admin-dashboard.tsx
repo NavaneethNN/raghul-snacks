@@ -6,7 +6,7 @@ import { AdminHeaderActions } from "./admin-header-actions";
 import styles from "./admin-dashboard.module.css";
 
 const statusLabel: Record<string, string> = {
-  placed: "Placed", packed: "Packed", shipped: "Shipped",
+  placed: "Placed", packed: "Packed", dispatched: "Dispatched",
   delivered: "Delivered", cancelled: "Cancelled",
 };
 
