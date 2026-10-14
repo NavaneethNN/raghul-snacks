@@ -48,6 +48,8 @@ export function DeliveryReviewNudge() {
         // Find first delivered paid order with an unreviewed product
         for (const order of ordersData.orders ?? []) {
           if (order.orderStatus !== "delivered" || order.paymentStatus !== "paid") continue;
+
+          // Check if order has any items with valid product slugs not yet reviewed
           for (const i of order.items ?? []) {
             if (!i.product?.slug || !i.product?.id) continue;
             if (!reviewedIds.has(i.product.id)) {
@@ -57,10 +59,23 @@ export function DeliveryReviewNudge() {
                 productSlug: i.product.slug,
                 productId: i.product.id,
               });
-              // Small delay so it doesn't flash immediately on load
               setTimeout(() => setVisible(true), 1500);
               return;
             }
+          }
+
+          // Fallback: order delivered but items have no linked product (deleted products)
+          // Show generic review nudge linking to orders page
+          if ((order.items ?? []).length > 0) {
+            const firstName = (order.items?.[0]?.name ?? "your order");
+            setItem({
+              orderNumber: order.orderNumber,
+              productName: firstName,
+              productSlug: "",
+              productId: 0,
+            });
+            setTimeout(() => setVisible(true), 1500);
+            return;
           }
         }
       } catch { /* silent */ }
@@ -117,7 +132,7 @@ export function DeliveryReviewNudge() {
 
       {/* Review link */}
       <Link
-        href={`/product/${item.productSlug}#write-review`}
+        href={item.productSlug ? `/product/${item.productSlug}#write-review` : `/account`}
         onClick={() => { setVisible(false); setDismissed(true); }}
         style={{
           flexShrink: 0,
