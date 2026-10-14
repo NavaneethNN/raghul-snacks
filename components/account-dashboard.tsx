@@ -157,19 +157,27 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
       return;
     }
 
+    // If only one product, go directly to that product page
+    const firstItem = order.items.find(i => i.product?.slug);
+    if (firstItem?.product?.slug) {
+      router.push(`/product/${firstItem.product.slug}`);
+      return;
+    }
+
+    // Multiple products — add all to cart and go to cart
     let addedCount = 0;
     let skippedCount = 0;
 
     order.items.forEach((item) => {
-      if (item.product) {
+      if (item.product && Number(item.product.price) > 0) {
         const catalogProduct = {
           id: String(item.product.id),
           slug: item.product.slug,
-          name: item.name, // use snapshotted name from order
+          name: item.name,
           category: "snacks",
-          price: Number(item.product.price) || Number(item.price),
-          offerPrice: Number(item.product.offerPrice || item.product.price) || Number(item.price),
-          weight: item.weight || item.product.weight || "", // use snapshotted weight
+          price: Number(item.product.price),
+          offerPrice: Number(item.product.offerPrice || item.product.price),
+          weight: item.weight || item.product.weight || "",
           description: "",
           ingredients: "",
           badge: undefined,
@@ -186,7 +194,6 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
     });
 
     if (addedCount === 0) {
-      // If no products could be added (all null), redirect to shop
       router.push("/shop");
       return;
     }
