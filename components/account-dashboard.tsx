@@ -22,6 +22,7 @@ type Order = {
     name: string;
     quantity: number;
     price: string;
+    weight?: string | null;
     product: {
       id: number;
       name: string;
