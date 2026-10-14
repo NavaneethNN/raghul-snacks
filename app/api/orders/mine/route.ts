@@ -45,6 +45,7 @@ export async function GET() {
               name: orderItems.name,
               quantity: orderItems.quantity,
               price: orderItems.price,
+              weight: orderItems.weight,
             })
             .from(orderItems)
             .where(inArray(orderItems.orderId, orderIds))
@@ -94,6 +95,7 @@ export async function GET() {
             name: item.name,
             quantity: item.quantity,
             price: String(item.price),
+            weight: item.weight ?? null,
             product: p
               ? {
                   id: p.id,

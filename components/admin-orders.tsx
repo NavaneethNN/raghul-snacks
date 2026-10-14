@@ -27,21 +27,25 @@ type AdminOrder = {
   items: OrderItem[];
 };
 
-type Status = "all" | "placed" | "packed" | "shipped" | "delivered" | "cancelled";
-const statuses: Status[] = ["all", "placed", "packed", "shipped", "delivered", "cancelled"];
+type Status = "all" | "placed" | "packed" | "dispatched" | "delivered" | "cancelled";
+const statuses: Status[] = ["all", "placed", "packed", "dispatched", "delivered", "cancelled"];
 
 const allowedTransitions: Record<string, string[]> = {
-  placed:    ["packed", "cancelled"],
-  packed:    ["shipped", "cancelled"],
-  shipped:   ["delivered"],
-  delivered: [],
-  cancelled: [],
+  placed:     ["packed", "cancelled"],
+  packed:     ["dispatched", "cancelled"],
+  dispatched: ["delivered"],
+  delivered:  [],
+  cancelled:  [],
 };
 
 const fmt = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 const paymentLabels: Record<string, string> = {
   upi: "UPI", card: "Credit / Debit Card", netbanking: "Net Banking",
   wallet: "Wallet", emi: "EMI", online: "Online Payment", cod: "Cash on Delivery",
+};
+const statusLabels: Record<string, string> = {
+  placed: "Order Placed", packed: "Packed", dispatched: "Dispatched",
+  delivered: "Delivered", cancelled: "Cancelled",
 };
 
 export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
@@ -82,7 +86,7 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
 
   const paid       = orders.filter((o) => o.paymentStatus === "paid");
   const pending    = statusCounts["placed"] ?? 0;
-  const dispatched = statusCounts["shipped"] ?? 0;
+  const dispatched = statusCounts["dispatched"] ?? 0;
   const revenue    = paid.reduce((s, o) => s + o.total, 0);
 
   async function setStatus(id: number, orderStatus: string) {
@@ -313,9 +317,9 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
                               disabled={busy === order.id}
                               onChange={(e) => setStatus(order.id, e.target.value)}
                             >
-                              <option value={order.orderStatus}>{order.orderStatus}</option>
+                              <option value={order.orderStatus}>{statusLabels[order.orderStatus] ?? order.orderStatus}</option>
                               {allowedTransitions[order.orderStatus]?.map((s) => (
-                                <option key={s} value={s}>{s}</option>
+                                <option key={s} value={s}>{statusLabels[s] ?? s}</option>
                               ))}
                             </select>
                           )}

@@ -11,14 +11,14 @@ type CustomerOrder = {
   total: number; orderStatus: string; paymentStatus: string; paymentMethod?: string | null;
   shippingStatus: string; awbCode: string | null; createdAt: string;
   items?: Array<{
-    id: number; name: string; quantity: number; price: string;
+    id: number; name: string; quantity: number; price: string; weight?: string | null;
     product: { id: number; name: string; slug: string; image: string | null; weight: string; } | null;
   }>;
 };
 type SavedOrder = { orderNumber: string; phone: string };
 
-const statusLabels: Record<string, string> = { placed: "Order confirmed", packed: "Packed with care", shipped: "On its way", delivered: "Delivered", cancelled: "Cancelled" };
-const stages = ["placed", "packed", "shipped", "delivered"];
+const statusLabels: Record<string, string> = { placed: "Order confirmed", packed: "Packed with care", dispatched: "On its way", delivered: "Delivered", cancelled: "Cancelled" };
+const stages = ["placed", "packed", "dispatched", "delivered"];
 const price = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
 export function CustomerOrders() {
@@ -66,22 +66,8 @@ export function CustomerOrders() {
   const stageIndex = stages.indexOf(displayOrder.orderStatus);
 
   const downloadInvoice = async (orderNumber: string) => {
-    try {
-      const response = await fetch(`/api/orders/${orderNumber}/invoice`);
-      if (!response.ok) throw new Error("Failed to download invoice");
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `invoice-${orderNumber}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error("Error downloading invoice:", error);
-      alert("Failed to download invoice. Please try again.");
-    }
+    // Open invoice in new tab — browser will auto-print via window.onload
+    window.open(`/api/orders/${orderNumber}/invoice`, "_blank");
   };
 
   return (
@@ -156,12 +142,16 @@ export function CustomerOrders() {
                     <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 8, overflow: "hidden", border: "1px solid var(--line)", background: "var(--cream)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       {item.product?.image
                         ? <img src={item.product.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                        : <div style={{ fontSize: 16, fontWeight: 700, color: "var(--terracotta)", fontFamily: "'DM Sans',sans-serif" }}>{item.name.charAt(0).toUpperCase()}</div>
                       }
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</p>
-                      <p style={{ margin: "2px 0 0", fontSize: 11, color: "#6b7280", fontFamily: "'DM Mono',monospace" }}>Qty {item.quantity} · {price.format(parseFloat(item.price) * item.quantity)}</p>
+                      <p style={{ margin: "2px 0 0", fontSize: 11, color: "#6b7280", fontFamily: "'DM Mono',monospace" }}>
+                        {item.weight || item.product?.weight ? `${item.weight || item.product?.weight}` : `Qty ${item.quantity}`}
+                        {item.quantity > 1 && ` · ×${item.quantity}`}
+                        {` · ${price.format(parseFloat(item.price) * item.quantity)}`}
+                      </p>
                     </div>
                   </>
                 );

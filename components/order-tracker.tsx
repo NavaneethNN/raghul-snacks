@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import styles from "./order-tracker.module.css";
 
 type Result = { orderNumber: string; orderStatus: string; paymentStatus: string; createdAt: string };
-const labels: Record<string, string> = { placed: "Order placed", packed: "Packed with care", shipped: "On the way", delivered: "Delivered", cancelled: "Cancelled" };
+const labels: Record<string, string> = { placed: "Order placed", packed: "Packed & ready", dispatched: "On the way", delivered: "Delivered", cancelled: "Cancelled" };
 
 function GuestReviewForm({ orderNumber, phone }: { orderNumber: string; phone: string }) {
   const [name, setName] = useState("");
@@ -219,14 +219,14 @@ export function OrderTracker({ initialOrder }: { initialOrder?: string }) {
                 </div>
               ) : (
                 <div className={styles.timeline}>
-                  <div className={result.orderStatus === "placed" || result.orderStatus === "packed" || result.orderStatus === "shipped" || result.orderStatus === "delivered" ? styles.active : ""}>
+                  <div className={["placed","packed","dispatched","delivered"].includes(result.orderStatus) ? styles.active : ""}>
                     <span>Order placed</span>
                   </div>
-                  <div className={result.orderStatus === "packed" || result.orderStatus === "shipped" || result.orderStatus === "delivered" ? styles.active : ""}>
+                  <div className={["packed","dispatched","delivered"].includes(result.orderStatus) ? styles.active : ""}>
                     <span>Packed</span>
                   </div>
-                  <div className={result.orderStatus === "shipped" || result.orderStatus === "delivered" ? styles.active : ""}>
-                    <span>Shipped</span>
+                  <div className={["dispatched","delivered"].includes(result.orderStatus) ? styles.active : ""}>
+                    <span>Dispatched</span>
                   </div>
                   <div className={result.orderStatus === "delivered" ? styles.active : ""}>
                     <span>Delivered</span>

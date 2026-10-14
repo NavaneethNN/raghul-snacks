@@ -109,25 +109,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   }
 
   async function downloadInvoice(orderNumber: string) {
-    try {
-      const response = await fetch(`/api/orders/${orderNumber}/invoice`);
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to download invoice");
-      }
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `invoice-${orderNumber}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error("Error downloading invoice:", error);
-      alert(error instanceof Error ? error.message : "Failed to download invoice. Please try again.");
-    }
+    window.open(`/api/orders/${orderNumber}/invoice`, "_blank");
   }
 
   function startEditingName() {
@@ -378,9 +360,9 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                           padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700,
                           fontFamily: "'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.04em",
                           ...({
-                            placed:    { background: "#fef3c7", color: "#92400e" },
-                            packed:    { background: "#dbeafe", color: "#1e40af" },
-                            shipped:   { background: "#dcfce7", color: "#166534" },
+                            placed:     { background: "#fef3c7", color: "#92400e" },
+                            packed:     { background: "#dbeafe", color: "#1e40af" },
+                            dispatched: { background: "#dcfce7", color: "#166534" },
                             delivered: { background: "#d1fae5", color: "#065f46" },
                             cancelled: { background: "#fee2e2", color: "#991b1b" },
                           } as Record<string, React.CSSProperties>)[order.orderStatus] ?? { background: "#f3f4f6", color: "#374151" }
