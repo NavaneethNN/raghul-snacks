@@ -164,15 +164,18 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
         const catalogProduct = {
           id: String(item.product.id),
           slug: item.product.slug,
-          name: item.product.name,
+          name: item.name, // use snapshotted name from order
           category: "snacks",
-          price: Number(item.product.price),
-          offerPrice: Number(item.product.offerPrice || item.product.price),
-          weight: item.product.weight,
-          description: item.product.description,
-          ingredients: item.product.ingredients || "",
-          badge: item.product.bestseller ? "Bestseller" : undefined,
+          price: Number(item.product.price) || Number(item.price),
+          offerPrice: Number(item.product.offerPrice || item.product.price) || Number(item.price),
+          weight: item.weight || item.product.weight || "", // use snapshotted weight
+          description: "",
+          ingredients: "",
+          badge: undefined,
           image: item.product.image,
+          stock: 1,
+          featured: false,
+          bestseller: false,
         };
         addItem(catalogProduct, item.quantity);
         addedCount++;
@@ -182,7 +185,8 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
     });
 
     if (addedCount === 0) {
-      alert("These products are no longer available.");
+      // If no products could be added (all null), redirect to shop
+      router.push("/shop");
       return;
     }
 
