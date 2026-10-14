@@ -37,6 +37,7 @@ type Order = {
       stock: number;
       featured: boolean;
       bestseller: boolean;
+      variants?: Array<{ id: number; weight: string; price: string; offerPrice: string | null }>;
     } | null;
   }>;
 };
@@ -157,31 +158,30 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
       return;
     }
 
-    // If only one product, go directly to that product page
-    const firstItem = order.items.find(i => i.product?.slug);
-    if (firstItem?.product?.slug) {
-      router.push(`/product/${firstItem.product.slug}`);
-      return;
-    }
-
-    // Multiple products — add all to cart and go to cart
     let addedCount = 0;
     let skippedCount = 0;
 
     order.items.forEach((item) => {
-      if (item.product && Number(item.product.price) > 0) {
+      if (item.product) {
+        const p = item.product;
+        // Try to match the snapshotted weight to a current variant
+        const snapWeight = item.weight || p.weight;
+        const matchedVariant = p.variants?.find(v => v.weight === snapWeight);
+
+        const cartId = matchedVariant ? `${p.id}-v${matchedVariant.id}` : String(p.id);
+        const price = matchedVariant ? Number(matchedVariant.offerPrice || matchedVariant.price) : Number(p.offerPrice || p.price);
+
         const catalogProduct = {
-          id: String(item.product.id),
-          slug: item.product.slug,
+          id: cartId,
+          slug: p.slug,
           name: item.name,
           category: "snacks",
-          price: Number(item.product.price),
-          offerPrice: Number(item.product.offerPrice || item.product.price),
-          weight: item.weight || item.product.weight || "",
+          price: Number(p.price),
+          offerPrice: price,
+          weight: snapWeight || "",
           description: "",
           ingredients: "",
-          badge: undefined,
-          image: item.product.image,
+          image: p.image,
           stock: 1,
           featured: false,
           bestseller: false,
@@ -197,11 +197,9 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
       router.push("/shop");
       return;
     }
-
     if (skippedCount > 0) {
       alert(`${addedCount} item${addedCount > 1 ? "s" : ""} added to cart. ${skippedCount} item${skippedCount > 1 ? "s are" : " is"} no longer available.`);
     }
-
     router.push("/cart");
   }
 

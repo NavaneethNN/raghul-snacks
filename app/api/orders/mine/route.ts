@@ -1,7 +1,7 @@
 import { desc, eq, inArray } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { orders, orderItems, products } from "@/drizzle/schema";
+import { orders, orderItems, products, productVariants } from "@/drizzle/schema";
 import { customerCookieName, getCustomerSession } from "@/lib/customer-auth";
 import { getDb } from "@/lib/db";
 
@@ -73,6 +73,21 @@ export async function GET() {
 
     const productById = new Map(allProductRows.map((p) => [p.id, p]));
 
+    // Fetch variants for all products so Buy Again can reconstruct the correct cart ID
+    const allVariantRows = productIds.length > 0
+      ? await db
+          .select({ id: productVariants.id, productId: productVariants.productId, weight: productVariants.weight, price: productVariants.price, offerPrice: productVariants.offerPrice })
+          .from(productVariants)
+          .where(inArray(productVariants.productId, productIds))
+      : [];
+    // Group variants by productId
+    const variantsByProduct = new Map<number, typeof allVariantRows>();
+    for (const v of allVariantRows) {
+      const arr = variantsByProduct.get(v.productId) ?? [];
+      arr.push(v);
+      variantsByProduct.set(v.productId, arr);
+    }
+
     const itemsByOrderId = new Map<number, typeof allItems>(orderIds.map((id) => [id, []]));
     for (const item of allItems) {
       itemsByOrderId.get(item.orderId)?.push(item);
@@ -105,6 +120,8 @@ export async function GET() {
                   price: String(p.price),
                   offerPrice: p.offerPrice != null ? String(p.offerPrice) : null,
                   weight: p.weight,
+                  // Find matching variant by snapshotted weight for Buy Again
+                  variants: variantsByProduct.get(p.id) ?? [],
                 }
               : null,
           };
