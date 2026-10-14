@@ -3,6 +3,7 @@ import { AnnouncementBar } from "@/components/announcement-bar";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { DeliveryNotification } from "@/components/delivery-notification";
 import { ReplyNotification } from "@/components/reply-notification";
+import { DeliveryReviewNudge } from "@/components/delivery-review-nudge";
 import Link from "next/link";
 
 export default function StoreLayout({ children }: { children: React.ReactNode }) {
@@ -13,6 +14,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
       <StoreHeader />
       <DeliveryNotification />
       <ReplyNotification />
+      <DeliveryReviewNudge />
       <main>{children}</main>
       <footer>
         <div className="footer-container">
