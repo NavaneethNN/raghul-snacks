@@ -438,7 +438,6 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
               <tr>
                 <th>Product</th>
                 <th className={productStyles.hideOnMobile}>Category</th>
-                <th>Price</th>
                 <th className={productStyles.hideOnMobile}>Status</th>
                 <th className={productStyles.hideOnMobile}>Type</th>
                 <th>Actions</th>
@@ -446,7 +445,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
             </thead>
             <tbody>
               {filteredProducts.length === 0 ? (
-                <tr><td colSpan={6} className={styles.emptyState}><div><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5c-1.5-1-3.5-1-5 0"/></svg><h3>No products yet</h3><p>Add your first product to get started.</p><button className={styles.primaryButton} onClick={() => setShowForm(true)}>Add Product</button></div></td></tr>
+                <tr><td colSpan={5} className={styles.emptyState}><div><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5c-1.5-1-3.5-1-5 0"/></svg><h3>No products yet</h3><p>Add your first product to get started.</p><button className={styles.primaryButton} onClick={() => setShowForm(true)}>Add Product</button></div></td></tr>
               ) : filteredProducts.map((product) => (
                 <tr key={product.id}>
                   <td>
@@ -464,11 +463,6 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                     </div>
                   </td>
                   <td className={productStyles.hideOnMobile}>{product.categoryName ?? "—"}</td>
-                  <td>
-                    {product.offerPrice
-                      ? <><strong>{fmt.format(Number(product.offerPrice))}</strong><br /><small style={{ color: "#6b7280", textDecoration: "line-through" }}>{fmt.format(Number(product.price))}</small></>
-                      : <strong>{fmt.format(Number(product.price))}</strong>}
-                  </td>
                   <td className={productStyles.hideOnMobile}>
                     {product.stock === 0
                       ? <span className={`${styles.badge}`} style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626", border: "1px solid rgba(220,38,38,0.2)" }}>Out of Stock</span>
