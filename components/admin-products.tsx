@@ -194,9 +194,26 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => { const b64 = reader.result as string; setImagePreview(b64); setImageData(b64); };
-      reader.readAsDataURL(file);
+      // Compress image before converting to base64
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const canvas = document.createElement("canvas");
+        const MAX = 800;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+          else { width = Math.round(width * MAX / height); height = MAX; }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+        const b64 = canvas.toDataURL("image/jpeg", 0.8);
+        setImagePreview(b64);
+        setImageData(b64);
+      };
+      img.src = objectUrl;
     }
   }
 
@@ -416,7 +433,12 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                 <tr key={product.id}>
                   <td>
                     <strong>{product.name}</strong><br />
-                    <small style={{ color: "#6b7280" }}>{formatWeight(product.weight)}</small>
+                    {product.weight && product.weight !== "—" && product.weight !== "-" && (product.variantCount ?? 0) === 0 && (
+                      <small style={{ color: "#6b7280" }}>{formatWeight(product.weight)}</small>
+                    )}
+                    {(product.variantCount ?? 0) > 0 && (
+                      <small style={{ color: "#9ca3af" }}>{product.variantCount} variant{(product.variantCount ?? 0) !== 1 ? "s" : ""}</small>
+                    )}
                     <div className={productStyles.mobileSubtext}>
                       {product.categoryName && <span>{product.categoryName}</span>}
                       {product.bestseller && <span className={productStyles.mobileBadge}>Bestseller</span>}

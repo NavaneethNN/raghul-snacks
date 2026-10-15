@@ -6,6 +6,15 @@ import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "10mb",
+    },
+  },
+};
 
 // PATCH - Update product
 export async function PATCH(

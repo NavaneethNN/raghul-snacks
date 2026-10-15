@@ -6,6 +6,16 @@ import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
+// Increase body size limit to 10MB for product images
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "10mb",
+    },
+  },
+};
 
 // GET - List all products
 export async function GET(request: NextRequest) {
