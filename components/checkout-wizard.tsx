@@ -59,6 +59,17 @@ export function CheckoutWizard() {
     [items],
   );
 
+  // Saved address for logged-in users
+  const [savedAddress, setSavedAddress] = useState<{ address: string; city: string; state: string; pincode: string } | null>(null);
+  useEffect(() => {
+    fetch("/api/account/address")
+      .then(r => r.json())
+      .then((d: { address: { address: string; city: string; state: string; pincode: string } | null }) => {
+        if (d.address) setSavedAddress(d.address);
+      })
+      .catch(() => {});
+  }, []);
+
   const shipping = quote?.charge ?? 0;
   const discount = appliedCoupon?.discountAmount ?? 0;
   const total = subtotal - discount + shipping;
@@ -681,6 +692,29 @@ export function CheckoutWizard() {
                     Choose your location to calculate a live courier rate and complete payment.
                   </span>
                 </div>
+
+                {/* Saved address card */}
+                {savedAddress && (
+                  <div style={{ margin: "0 0 20px", padding: "14px 16px", background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 10 }}>
+                    <p style={{ margin: "0 0 6px", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", fontWeight: 600 }}>Saved address</p>
+                    <p style={{ margin: "0 0 10px", fontSize: 14, color: "var(--ink)", lineHeight: 1.5 }}>
+                      {savedAddress.address}, {savedAddress.city}, {savedAddress.state} – {savedAddress.pincode}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        update("address", savedAddress.address);
+                        update("city", savedAddress.city);
+                        update("state", savedAddress.state);
+                        update("pincode", savedAddress.pincode);
+                      }}
+                      style={{ fontSize: 13, fontWeight: 600, color: "var(--terracotta)", background: "none", border: "1px solid var(--terracotta)", borderRadius: 7, padding: "6px 14px", cursor: "pointer" }}
+                    >
+                      Use this address
+                    </button>
+                  </div>
+                )}
+
                 <div className={styles.fields}>
                   <label className={styles.full}>
                     Street address
