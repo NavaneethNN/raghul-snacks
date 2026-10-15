@@ -42,6 +42,7 @@ export async function GET() {
               id: orderItems.id,
               orderId: orderItems.orderId,
               productId: orderItems.productId,
+              variantId: orderItems.variantId,
               name: orderItems.name,
               quantity: orderItems.quantity,
               price: orderItems.price,
@@ -113,6 +114,7 @@ export async function GET() {
           return {
             id: item.id,
             productId: item.productId,
+            variantId: item.variantId ?? null,
             name: item.name,
             quantity: item.quantity,
             price: String(item.price),

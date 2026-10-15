@@ -19,6 +19,7 @@ type Order = {
   items: Array<{
     id: number;
     productId: number | null;
+    variantId?: number | null;
     name: string;
     quantity: number;
     price: string;
@@ -194,11 +195,10 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
     order.items.forEach((item) => {
       if (item.product) {
         const p = item.product;
-        // Try to match the snapshotted weight to a current variant
-        const snapWeight = item.weight || p.weight;
-        const matchedVariant = p.variants?.find(v => v.weight === snapWeight);
-
-        const cartId = matchedVariant ? `${p.id}-v${matchedVariant.id}` : String(p.id);
+        // Use stored variantId if available, otherwise fall back to weight matching
+        const variantId = item.variantId ?? p.variants?.find(v => v.weight === (item.weight || p.weight))?.id ?? null;
+        const cartId = variantId ? `${p.id}-v${variantId}` : String(p.id);
+        const matchedVariant = variantId ? p.variants?.find(v => v.id === variantId) : null;
         const price = matchedVariant ? Number(matchedVariant.offerPrice || matchedVariant.price) : Number(p.offerPrice || p.price);
 
         const catalogProduct = {
