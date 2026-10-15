@@ -49,7 +49,7 @@ export function DeliveryReviewNudge() {
         for (const order of ordersData.orders ?? []) {
           if (order.orderStatus !== "delivered" || order.paymentStatus !== "paid") continue;
 
-          // Check if order has any items with valid product slugs not yet reviewed
+          // Only show if there's an unreviewed product with a valid ID
           for (const i of order.items ?? []) {
             if (!i.product?.slug || !i.product?.id) continue;
             if (!reviewedIds.has(i.product.id)) {
@@ -63,20 +63,7 @@ export function DeliveryReviewNudge() {
               return;
             }
           }
-
-          // Fallback: order delivered but items have no linked product (deleted products)
-          // Show generic review nudge linking to orders page
-          if ((order.items ?? []).length > 0) {
-            const firstName = (order.items?.[0]?.product?.name ?? "your recent order");
-            setItem({
-              orderNumber: order.orderNumber,
-              productName: firstName,
-              productSlug: "",
-              productId: 0,
-            });
-            setTimeout(() => setVisible(true), 1500);
-            return;
-          }
+          // All products in this order have been reviewed — don't show nudge
         }
       } catch { /* silent */ }
     }
@@ -130,16 +117,16 @@ export function DeliveryReviewNudge() {
       {/* Text */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ margin: 0, fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}>
-          Your order is delivered!
+          Your order is delivered! 🎉
         </p>
-        <p style={{ margin: "2px 0 0", fontSize: 12, color: "rgba(255,255,255,0.7)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          How was {item.productName}?
+        <p style={{ margin: "2px 0 0", fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
+          How was your order? Share your experience.
         </p>
       </div>
 
       {/* Review link */}
       <Link
-        href={item.productSlug ? `/product/${item.productSlug}#write-review` : `/account`}
+        href="/account"
         onClick={() => { setVisible(false); setDismissed(true); }}
         style={{
           flexShrink: 0,

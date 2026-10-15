@@ -264,11 +264,12 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>{item.name}</p>
-                      {(item.weight || item.product?.weight) && (
-                        <p style={{ margin: "2px 0 0", fontSize: 11, color: "#9ca3af", fontFamily: "'DM Mono',monospace" }}>
-                          {item.weight || item.product?.weight}
-                        </p>
-                      )}
+                      {(() => {
+                        const w = item.weight || item.product?.weight;
+                        return w && w !== "-" && w !== "—" ? (
+                          <p style={{ margin: "2px 0 0", fontSize: 11, color: "#9ca3af", fontFamily: "'DM Mono',monospace" }}>{w}</p>
+                        ) : null;
+                      })()}
                       <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>Qty {item.quantity}</p>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
