@@ -194,10 +194,10 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
-      // Compress image before converting to base64
+      // Compress image first, then upload to R2
       const img = new Image();
       const objectUrl = URL.createObjectURL(file);
-      img.onload = () => {
+      img.onload = async () => {
         URL.revokeObjectURL(objectUrl);
         const canvas = document.createElement("canvas");
         const MAX = 800;
@@ -210,8 +210,24 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
         canvas.height = height;
         canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
         const b64 = canvas.toDataURL("image/jpeg", 0.8);
-        setImagePreview(b64);
-        setImageData(b64);
+        setImagePreview(b64); // show preview immediately
+
+        // Upload to R2
+        try {
+          const res = await fetch("/api/admin/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ base64: b64, filename: file.name }),
+          });
+          const data = await res.json() as { url?: string; error?: string };
+          if (res.ok && data.url) {
+            setImageData(data.url); // store R2 URL, not base64
+          } else {
+            setImageData(b64); // fallback to base64 if R2 fails
+          }
+        } catch {
+          setImageData(b64); // fallback
+        }
       };
       img.src = objectUrl;
     }

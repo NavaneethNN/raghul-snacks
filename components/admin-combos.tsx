@@ -98,13 +98,32 @@ export function AdminCombos() {
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setImagePreview(base64String);
-        setImageData(base64String);
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = async () => {
+        URL.revokeObjectURL(objectUrl);
+        const canvas = document.createElement("canvas");
+        const MAX = 800;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+          else { width = Math.round(width * MAX / height); height = MAX; }
+        }
+        canvas.width = width; canvas.height = height;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+        const b64 = canvas.toDataURL("image/jpeg", 0.8);
+        setImagePreview(b64);
+        try {
+          const res = await fetch("/api/admin/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ base64: b64, filename: file.name }),
+          });
+          const data = await res.json() as { url?: string; error?: string };
+          setImageData(res.ok && data.url ? data.url : b64);
+        } catch { setImageData(b64); }
       };
-      reader.readAsDataURL(file);
+      img.src = objectUrl;
     }
   }
 
