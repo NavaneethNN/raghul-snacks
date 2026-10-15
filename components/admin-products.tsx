@@ -82,6 +82,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
   const [editWeight, setEditWeight] = useState("");
   const [editPrice, setEditPrice]   = useState("");
   const [editOffer, setEditOffer]   = useState("");
+  // inline editing of a draft variant (before save)
+  const [editingDraftKey, setEditingDraftKey] = useState<string | null>(null);
 
   async function loadSavedVariants(productId: number) {
     try {
@@ -665,17 +667,38 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                     <div style={{ marginBottom: 12 }}>
                       <p style={{ margin: "0 0 8px", fontSize: 12, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Added variants</p>
                       {draftVariants.map(v => (
-                        <div key={v.key} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "var(--paper)", borderRadius: 7, border: "1px solid var(--line)", marginBottom: 5 }}>
-                          <span style={{ flex: 1, font: "600 13px 'DM Sans',sans-serif" }}>{v.label}</span>
-                          <span style={{ fontSize: 12, color: "#6b7280" }}>₹{v.price}{v.offerPrice ? ` → ₹${v.offerPrice}` : ""}</span>
-                          {/* Edit: pre-fill inputs and remove from list */}
-                          <button type="button" className={styles.iconButton} title="Edit"
-                            onClick={() => { setDraftLabel(v.label); setDraftPrice(v.price); setDraftOffer(v.offerPrice ?? ""); removeDraftVariant(v.key); }}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                          </button>
-                          <button type="button" className={styles.iconButton} onClick={() => removeDraftVariant(v.key)} title="Remove">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                          </button>
+                        <div key={v.key} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "var(--paper)", borderRadius: 7, border: `1px solid ${editingDraftKey === v.key ? "var(--terracotta)" : "var(--line)"}`, marginBottom: 5 }}>
+                          {editingDraftKey === v.key ? (
+                            <>
+                              <input type="text" value={editWeight} onChange={e => setEditWeight(e.target.value)} placeholder="Weight" style={{ flex: 2, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13, fontFamily: "'DM Sans',sans-serif" }} />
+                              <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="Price" style={{ flex: 1, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
+                              <input type="number" value={editOffer} onChange={e => setEditOffer(e.target.value)} placeholder="Offer (opt)" style={{ flex: 1, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
+                              <button type="button" className={styles.primaryButton} style={{ padding: "4px 12px", fontSize: 12, whiteSpace: "nowrap" }}
+                                disabled={!editWeight.trim() || !editPrice}
+                                onClick={() => {
+                                  setDraftVariants(prev => prev.map(d => d.key === v.key ? { ...d, label: editWeight.trim(), price: editPrice, offerPrice: editOffer } : d));
+                                  setEditingDraftKey(null);
+                                }}>
+                                Save
+                              </button>
+                              <button type="button" className={styles.secondaryButton} style={{ padding: "4px 10px", fontSize: 12 }}
+                                onClick={() => setEditingDraftKey(null)}>
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <span style={{ flex: 1, font: "600 13px 'DM Sans',sans-serif" }}>{v.label}</span>
+                              <span style={{ fontSize: 12, color: "#6b7280" }}>₹{v.price}{v.offerPrice ? ` → ₹${v.offerPrice}` : ""}</span>
+                              <button type="button" className={styles.iconButton} title="Edit"
+                                onClick={() => { setEditingDraftKey(v.key); setEditWeight(v.label); setEditPrice(v.price); setEditOffer(v.offerPrice ?? ""); }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                              </button>
+                              <button type="button" className={styles.iconButton} onClick={() => removeDraftVariant(v.key)} title="Remove">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                              </button>
+                            </>
+                          )}
                         </div>
                       ))}
                     </div>
