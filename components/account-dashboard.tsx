@@ -208,7 +208,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
           category: "snacks",
           price: Number(p.price),
           offerPrice: price,
-          weight: snapWeight || "",
+          weight: item.weight || p.weight || "",
           description: "",
           ingredients: "",
           image: p.image,
