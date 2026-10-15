@@ -66,6 +66,10 @@ export async function GET() {
               price: products.price,
               offerPrice: products.offerPrice,
               weight: products.weight,
+              stock: products.stock,
+              featured: products.featured,
+              bestseller: products.bestseller,
+              categoryId: products.categoryId,
             })
             .from(products)
             .where(inArray(products.id, productIds))
