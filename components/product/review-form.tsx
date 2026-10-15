@@ -55,6 +55,7 @@ export function ReviewForm({ productId }: { productId: number }) {
       const data = await res.json() as { success?: boolean; error?: string };
       if (!res.ok) throw new Error(data.error || "Failed to submit review.");
       setSubmitted(true);
+      window.dispatchEvent(new Event("review-submitted"));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit review.");
     } finally {

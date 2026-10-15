@@ -90,6 +90,8 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
       setReviewingItemId(null);
       setReviewRating(0);
       setReviewContent("");
+      // Notify nudge to re-check
+      window.dispatchEvent(new Event("review-submitted"));
     } catch (err) {
       setReviewError(err instanceof Error ? err.message : "Failed to submit review.");
     } finally {

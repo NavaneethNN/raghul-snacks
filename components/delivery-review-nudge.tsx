@@ -81,9 +81,13 @@ export function DeliveryReviewNudge() {
       } catch { /* silent */ }
     }
     check();
-    // Re-check when user returns to this tab after writing a review
+    // Re-check when user returns to this tab or submits a review anywhere
     window.addEventListener("focus", check);
-    return () => window.removeEventListener("focus", check);
+    window.addEventListener("review-submitted", check);
+    return () => {
+      window.removeEventListener("focus", check);
+      window.removeEventListener("review-submitted", check);
+    };
   }, []);
 
   // Auto-hide after 5 seconds
