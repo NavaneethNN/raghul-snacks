@@ -199,7 +199,13 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
         const variantId = item.variantId ?? p.variants?.find(v => v.weight === (item.weight || p.weight))?.id ?? null;
         const cartId = variantId ? `${p.id}-v${variantId}` : String(p.id);
         const matchedVariant = variantId ? p.variants?.find(v => v.id === variantId) : null;
-        const price = matchedVariant ? Number(matchedVariant.offerPrice || matchedVariant.price) : Number(p.offerPrice || p.price);
+        const price = matchedVariant
+          ? (matchedVariant.offerPrice && Number(matchedVariant.offerPrice) > 0
+              ? Number(matchedVariant.offerPrice)
+              : Number(matchedVariant.price))
+          : (p.offerPrice && Number(p.offerPrice) > 0
+              ? Number(p.offerPrice)
+              : Number(p.price));
 
         const catalogProduct = {
           id: cartId,

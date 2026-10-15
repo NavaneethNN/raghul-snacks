@@ -24,7 +24,7 @@ export function DeliveryReviewNudge() {
         const session = await sessionRes.json() as { account?: { id: number } };
         if (!session.account) return;
 
-        // Get reviewed product IDs
+        // Get reviewed product IDs (always fresh fetch)
         const reviewedRes = await fetch("/api/reviews/mine");
         const reviewedData = reviewedRes.ok
           ? await reviewedRes.json() as { reviewedProductIds: number[] }
@@ -81,6 +81,9 @@ export function DeliveryReviewNudge() {
       } catch { /* silent */ }
     }
     check();
+    // Re-check when user returns to this tab after writing a review
+    window.addEventListener("focus", check);
+    return () => window.removeEventListener("focus", check);
   }, []);
 
   // Auto-hide after 5 seconds
