@@ -129,6 +129,7 @@ export async function POST(request: Request) {
     await db.insert(orderItems).values(
       lines.map((line) => ({
         orderId: order.id,
+        productId: typeof line.product.id === "number" ? line.product.id : null,
         name: line.product.name,
         quantity: line.quantity,
         price: String(line.product.offerPrice),

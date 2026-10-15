@@ -70,6 +70,8 @@ export async function GET() {
               featured: products.featured,
               bestseller: products.bestseller,
               categoryId: products.categoryId,
+              description: products.description,
+              ingredients: products.ingredients,
             })
             .from(products)
             .where(inArray(products.id, productIds))
