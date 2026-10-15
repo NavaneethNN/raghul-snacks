@@ -45,6 +45,7 @@ interface Props {
   onClose: () => void;
   onDownloadInvoice: (orderNumber: string) => void;
   onBuyAgain: (order: Order) => void;
+  reviewedProductIds?: number[];
 }
 
 /* ── Star picker ─────────────────────────────────────── */
@@ -91,7 +92,7 @@ function Badge({ label }: { label: string }) {
 }
 
 /* ── Main component ──────────────────────────────────── */
-export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain }: Props) {
+export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain, reviewedProductIds = [] }: Props) {
   const [reviewStates, setReviewStates] = useState<Record<string, ReviewState>>({});
   // Which product is currently being reviewed (productId), null = none
   const [reviewingPid, setReviewingPid] = useState<number | null>(null);
@@ -292,7 +293,7 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
                       </div>
                     )}
                     {/* Review button — only for delivered orders with existing products */}
-                    {isDelivered && item.product?.slug && !donePids.has(item.product.id) && (
+                    {isDelivered && item.product?.slug && !donePids.has(item.product.id) && !reviewedProductIds.includes(item.product.id) && (
                       <Link
                         href={`/product/${item.product.slug}#write-review`}
                         onClick={onClose}

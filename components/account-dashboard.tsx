@@ -249,6 +249,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
           onClose={() => setDetailOrder(null)}
           onDownloadInvoice={downloadInvoice}
           onBuyAgain={handleBuyAgain}
+          reviewedProductIds={reviewedProductIds}
         />
       )}
 

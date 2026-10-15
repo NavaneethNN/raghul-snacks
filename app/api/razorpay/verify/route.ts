@@ -127,14 +127,20 @@ export async function POST(request: Request) {
       .returning({ id: orders.id });
 
     await db.insert(orderItems).values(
-      lines.map((line) => ({
-        orderId: order.id,
-        productId: typeof line.product.id === "number" ? line.product.id : null,
-        name: line.product.name,
-        quantity: line.quantity,
-        price: String(line.product.offerPrice),
-        weight: (line.product.weight as string) ?? null,
-      }))
+      lines.map((line) => {
+        const baseId = typeof line.product.id === "number" ? line.product.id : null;
+        // Parse variant ID from cart product ID format "6-v12" → variantId=12
+        const variantId = line.product.variantId ?? null;
+        return {
+          orderId: order.id,
+          productId: baseId,
+          variantId: typeof variantId === "number" ? variantId : null,
+          name: line.product.name,
+          quantity: line.quantity,
+          price: String(line.product.offerPrice),
+          weight: (line.product.weight as string) ?? null,
+        };
+      })
     );
 
     // Send order confirmation email (non-fatal)

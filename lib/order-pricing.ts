@@ -75,6 +75,7 @@ export async function priceOrder(items: RequestedItem[]) {
         weight,
         price: parseFloat(product.price),
         offerPrice,
+        variantId: item.variantId, // pass through for order item storage
       },
       quantity: item.quantity,
       lineTotal: offerPrice * item.quantity,
