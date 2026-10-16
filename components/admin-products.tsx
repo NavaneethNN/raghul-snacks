@@ -27,6 +27,7 @@ type Product = {
   bestseller: boolean;
   stock: number;
   variantCount?: number;
+  shelfLife?: string | null;
   createdAt: Date;
 };
 
