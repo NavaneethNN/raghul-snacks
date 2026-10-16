@@ -24,15 +24,23 @@ export function ReviewForm({ productId }: { productId: number }) {
 
   useEffect(() => {
     if (!account) return;
-    fetch("/api/reviews/mine")
-      .then((r) => r.json())
-      .then((d: { reviewedProductIds: number[] }) => {
-        if (d.reviewedProductIds.includes(productId)) {
+    // Check both: have they reviewed it, AND have they purchased it
+    Promise.all([
+      fetch("/api/reviews/mine").then(r => r.json()) as Promise<{ reviewedProductIds: number[] }>,
+      fetch("/api/orders/mine").then(r => r.json()) as Promise<{ orders?: Array<{ paymentStatus: string; orderStatus: string; items?: Array<{ productId: number | null }> }> }>,
+    ])
+      .then(([reviewData, ordersData]) => {
+        if (reviewData.reviewedProductIds.includes(productId)) {
           setAlreadyReviewed(true);
           setEligible(false);
-        } else {
-          setEligible(true);
+          return;
         }
+        // Check if this product was purchased in any paid delivered order
+        const purchased = (ordersData.orders ?? []).some(order =>
+          order.paymentStatus === "paid" &&
+          (order.items ?? []).some(item => item.productId === productId)
+        );
+        setEligible(purchased);
       })
       .catch(() => setEligible(false));
   }, [account, productId]);
