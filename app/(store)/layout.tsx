@@ -5,8 +5,18 @@ import { DeliveryNotification } from "@/components/delivery-notification";
 import { ReplyNotification } from "@/components/reply-notification";
 import { DeliveryReviewNudge } from "@/components/delivery-review-nudge";
 import Link from "next/link";
+import { getDb } from "@/lib/db";
+import { categories } from "@/drizzle/schema";
 
-export default function StoreLayout({ children }: { children: React.ReactNode }) {
+async function getFooterCategories() {
+  try {
+    const db = getDb();
+    return await db.select({ name: categories.name, slug: categories.slug }).from(categories).orderBy(categories.name);
+  } catch { return []; }
+}
+
+export default async function StoreLayout({ children }: { children: React.ReactNode }) {
+  const footerCategories = await getFooterCategories();
   return (
     <>
       <ScrollToTop />
@@ -39,24 +49,10 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
                   <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
                 </svg>
               </a>
-              <a
-                href="https://www.facebook.com/share/1Be8hDcm56/"
-                aria-label="Facebook"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <circle cx="12" cy="12" r="11" />
-                  <path
-                    d="M13.5 8H15V5.5H13.2C10.9 5.5 9.5 6.9 9.5 9.2V11H7.5V13.5H9.5V19H12.5V13.5H14.5L15 11H12.5V9.5C12.5 8.5 12.8 8 13.5 8Z"
-                    fill="currentColor"
-                    stroke="none"
-                  />
+              <a href="https://www.facebook.com/share/1Be8hDcm56/" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="11"/>
+                  <path d="M13.5 8H15V5.5H13.2C10.9 5.5 9.5 6.9 9.5 9.2V11H7.5V13.5H9.5V19H12.5V13.5H14.5L15 11H12.5V9.5C12.5 8.5 12.8 8 13.5 8Z" fill="currentColor" stroke="none"/>
                 </svg>
               </a>
             </div>
@@ -68,11 +64,11 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
               <ul>
                 <li><Link href="/shop">All Products</Link></li>
                 <li><Link href="/shop?tab=combos">Combos</Link></li>
-                <li><Link href="/shop/kadalai">Millet Laddu</Link></li>
-                <li><Link href="/shop/podi">Everyday Podi</Link></li>
+                {footerCategories.map((cat) => (
+                  <li key={cat.slug}><Link href={`/shop/${cat.slug}`}>{cat.name}</Link></li>
+                ))}
               </ul>
             </div>
-
             <div className="footer-column">
               <h4>Company</h4>
               <ul>
@@ -81,7 +77,6 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
                 <li><Link href="/track">Track Order</Link></li>
               </ul>
             </div>
-
             <div className="footer-column">
               <h4>Support</h4>
               <ul>
@@ -92,10 +87,8 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
             </div>
           </div>
         </div>
-
         <div className="footer-bottom">
           <p>&copy; {new Date().getFullYear()} Raghul Delights. All rights reserved.</p>
-          
         </div>
       </footer>
     </>

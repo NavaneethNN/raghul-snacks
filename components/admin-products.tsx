@@ -337,9 +337,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
       if (!editingProduct) {
         if (hasVariants) {
           showToast(`"${data.name}" saved with ${draftVariants.length} variant${draftVariants.length > 1 ? "s" : ""}`);
-          setEditingProduct(saved);
-          setDraftVariants([]);
-          await loadSavedVariants(saved.id);
+          handleCloseForm();
         } else {
           handleCloseForm();
           showToast(`"${data.name}" added to catalog`);
