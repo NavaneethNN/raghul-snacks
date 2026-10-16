@@ -30,6 +30,7 @@ async function getProduct(slug: string) {
         featured: products.featured,
         bestseller: products.bestseller,
         stock: products.stock,
+        shelfLife: products.shelfLife,
         createdAt: products.createdAt,
       })
       .from(products)
