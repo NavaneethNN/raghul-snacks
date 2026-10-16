@@ -586,31 +586,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
               {/* ── Variant builder (shown when HAS variants) ── */}
               {hasVariants && (
                 <div style={{ marginBottom: 20, padding: "16px", background: "var(--cream)", borderRadius: 10, border: "1px solid var(--line)" }}>
-                  {/* Variant type selector */}
-                  <div style={{ marginBottom: 14 }}>
-                    <span style={{ display: "block", marginBottom: 8, font: "600 12px 'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.07em", color: "#6b7280" }}>Variant type</span>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      {VARIANT_TYPES.map(t => (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() => setVariantType(t)}
-                          style={{
-                            padding: "6px 14px",
-                            borderRadius: 6,
-                            border: "1.5px solid var(--line)",
-                            background: variantType === t ? "var(--ink)" : "var(--paper)",
-                            color: variantType === t ? "#fff" : "var(--ink)",
-                            font: "600 13px 'DM Sans',sans-serif",
-                            cursor: "pointer",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Variant type selector removed - not stored in DB */}
 
                   {/* Saved variants (when editing) */}
                   {editingProduct && savedVariants.length > 0 && (
@@ -697,14 +673,14 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
 
                   {/* Add variant row */}
                   <p style={{ margin: "0 0 8px", fontSize: 12, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                    Add a {variantType.toLowerCase()}
+                    Add a variant
                   </p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end" }}>
                     <div className={styles.field} style={{ flex: "1 1 100px", minWidth: 90 }}>
-                      <label>{variantType}</label>
+                      <label>Weight / Size</label>
                       <input
                         type="text"
-                        placeholder={VARIANT_PLACEHOLDERS[variantType]}
+                        placeholder="e.g. 250g or Pack of 3"
                         value={draftLabel}
                         onChange={(e) => setDraftLabel(e.target.value)}
                       />
