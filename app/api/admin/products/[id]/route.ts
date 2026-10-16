@@ -44,6 +44,7 @@ export async function PATCH(
     if (body.featured !== undefined) updateData.featured = body.featured;
     if (body.bestseller !== undefined) updateData.bestseller = body.bestseller;
     if (body.stock !== undefined) updateData.stock = body.stock;
+    if (body.shelfLife !== undefined) updateData.shelfLife = body.shelfLife || null;
 
     const db = getDb();
     // Validate categoryId exists before updating

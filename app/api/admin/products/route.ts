@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
       image,
       featured,
       bestseller,
+      shelfLife,
     } = body;
 
     // Generate slug if not provided
@@ -113,6 +114,7 @@ export async function POST(request: NextRequest) {
       featured: featured || false,
       bestseller: bestseller || false,
       stock: body.stock !== undefined ? body.stock : 1,
+      shelfLife: shelfLife || null,
     }).returning();
 
     return NextResponse.json(newProduct, { status: 201 });
