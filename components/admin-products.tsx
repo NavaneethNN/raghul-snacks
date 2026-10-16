@@ -304,7 +304,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
       categoryId: formData.get("categoryId") ? parseInt(formData.get("categoryId") as string) : null,
       image: imageValue,
       featured: false,
-      bestseller: formData.get("bestseller") === "on",
+      bestseller: false,
       stock: formData.get("inStock") === "on" ? 1 : 0,
       shelfLife: (formData.get("shelfLife") as string) || null,
     };
@@ -457,7 +457,6 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                     )}
                     <div className={productStyles.mobileSubtext}>
                       {product.categoryName && <span>{product.categoryName}</span>}
-                      {product.bestseller && <span className={productStyles.mobileBadge}>Bestseller</span>}
                       {product.stock === 0 && <span className={productStyles.mobileBadge} style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626" }}>Out of Stock</span>}
                     </div>
                   </td>
@@ -467,7 +466,6 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                       ? <span className={`${styles.badge}`} style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626", border: "1px solid rgba(220,38,38,0.2)" }}>Out of Stock</span>
                       : <span className={`${styles.badge} ${styles.success}`}>In Stock</span>
                     }
-                    {product.bestseller && <span className={`${styles.badge} ${styles.info}`} style={{ marginLeft: 6 }}>Bestseller</span>}
                   </td>
                   <td className={productStyles.hideOnMobile}>
                     {(product.variantCount ?? 0) > 0 ? (
@@ -803,10 +801,6 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                 <label className={styles.checkbox}>
                   <input type="checkbox" name="inStock" defaultChecked={(editingProduct as any)?.stock !== 0} />
                   <span>In Stock</span>
-                </label>
-                <label className={styles.checkbox}>
-                  <input type="checkbox" name="bestseller" defaultChecked={editingProduct?.bestseller} />
-                  <span>Bestseller</span>
                 </label>
               </div>
 

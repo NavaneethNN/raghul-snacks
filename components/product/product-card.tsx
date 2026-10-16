@@ -20,7 +20,7 @@ export function ProductCard({ product }: { product: any }) {
     product.categorySlug?.replace("-", " ") ||
     product.category?.replace("-", " ") ||
     "";
-  const badge = product.bestseller ? "Bestseller" : product.featured ? "Featured" : null;
+  const badge = null; // Bestseller/Featured badges removed
   const isOutOfStock = typeof product.stock === "number" && product.stock <= 0;
 
   // The card advertises the first variant, so its cart entry is that variant too —
