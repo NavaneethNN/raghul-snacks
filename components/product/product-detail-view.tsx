@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { formatPrice, formatWeight } from "@/lib/catalog";
 import { useCart } from "@/components/cart/cart-provider";
 import { useToast } from "@/components/toast-provider";
@@ -92,18 +93,34 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
 
   return (
     <section className="product-page">
-      <button
-        type="button"
-        onClick={() => router.back()}
-        className="product-back-btn"
-        aria-label="Go back"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M19 12H5" />
-          <path d="M12 5l-7 7 7 7" />
-        </svg>
-        Back
-      </button>
+      <div className="product-breadcrumbs-row">
+        <nav className="breadcrumbs" aria-label="Breadcrumbs">
+          <Link href="/">Home</Link>
+          <span className="crumb-sep">/</span>
+          <Link href="/shop">Shop</Link>
+          {product.categorySlug && (
+            <>
+              <span className="crumb-sep">/</span>
+              <Link href={`/category/${product.categorySlug}`}>{categoryName}</Link>
+            </>
+          )}
+          <span className="crumb-sep">/</span>
+          <span className="crumb-current" aria-current="page">{product.name}</span>
+        </nav>
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="product-back-btn"
+          aria-label="Go back"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5" />
+            <path d="M12 5l-7 7 7 7" />
+          </svg>
+          Back
+        </button>
+      </div>
+
       <div className="product-large-visual">
         <img src={product.image || "/hero.png"} alt={product.name} />
         <span className="category-badge">{categoryName}</span>
@@ -131,18 +148,27 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
         {/* Weight / variant selector */}
         {hasVariants ? (
           <div className="variant-selector">
-            <p className="variant-label">Size</p>
+            <div className="variant-header">
+              <p className="variant-label">Select Pack Size</p>
+              <span className="variant-helper">Freshly Packed</span>
+            </div>
             <div className="variant-options">
-              {variants.map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  className={`variant-btn${selectedVariant?.id === v.id ? " variant-btn--active" : ""}`}
-                  onClick={() => handleVariantSelect(v)}
-                >
-                  {formatWeight(v.weight)}
-                </button>
-              ))}
+              {variants.map((v) => {
+                const vBase = parseFloat(v.price) || 0;
+                const vOffer = v.offerPrice ? parseFloat(v.offerPrice) : vBase;
+                const isSelected = selectedVariant?.id === v.id;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    className={`variant-btn${isSelected ? " variant-btn--active" : ""}`}
+                    onClick={() => handleVariantSelect(v)}
+                  >
+                    <span className="variant-weight">{formatWeight(v.weight)}</span>
+                    <span className="variant-price">{formatPrice(vOffer)}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         ) : null}
@@ -215,6 +241,32 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
               {redirecting ? "Redirecting…" : "Buy Now"}
             </button>
           )}
+        </div>
+
+        {/* Product Trust Strip */}
+        <div className="product-trust-strip">
+          <div className="trust-pill">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>100% Pure Natural</span>
+          </div>
+          <div className="trust-pill">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span>Small-Batch Daily</span>
+          </div>
+          <div className="trust-pill">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="1" y="3" width="15" height="13"/>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
+              <circle cx="5.5" cy="18.5" r="2.5"/>
+              <circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+            <span>Pan-India Safe Pack</span>
+          </div>
         </div>
       </div>
     </section>

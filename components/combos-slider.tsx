@@ -120,7 +120,7 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
       <style>{`
         .combo-section {
           max-width: 1200px;
-          margin: 36px auto 44px;
+          margin: 24px auto 28px;
           padding: 0 20px;
           position: relative;
         }

@@ -54,92 +54,80 @@ export function ComboActions({ combo }: { combo: any }) {
   }
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
-      {/* Quantity selector */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          border: "1.5px solid var(--line)",
-          borderRadius: "8px",
-          padding: "4px",
-        }}
-      >
+    <>
+      <div className="product-purchase-row">
+        {/* Quantity selector */}
+        <div className="quantity-selector-compact">
+          <button
+            type="button"
+            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            disabled={quantity <= 1}
+            aria-label="Decrease quantity"
+          >
+            −
+          </button>
+          <span>{quantity}</span>
+          <button
+            type="button"
+            onClick={() => setQuantity(quantity + 1)}
+            aria-label="Increase quantity"
+          >
+            +
+          </button>
+        </div>
+
+        {/* Add to Cart */}
         <button
-          onClick={() => setQuantity(Math.max(1, quantity - 1))}
-          style={{
-            width: "36px",
-            height: "36px",
-            border: "none",
-            background: "var(--cream)",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "18px",
-            fontWeight: "bold",
-            color: "var(--ink)",
-          }}
+          type="button"
+          onClick={handleAddToCart}
+          className={`button wide-button ${added ? "button-success" : inCart ? "button-dark" : "button-dark"}`}
+          disabled={added}
+          style={added ? { cursor: "default" } : undefined}
         >
-          −
+          {added ? "✓ Added to Cart" : inCart ? "+ Add More" : "Add Combo to Cart"}
         </button>
-        <span style={{ minWidth: "40px", textAlign: "center", fontWeight: "600", fontSize: "16px" }}>
-          {quantity}
-        </span>
+
+        {/* Buy Now */}
         <button
-          onClick={() => setQuantity(quantity + 1)}
-          style={{
-            width: "36px",
-            height: "36px",
-            border: "none",
-            background: "var(--cream)",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "18px",
-            fontWeight: "bold",
-            color: "var(--ink)",
-          }}
+          type="button"
+          onClick={handleBuyNow}
+          className="button buy-now-button wide-button"
+          disabled={redirecting}
         >
-          +
+          {redirecting ? "Redirecting…" : (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              <span>Buy Combo</span>
+              <span style={{ opacity: 0.85, fontSize: "13px" }}>({fmt.format(offerPrice * quantity)})</span>
+            </span>
+          )}
         </button>
       </div>
 
-      {/* Add to Cart */}
-      <button
-        onClick={handleAddToCart}
-        className="button"
-        disabled={added}
-        style={{
-          flex: "1",
-          minWidth: "160px",
-          background: added ? "#16a34a" : inCart ? "var(--terracotta)" : "var(--ink)",
-          color: "white",
-          border: added ? "2px solid #16a34a" : inCart ? "2px solid var(--terracotta)" : "2px solid var(--ink)",
-          opacity: 1,
-          cursor: added ? "default" : "pointer",
-        }}
-      >
-        {added ? "✓ Added to Cart" : inCart ? "+ Add More" : "Add to Cart"}
-      </button>
-
-      {/* Buy Now */}
-      <button
-        onClick={handleBuyNow}
-        className="button buy-now-button"
-        disabled={redirecting}
-        style={{ flex: "1", minWidth: "160px" }}
-      >
-        {redirecting ? "Redirecting…" : (
-          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.3 }}>
-            <span>Get this combo · {fmt.format(offerPrice)}</span>
-            {hasDiscount && (
-              <span style={{ fontSize: "11px", opacity: 0.8 }}>
-                <s>{fmt.format(originalPrice)}</s>
-                {" · Save "}{fmt.format(originalPrice - offerPrice)}
-              </span>
-            )}
-          </span>
-        )}
-      </button>
-    </div>
+      {/* Trust Strip */}
+      <div className="product-trust-strip">
+        <div className="trust-pill">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span>100% Pure Natural</span>
+        </div>
+        <div className="trust-pill">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span>Small-Batch Daily</span>
+        </div>
+        <div className="trust-pill">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="1" y="3" width="15" height="13"/>
+            <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
+            <circle cx="5.5" cy="18.5" r="2.5"/>
+            <circle cx="18.5" cy="18.5" r="2.5"/>
+          </svg>
+          <span>Pan-India Safe Pack</span>
+        </div>
+      </div>
+    </>
   );
 }
