@@ -1616,7 +1616,7 @@ h2 i {
 .section {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 48px 16px 32px;
+  padding: 36px 16px 20px;
   width: 100%;
   box-sizing: border-box;
   position: relative;
@@ -1624,9 +1624,9 @@ h2 i {
 
 .section#bestsellers {
   background: linear-gradient(to bottom, transparent 0%, rgba(247, 244, 236, 0.6) 100%);
-  padding: 40px 16px;
+  padding: 24px 16px 28px;
   border-radius: 16px;
-  margin-top: 24px;
+  margin-top: 8px;
   overflow: visible;
 }
 
@@ -1688,6 +1688,21 @@ h2 i {
   max-width: 420px;
   min-width: 300px;
   scroll-snap-align: start;
+}
+
+@media (min-width: 860px) {
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    overflow-x: visible;
+    padding-bottom: 0;
+  }
+  .category-grid .category-card {
+    flex: none;
+    max-width: none;
+    min-width: 0;
+  }
 }
 
 .product-grid {

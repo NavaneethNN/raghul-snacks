@@ -3,7 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { ProductCard } from "@/components/product/product-card";
 import { BestsellersSlider } from "@/components/bestsellers-slider";
 import { CombosSlider } from "@/components/combos-slider";
-import { HeroBanner } from "@/components/hero-banner";
+import { HeroSection } from "@/components/hero-section";
 import { ScrollAnimate } from "@/components/scroll-animate";
 import { getDb } from "@/lib/db";
 import { categories, combos, comboItems, products } from "@/drizzle/schema";
@@ -82,67 +82,7 @@ export default async function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="hero">
-        <div className="hero-content">
-          <p className="eyebrow">Tradition in every bite</p>
-          <h1>
-            Snacks made the <i>real</i> way.
-          </h1>
-          <p className="hero-copy">
-            Wholesome millet snacks, stone-ground podis, crispy savouries and
-            homemade flavours crafted in small batches.
-          </p>
-
-          <div className="hero-features">
-            <div className="hero-feature">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-              <span>100% Natural Ingredients</span>
-            </div>
-            <div className="hero-feature">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2v20M2 12h20"></path>
-              </svg>
-              <span>Handcrafted in Small Batches</span>
-            </div>
-            <div className="hero-feature">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
-              <span>Delivered Fresh Across India</span>
-            </div>
-          </div>
-
-          {/* Banner visible only on mobile — sits above CTA buttons */}
-          <div className="hero-banner-mobile">
-            <HeroBanner initialBanners={banners} />
-          </div>
-
-          <div className="hero-actions">
-            <Link className="button button-dark" href="/shop">
-              Shop all snacks
-            </Link>
-            <Link className="button button-outline" href="#bestsellers">
-              Meet the favourites →
-            </Link>
-          </div>
-        </div>
-
-        <div className="hero-visual">
-          <div className="hero-image-wrapper">
-            <div className="snacks-display">
-              <img
-                src="/hero.png"
-                alt="Traditional snacks"
-              />
-            </div>
-            <HeroBanner initialBanners={banners} />
-          </div>
-        </div>
-      </section>
+      <HeroSection banners={banners} />
 
       {/* Browse by Craving Section */}
       <section className="section" id="categories">
