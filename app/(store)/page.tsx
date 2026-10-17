@@ -53,6 +53,9 @@ async function getCombos() {
             productId: comboItems.productId,
             quantity: comboItems.quantity,
             name: products.name,
+            image: products.image,
+            weight: products.weight,
+            slug: products.slug,
           })
           .from(comboItems)
           .leftJoin(products, eq(comboItems.productId, products.id))
