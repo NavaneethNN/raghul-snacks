@@ -66,7 +66,7 @@ export function AdminSettings() {
       </header>
 
       <section className={styles.workspace} style={{ maxWidth: 520, margin: "32px auto" }}>
-        <div style={{ padding: "32px" }}>
+        <div style={{ padding: "clamp(16px, 4vw, 32px)" }}>
           <h2 style={{ margin: "0 0 6px", fontSize: 20, fontWeight: 700, color: "var(--ink)", fontFamily: "'Playfair Display', serif" }}>
             Change Password
           </h2>

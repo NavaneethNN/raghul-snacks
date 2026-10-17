@@ -71,7 +71,7 @@ export function AdminShipping() {
           value={rates[key]}
           onChange={(e) => setRates((r) => ({ ...r, [key]: e.target.value }))}
           disabled={loading}
-          style={{ width: 120, padding: "10px 14px", border: "1.5px solid var(--line)", borderRadius: 8, fontSize: 15, fontWeight: 600, background: "var(--paper)", color: "var(--ink)" }}
+          style={{ width: "min(120px, 40%)", padding: "10px 14px", border: "1.5px solid var(--line)", borderRadius: 8, fontSize: 15, fontWeight: 600, background: "var(--paper)", color: "var(--ink)" }}
         />
         <span style={{ fontSize: 13, color: "#9ca3af" }}>per first 1 kg</span>
       </div>

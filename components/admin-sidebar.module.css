@@ -356,7 +356,7 @@
     position: absolute;
     top: -4px;
     right: -6px;
-    background: #f59e0b;
+    background: #ef4444;
     color: #fff;
     border-radius: 999px;
     font-size: 9px;
@@ -365,6 +365,7 @@
     padding: 2px 4px;
     min-width: 14px;
     text-align: center;
+    border: 2px solid var(--ink);
   }
 
   .bottomNavLabel {

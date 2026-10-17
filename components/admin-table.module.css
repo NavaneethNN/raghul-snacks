@@ -532,6 +532,27 @@
   }
 }
 
+@media (max-width: 820px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Variant inline-edit row — wraps on narrow screens */
+.variantEditRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.variantEditRow input {
+  flex: 1 1 80px;
+  min-width: 0;
+}
+
 @media (max-width: 768px) {
   .header {
     flex-direction: column;
@@ -609,7 +630,16 @@
   .modal {
     padding: 0;
     padding-top: 60px;   /* clear the fixed admin top bar */
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); /* clear bottom nav */
     align-items: flex-end; /* sheet slides up from bottom */
+  }
+
+  .modalContent {
+    max-height: calc(100vh - 60px - 60px);
+  }
+
+  .formActions {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   }
 }
 

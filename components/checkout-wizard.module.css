@@ -522,9 +522,14 @@
 
   .panelHead h2 { font-size: 24px; }
 
+  .actions {
+    flex-wrap: wrap;
+  }
+
   .actions :global(.button) {
     padding: 11px 14px;
     font-size: 13px;
+    min-width: 120px;
   }
 
   .courier {

@@ -936,4 +936,13 @@
     padding: 14px 12px;
     gap: 14px;
   }
+
+  /* Sign-out confirmation row — wrap on very small screens */
+  .signOutConfirm {
+    flex-wrap: wrap;
+  }
+
+  .signOutConfirm span {
+    white-space: normal;
+  }
 }
