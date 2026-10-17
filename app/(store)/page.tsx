@@ -173,8 +173,8 @@ export default async function HomePage() {
                 </svg>
               </div>
               <span className="value-num">01</span>
-              <h3>100% Cold-Pressed Oils</h3>
-              <p>Wood-pressed groundnut & sesame oils. Absolutely no palm oil, trans fats, or reheated oils.</p>
+              <h3>Wholesome Millet Laddus</h3>
+              <p>Nutrient-dense native millets sweetened naturally with country jaggery. Wholesome goodness in every single bite.</p>
             </div>
 
             <div className="value-card">
@@ -185,8 +185,8 @@ export default async function HomePage() {
                 </svg>
               </div>
               <span className="value-num">02</span>
-              <h3>Generations of Heritage</h3>
-              <p>Authentic heirloom family recipes, stone-ground idli podis, and traditional temple spices.</p>
+              <h3>Crunchy Traditional Snacks</h3>
+              <p>Time-honoured South Indian savouries — murukku, mixture, seedai, and thattai crafted fresh in small batches.</p>
             </div>
 
             <div className="value-card">
@@ -197,8 +197,8 @@ export default async function HomePage() {
                 </svg>
               </div>
               <span className="value-num">03</span>
-              <h3>Small-Batch Daily Roast</h3>
-              <p>Prepared and slow-roasted fresh every morning in small batches with zero preservatives.</p>
+              <h3>Everyday Podi Varieties</h3>
+              <p>Authentic stone-ground idli podi, fragrant karuveppilai podi, paruppu podi, and garlic podi made fresh.</p>
             </div>
 
             <div className="value-card">

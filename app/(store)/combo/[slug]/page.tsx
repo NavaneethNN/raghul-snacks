@@ -109,7 +109,7 @@ export default async function ComboDetailPage({ params }: { params: Promise<{ sl
                   </svg>
                   <span style={{ flex: 1, fontWeight: 500, fontSize: '15px' }}>{item.name || 'Product'}</span>
                   <span style={{ fontSize: '13px', color: '#6b7280', fontFamily: "'DM Mono', monospace" }}>
-                    {item.quantity}g
+                    {item.quantity}
                   </span>
                 </li>
               ))}

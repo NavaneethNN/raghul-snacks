@@ -167,24 +167,23 @@ main {
   transform: translateX(-50%) translateY(0);
 }
 
-/* ── Hero banner: fixed-size sliding track ── */
-/* ── Hero banner: compact card, top-right of hero image wrapper ── */
+/* ── Hero banner: responsive card track ── */
 .hero-banner-track {
-  position: absolute;
-  top: -70px;
-  right: 10px;
-  width: 210px;
+  position: relative;
+  width: 100%;
+  max-width: 100%;
   overflow: hidden;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #fff8f0 0%, #ffefe0 100%);
-  border: 2px dashed #e5a52f66;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fffbf5 0%, #fff4e8 100%);
+  border: 1.5px dashed rgba(201, 95, 59, 0.35);
+  box-shadow: 0 4px 16px rgba(201, 95, 59, 0.08);
   z-index: 2;
 }
 
 .hero-banner-slide {
   width: 100%;
-  min-height: 180px;
-  padding: 14px;
+  min-height: auto;
+  padding: 16px 20px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -270,9 +269,9 @@ main {
   }
 }
 
-/* Tablet: Banner top-right of hero image (768px-1023px) */
+/* Tablet: Banner top-right of legacy hero image (768px-1023px) */
 @media (min-width: 768px) and (max-width: 1023px) {
-  .hero-banner-track {
+  .hero-image-wrapper .hero-banner-track {
     position: absolute;
     top: 10px;
     right: 10px;
@@ -327,22 +326,28 @@ main {
   justify-content: center;
   text-align: center;
   width: 100%;
+  max-width: 100%;
 }
 
 .hero-banner-eyebrow {
-  margin: 0 0 3px;
-  font: 700 8px 'DM Sans', sans-serif;
-  letter-spacing: 0.15em;
+  margin: 0 0 4px;
+  font: 700 10.5px 'DM Mono', monospace;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--terracotta);
-  white-space: nowrap;
+  white-space: normal;
+  text-align: center;
 }
 
 .hero-banner-title {
-  margin: 0 0 2px;
-  font: 700 16px / 1.1 'Playfair Display', serif;
+  margin: 0 0 6px;
+  font: 700 clamp(16px, 2.5vw, 20px) / 1.25 'Playfair Display', serif;
   color: var(--ink);
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  text-align: center;
+  max-width: 100%;
 }
 
 .hero-banner-title strong,
@@ -352,49 +357,66 @@ main {
 }
 
 .hero-banner-subtitle {
-  margin: 0 0 6px;
-  font-size: 9px;
-  color: #5c6358;
-  line-height: 1.3;
-  white-space: nowrap;
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.45;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  text-align: center;
+  max-width: 100%;
 }
 
 .hero-banner-coupon {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: 1.5px dashed var(--terracotta);
-  border-radius: 3px;
-  padding: 4px 10px;
-  margin: 0 auto 6px;
-  background: rgba(255, 255, 255, 0.6);
-  white-space: nowrap;
-  width: max-content;
+  border-radius: 6px;
+  padding: 5px 14px;
+  margin: 0 auto 10px;
+  background: rgba(255, 255, 255, 0.95);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.hero-banner-coupon:hover {
+  background: #fff;
+  transform: scale(1.02);
+  border-color: #b54a27;
 }
 
 .hero-banner-coupon-text {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink);
-  white-space: nowrap;
-  display: inline;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .hero-banner-coupon-text strong {
   color: var(--terracotta);
   font-weight: 700;
-  display: inline;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.06em;
 }
 
 .hero-banner-cta {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: var(--ink);
   color: white;
-  padding: 6px 14px;
-  border-radius: 3px;
-  font: 600 10px 'DM Sans', sans-serif;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font: 600 12.5px 'DM Sans', sans-serif;
   text-decoration: none;
-  margin: 0 auto 3px;
-  transition: background 0.3s ease, transform 0.2s ease;
-  width: max-content;
-  white-space: nowrap !important;
+  margin: 0 auto 4px;
+  transition: background 0.2s ease, transform 0.2s ease;
+  white-space: normal;
+  text-align: center;
 }
 
 .hero-banner-cta:hover {
@@ -403,10 +425,11 @@ main {
 }
 
 .hero-banner-validity {
-  margin: 0;
-  font-size: 8px;
-  color: #6b7280;
-  white-space: nowrap;
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #78716c;
+  white-space: normal;
+  text-align: center;
 }
 
 .hero-banner-dots {
@@ -1354,10 +1377,13 @@ h2 i {
   }
 
   .hero-banner-eyebrow,
+  .hero-banner-title,
   .hero-banner-subtitle,
   .hero-banner-coupon-text,
   .hero-banner-validity {
     white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
   }
 
   .hero-banner-title {
