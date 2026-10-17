@@ -14,7 +14,7 @@ type Announcement = {
   createdAt: string;
 };
 
-const BLANK = { text: "", icon: "", active: true, order: 0 };
+const BLANK = { text: "", icon: "", active: true };
 
 export function AdminAnnouncements() {
   const [items, setItems] = useState<Announcement[]>([]);
@@ -45,14 +45,13 @@ export function AdminAnnouncements() {
 
   function openCreate() {
     setEditing(null);
-    setForm({ ...BLANK, order: items.length });
-    setFormError("");
+    setForm({ ...BLANK });    setFormError("");
     setShowForm(true);
   }
 
   function openEdit(item: Announcement) {
     setEditing(item);
-    setForm({ text: item.text, icon: item.icon ?? "", active: item.active, order: item.order });
+    setForm({ text: item.text, icon: item.icon ?? "", active: item.active });
     setFormError("");
     setShowForm(true);
   }
@@ -73,15 +72,15 @@ export function AdminAnnouncements() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: form.text.trim(), icon: form.icon.trim() || null, active: form.active, order: form.order }),
+        body: JSON.stringify({ text: form.text.trim(), icon: form.icon.trim() || null, active: form.active }),
       });
       const data = await res.json() as Announcement & { error?: string };
       if (!res.ok) throw new Error(data.error || "Failed to save.");
       if (editing) {
-        setItems((prev) => prev.map((i) => i.id === editing.id ? data : i).sort((a, b) => a.order - b.order));
+        setItems((prev) => prev.map((i) => i.id === editing.id ? data : i));
         flash("Announcement updated.");
       } else {
-        setItems((prev) => [...prev, data].sort((a, b) => a.order - b.order));
+        setItems((prev) => [...prev, data]);
         flash("Announcement added.");
       }
       closeForm();
@@ -115,34 +114,7 @@ export function AdminAnnouncements() {
     finally { setBusyId(null); }
   }
 
-  async function moveOrder(item: Announcement, dir: -1 | 1) {
-    const sorted = [...items].sort((a, b) => a.order - b.order);
-    const idx = sorted.findIndex((i) => i.id === item.id);
-    const swapIdx = idx + dir;
-    if (swapIdx < 0 || swapIdx >= sorted.length) return;
-    const swap = sorted[swapIdx];
-    // Swap order values
-    const newOrder = swap.order;
-    const swapOrder = item.order;
-    setBusyId(item.id);
-    try {
-      await Promise.all([
-        fetch(`/api/admin/announcements/${item.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: newOrder }) }),
-        fetch(`/api/admin/announcements/${swap.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: swapOrder }) }),
-      ]);
-      setItems((prev) =>
-        prev.map((i) => {
-          if (i.id === item.id) return { ...i, order: newOrder };
-          if (i.id === swap.id) return { ...i, order: swapOrder };
-          return i;
-        }).sort((a, b) => a.order - b.order)
-      );
-    } catch { flash("Failed to reorder."); }
-    finally { setBusyId(null); }
-  }
-
-  const sorted = [...items].sort((a, b) => a.order - b.order);
-
+  
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -170,7 +142,7 @@ export function AdminAnnouncements() {
           <div className={styles.tableWrapper}>
             <table className={styles.table}><tbody><tr><td colSpan={5} className={styles.emptyState}><div><p>Loading…</p></div></td></tr></tbody></table>
           </div>
-        ) : sorted.length === 0 ? (
+        ) : items.length === 0 ? (
           <div className={styles.tableWrapper}>
             <table className={styles.table}><tbody>
               <tr><td colSpan={5} className={styles.emptyState}>
@@ -190,7 +162,6 @@ export function AdminAnnouncements() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th className={styles.colHide} style={{ width: 72 }}>Order</th>
                   <th className={styles.colHide} style={{ width: 48 }}>Icon</th>
                   <th>Text</th>
                   <th style={{ width: 100 }}>Status</th>
@@ -198,88 +169,47 @@ export function AdminAnnouncements() {
                 </tr>
               </thead>
               <tbody>
-                {sorted.map((item, idx) => (
-                  <tr key={item.id} style={{ opacity: busyId === item.id ? 0.5 : 1, transition: "opacity 0.2s" }}>
-                    <td className={styles.colHide}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "center" }}>
-                        <button
-                          className={styles.iconButton}
-                          onClick={() => moveOrder(item, -1)}
-                          disabled={idx === 0 || busyId === item.id}
-                          title="Move up"
-                          style={{ padding: "2px 6px" }}
-                        >▲</button>
-                        <span style={{ fontSize: 12, color: "#9ca3af", fontFamily: "'DM Mono',monospace" }}>{idx + 1}</span>
-                        <button
-                          className={styles.iconButton}
-                          onClick={() => moveOrder(item, 1)}
-                          disabled={idx === sorted.length - 1 || busyId === item.id}
-                          title="Move down"
-                          style={{ padding: "2px 6px" }}
-                        >▼</button>
-                      </div>
+                {items.map((item) => (
+                  <tr key={item.id}>
+                    <td className={styles.colHide} style={{ fontSize: 20, textAlign: "center" }}>
+                      {item.icon || "—"}
                     </td>
-                    <td className={styles.colHide}>
-                      {item.icon
-                        ? <span style={{ fontSize: 20 }}>{item.icon}</span>
-                        : <span style={{ color: "#9ca3af" }}>—</span>}
+                    <td style={{ maxWidth: 340, wordBreak: "break-word" }}>
+                      <span style={{ fontWeight: 500 }}>{item.text}</span>
                     </td>
                     <td>
-                      {/* Show icon inline on mobile since that column is hidden */}
-                      {item.icon && <span className={styles.mobileOnly} style={{ marginRight: 6 }}>{item.icon}</span>}
-                      <strong style={{ fontSize: 14 }}>{item.text}</strong>
-                    </td>
-                    <td>
-                      <button
-                        onClick={() => toggleActive(item)}
-                        disabled={busyId === item.id}
-                        title={item.active ? "Click to hide" : "Click to show"}
-                        style={{
-                          background: item.active ? "#d1fae5" : "#fee2e2",
-                          color: item.active ? "#065f46" : "#991b1b",
-                          border: "none",
-                          borderRadius: 6,
-                          padding: "4px 10px",
-                          fontSize: 11,
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          fontFamily: "'DM Mono',monospace",
-                          letterSpacing: "0.04em",
-                        }}
-                      >
+                      <span className={`${styles.badge} ${item.active ? styles.success : ""}`}>
                         {item.active ? "Active" : "Hidden"}
-                      </button>
+                      </span>
                     </td>
                     <td>
                       <div className={styles.actionButtons}>
-                        {/* Reorder buttons — shown only on mobile (desktop has the Order column) */}
                         <button
-                          className={`${styles.iconButton} ${styles.mobileOnly}`}
-                          onClick={() => moveOrder(item, -1)}
-                          disabled={idx === 0 || busyId === item.id}
-                          title="Move up"
+                          className={styles.iconButton}
+                          onClick={() => toggleActive(item)}
+                          disabled={busyId === item.id}
+                          title={item.active ? "Hide" : "Activate"}
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                          {item.active ? (
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                          ) : (
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                          )}
                         </button>
                         <button
-                          className={`${styles.iconButton} ${styles.mobileOnly}`}
-                          onClick={() => moveOrder(item, 1)}
-                          disabled={idx === sorted.length - 1 || busyId === item.id}
-                          title="Move down"
+                          className={styles.iconButton}
+                          onClick={() => openEdit(item)}
+                          title="Edit"
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
-                        <button className={styles.iconButton} onClick={() => openEdit(item)} title="Edit">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                        </button>
-                        <button className={styles.iconButton} onClick={() => setConfirmDeleteId(item.id)} title="Delete">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                          </svg>
+                        <button
+                          className={styles.iconButton}
+                          onClick={() => setConfirmDeleteId(item.id)}
+                          title="Delete"
+                          style={{ color: "#dc2626" }}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                         </button>
                       </div>
                     </td>
@@ -345,7 +275,6 @@ export function AdminAnnouncements() {
                   </select>
                 </div>
               </div>
-
               <div className={styles.formActions}>
                 <button type="button" className={styles.secondaryButton} onClick={closeForm}>Cancel</button>
                 <button type="submit" className={styles.primaryButton} disabled={saving}>
