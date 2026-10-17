@@ -17,36 +17,36 @@ export type ProductVariantRow = {
  * Returns products enriched with a `variants` array (empty when a product has no variants).
  */
 export async function getProductsWithVariants(db: any) {
-  // 1. Main products + categories LEFT JOIN (same columns as all existing getProducts() calls)
-  const rows = await db
-    .select({
-      id: products.id,
-      name: products.name,
-      slug: products.slug,
-      description: products.description,
-      ingredients: products.ingredients,
-      price: products.price,
-      offerPrice: products.offerPrice,
-      weight: products.weight,
-      categoryId: products.categoryId,
-      categoryName: categories.name,
-      categorySlug: categories.slug,
-      image: products.image,
-      featured: products.featured,
-      bestseller: products.bestseller,
-      stock: products.stock,
-      shelfLife: products.shelfLife,
-      createdAt: products.createdAt,
-    })
-    .from(products)
-    .leftJoin(categories, eq(products.categoryId, categories.id))
-    .orderBy(desc(products.createdAt));
-
-  // 2. Fetch all active variants in one query
-  const allVariants: ProductVariantRow[] = await db
-    .select()
-    .from(productVariants)
-    .where(eq(productVariants.active, true));
+  // 1 & 2. Fetch products and active variants concurrently in parallel
+  const [rows, allVariants]: [any[], ProductVariantRow[]] = await Promise.all([
+    db
+      .select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        description: products.description,
+        ingredients: products.ingredients,
+        price: products.price,
+        offerPrice: products.offerPrice,
+        weight: products.weight,
+        categoryId: products.categoryId,
+        categoryName: categories.name,
+        categorySlug: categories.slug,
+        image: products.image,
+        featured: products.featured,
+        bestseller: products.bestseller,
+        stock: products.stock,
+        shelfLife: products.shelfLife,
+        createdAt: products.createdAt,
+      })
+      .from(products)
+      .leftJoin(categories, eq(products.categoryId, categories.id))
+      .orderBy(desc(products.createdAt)),
+    db
+      .select()
+      .from(productVariants)
+      .where(eq(productVariants.active, true)),
+  ]);
 
   // 3. Group variants by productId, sorted by sortOrder ASC, id ASC
   const variantsByProduct = new Map<number, ProductVariantRow[]>();

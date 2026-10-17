@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db";
 import { combos, comboItems, products } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 async function getCombo(slug: string) {
   try {

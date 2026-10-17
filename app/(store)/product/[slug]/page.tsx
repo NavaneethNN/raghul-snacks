@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductDetailView } from "@/components/product/product-detail-view";
 import { ProductReviews } from "@/components/product/product-reviews";
@@ -8,9 +9,9 @@ import { products, categories, productVariants } from "@/drizzle/schema";
 import { and, eq } from "drizzle-orm";
 import { getProductsWithVariants } from "@/lib/db-queries";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
-async function getProduct(slug: string) {
+const getProduct = cache(async (slug: string) => {
   try {
     const db = getDb();
     const result = await db
@@ -42,7 +43,7 @@ async function getProduct(slug: string) {
     console.error('Error fetching product:', error);
     return null;
   }
-}
+});
 
 async function getVariants(productId: number) {
   try {
@@ -84,8 +85,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   if (!product) notFound();
 
-  const variants = await getVariants(product.id);
-  const allProducts = await getProducts();
+  const [variants, allProducts] = await Promise.all([
+    getVariants(product.id),
+    getProducts(),
+  ]);
   const others = allProducts.filter((item: any) => item.id !== product.id);
   const sameCat = product.categoryId
     ? others.filter((item: any) => item.categoryId === product.categoryId)

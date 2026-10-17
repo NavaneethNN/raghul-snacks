@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { ProductCard } from "@/components/product/product-card";
 import { BestsellersSlider } from "@/components/bestsellers-slider";
 import { CombosSlider } from "@/components/combos-slider";
@@ -10,7 +10,7 @@ import { categories, combos, comboItems, products } from "@/drizzle/schema";
 import { getBannersWithValidity } from "@/lib/banners";
 import { getProductsWithVariants } from "@/lib/db-queries";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 async function getBanners() {
   try {
@@ -45,24 +45,35 @@ async function getCombos() {
   try {
     const db = getDb();
     const allCombos = await db.select().from(combos).orderBy(desc(combos.createdAt));
-    return await Promise.all(
-      allCombos.map(async (combo) => {
-        const items = await db
-          .select({
-            id: comboItems.id,
-            productId: comboItems.productId,
-            quantity: comboItems.quantity,
-            name: products.name,
-            image: products.image,
-            weight: products.weight,
-            slug: products.slug,
-          })
-          .from(comboItems)
-          .leftJoin(products, eq(comboItems.productId, products.id))
-          .where(eq(comboItems.comboId, combo.id));
-        return { ...combo, items };
+    if (!allCombos || allCombos.length === 0) return [];
+
+    const comboIds = allCombos.map((c) => c.id);
+    const allItems = await db
+      .select({
+        id: comboItems.id,
+        comboId: comboItems.comboId,
+        productId: comboItems.productId,
+        quantity: comboItems.quantity,
+        name: products.name,
+        image: products.image,
+        weight: products.weight,
+        slug: products.slug,
       })
-    );
+      .from(comboItems)
+      .leftJoin(products, eq(comboItems.productId, products.id))
+      .where(inArray(comboItems.comboId, comboIds));
+
+    const itemsByCombo = new Map<number, any[]>();
+    for (const item of allItems) {
+      const list = itemsByCombo.get(item.comboId) || [];
+      list.push(item);
+      itemsByCombo.set(item.comboId, list);
+    }
+
+    return allCombos.map((combo) => ({
+      ...combo,
+      items: itemsByCombo.get(combo.id) || [],
+    }));
   } catch (error) {
     console.error('Error fetching combos:', error);
     return [];
@@ -70,10 +81,13 @@ async function getCombos() {
 }
 
 export default async function HomePage() {
-  const categories = await getCategories();
-  const allProducts = await getProducts();
-  const combos = await getCombos();
-  const banners = await getBanners();
+  const [categories, allProducts, combos, banners] = await Promise.all([
+    getCategories(),
+    getProducts(),
+    getCombos(),
+    getBanners(),
+  ]);
+
   // Only show combos that still have at least one item
   const validCombos = combos ? combos.filter((c: any) => c.items && c.items.length > 0) : [];
   // Show up to 10 most recently added products in bestsellers
@@ -105,15 +119,15 @@ export default async function HomePage() {
                 key={category.slug}
                 style={{
                   backgroundImage: category.image
-                    ? `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.4)), url(${category.image})`
-                    : 'none',
+                    ? `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.45)), url(${category.image})`
+                    : 'linear-gradient(135deg, #243127 0%, #1a221b 60%, #a23c1c 100%)',
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                 }}
               >
                 <span className="category-mark">0{index + 1}</span>
                 <h3>{category.name}</h3>
-                <p>{category.description || 'Explore our collection'}</p>
+                <p>{category.description || 'Handcrafted traditional recipe'}</p>
                 <b>Explore →</b>
               </Link>
             ))}
@@ -142,25 +156,64 @@ export default async function HomePage() {
       {validCombos.length > 0 && (
         <CombosSlider combos={validCombos} />
       )}
+
       {/* Values Section */}
       <ScrollAnimate>
-        <section className="values">
-          <div>
-            <b>01</b>
-            <h3>Ingredients you know</h3>
-            <p>No preservatives. No unpronounceable extras.</p>
+        <section className="values-section">
+          <div className="values-header">
+            <p className="eyebrow">The Raghul Delights Promise</p>
+            <h2>Pure Taste. Zero Compromise.</h2>
           </div>
+          <div className="values-grid-home">
+            <div className="value-card">
+              <div className="value-icon-box">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 2a9 9 0 0 1 9 9c0 4.97-4.03 9-9 9a9 9 0 0 1-9-9 9 9 0 0 1 9-9z"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              </div>
+              <span className="value-num">01</span>
+              <h3>100% Cold-Pressed Oils</h3>
+              <p>Wood-pressed groundnut & sesame oils. Absolutely no palm oil, trans fats, or reheated oils.</p>
+            </div>
 
-          <div>
-            <b>02</b>
-            <h3>Rooted in tradition</h3>
-            <p>Time-tested recipes with wholesome millets.</p>
-          </div>
+            <div className="value-card">
+              <div className="value-icon-box">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+              </div>
+              <span className="value-num">02</span>
+              <h3>Generations of Heritage</h3>
+              <p>Authentic heirloom family recipes, stone-ground idli podis, and traditional temple spices.</p>
+            </div>
 
-          <div>
-            <b>03</b>
-            <h3>Fresh to your door</h3>
-            <p>Made in small batches and shipped across India.</p>
+            <div className="value-card">
+              <div className="value-icon-box">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 14 14"/>
+                </svg>
+              </div>
+              <span className="value-num">03</span>
+              <h3>Small-Batch Daily Roast</h3>
+              <p>Prepared and slow-roasted fresh every morning in small batches with zero preservatives.</p>
+            </div>
+
+            <div className="value-card">
+              <div className="value-icon-box">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="1" y="3" width="15" height="13"/>
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
+                  <circle cx="5.5" cy="18.5" r="2.5"/>
+                  <circle cx="18.5" cy="18.5" r="2.5"/>
+                </svg>
+              </div>
+              <span className="value-num">04</span>
+              <h3>Moisture-Lock Pan-India</h3>
+              <p>Food-grade nitrogen barrier packaging delivered crispy to your doorstep anywhere in India.</p>
+            </div>
           </div>
         </section>
       </ScrollAnimate>

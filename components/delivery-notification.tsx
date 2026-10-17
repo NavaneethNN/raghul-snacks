@@ -14,29 +14,35 @@ export function DeliveryNotification() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    fetch("/api/auth/session")
-      .then((r) => r.json())
-      .then(async (d) => {
-        if (!d.account) return;
+    // Delay non-critical background checks to prioritize fast page load & rendering
+    const initTimer = setTimeout(() => {
+      fetch("/api/auth/session")
+        .then((r) => r.json())
+        .then(async (d) => {
+          if (!d.account) return;
 
-        // Find the most recent delivered order
-        const ordersRes = await fetch("/api/orders/mine");
-        if (!ordersRes.ok) return;
-        const ordersData = await ordersRes.json() as { orders?: Array<{ orderNumber: string; orderStatus: string }> };
-        const delivered = ordersData.orders?.find((o) => o.orderStatus === "delivered");
-        if (!delivered) return;
+          // Find the most recent delivered order
+          const ordersRes = await fetch("/api/orders/mine");
+          if (!ordersRes.ok) return;
+          const ordersData = await ordersRes.json() as { orders?: Array<{ orderNumber: string; orderStatus: string }> };
+          const delivered = ordersData.orders?.find((o) => o.orderStatus === "delivered");
+          if (!delivered) return;
 
-        // Get the direct link to the first unreviewed product
-        const targetRes = await fetch("/api/orders/review-target");
-        const targetData = await targetRes.json() as { href: string | null };
-        if (!targetData.href) return; // all reviewed — nothing to show
+          // Get the direct link to the first unreviewed product
+          const targetRes = await fetch("/api/orders/review-target");
+          const targetData = await targetRes.json() as { href: string | null };
+          if (!targetData.href) return; // all reviewed — nothing to show
 
-        setOrder({ orderNumber: delivered.orderNumber, reviewHref: targetData.href });
-        showIfReady(); // eslint-disable-line react-hooks/immutability
-      })
-      .catch(() => {});
+          setOrder({ orderNumber: delivered.orderNumber, reviewHref: targetData.href });
+          showIfReady(); // eslint-disable-line react-hooks/immutability
+        })
+        .catch(() => {});
+    }, 2000);
 
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+    return () => {
+      clearTimeout(initTimer);
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, []);
 
   function showIfReady() {

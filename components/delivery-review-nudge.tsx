@@ -67,11 +67,12 @@ export function DeliveryReviewNudge() {
         }
       } catch { /* silent */ }
     }
-    check();
+    const initTimer = setTimeout(check, 2500);
     // Re-check when user returns to this tab or submits a review anywhere
     window.addEventListener("focus", check);
     window.addEventListener("review-submitted", check);
     return () => {
+      clearTimeout(initTimer);
       window.removeEventListener("focus", check);
       window.removeEventListener("review-submitted", check);
     };

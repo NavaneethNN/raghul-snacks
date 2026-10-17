@@ -8,15 +8,28 @@ import Link from "next/link";
 import { getDb } from "@/lib/db";
 import { categories } from "@/drizzle/schema";
 
-async function getFooterCategories() {
-  try {
-    const db = getDb();
-    return await db.select({ name: categories.name, slug: categories.slug }).from(categories).orderBy(categories.name);
-  } catch { return []; }
-}
+import { unstable_cache } from "next/cache";
+
+const getFooterCategories = unstable_cache(
+  async () => {
+    try {
+      const db = getDb();
+      return await db
+        .select({ name: categories.name, slug: categories.slug })
+        .from(categories)
+        .orderBy(categories.name);
+    } catch {
+      return [];
+    }
+  },
+  ["footer-categories-cache"],
+  { revalidate: 300 }
+);
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
   const footerCategories = await getFooterCategories();
+  const topCategories = footerCategories.slice(0, 5);
+
   return (
     <>
       <ScrollToTop />
@@ -62,11 +75,23 @@ export default async function StoreLayout({ children }: { children: React.ReactN
             <div className="footer-column">
               <h4>Shop</h4>
               <ul>
-                <li><Link href="/shop">All Products</Link></li>
-                <li><Link href="/shop?tab=combos">Combos</Link></li>
-                {footerCategories.map((cat) => (
+                <li><Link href="/shop">All Snacks</Link></li>
+                <li><Link href="/shop?tab=combos">Curated Combos</Link></li>
+                <li><Link href="/#bestsellers">Bestsellers</Link></li>
+                <li><Link href="/#categories">Browse by Craving</Link></li>
+              </ul>
+            </div>
+            <div className="footer-column">
+              <h4>Categories</h4>
+              <ul>
+                {topCategories.map((cat) => (
                   <li key={cat.slug}><Link href={`/shop/${cat.slug}`}>{cat.name}</Link></li>
                 ))}
+                <li>
+                  <Link href="/shop" className="footer-view-all">
+                    Explore all categories →
+                  </Link>
+                </li>
               </ul>
             </div>
             <div className="footer-column">
@@ -78,16 +103,31 @@ export default async function StoreLayout({ children }: { children: React.ReactN
               </ul>
             </div>
             <div className="footer-column">
-              <h4>Support</h4>
+              <h4>Customer Care</h4>
               <ul>
-                <li><Link href="/policies/shipping">Shipping</Link></li>
-                <li><Link href="/policies/refund">Returns</Link></li>
-                <li><Link href="/policies/privacy">Privacy</Link></li>
-                <li><Link href="/policies/terms">Terms</Link></li>
+                <li><Link href="/policies/shipping">Shipping Policy</Link></li>
+                <li><Link href="/policies/refund">Returns & Refund</Link></li>
+                <li><Link href="/policies/privacy">Privacy Policy</Link></li>
+                <li><Link href="/policies/terms">Terms of Service</Link></li>
               </ul>
             </div>
           </div>
         </div>
+
+        {footerCategories.length > 0 && (
+          <div className="footer-category-strip">
+            <span className="strip-title">Popular Collections:</span>
+            <div className="strip-tags">
+              {footerCategories.map((cat, i) => (
+                <span key={cat.slug} className="strip-item">
+                  <Link href={`/shop/${cat.slug}`}>{cat.name}</Link>
+                  {i < footerCategories.length - 1 && <span className="strip-sep">·</span>}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="footer-bottom">
           <p>&copy; {new Date().getFullYear()} Raghul Delights. All rights reserved.</p>
         </div>
@@ -95,3 +135,4 @@ export default async function StoreLayout({ children }: { children: React.ReactN
     </>
   );
 }
+

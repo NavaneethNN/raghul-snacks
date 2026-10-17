@@ -6,7 +6,7 @@ import { categories } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { getProductsWithVariants } from "@/lib/db-queries";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 async function getCategory(slug: string) {
   try {
@@ -19,14 +19,11 @@ async function getCategory(slug: string) {
   }
 }
 
-async function getProducts(categorySlug: string) {
+async function getProductsByCategoryId(categoryId: number) {
   try {
     const db = getDb();
-    const category = await db.select().from(categories).where(eq(categories.slug, categorySlug)).limit(1);
-    if (!category || category.length === 0) return [];
-
     const allProducts = await getProductsWithVariants(db);
-    return allProducts.filter((p: any) => p.categoryId === category[0].id);
+    return allProducts.filter((p: any) => p.categoryId === categoryId);
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];
@@ -39,7 +36,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
 
   if (!category) notFound();
 
-  const items = await getProducts(slug);
+  const items = await getProductsByCategoryId(category.id);
 
   return (
     <section className="section shop-page">
