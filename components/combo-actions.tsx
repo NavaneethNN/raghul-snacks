@@ -14,15 +14,19 @@ export function ComboActions({ combo }: { combo: any }) {
   const [added, setAdded] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
 
+  const offerPrice = combo.discount && parseFloat(combo.discount) > 0
+    ? parseFloat(combo.discount)
+    : parseFloat(combo.price);
+  const originalPrice = parseFloat(combo.price);
+  const hasDiscount = offerPrice < originalPrice;
+  const fmt = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
+
   const cartCombo = {
     id: String(combo.id),
     slug: combo.slug,
     name: combo.title,
-    price: parseFloat(combo.price),
-    offerPrice:
-      combo.discount && parseFloat(combo.discount) > 0
-        ? parseFloat(combo.discount)
-        : parseFloat(combo.price),
+    price: originalPrice,
+    offerPrice,
     weight: `${combo.items?.length || 0} items`,
     description: combo.description || `Combo with ${combo.items?.length || 0} products`,
     ingredients: combo.items?.map((item: any) => item.name).join(", ") || "",
@@ -123,7 +127,17 @@ export function ComboActions({ combo }: { combo: any }) {
         disabled={redirecting}
         style={{ flex: "1", minWidth: "160px" }}
       >
-        {redirecting ? "Redirecting…" : "Buy Now"}
+        {redirecting ? "Redirecting…" : (
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.3 }}>
+            <span>Get this combo · {fmt.format(offerPrice)}</span>
+            {hasDiscount && (
+              <span style={{ fontSize: "11px", opacity: 0.8 }}>
+                <s>{fmt.format(originalPrice)}</s>
+                {" · Save "}{fmt.format(originalPrice - offerPrice)}
+              </span>
+            )}
+          </span>
+        )}
       </button>
     </div>
   );

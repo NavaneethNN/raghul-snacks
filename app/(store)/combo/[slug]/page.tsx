@@ -74,7 +74,7 @@ export default async function ComboDetailPage({ params }: { params: Promise<{ sl
             <strong>₹{displayPrice}</strong>
             {hasDiscount && <s>₹{originalPrice}</s>}
           </div>
-          {hasDiscount && <span className="savings">Save ₹{savings.toFixed(0)}</span>}
+          {hasDiscount && <span className="savings">You save ₹{savings.toFixed(0)}</span>}
         </div>
 
         <p className="description">
