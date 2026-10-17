@@ -1,7 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { cartItems, products } from "@/drizzle/schema";
+import { cartItems, combos, products, productVariants } from "@/drizzle/schema";
 import { customerCookieName, getCustomerSession } from "@/lib/customer-auth";
 import { getDb } from "@/lib/db";
 
@@ -13,7 +13,7 @@ async function getSession() {
 }
 
 // ── GET /api/cart ────────────────────────────────────────────────────────────
-// Returns the logged-in user's saved cart rows, enriched with product data.
+// Returns the logged-in user's saved cart rows, enriched with product/variant/combo data.
 // Response: { items: Array<{ productId, quantity, product: Product | null }> }
 export async function GET() {
   const session = await getSession();
@@ -27,31 +27,131 @@ export async function GET() {
 
   if (!rows.length) return NextResponse.json({ items: [] });
 
-  // Fetch product details for numeric IDs (DB products use integer IDs stored as text)
-  const numericIds = rows.map((r) => Number(r.productId)).filter((n) => !Number.isNaN(n));
-  const productRows = numericIds.length
-    ? await db.select({
-        id: products.id,
-        name: products.name,
-        slug: products.slug,
-        description: products.description,
-        ingredients: products.ingredients,
-        price: products.price,
-        offerPrice: products.offerPrice,
-        weight: products.weight,
-        categoryId: products.categoryId,
-        image: products.image,
-        stock: products.stock,
-        featured: products.featured,
-        bestseller: products.bestseller,
-      }).from(products).where(inArray(products.id, numericIds))
-    : [];
+  // 1. Categorize cart item IDs
+  const productBaseIds = new Set<number>();
+  const variantIds = new Set<number>();
+  const comboIds = new Set<number>();
 
-  const productMap = new Map(productRows.map((p) => [String(p.id), p]));
+  for (const row of rows) {
+    const pid = row.productId;
+    if (pid.startsWith("combo-")) {
+      const cid = parseInt(pid.slice(6));
+      if (!isNaN(cid)) comboIds.add(cid);
+    } else {
+      const vMatch = pid.match(/^(\d+)-v(\d+)$/);
+      if (vMatch) {
+        productBaseIds.add(parseInt(vMatch[1]));
+        variantIds.add(parseInt(vMatch[2]));
+      } else {
+        const id = Number(pid);
+        if (!Number.isNaN(id)) productBaseIds.add(id);
+      }
+    }
+  }
 
-  // Auto-clean stale cart rows where the product no longer exists
+  // 2. Fetch products, variants, combos concurrently
+  const [productRows, variantRows, comboRows] = await Promise.all([
+    productBaseIds.size > 0
+      ? db
+          .select({
+            id: products.id,
+            name: products.name,
+            slug: products.slug,
+            description: products.description,
+            ingredients: products.ingredients,
+            price: products.price,
+            offerPrice: products.offerPrice,
+            weight: products.weight,
+            categoryId: products.categoryId,
+            image: products.image,
+            stock: products.stock,
+            featured: products.featured,
+            bestseller: products.bestseller,
+          })
+          .from(products)
+          .where(inArray(products.id, [...productBaseIds]))
+      : [],
+    variantIds.size > 0
+      ? db
+          .select()
+          .from(productVariants)
+          .where(inArray(productVariants.id, [...variantIds]))
+      : [],
+    comboIds.size > 0
+      ? db
+          .select()
+          .from(combos)
+          .where(inArray(combos.id, [...comboIds]))
+      : [],
+  ]);
+
+  const baseProductMap = new Map(productRows.map((p) => [p.id, p]));
+  const variantMap = new Map(variantRows.map((v) => [v.id, v]));
+  const comboMap = new Map(comboRows.map((c) => [c.id, c]));
+
+  // 3. Build enriched products map keyed by cart productId (e.g. "6", "6-v12", "combo-1")
+  const productMap = new Map<string, any>();
+
+  for (const row of rows) {
+    const pid = row.productId;
+    if (pid.startsWith("combo-")) {
+      const cid = parseInt(pid.slice(6));
+      const c = comboMap.get(cid);
+      if (c) {
+        const offerPrice = c.discount && parseFloat(c.discount) > 0 ? c.discount : c.price;
+        productMap.set(pid, {
+          id: pid,
+          name: c.title,
+          slug: c.slug,
+          description: c.description || "",
+          ingredients: "",
+          price: c.price,
+          offerPrice,
+          weight: "Combo",
+          categoryId: null,
+          image: c.image,
+          stock: 1,
+          featured: false,
+          bestseller: false,
+        });
+      }
+    } else {
+      const vMatch = pid.match(/^(\d+)-v(\d+)$/);
+      if (vMatch) {
+        const baseId = parseInt(vMatch[1]);
+        const varId = parseInt(vMatch[2]);
+        const p = baseProductMap.get(baseId);
+        const v = variantMap.get(varId);
+        if (p && v) {
+          productMap.set(pid, {
+            id: pid,
+            name: p.name,
+            slug: p.slug,
+            description: p.description,
+            ingredients: p.ingredients,
+            price: v.price,
+            offerPrice: v.offerPrice || v.price,
+            weight: v.weight,
+            categoryId: p.categoryId,
+            image: p.image,
+            stock: p.stock,
+            featured: p.featured,
+            bestseller: p.bestseller,
+          });
+        }
+      } else {
+        const id = Number(pid);
+        const p = baseProductMap.get(id);
+        if (p) {
+          productMap.set(pid, p);
+        }
+      }
+    }
+  }
+
+  // Auto-clean stale cart rows where product/combo no longer exists
   const staleIds = rows
-    .filter((row) => productMap.get(row.productId) === undefined && !Number.isNaN(Number(row.productId)))
+    .filter((row) => !productMap.has(row.productId))
     .map((row) => row.productId);
   if (staleIds.length > 0) {
     // Delete stale rows in background (don't await to keep response fast)
@@ -63,7 +163,7 @@ export async function GET() {
   }
 
   const enriched = rows
-    .filter((row) => productMap.get(row.productId) !== undefined)
+    .filter((row) => productMap.has(row.productId))
     .map((row) => ({
       productId: row.productId,
       quantity: row.quantity,

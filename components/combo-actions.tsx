@@ -21,8 +21,9 @@ export function ComboActions({ combo }: { combo: any }) {
   const hasDiscount = offerPrice < originalPrice;
   const fmt = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 
+  const cartComboId = `combo-${combo.id}`;
   const cartCombo = {
-    id: String(combo.id),
+    id: cartComboId,
     slug: combo.slug,
     name: combo.title,
     price: originalPrice,
@@ -34,15 +35,15 @@ export function ComboActions({ combo }: { combo: any }) {
     image: combo.image || "",
   };
 
-  const inCart = getItemQuantity(combo.id) > 0;
+  const inCart = getItemQuantity(cartComboId) > 0;
 
   function handleAddToCart() {
-    if (inCart || added) return;
+    if (added) return;
     addItem(cartCombo, quantity);
     setAdded(true);
     // Show "Go to Cart" toast with a link-style message for 5 seconds
     show("✓ Added to cart", { duration: 5000, href: "/cart" });
-    window.setTimeout(() => setAdded(false), 5000);
+    window.setTimeout(() => setAdded(false), 3000);
   }
 
   function handleBuyNow() {
@@ -106,18 +107,18 @@ export function ComboActions({ combo }: { combo: any }) {
       <button
         onClick={handleAddToCart}
         className="button"
-        disabled={inCart || added}
+        disabled={added}
         style={{
           flex: "1",
           minWidth: "160px",
-          background: inCart || added ? "#16a34a" : "var(--ink)",
+          background: added ? "#16a34a" : inCart ? "var(--terracotta)" : "var(--ink)",
           color: "white",
-          border: inCart || added ? "2px solid #16a34a" : "2px solid var(--ink)",
+          border: added ? "2px solid #16a34a" : inCart ? "2px solid var(--terracotta)" : "2px solid var(--ink)",
           opacity: 1,
-          cursor: inCart || added ? "default" : "pointer",
+          cursor: added ? "default" : "pointer",
         }}
       >
-        {inCart || added ? "✓ Added to Cart" : "Add to Cart"}
+        {added ? "✓ Added to Cart" : inCart ? "+ Add More" : "Add to Cart"}
       </button>
 
       {/* Buy Now */}

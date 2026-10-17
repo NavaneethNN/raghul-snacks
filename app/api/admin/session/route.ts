@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { timingSafeEqual } from "node:crypto";
+import { eq } from "drizzle-orm";
+import { settings } from "@/drizzle/schema";
+import { getDb } from "@/lib/db";
 import { adminCookieName, createAdminSession, isValidAdminPassword } from "@/lib/admin-auth";
 
 const bodySchema = z.object({ password: z.string().min(1) });
@@ -8,7 +12,23 @@ export async function POST(request: Request) {
   const body = bodySchema.safeParse(await request.json());
   if (!body.success) return NextResponse.json({ error: "Password is required." }, { status: 400 });
   try {
-    if (!isValidAdminPassword(body.data.password)) return NextResponse.json({ error: "Incorrect password." }, { status: 401 });
+    const db = getDb();
+    const dbSetting = await db
+      .select({ value: settings.value })
+      .from(settings)
+      .where(eq(settings.key, "adminPassword"))
+      .limit(1);
+
+    let valid = false;
+    if (dbSetting.length > 0 && dbSetting[0].value) {
+      const storedPw = dbSetting[0].value;
+      valid = storedPw.length === body.data.password.length &&
+        timingSafeEqual(Buffer.from(storedPw), Buffer.from(body.data.password));
+    } else {
+      valid = isValidAdminPassword(body.data.password);
+    }
+
+    if (!valid) return NextResponse.json({ error: "Incorrect password." }, { status: 401 });
     const response = NextResponse.json({ authenticated: true });
     response.cookies.set(adminCookieName(), createAdminSession(), { httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 12 });
     return response;

@@ -11,10 +11,9 @@ export function AddToCart({ product, quantity = 1, className = "", showModal = f
   const [justAdded, setJustAdded] = useState(false);
 
   const inCart = getItemQuantity(product.id) > 0;
-  const isAdded = inCart || justAdded;
 
   function handleClick() {
-    if (isAdded) return;
+    if (justAdded) return;
     addItem(product, quantity);
     show(`✓ ${product.name} added to cart`);
     setJustAdded(true);
@@ -25,10 +24,10 @@ export function AddToCart({ product, quantity = 1, className = "", showModal = f
     <button
       className={`button button-dark ${className}`}
       onClick={handleClick}
-      disabled={isAdded}
-      style={isAdded ? { opacity: 1, cursor: "default", pointerEvents: "none" } : undefined}
+      disabled={justAdded}
+      style={justAdded ? { opacity: 1, cursor: "default" } : undefined}
     >
-      {isAdded ? "✓ Added" : "Add to Cart"}
+      {justAdded ? "✓ Added" : inCart ? "+ Add More" : "Add to Cart"}
     </button>
   );
 }

@@ -99,6 +99,10 @@ export function StoreHeader() {
 
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (searchQuery.trim()) {
+      setSearchOpen(false);
+      router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
   };
 
   const handleSearchChange = async (value: string) => {

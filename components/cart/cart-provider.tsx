@@ -213,18 +213,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setSyncing(false);
         // Background validation — remove deleted products without blocking render
         if (local.length > 0) {
-          const ids = [...new Set(local.map((i) => i.id.toString().split("-v")[0]))];
-          fetch(`/api/products?ids=${ids.join(",")}`)
-            .then((res) => res.ok ? res.json() : null)
-            .then((validProducts: Array<{ id: number }> | null) => {
-              if (!validProducts) return;
-              const validIds = new Set(validProducts.map((p) => String(p.id)));
-              setItems((current) => current.filter((item) => {
-                const baseId = item.id.toString().split("-v")[0];
-                return validIds.has(baseId);
-              }));
-            })
-            .catch(() => { /* best-effort */ });
+          const ids = [...new Set(local.map((i) => i.id.toString().split("-v")[0]).filter((id) => !id.startsWith("combo-")))];
+          if (ids.length > 0) {
+            fetch(`/api/products?ids=${ids.join(",")}`)
+              .then((res) => res.ok ? res.json() : null)
+              .then((validProducts: Array<{ id: number }> | null) => {
+                if (!validProducts) return;
+                const validIds = new Set(validProducts.map((p) => String(p.id)));
+                setItems((current) => current.filter((item) => {
+                  const baseId = item.id.toString().split("-v")[0];
+                  return item.id.toString().startsWith("combo-") || validIds.has(baseId);
+                }));
+              })
+              .catch(() => { /* best-effort */ });
+          }
         }
         return; // already set hydrated above
       }

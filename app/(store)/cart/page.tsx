@@ -104,7 +104,7 @@ export default function CartPage() {
               <article className="cart-item" key={item.id}>
                 <div className="cart-thumb">
                   {item.image ? (
-                    <Link href={`/product/${item.slug ?? item.id}`}>
+                    <Link href={item.category === "combo" || item.id.toString().startsWith("combo-") ? `/combo/${item.slug ?? item.id}` : `/product/${item.slug ?? item.id}`}>
                       <img src={item.image} alt={item.name} />
                     </Link>
                   ) : (
@@ -114,7 +114,7 @@ export default function CartPage() {
                 <div>
                   <h3>
                     {item.slug ? (
-                      <Link href={`/product/${item.slug}`} style={{ color: "inherit", textDecoration: "none" }}>{item.name}</Link>
+                      <Link href={item.category === "combo" || item.id.toString().startsWith("combo-") ? `/combo/${item.slug}` : `/product/${item.slug}`} style={{ color: "inherit", textDecoration: "none" }}>{item.name}</Link>
                     ) : item.name}
                   </h3>
                   <p>{formatWeight(item.weight)}</p>

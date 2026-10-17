@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { ProductCard } from "@/components/product/product-card";
 import { getDb } from "@/lib/db";
 import { categories } from "@/drizzle/schema";
@@ -44,11 +45,20 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
     <section className="section shop-page">
       <p className="eyebrow">{category.description || 'Explore our collection'}</p>
       <h1>{category.name}</h1>
-      <div className="product-grid">
-        {items.map((product: any) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+      {items.length === 0 ? (
+        <div className="empty-state">
+          <p>No snacks currently available in this category.</p>
+          <Link href="/shop" className="button button-dark" style={{ marginTop: 16 }}>
+            Browse all snacks →
+          </Link>
+        </div>
+      ) : (
+        <div className="product-grid">
+          {items.map((product: any) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

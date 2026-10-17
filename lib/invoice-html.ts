@@ -54,7 +54,7 @@ export function buildInvoiceHtml(data: InvoiceData): string {
   );
   const discount = Number(data.discount) || 0;
   const total    = Number(data.total);
-  const shipping = total - subtotal + discount;
+  const shipping = Math.max(0, Math.round((total - subtotal + discount) * 100) / 100);
 
   const orderDate = new Date(data.createdAt).toLocaleDateString("en-IN", {
     day: "2-digit", month: "long", year: "numeric",

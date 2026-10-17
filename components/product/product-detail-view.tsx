@@ -60,7 +60,7 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
 
   const cartQuantity = getItemQuantity(cartItemId);
   const inCart = cartQuantity > 0;
-  const isAdded = inCart || added;
+  const isAdded = added;
   const hasDiscount = displayPrice < basePrice;
   const isOutOfStock = typeof product.stock === "number" && product.stock <= 0;
 
@@ -76,7 +76,7 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
   }
 
   function handleAddToCart() {
-    if (isAdded) return;
+    if (added) return;
     addItem(cartProduct, quantity);
     show(`✓ ${product.name} (${formatWeight(displayWeight)}) added to cart`);
     setAdded(true);
@@ -198,12 +198,12 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
             >+</button>
           </div>
           <button
-            className={`button wide-button ${isOutOfStock ? "button-disabled" : isAdded ? "button-success" : "button-dark"}`}
+            className={`button wide-button ${isOutOfStock ? "button-disabled" : added ? "button-success" : inCart ? "button-dark" : "button-dark"}`}
             onClick={handleAddToCart}
-            disabled={isAdded || isOutOfStock}
-            style={isAdded || isOutOfStock ? { opacity: isOutOfStock ? 0.5 : 1, cursor: "default" } : undefined}
+            disabled={added || isOutOfStock}
+            style={isOutOfStock ? { opacity: 0.5, cursor: "not-allowed" } : added ? { cursor: "default" } : undefined}
           >
-            {isOutOfStock ? "Out of Stock" : isAdded ? "✓ Added to Cart" : "Add to Cart"}
+            {isOutOfStock ? "Out of Stock" : added ? "✓ Added to Cart" : inCart ? "+ Add More" : "Add to Cart"}
           </button>
           {!isOutOfStock && (
             <button
