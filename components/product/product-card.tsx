@@ -62,8 +62,6 @@ export function ProductCard({ product }: { product: any }) {
             <span className="placeholder-icon">✦</span>
           </div>
         )}
-        <span className="category-label">{categoryName}</span>
-        {badge && <b>{badge}</b>}
         {isOutOfStock && <b className="out-of-stock-label">Out of Stock</b>}
         {variants.length > 0 && <VariantStackFlag count={variants.length} />}
       </Link>

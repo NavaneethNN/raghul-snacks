@@ -73,7 +73,8 @@ export default async function HomePage() {
   // Only show combos that still have at least one item
   const validCombos = combos ? combos.filter((c: any) => c.items && c.items.length > 0) : [];
   const featuredCombo = validCombos.length > 0 ? validCombos[0] : null;
-  const products = allProducts;
+  // Show up to 10 most recently added products in bestsellers
+  const products = allProducts.slice(0, 10);
 
   return (
     <>

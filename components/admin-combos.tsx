@@ -673,7 +673,7 @@ export function AdminCombos() {
                               {product?.name}
                             </span>
                             <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#6b7280" }}>
-                              Weight (g):
+                              Qty / Weight (g):
                               <input
                                 type="text"
                                 inputMode="numeric"
