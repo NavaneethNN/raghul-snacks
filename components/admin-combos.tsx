@@ -141,7 +141,7 @@ export function AdminCombos() {
       productId: item.productId,
       quantity: item.quantity
     })) || []);
-    setImageInputType(combo.image?.startsWith("data:") ? "file" : "url");
+    setImageInputType(combo.image?.startsWith("data:") || combo.image?.startsWith("https://") ? "file" : "url");
     setImagePreview(combo.image || "");
     setImageData(combo.image || "");
     setShowForm(true);

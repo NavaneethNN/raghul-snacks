@@ -33,7 +33,7 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
     setCategoryName(category.name);
     setCategorySlug(category.slug);
     setShowForm(true);
-    setImageInputType(category.image?.startsWith("data:") ? "file" : "url");
+    setImageInputType(category.image?.startsWith("data:") || category.image?.startsWith("https://") ? "file" : "url");
     setImagePreview(category.image || "");
   }
 
@@ -315,21 +315,21 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
                   <input type="text" name="imageUrl" placeholder="https://..." />
                 ) : (
                   <>
-                    {!imagePreview && (
-                      <input
-                        type="file"
-                        name="imageFile"
-                        accept="image/*"
-                        onChange={handleImageFileChange}
-                        style={{
-                          padding: '10px',
-                          border: '1.5px solid var(--line)',
-                          borderRadius: '8px',
-                          background: 'var(--cream)',
-                          fontSize: '14px',
-                        }}
-                      />
-                    )}
+                    {/* Always show file input so user can replace existing image */}
+                    <input
+                      type="file"
+                      name="imageFile"
+                      accept="image/*"
+                      onChange={handleImageFileChange}
+                      style={{
+                        padding: '10px',
+                        border: '1.5px solid var(--line)',
+                        borderRadius: '8px',
+                        background: 'var(--cream)',
+                        fontSize: '14px',
+                        marginBottom: '8px',
+                      }}
+                    />
                     {imagePreview && (
                       <div style={{ marginTop: '12px', position: 'relative', display: 'inline-block', borderRadius: '8px', overflow: 'hidden', width: 'fit-content' }}>
                         <img

@@ -245,7 +245,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     setProductName(product.name);
     setProductSlug(product.slug);
     setShowForm(true);
-    setImageInputType(product.image?.startsWith("data:") ? "file" : "url");
+    setImageInputType(product.image?.startsWith("data:") || product.image?.startsWith("https://") ? "file" : "url");
     setImagePreview(product.image || "");
     setImageData(product.image || "");
     setError("");
@@ -747,9 +747,14 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                 {imageInputType === "url"
                   ? <input type="text" name="image" placeholder="https://…" defaultValue={editingProduct?.image?.startsWith("data:") ? "" : (editingProduct?.image ?? "")} />
                   : (<>
-                      {!imagePreview && (
-                        <input type="file" accept="image/*" ref={imageFileRef} onChange={handleImageUpload} style={{ marginBottom: "8px" }} />
-                      )}
+                      {/* Always show file input so user can pick a new file even when preview exists */}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        ref={imageFileRef}
+                        onChange={handleImageUpload}
+                        style={{ marginBottom: "8px" }}
+                      />
                       {imageUploading && (
                         <p style={{ fontSize: 12, color: "var(--terracotta)", margin: "4px 0" }}>⏳ Uploading to cloud…</p>
                       )}

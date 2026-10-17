@@ -326,7 +326,10 @@
   width: 100%;
   max-width: 700px;
   max-height: 90vh;
-  overflow-y: auto;
+  /* flex column so header+footer stay fixed and only form body scrolls */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   box-shadow: 0 20px 40px rgba(36, 49, 39, 0.2);
   box-sizing: border-box;
 }
@@ -363,6 +366,8 @@
 .form {
   padding: 32px;
   box-sizing: border-box;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .formGrid {
@@ -585,6 +590,7 @@
   .modalContent {
     max-width: 100%;
     margin: 0 8px;
+    max-height: 95vh;
   }
 
   .modalHeader {

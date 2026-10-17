@@ -534,21 +534,6 @@ body.mobile-menu-open .announcement {
   0%   { transform: translateX(60%); }
   100% { transform: translateX(-110%); }
 }
-  align-items: center;
-  gap: 8px;
-  animation: slideInFromRight 0.5s ease-in-out;
-}
-
-@keyframes slideInFromRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
 
 .announcement-icon {
   font-size: 14px;
