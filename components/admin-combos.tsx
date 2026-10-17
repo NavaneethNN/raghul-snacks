@@ -663,12 +663,12 @@ export function AdminCombos() {
                       {selectedItems.map((item) => {
                         const product = products.find(p => p.id === item.productId);
                         return (
-                          <div key={item.productId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", background: "#fff", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
+                          <div key={item.productId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", padding: "10px 12px", background: "#fff", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
                             <span style={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>
                               {product?.name}
                             </span>
                             <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#6b7280" }}>
-                              Qty / Weight (g):
+                              Qty:
                               <input
                                 type="text"
                                 inputMode="numeric"
@@ -676,7 +676,7 @@ export function AdminCombos() {
                                 onChange={(e) => updateWeight(item.productId, e.target.value)}
                                 onBlur={() => handleWeightBlur(item.productId)}
                                 placeholder="100"
-                                style={{ width: "80px", border: "1px solid #d1d5db", padding: "6px 10px", borderRadius: "4px", textAlign: "center", fontSize: "13px", fontWeight: 600 }}
+                                style={{ width: "72px", minWidth: 0, border: "1px solid #d1d5db", padding: "6px 10px", borderRadius: "4px", textAlign: "center", fontSize: "13px", fontWeight: 600, boxSizing: "border-box" }}
                               />
                             </label>
                           </div>

@@ -326,7 +326,7 @@
   width: 100%;
   max-width: 700px;
   max-height: 90vh;
-  /* flex column so header+footer stay fixed and only form body scrolls */
+  /* flex column so header stays fixed and only form body scrolls */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -589,8 +589,9 @@
 
   .modalContent {
     max-width: 100%;
-    margin: 0 8px;
-    max-height: 95vh;
+    margin: 0;
+    max-height: 100%;
+    border-radius: 12px 12px 0 0;
   }
 
   .modalHeader {
@@ -606,9 +607,9 @@
   }
 
   .modal {
-    padding: 8px;
-    padding-top: 70px;
-    align-items: flex-start;
+    padding: 0;
+    padding-top: 60px;   /* clear the fixed admin top bar */
+    align-items: flex-end; /* sheet slides up from bottom */
   }
 }
 

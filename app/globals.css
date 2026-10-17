@@ -1684,9 +1684,9 @@ h2 i {
 }
 .category-grid::-webkit-scrollbar { display: none; }
 .category-grid .category-card {
-  flex: 0 0 80vw;
-  max-width: 320px;
-  min-width: 240px;
+  flex: 0 0 88vw;
+  max-width: 420px;
+  min-width: 300px;
   scroll-snap-align: start;
 }
 
@@ -1809,7 +1809,7 @@ h2 i {
 }
 
 .category-card {
-  min-height: 160px;
+  min-height: 200px;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -4677,7 +4677,7 @@ footer {
   .category-grid .category-card {
     /* Fill the row equally; min-width keeps them readable on narrow tablets */
     flex: 1 0 0;
-    min-width: 200px;
+    min-width: 280px;
     max-width: none;
     scroll-snap-align: start;
   }
@@ -4980,7 +4980,7 @@ footer {
   .category-grid .category-card {
     /* Each card takes equal width filling the row; scrolls if there are more than fit */
     flex: 1 0 0;
-    min-width: 220px;
+    min-width: 320px;
     max-width: none;
     scroll-snap-align: start;
   }
