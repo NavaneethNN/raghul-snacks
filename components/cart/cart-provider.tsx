@@ -297,7 +297,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const item = items.find((i) => i.id === id || i.id === String(id));
       return item ? item.quantity : 0;
     },
-  }), [items, loggedIn, scheduleSync]);
+  }), [items, loggedIn, scheduleSync, hydrated, syncing]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ComboActions } from "@/components/combo-actions";
 import { getDb } from "@/lib/db";
@@ -46,7 +47,7 @@ export default async function ComboDetailPage({ params }: { params: Promise<{ sl
         <p className="eyebrow">Combo unavailable</p>
         <h1>This combo is no longer available.</h1>
         <p>The products in this combo have been removed. Check out our shop for other options.</p>
-        <a href="/shop" className="button button-dark">Browse products</a>
+        <Link href="/shop" className="button button-dark">Browse products</Link>
       </section>
     );
   }

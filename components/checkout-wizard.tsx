@@ -22,7 +22,7 @@ export function CheckoutWizard() {
     typeof window !== "undefined" ? readBuyNowItem() : null
   );
   const buyNowChecked = true; // always ready — synchronous read, no async needed
-  const items = buyNowItem ? [buyNowItem] : cartItems;
+  const items = useMemo(() => (buyNowItem ? [buyNowItem] : cartItems), [buyNowItem, cartItems]);
   const subtotal = buyNowItem ? buyNowItem.offerPrice * buyNowItem.quantity : cartSubtotal;
   const [step, setStep] = useState(1);
   const [account, setAccount] = useState<{ name: string; email: string } | null>(null);
@@ -78,11 +78,6 @@ export function CheckoutWizard() {
 
   // Track whether payment was successfully completed
   const orderPlacedRef = useRef(false);
-
-  // If Razorpay SDK already on window (cached from previous visit), mark ready immediately
-  useEffect(() => {
-    if ((window as any).Razorpay) setPaymentReady(true);
-  }, []);
 
   useEffect(() => {
     // Pre-fill contact details for logged-in users; guests can proceed without signing in
@@ -172,7 +167,7 @@ export function CheckoutWizard() {
           baseRate = northRate; courierLabel = "Air Delivery";
         }
 
-        const totalWeightKg = Math.max(1, items.reduce((sum, item) => sum + item.quantity * 0.25, 0));
+        const totalWeightKg = Math.max(1, itemPayload.reduce((sum, item) => sum + item.quantity * 0.25, 0));
         const extraKg = Math.ceil(Math.max(0, totalWeightKg - 1));
         const charge = baseRate + extraKg * extraRate;
 

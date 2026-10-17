@@ -120,7 +120,7 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
       .then((r) => r.json())
       .then((data: Record<number, ReviewState>) => setReviewStates(data))
       .catch(() => {});
-  }, [order.id, isDelivered]);
+  }, [order.id, isDelivered, order.items]);
 
   // Close on Escape
   useEffect(() => {

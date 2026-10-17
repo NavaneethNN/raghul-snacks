@@ -48,9 +48,10 @@ function ProgressBar() {
       setVisible(false);
       setWidth(0);
     }, 350);
+    const raf = rafRef.current;
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (raf) cancelAnimationFrame(raf);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, searchParams]);
