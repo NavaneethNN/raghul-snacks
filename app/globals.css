@@ -1961,6 +1961,12 @@ h2 i {
   font: 100px 'Playfair Display', serif;
   color: #f0c666;
   animation: scaleIn 1s ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  height: 200px;
+  line-height: 1;
 }
 
 @keyframes scaleIn {

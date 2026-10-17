@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
 import { useRouter } from "next/navigation";
 import { formatWeight } from "@/lib/catalog";
@@ -63,6 +63,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
   const [imageInputType, setImageInputType] = useState<"url" | "file">("url");
   const [imagePreview, setImagePreview]     = useState<string>("");
   const [imageData, setImageData]           = useState<string>("");
+  const [imageUploading, setImageUploading] = useState(false);
+  const imageFileRef                        = React.useRef<HTMLInputElement>(null);
   const [productName, setProductName]       = useState("");
   const [productSlug, setProductSlug]       = useState("");
 
@@ -213,9 +215,9 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
         canvas.height = height;
         canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
         const b64 = canvas.toDataURL("image/jpeg", 0.8);
-        setImagePreview(b64); // show preview immediately
+        setImagePreview(b64);
+        setImageUploading(true);
 
-        // Upload to R2
         try {
           const res = await fetch("/api/admin/upload", {
             method: "POST",
@@ -224,12 +226,14 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
           });
           const data = await res.json() as { url?: string; error?: string };
           if (res.ok && data.url) {
-            setImageData(data.url); // store R2 URL, not base64
+            setImageData(data.url);
           } else {
-            setImageData(b64); // fallback to base64 if R2 fails
+            setImageData(b64);
           }
         } catch {
-          setImageData(b64); // fallback
+          setImageData(b64);
+        } finally {
+          setImageUploading(false);
         }
       };
       img.src = objectUrl;
@@ -747,9 +751,12 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                   ? <input type="text" name="image" placeholder="https://…" defaultValue={editingProduct?.image?.startsWith("data:") ? "" : (editingProduct?.image ?? "")} />
                   : (<>
                       {!imagePreview && (
-                        <input type="file" accept="image/*" onChange={handleImageUpload} style={{ marginBottom: "8px" }} />
+                        <input type="file" accept="image/*" ref={imageFileRef} onChange={handleImageUpload} style={{ marginBottom: "8px" }} />
                       )}
-                      {imagePreview && (
+                      {imageUploading && (
+                        <p style={{ fontSize: 12, color: "var(--terracotta)", margin: "4px 0" }}>⏳ Uploading to cloud…</p>
+                      )}
+                      {imagePreview && !imageUploading && (
                         <div
                           style={{ position: "relative", display: "inline-block", marginTop: "8px" }}
                           className={productStyles.imagePreviewWrap}
@@ -761,7 +768,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                           />
                           <button
                             type="button"
-                            onClick={() => { setImagePreview(""); setImageData(""); }}
+                            onClick={() => { setImagePreview(""); setImageData(""); if (imageFileRef.current) imageFileRef.current.value = ""; }}
                             className={productStyles.imageDeleteButton}
                             title="Remove image"
                           >
