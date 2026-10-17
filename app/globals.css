@@ -1672,11 +1672,8 @@ h2 i {
 }
 
 .category-grid {
-  display: grid;
-  grid-template-columns: 1fr;
   gap: 12px;
   width: 100%;
-  /* Mobile: horizontal scroll slider */
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -1687,9 +1684,9 @@ h2 i {
 }
 .category-grid::-webkit-scrollbar { display: none; }
 .category-grid .category-card {
-  flex: 0 0 72vw;
-  max-width: 280px;
-  min-width: 220px;
+  flex: 0 0 80vw;
+  max-width: 320px;
+  min-width: 240px;
   scroll-snap-align: start;
 }
 
@@ -4678,9 +4675,10 @@ footer {
   }
   .category-grid::-webkit-scrollbar { display: none; }
   .category-grid .category-card {
-    flex: 0 0 260px;
-    min-width: 260px;
-    max-width: 260px;
+    /* Fill the row equally; min-width keeps them readable on narrow tablets */
+    flex: 1 0 0;
+    min-width: 200px;
+    max-width: none;
     scroll-snap-align: start;
   }
 
@@ -4980,15 +4978,11 @@ footer {
     scrollbar-width: none;
   }
   .category-grid .category-card {
-    flex: 0 0 300px;
-    min-width: 300px;
-    max-width: 300px;
+    /* Each card takes equal width filling the row; scrolls if there are more than fit */
+    flex: 1 0 0;
+    min-width: 220px;
+    max-width: none;
     scroll-snap-align: start;
-  }
-  .category-grid .category-card {
-    flex: unset;
-    max-width: unset;
-    min-width: unset;
   }
 
 
