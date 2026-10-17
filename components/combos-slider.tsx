@@ -364,7 +364,7 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
             <ul className="combo-items-list">
               {combo.items.slice(0, 4).map((item, idx) => (
                 <li key={idx}>
-                  {item.name || "Product"} × {item.quantity}g
+                  {item.name || "Product"} × {item.quantity}
                 </li>
               ))}
               {combo.items.length > 4 && (

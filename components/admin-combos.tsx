@@ -341,7 +341,7 @@ export function AdminCombos() {
                             <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
                               {combo.items.map((item) => (
                                 <span key={item.id} style={{ fontSize: "13px", color: "#6b7280" }}>
-                                  {item.productName} — {item.quantity}g
+                                  {item.productName} — {item.quantity}
                                 </span>
                               ))}
                             </div>
