@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Announcement = {
   id: number;
@@ -8,8 +8,35 @@ type Announcement = {
   icon: string | null;
 };
 
-// Module-level cache — fetched once per browser session, not on every navigation.
 let cachedAnnouncements: Announcement[] | undefined = undefined;
+
+function AnnouncementItem({ text, icon }: { text: string; icon: string | null }) {
+  const itemRef = useRef<HTMLSpanElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isMarquee, setIsMarquee] = useState(false);
+
+  useEffect(() => {
+    function check() {
+      const item = itemRef.current;
+      const container = containerRef.current;
+      if (item && container) {
+        setIsMarquee(item.scrollWidth > container.clientWidth);
+      }
+    }
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [text]);
+
+  return (
+    <div ref={containerRef} className="announcement-slider">
+      <span ref={itemRef} className={`announcement-item${isMarquee ? " marquee" : ""}`}>
+        {icon && <span className="announcement-icon">{icon}</span>}
+        {text}
+      </span>
+    </div>
+  );
+}
 
 export function AnnouncementBar() {
   const [announcements, setAnnouncements] = useState<Announcement[]>(cachedAnnouncements ?? []);
@@ -17,7 +44,7 @@ export function AnnouncementBar() {
   const [loading, setLoading] = useState(cachedAnnouncements === undefined);
 
   useEffect(() => {
-    if (cachedAnnouncements !== undefined) return; // already have data
+    if (cachedAnnouncements !== undefined) return;
     fetch("/api/announcements")
       .then((res) => res.json())
       .then((data: Announcement[]) => {
@@ -35,7 +62,7 @@ export function AnnouncementBar() {
     if (announcements.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % announcements.length);
-    }, 5000);
+    }, 6000);
     return () => clearInterval(interval);
   }, [announcements.length]);
 
@@ -44,12 +71,7 @@ export function AnnouncementBar() {
     const icon = loading ? null : "🚚";
     return (
       <div className="announcement">
-        <div className="announcement-slider">
-          <span className="announcement-item">
-            {icon && <span className="announcement-icon">{icon}</span>}
-            {text}
-          </span>
-        </div>
+        <AnnouncementItem text={text} icon={icon} />
       </div>
     );
   }
@@ -57,12 +79,7 @@ export function AnnouncementBar() {
   const current = announcements[currentIndex];
   return (
     <div className="announcement">
-      <div className="announcement-slider">
-        <span key={current.id} className="announcement-item">
-          {current.icon && <span className="announcement-icon">{current.icon}</span>}
-          {current.text}
-        </span>
-      </div>
+      <AnnouncementItem key={current.id} text={current.text} icon={current.icon} />
     </div>
   );
 }

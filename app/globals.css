@@ -511,12 +511,29 @@ body.mobile-menu-open .announcement {
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
+  width: 100%;
 }
 
 .announcement-item {
   color: var(--saffron);
   white-space: nowrap;
   display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* Auto-scroll long text */
+  animation: marquee-scroll 0s linear infinite;
+  animation-play-state: paused;
+}
+
+.announcement-item.marquee {
+  animation: marquee-scroll 18s linear infinite;
+}
+
+@keyframes marquee-scroll {
+  0%   { transform: translateX(60%); }
+  100% { transform: translateX(-110%); }
+}
   align-items: center;
   gap: 8px;
   animation: slideInFromRight 0.5s ease-in-out;
