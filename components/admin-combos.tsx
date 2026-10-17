@@ -441,11 +441,6 @@ export function AdminCombos() {
               </button>
             </div>
             <form className={styles.form} onSubmit={handleSubmit}>
-              {error && (
-                <div style={{ padding: "12px", background: "#fee2e2", border: "1px solid #dc2626", borderRadius: "8px", color: "#991b1b", marginBottom: "20px" }}>
-                  {error}
-                </div>
-              )}
               <div className={styles.field}>
                 <label>Combo Title</label>
                 <input
@@ -697,6 +692,11 @@ export function AdminCombos() {
                   </p>
                 )}
               </div>
+              {error && (
+                <div style={{ padding: "12px", background: "#fee2e2", border: "1px solid #dc2626", borderRadius: "8px", color: "#991b1b", marginBottom: "12px" }}>
+                  {error}
+                </div>
+              )}
               <div className={styles.formActions}>
                 <button type="button" className={styles.secondaryButton} onClick={handleCloseForm}>
                   Cancel

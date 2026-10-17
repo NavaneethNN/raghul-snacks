@@ -2,6 +2,7 @@ import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import { ProductCard } from "@/components/product/product-card";
 import { BestsellersSlider } from "@/components/bestsellers-slider";
+import { CombosSlider } from "@/components/combos-slider";
 import { HeroBanner } from "@/components/hero-banner";
 import { ScrollAnimate } from "@/components/scroll-animate";
 import { getDb } from "@/lib/db";
@@ -72,7 +73,6 @@ export default async function HomePage() {
   const banners = await getBanners();
   // Only show combos that still have at least one item
   const validCombos = combos ? combos.filter((c: any) => c.items && c.items.length > 0) : [];
-  const featuredCombo = validCombos.length > 0 ? validCombos[0] : null;
   // Show up to 10 most recently added products in bestsellers
   const products = allProducts.slice(0, 10);
 
@@ -195,55 +195,9 @@ export default async function HomePage() {
         </ScrollAnimate>
       </section>
 
-      {/* Combo Box Section */}
-      {featuredCombo && featuredCombo.title && (
-        <section className="combo">
-          <ScrollAnimate animation="left">
-            <div>
-              <p className="eyebrow">Special Combo</p>
-              <h2>
-                {featuredCombo.title}
-                {featuredCombo.title?.includes(' ') && (
-                  <>
-                    <br />
-                    <i>Box</i>
-                  </>
-                )}
-              </h2>
-              <p>
-                A curated selection of our finest snacks in one combo.
-              </p>
-
-              {featuredCombo.items && featuredCombo.items.length > 0 && (
-                <ul>
-                  {featuredCombo.items.map((item: any, index: number) => (
-                    <li key={index}>{item.name || 'Product'} (×{item.quantity})</li>
-                  ))}
-                </ul>
-              )}
-
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <Link href={`/combo/${featuredCombo.slug}`} className="button button-light">
-                  Get this combo · ₹{featuredCombo.discount && parseFloat(featuredCombo.discount) > 0 ? featuredCombo.discount : featuredCombo.price}
-                </Link>
-                <Link href="/shop?tab=combos" className="button button-outline">
-                  View all combos →
-                </Link>
-              </div>
-            </div>
-          </ScrollAnimate>
-
-          <ScrollAnimate animation="right">
-            <div className="combo-visual">
-              <span>{featuredCombo.items?.length || 0}</span>
-              <p>
-                delicious
-                <br />
-                items
-              </p>
-            </div>
-          </ScrollAnimate>
-        </section>
+      {/* Combo Slider Section */}
+      {validCombos.length > 0 && (
+        <CombosSlider combos={validCombos} />
       )}
       {/* Values Section */}
       <ScrollAnimate>

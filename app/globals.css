@@ -1493,7 +1493,7 @@ h2 i {
 }
 
 .button-outline:hover {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.15);
   color: white;
   border-color: white;
   transform: scale(1.05);
@@ -4571,8 +4571,9 @@ footer {
   }
 
   .button-outline:hover {
-    background: var(--ink);
-    color: white;
+    background: var(--cream);
+    color: var(--terracotta);
+    border-color: var(--terracotta);
   }
 
   .button-light {
@@ -4681,17 +4682,21 @@ footer {
   }
 
   .category-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
     gap: 16px;
-    overflow-x: visible;
-    flex-direction: unset;
-    padding-bottom: 0;
+    padding-bottom: 8px;
+    scrollbar-width: none;
   }
+  .category-grid::-webkit-scrollbar { display: none; }
   .category-grid .category-card {
-    flex: unset;
-    max-width: unset;
-    min-width: unset;
+    flex: 0 0 260px;
+    min-width: 260px;
+    max-width: 260px;
+    scroll-snap-align: start;
   }
 
 
@@ -4981,12 +4986,19 @@ footer {
   }
 
   .category-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
     gap: 24px;
-    overflow-x: visible;
-    flex-direction: unset;
-    padding-bottom: 0;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+  }
+  .category-grid .category-card {
+    flex: 0 0 300px;
+    min-width: 300px;
+    max-width: 300px;
+    scroll-snap-align: start;
   }
   .category-grid .category-card {
     flex: unset;
