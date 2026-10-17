@@ -538,12 +538,15 @@ export function AdminCombos() {
                   />
                 ) : (
                   <>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      style={{ marginBottom: "8px" }}
-                    />
+                    {/* Show file input only when no image chosen yet */}
+                    {!imagePreview && (
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        style={{ marginBottom: "8px" }}
+                      />
+                    )}
                     {imagePreview && (
                       <div style={{ position: "relative", display: "inline-block", marginTop: "8px", borderRadius: "8px", overflow: "hidden", width: "fit-content" }}>
                         <img
@@ -663,7 +666,7 @@ export function AdminCombos() {
                       {selectedItems.map((item) => {
                         const product = products.find(p => p.id === item.productId);
                         return (
-                          <div key={item.productId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", padding: "10px 12px", background: "#fff", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
+                          <div key={item.productId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", padding: "10px 12px", background: "#fff", borderRadius: "6px", border: "1px solid #e5e7eb", width: "100%", boxSizing: "border-box" }}>
                             <span style={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>
                               {product?.name}
                             </span>

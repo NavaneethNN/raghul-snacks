@@ -411,7 +411,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
       </header>
 
       {/* Stat banners — match dashboard metric card style */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16, padding: "24px 32px 8px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16, padding: "clamp(12px, 4vw, 24px) clamp(12px, 4vw, 32px) 8px" }}>
         {[
           { label: "Total Products", value: products.length },
           { label: "In Stock", value: products.filter(p => p.stock !== 0).length },
@@ -594,13 +594,13 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                     <div style={{ marginBottom: 12 }}>
                       <p style={{ margin: "0 0 8px", fontSize: 12, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Saved variants</p>
                       {savedVariants.map(v => (
-                        <div key={v.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "var(--paper)", borderRadius: 7, border: `1px solid ${editingVariantId === v.id ? "var(--terracotta)" : "var(--line)"}`, marginBottom: 5 }}>
+                        <div key={v.id} style={{ padding: "8px 10px", background: "var(--paper)", borderRadius: 7, border: `1px solid ${editingVariantId === v.id ? "var(--terracotta)" : "var(--line)"}`, marginBottom: 5 }}>
                           {editingVariantId === v.id ? (
                             // ── Inline edit mode ──
-                            <>
-                              <input type="text" value={editWeight} onChange={e => setEditWeight(e.target.value)} placeholder="Weight" style={{ flex: 2, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13, fontFamily: "'DM Sans',sans-serif" }} />
-                              <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="Price" style={{ flex: 1, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
-                              <input type="number" value={editOffer} onChange={e => setEditOffer(e.target.value)} placeholder="Offer (opt)" style={{ flex: 1, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
+                            <div className={styles.variantEditRow}>
+                              <input type="text" value={editWeight} onChange={e => setEditWeight(e.target.value)} placeholder="Weight" style={{ padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13, fontFamily: "'DM Sans',sans-serif" }} />
+                              <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="Price" style={{ padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
+                              <input type="number" value={editOffer} onChange={e => setEditOffer(e.target.value)} placeholder="Offer (opt)" style={{ padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
                               <button type="button" className={styles.primaryButton} style={{ padding: "4px 12px", fontSize: 12, whiteSpace: "nowrap" }}
                                 disabled={variantSaving || !editWeight.trim() || !editPrice}
                                 onClick={() => saveVariantEdit(editingProduct!.id, v.id)}>
@@ -610,10 +610,10 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                                 onClick={() => setEditingVariantId(null)}>
                                 Cancel
                               </button>
-                            </>
+                            </div>
                           ) : (
                             // ── Display mode ──
-                            <>
+                            <div className={styles.variantEditRow}>
                               <span style={{ flex: 1, font: "600 13px 'DM Sans',sans-serif" }}>{v.weight}</span>
                               <span style={{ fontSize: 12, color: "#6b7280" }}>₹{v.price}{v.offerPrice ? ` → ₹${v.offerPrice}` : ""}</span>
                               <button type="button" className={styles.iconButton} title="Edit variant"
@@ -623,7 +623,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                               <button type="button" className={styles.iconButton} onClick={() => deleteSavedVariant(editingProduct!.id, v.id)} title="Remove">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                               </button>
-                            </>
+                            </div>
                           )}
                         </div>
                       ))}
@@ -635,12 +635,12 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                     <div style={{ marginBottom: 12 }}>
                       <p style={{ margin: "0 0 8px", fontSize: 12, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Added variants</p>
                       {draftVariants.map(v => (
-                        <div key={v.key} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "var(--paper)", borderRadius: 7, border: `1px solid ${editingDraftKey === v.key ? "var(--terracotta)" : "var(--line)"}`, marginBottom: 5 }}>
+                        <div key={v.key} style={{ padding: "8px 10px", background: "var(--paper)", borderRadius: 7, border: `1px solid ${editingDraftKey === v.key ? "var(--terracotta)" : "var(--line)"}`, marginBottom: 5 }}>
                           {editingDraftKey === v.key ? (
-                            <>
-                              <input type="text" value={editWeight} onChange={e => setEditWeight(e.target.value)} placeholder="Weight" style={{ flex: 2, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13, fontFamily: "'DM Sans',sans-serif" }} />
-                              <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="Price" style={{ flex: 1, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
-                              <input type="number" value={editOffer} onChange={e => setEditOffer(e.target.value)} placeholder="Offer (opt)" style={{ flex: 1, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
+                            <div className={styles.variantEditRow}>
+                              <input type="text" value={editWeight} onChange={e => setEditWeight(e.target.value)} placeholder="Weight" style={{ padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13, fontFamily: "'DM Sans',sans-serif" }} />
+                              <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="Price" style={{ padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
+                              <input type="number" value={editOffer} onChange={e => setEditOffer(e.target.value)} placeholder="Offer (opt)" style={{ padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
                               <button type="button" className={styles.primaryButton} style={{ padding: "4px 12px", fontSize: 12, whiteSpace: "nowrap" }}
                                 disabled={!editWeight.trim() || !editPrice}
                                 onClick={() => {
@@ -653,9 +653,9 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                                 onClick={() => setEditingDraftKey(null)}>
                                 Cancel
                               </button>
-                            </>
+                            </div>
                           ) : (
-                            <>
+                            <div className={styles.variantEditRow}>
                               <span style={{ flex: 1, font: "600 13px 'DM Sans',sans-serif" }}>{v.label}</span>
                               <span style={{ fontSize: 12, color: "#6b7280" }}>₹{v.price}{v.offerPrice ? ` → ₹${v.offerPrice}` : ""}</span>
                               <button type="button" className={styles.iconButton} title="Edit"
@@ -665,7 +665,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                               <button type="button" className={styles.iconButton} onClick={() => removeDraftVariant(v.key)} title="Remove">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                               </button>
-                            </>
+                            </div>
                           )}
                         </div>
                       ))}
@@ -747,14 +747,16 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                 {imageInputType === "url"
                   ? <input type="text" name="image" placeholder="https://…" defaultValue={editingProduct?.image?.startsWith("data:") ? "" : (editingProduct?.image ?? "")} />
                   : (<>
-                      {/* Always show file input so user can pick a new file even when preview exists */}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        ref={imageFileRef}
-                        onChange={handleImageUpload}
-                        style={{ marginBottom: "8px" }}
-                      />
+                      {/* Show file input only when no image is chosen yet */}
+                      {!imagePreview && (
+                        <input
+                          type="file"
+                          accept="image/*"
+                          ref={imageFileRef}
+                          onChange={handleImageUpload}
+                          style={{ marginBottom: "8px" }}
+                        />
+                      )}
                       {imageUploading && (
                         <p style={{ fontSize: 12, color: "var(--terracotta)", margin: "4px 0" }}>⏳ Uploading to cloud…</p>
                       )}

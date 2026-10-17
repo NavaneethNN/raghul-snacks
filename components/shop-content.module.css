@@ -1,1 +1,26 @@
-/* Placeholder for any specific shop content styles */
+/* Shop tab pill bar */
+.tabBtn {
+  white-space: nowrap;
+  border: none;
+  padding: 9px 18px;
+  font: 500 13px 'DM Sans', sans-serif;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  letter-spacing: 0.01em;
+}
+
+.tabBtn:hover {
+  color: var(--ink);
+  background: rgba(36, 49, 39, 0.05);
+}
+
+.tabBtnActive {
+  background: white !important;
+  color: var(--terracotta) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1) !important;
+}

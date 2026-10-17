@@ -60,33 +60,17 @@ export function ShopContent({
 
   return (
     <>
-      <div className="filter-row" style={{ marginBottom: '24px' }}>
+      <div className="filter-row">
         <button
+          className={`${styles.tabBtn} ${activeTab === 'products' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('products')}
-          style={{
-            background: activeTab === 'products' ? 'var(--ink)' : 'transparent',
-            color: activeTab === 'products' ? 'white' : 'inherit',
-            border: '1px solid var(--line)',
-            padding: '8px 16px',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontWeight: activeTab === 'products' ? '600' : '400',
-          }}
         >
           All Products
         </button>
         {combos.length > 0 && (
           <button
+            className={`${styles.tabBtn} ${activeTab === 'combos' ? styles.tabBtnActive : ''}`}
             onClick={() => setActiveTab('combos')}
-            style={{
-              background: activeTab === 'combos' ? 'var(--ink)' : 'transparent',
-              color: activeTab === 'combos' ? 'white' : 'inherit',
-              border: '1px solid var(--line)',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontWeight: activeTab === 'combos' ? '600' : '400',
-            }}
           >
             Combos
           </button>
@@ -94,16 +78,8 @@ export function ShopContent({
         {categories.map((category) => (
           <button
             key={category.slug}
+            className={`${styles.tabBtn} ${activeTab === category.slug ? styles.tabBtnActive : ''}`}
             onClick={() => setActiveTab(category.slug)}
-            style={{
-              background: activeTab === category.slug ? 'var(--ink)' : 'transparent',
-              color: activeTab === category.slug ? 'white' : 'inherit',
-              border: '1px solid var(--line)',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontWeight: activeTab === category.slug ? '600' : '400',
-            }}
           >
             {category.name}
           </button>
