@@ -578,8 +578,8 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
             <Link href="/shop" className="hero-btn-primary">
               Shop Fresh Snacks →
             </Link>
-            <Link href="/shop?tab=combos" className="hero-btn-secondary">
-              Curated Gift Combos
+            <Link href="/#bestsellers" className="hero-btn-secondary">
+              Explore Bestsellers →
             </Link>
           </div>
 
@@ -590,7 +590,7 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
             <Link href="/shop#categories" className="hero-cat-pill">Laddus</Link>
             <Link href="/shop#categories" className="hero-cat-pill">Savouries</Link>
             <Link href="/shop#categories" className="hero-cat-pill">Podis</Link>
-            <Link href="/shop?tab=combos" className="hero-cat-pill highlight">Gift Combos ✨</Link>
+            <Link href="/#bestsellers" className="hero-cat-pill highlight">Bestsellers 🔥</Link>
           </div>
         </div>
 

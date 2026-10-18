@@ -53,9 +53,9 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
               <h4>Shop</h4>
               <ul>
                 <li><Link href="/shop">All Snacks</Link></li>
-                <li><Link href="/shop?tab=combos">Curated Combos</Link></li>
                 <li><Link href="/#bestsellers">Bestsellers</Link></li>
                 <li><Link href="/#categories">Browse by Craving</Link></li>
+                <li><Link href="/shop#categories">Millet Laddus</Link></li>
               </ul>
             </div>
             <div className="footer-column">

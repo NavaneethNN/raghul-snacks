@@ -30,7 +30,9 @@ export function ShopContent({
   const tabParam = searchParams.get('tab');
   // Track whether user has manually clicked a tab — if so, ignore the URL param
   const [userTab, setUserTab] = useState<string | null>(null);
-  const activeTab = userTab ?? tabParam ?? 'products';
+  const selectedTab = userTab ?? tabParam ?? 'products';
+  // If combos tab is requested but there are no combos active, gracefully fall back to 'products'
+  const activeTab = selectedTab === 'combos' && combos.length === 0 ? 'products' : selectedTab;
 
   function setActiveTab(tab: string) {
     setUserTab(tab);
