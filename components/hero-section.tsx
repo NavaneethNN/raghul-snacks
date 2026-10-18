@@ -248,78 +248,209 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
           z-index: 10;
         }
 
-        /* ── Mobile Layout Optimization ── */
+        /* ── Mobile-Only Hero Redesign (≤860px) ── */
         @media (max-width: 860px) {
           .hero-custom {
-            padding: 24px 16px 28px;
+            padding: 22px 16px 28px;
+            background: radial-gradient(circle at 50% 0%, rgba(229, 165, 47, 0.12) 0%, transparent 65%),
+                        radial-gradient(circle at 85% 90%, rgba(201, 95, 59, 0.08) 0%, transparent 50%),
+                        #fcfaf6;
           }
+
           .hero-container {
-            grid-template-columns: 1fr;
-            gap: 22px;
-          }
-          /* Keep text col first on mobile so customer immediately sees what we sell & can shop */
-          .hero-text-col {
-            order: 1;
-            align-items: flex-start;
-          }
-          .hero-visual-col {
-            order: 2;
-          }
-          .hero-heading {
-            font-size: clamp(26px, 7.5vw, 34px);
-            line-height: 1.15;
-            margin-bottom: 10px;
-          }
-          .hero-description {
-            font-size: 13.5px;
-            line-height: 1.55;
-            margin-bottom: 16px;
-          }
-          .hero-trust-chips {
-            gap: 6px 10px;
-            margin-bottom: 18px;
-          }
-          .hero-trust-chip {
-            font-size: 11.5px;
-            padding: 4px 9px;
-          }
-          .hero-cta-row {
-            flex-direction: row;
-            gap: 10px;
-          }
-          .hero-btn-primary, .hero-btn-secondary {
-            flex: 1 1 auto;
-            padding: 12px 14px;
-            font-size: 13.5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             text-align: center;
-          }
-          .hero-visual-wrapper {
+            gap: 0;
             max-width: 440px;
+            margin: 0 auto;
           }
+
+          /* Flatten columns on mobile so elements can be ordered perfectly */
+          .hero-text-col,
+          .hero-visual-col {
+            display: contents;
+          }
+
+          /* 1. Category Eyebrow Pill */
+          .hero-eyebrow-pill {
+            order: 1;
+            margin: 0 auto 10px;
+            font-size: 10px;
+            padding: 4px 11px;
+            letter-spacing: 0.1em;
+          }
+
+          /* 2. Headline */
+          .hero-heading {
+            order: 2;
+            font-size: clamp(27px, 7.8vw, 34px);
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            margin: 0 auto 8px;
+            text-align: center;
+            max-width: 360px;
+          }
+
+          /* 3. Short Punchy Description */
+          .hero-description {
+            order: 3;
+            font-size: 13.5px;
+            line-height: 1.5;
+            color: #525a50;
+            margin: 0 auto 16px;
+            text-align: center;
+            max-width: 360px;
+          }
+
+          /* 4. Showcase Card (Hero Image + Docked Offer Banner) */
+          .hero-visual-wrapper {
+            order: 4;
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+
           .hero-image-frame {
+            width: 100%;
             max-width: 100%;
             aspect-ratio: 16 / 10;
             border-radius: 16px;
+            border: 1.5px solid var(--line);
+            box-shadow: 0 10px 26px -6px rgba(36, 49, 39, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            position: relative;
           }
-          /* Hide desktop floating badges on mobile so food is 100% visible and unblocked */
-          .hero-badge-artisan,
+
+          /* Show artisanal badge neatly at bottom-left of the image */
+          .hero-badge-artisan {
+            display: inline-flex !important;
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            top: auto;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 4px 10px;
+            border-radius: 999px;
+            font: 600 9.5px 'DM Mono', monospace;
+            color: var(--ink);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+            z-index: 2;
+          }
+
           .hero-badge-pure {
             display: none;
           }
+
+          /* On mobile, promo banner sits cleanly as a full-width offer card below the image */
           .hero-banner-wrapper {
-            position: absolute;
-            top: -14px;
-            right: -6px;
-            width: 175px;
-            z-index: 10;
+            position: relative !important;
+            top: auto !important;
+            right: auto !important;
+            width: 100% !important;
+            max-width: 420px !important;
+            margin-top: 12px !important;
+            z-index: 5 !important;
+          }
+
+          /* 5. Trust Chips: 2x2 grid */
+          .hero-trust-chips {
+            order: 5;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto 16px;
+          }
+
+          .hero-trust-chip {
+            justify-content: center;
+            text-align: center;
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 7px 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(201, 95, 59, 0.16);
+            color: #374151;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .hero-trust-chip svg {
+            width: 13px;
+            height: 13px;
+          }
+
+          /* 6. Action Buttons: Clean stacked CTAs */
+          .hero-cta-row {
+            order: 6;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto;
+          }
+
+          .hero-btn-primary {
+            width: 100%;
+            padding: 13px 18px;
+            font-size: 14.5px;
+            font-weight: 700;
+            text-align: center;
+            justify-content: center;
+            border-radius: 10px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 14px rgba(201, 95, 59, 0.28);
+          }
+
+          .hero-btn-secondary {
+            width: 100%;
+            padding: 12px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            justify-content: center;
+            border-radius: 10px;
+            box-sizing: border-box;
+            background: #fff;
           }
         }
 
-        @media (max-width: 440px) {
-          .hero-banner-wrapper {
-            top: -10px;
-            right: 0px;
-            width: 160px;
+        /* Small screens (≤380px) */
+        @media (max-width: 380px) {
+          .hero-custom {
+            padding: 18px 12px 24px;
+          }
+
+          .hero-heading {
+            font-size: 25px;
+          }
+
+          .hero-description {
+            font-size: 12.5px;
+          }
+
+          .hero-trust-chips {
+            grid-template-columns: 1fr;
+            gap: 6px;
+          }
+
+          .hero-trust-chip {
+            justify-content: flex-start;
+            padding: 6px 10px;
           }
         }
       `}</style>
