@@ -4,6 +4,7 @@ import { eq, like } from "drizzle-orm";
 import { products, comboItems, orderItems, reviews, cartItems, categories } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
+import { invalidateCache } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -55,6 +56,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
+    invalidateCache("home:products");
+    invalidateCache("shop:products");
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Error updating product:", error);
@@ -85,6 +89,9 @@ export async function DELETE(
 
     // Now delete the product (productVariants cascade automatically)
     await db.delete(products).where(eq(products.id, id));
+
+    invalidateCache("home:products");
+    invalidateCache("shop:products");
 
     return NextResponse.json({ success: true });
   } catch (error) {

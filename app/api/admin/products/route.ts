@@ -4,6 +4,7 @@ import { desc, eq, ilike, or } from "drizzle-orm";
 import { products, categories } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
+import { invalidateCache } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -109,6 +110,9 @@ export async function POST(request: NextRequest) {
       stock: body.stock !== undefined ? body.stock : 1,
       shelfLife: shelfLife || null,
     }).returning();
+
+    invalidateCache("home:products");
+    invalidateCache("shop:products");
 
     return NextResponse.json(newProduct, { status: 201 });
   } catch (error) {

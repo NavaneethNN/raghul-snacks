@@ -788,7 +788,7 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
                     return (
                       <div key={idx} className="combo-chip" title={`${item.name || "Snack"} (${qtyText})`}>
                         {item.image ? (
-                          <img src={item.image} alt={item.name || ""} className="combo-chip-img" />
+                          <img src={item.image} alt={item.name || ""} className="combo-chip-img" loading="lazy" decoding="async" />
                         ) : (
                           <span className="combo-chip-bullet">✦</span>
                         )}
@@ -850,7 +850,7 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
             <Link href={`/combo/${combo.slug}`} className="combo-image-link" tabIndex={-1} aria-label={`View ${combo.title}`}>
               <div className="combo-image-card">
                 {combo.image ? (
-                  <img src={combo.image} alt={combo.title} className="combo-hero-image" />
+                  <img src={combo.image} alt={combo.title} className="combo-hero-image" loading="lazy" decoding="async" />
                 ) : (
                   <div className="combo-placeholder-box">
                     <span className="combo-placeholder-icon">🎁</span>

@@ -56,7 +56,7 @@ export function ProductCard({ product }: { product: any }) {
     <article className="product-card">
       <Link href={`/product/${product.slug}`} className="product-visual">
         {product.image ? (
-          <img src={product.image} alt={product.name} />
+          <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
         ) : (
           <div className="product-visual-placeholder">
             <span className="placeholder-icon">✦</span>

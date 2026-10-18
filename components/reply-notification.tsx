@@ -67,8 +67,12 @@ export function ReplyNotification() {
       } catch { /* ignore */ }
     }
 
-    check();
-    return () => { cancelled = true; };
+    // Delay non-critical check by 3 seconds to keep initial page load fast
+    const initTimer = setTimeout(check, 3000);
+    return () => {
+      cancelled = true;
+      clearTimeout(initTimer);
+    };
   }, [pathname]);
 
   function dismiss() {

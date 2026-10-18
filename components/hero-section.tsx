@@ -304,60 +304,32 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
             max-width: 360px;
           }
 
-          /* 4. Showcase Card (Hero Image + Docked Offer Banner) */
+          /* 4. Showcase Card: Remove hero image on mobile, keep promo banner if active */
           .hero-visual-wrapper {
             order: 4;
             width: 100%;
             max-width: 420px;
-            margin: 0 auto 16px;
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
             align-items: center;
           }
 
-          .hero-image-frame {
-            width: 100%;
-            max-width: 100%;
-            aspect-ratio: 16 / 10;
-            border-radius: 16px;
-            border: 1.5px solid var(--line);
-            box-shadow: 0 10px 26px -6px rgba(36, 49, 39, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
-            overflow: hidden;
-            position: relative;
-          }
-
-          /* Show artisanal badge neatly at bottom-left of the image */
-          .hero-badge-artisan {
-            display: inline-flex !important;
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            top: auto;
-            background: rgba(255, 255, 255, 0.94);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            padding: 4px 10px;
-            border-radius: 999px;
-            font: 600 9.5px 'DM Mono', monospace;
-            color: var(--ink);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-            z-index: 2;
-          }
-
+          /* Hide hero image frame & badges completely on mobile */
+          .hero-image-frame,
+          .hero-badge-artisan,
           .hero-badge-pure {
-            display: none;
+            display: none !important;
           }
 
-          /* On mobile, promo banner sits cleanly as a full-width offer card below the image */
+          /* On mobile, promo banner sits cleanly as a full-width offer card */
           .hero-banner-wrapper {
             position: relative !important;
             top: auto !important;
             right: auto !important;
             width: 100% !important;
             max-width: 420px !important;
-            margin-top: 12px !important;
+            margin: 0 auto 16px !important;
             z-index: 5 !important;
           }
 
@@ -503,11 +475,18 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
         <div className="hero-visual-col">
           <div className="hero-visual-wrapper">
             <div className="hero-image-frame">
-              <img
-                src="/hero.png"
-                alt="Handcrafted millet laddus, traditional snacks, and authentic podi varieties from Raghul Delights"
-                className="hero-main-photo"
-              />
+              <picture>
+                <source
+                  media="(max-width: 860px)"
+                  srcSet="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                />
+                <source srcSet="/hero.webp" type="image/webp" />
+                <img
+                  src="/hero.png"
+                  alt="Handcrafted millet laddus, traditional snacks, and authentic podi varieties from Raghul Delights"
+                  className="hero-main-photo"
+                />
+              </picture>
               <div className="hero-badge-artisan">
                 <span className="dot" />
                 <span>Fresh Batch Handcrafted</span>
