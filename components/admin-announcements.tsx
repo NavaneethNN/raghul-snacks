@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
@@ -244,7 +244,7 @@ export function AdminAnnouncements() {
                 <label>Announcement Text *</label>
                 <input
                   type="text"
-                  placeholder="e.g., Free delivery on orders above ₹499 🚚"
+                  placeholder="e.g., Free delivery on orders above ₹499"
                   value={form.text}
                   onChange={(e) => setForm({ ...form, text: e.target.value })}
                   autoFocus
@@ -254,15 +254,15 @@ export function AdminAnnouncements() {
 
               <div className={styles.formGrid}>
                 <div className={styles.field}>
-                  <label>Icon / Emoji</label>
+                  <label>Icon</label>
                   <input
                     type="text"
-                    placeholder="e.g., 🎉"
+                    placeholder="e.g., •"
                     value={form.icon}
                     onChange={(e) => setForm({ ...form, icon: e.target.value })}
                     maxLength={4}
                   />
-                  <small style={{ color: "#6b7280", fontSize: 12 }}>Optional emoji shown before the text</small>
+                  <small style={{ color: "#6b7280", fontSize: 12 }}>Optional icon or character shown before the text</small>
                 </div>
                 <div className={styles.field}>
                   <label>Status</label>

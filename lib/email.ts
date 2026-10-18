@@ -57,7 +57,7 @@ function buildOrderEmailHtml(data: OrderEmailData): string {
         <!-- Header -->
         <tr><td style="background:#243127;border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
           <p style="margin:0 0 4px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#b6d4a0;font-weight:600;">Raghul Delights</p>
-          <h1 style="margin:0;font-size:26px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;">Order Confirmed! 🎉</h1>
+          <h1 style="margin:0;font-size:26px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;">Order Confirmed!</h1>
         </td></tr>
 
         <!-- Body -->
@@ -117,7 +117,7 @@ function buildOrderEmailHtml(data: OrderEmailData): string {
           <!-- Prep note -->
           <div style="background:#f0f7ec;border-left:3px solid #7aad5e;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:28px;">
             <p style="margin:0;font-size:13px;color:#3a6b2a;line-height:1.6;">
-              🍃 <strong>Made fresh for you.</strong> Your snacks are prepared after your order is placed. Please allow 2–3 business days for preparation before dispatch.
+              <strong>Made fresh for you.</strong> Your snacks are prepared after your order is placed. Please allow 2–3 business days for preparation before dispatch.
             </p>
           </div>
 

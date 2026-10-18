@@ -106,16 +106,6 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
           color: var(--terracotta);
           flex-shrink: 0;
         }
-        .hero-trust-chip .chip-sub,
-        .hero-trust-chip .chip-icon-box {
-          display: none;
-        }
-        .hero-trust-chip .chip-text-wrap {
-          display: inline;
-        }
-        .hero-mobile-categories {
-          display: none;
-        }
 
         /* Action Buttons */
         .hero-cta-row {
@@ -319,9 +309,47 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
             max-width: 360px;
           }
 
-          /* 4. Active Promo Offer Banner (if present) */
-          .hero-visual-wrapper {
+          /* 4. Trust Pillars: placed above banner, single line per item, no boxes */
+          .hero-trust-chips {
             order: 4;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            width: fit-content;
+            margin: 0 auto 18px;
+          }
+
+          .hero-trust-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            white-space: nowrap;
+          }
+
+          .hero-trust-chip svg {
+            color: var(--terracotta);
+            flex-shrink: 0;
+          }
+
+          @media (min-width: 480px) and (max-width: 860px) {
+            .hero-trust-chips {
+              display: grid;
+              grid-template-columns: repeat(2, auto);
+              gap: 10px 24px;
+            }
+          }
+
+          /* 5. Active Promo Offer Banner (if present) */
+          .hero-visual-wrapper {
+            order: 5;
             width: 100%;
             max-width: 420px;
             margin: 0 auto;
@@ -348,15 +376,15 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
             z-index: 5 !important;
           }
 
-          /* 5. Action Buttons: Touch-friendly full-width CTAs */
+          /* 6. Action Buttons: Touch-friendly full-width CTAs */
           .hero-cta-row {
-            order: 5;
+            order: 6;
             display: flex;
             flex-direction: column;
             gap: 10px;
             width: 100%;
             max-width: 420px;
-            margin: 0 auto 20px;
+            margin: 0 auto 12px;
           }
 
           .hero-btn-primary {
@@ -386,115 +414,6 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
             border: 1.5px solid rgba(201, 95, 59, 0.28);
             color: var(--ink);
           }
-
-          /* 6. Bento Value Pillars: 2x2 grid */
-          .hero-trust-chips {
-            order: 6;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            width: 100%;
-            max-width: 420px;
-            margin: 0 auto 18px;
-          }
-
-          .hero-trust-chip {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 12px 8px;
-            border-radius: 12px;
-            background: #ffffff;
-            border: 1px solid rgba(0, 0, 0, 0.07);
-            box-shadow: 0 2px 8px -2px rgba(36, 49, 39, 0.05);
-            width: 100%;
-            box-sizing: border-box;
-          }
-
-          .hero-trust-chip .desktop-icon {
-            display: none !important;
-          }
-
-          .hero-trust-chip .chip-icon-box {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: rgba(201, 95, 59, 0.09);
-            color: var(--terracotta);
-            font-size: 15px;
-            margin-bottom: 6px;
-          }
-
-          .hero-trust-chip .chip-title {
-            font-size: 12.5px;
-            font-weight: 700;
-            color: var(--ink);
-            line-height: 1.25;
-          }
-
-          .hero-trust-chip .chip-sub {
-            display: block;
-            font-size: 10.5px;
-            font-weight: 500;
-            color: #6b7280;
-            line-height: 1.25;
-            margin-top: 2px;
-          }
-
-          /* 7. Quick Category Jump Bar */
-          .hero-mobile-categories {
-            order: 7;
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            padding: 4px 2px;
-            width: 100%;
-            max-width: 420px;
-            margin: 0 auto;
-            scrollbar-width: none;
-          }
-          .hero-mobile-categories::-webkit-scrollbar {
-            display: none;
-          }
-
-          .hero-cat-tag {
-            font: 700 10px 'DM Mono', monospace;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #8c9388;
-            flex-shrink: 0;
-            margin-right: 2px;
-          }
-
-          .hero-cat-pill {
-            display: inline-flex;
-            align-items: center;
-            white-space: nowrap;
-            flex-shrink: 0;
-            font-size: 11.5px;
-            font-weight: 600;
-            color: #4b5563;
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            border-radius: 999px;
-            padding: 5px 11px;
-            text-decoration: none;
-            transition: all 0.2s ease;
-          }
-
-          .hero-cat-pill.highlight {
-            background: rgba(201, 95, 59, 0.09);
-            border-color: rgba(201, 95, 59, 0.25);
-            color: var(--terracotta);
-            font-weight: 700;
-          }
         }
 
         /* Ultra small screens (≤380px) */
@@ -512,11 +431,11 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
           }
 
           .hero-trust-chips {
-            gap: 8px;
+            gap: 7px;
           }
 
           .hero-trust-chip {
-            padding: 10px 6px;
+            font-size: 12px;
           }
         }
       `}</style>
@@ -538,39 +457,23 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
 
           <div className="hero-trust-chips">
             <span className="hero-trust-chip">
-              <svg className="desktop-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span className="chip-icon-box">🌾</span>
-              <span className="chip-text-wrap">
-                <span className="chip-title">Millet Laddus</span>
-                <span className="chip-sub">Heirloom Recipes</span>
-              </span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Millet Laddus</span>
             </span>
 
             <span className="hero-trust-chip">
-              <svg className="desktop-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span className="chip-icon-box">🫓</span>
-              <span className="chip-text-wrap">
-                <span className="chip-title">Traditional Snacks</span>
-                <span className="chip-sub">Pure Cold-Pressed</span>
-              </span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Traditional Snacks</span>
             </span>
 
             <span className="hero-trust-chip">
-              <svg className="desktop-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span className="chip-icon-box">🌿</span>
-              <span className="chip-text-wrap">
-                <span className="chip-title">Everyday Podis</span>
-                <span className="chip-sub">Stone-Ground Fresh</span>
-              </span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Everyday Podi Varieties</span>
             </span>
 
             <span className="hero-trust-chip">
-              <svg className="desktop-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span className="chip-icon-box">🚚</span>
-              <span className="chip-text-wrap">
-                <span className="chip-title">Shipped Fresh</span>
-                <span className="chip-sub">Pan-India Delivery</span>
-              </span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Shipped Fresh Across India</span>
             </span>
           </div>
 

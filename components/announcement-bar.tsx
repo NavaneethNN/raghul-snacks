@@ -10,6 +10,21 @@ type Announcement = {
 
 let cachedAnnouncements: Announcement[] | undefined = undefined;
 
+function renderAnnouncementIcon(icon: string | null) {
+  if (!icon) return null;
+  if (icon === "🚚" || icon === "truck") {
+    return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}>
+        <rect x="1" y="3" width="15" height="13"></rect>
+        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+        <circle cx="5.5" cy="18.5" r="2.5"></circle>
+        <circle cx="18.5" cy="18.5" r="2.5"></circle>
+      </svg>
+    );
+  }
+  return <span className="announcement-icon">{icon}</span>;
+}
+
 function AnnouncementItem({ text, icon }: { text: string; icon: string | null }) {
   const itemRef = useRef<HTMLSpanElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -31,7 +46,7 @@ function AnnouncementItem({ text, icon }: { text: string; icon: string | null })
   return (
     <div ref={containerRef} className="announcement-slider">
       <span ref={itemRef} className={`announcement-item${isMarquee ? " marquee" : ""}`}>
-        {icon && <span className="announcement-icon">{icon}</span>}
+        {renderAnnouncementIcon(icon)}
         {text}
       </span>
     </div>
@@ -68,7 +83,7 @@ export function AnnouncementBar() {
 
   if (announcements.length === 0) {
     const text = loading ? "" : "Free delivery on orders above ₹499";
-    const icon = loading ? null : "🚚";
+    const icon = loading ? null : "truck";
     return (
       <div className="announcement">
         <AnnouncementItem text={text} icon={icon} />

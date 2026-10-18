@@ -20,10 +20,10 @@ export type Banner = {
 function BannerCard({ banner, onCopyCoupon }: { banner: Banner; onCopyCoupon: (code: string) => void }) {
   return (
     <div className="hero-banner-card">
-      <div className="hero-banner-pattern">
-        <span className="hero-banner-leaf leaf-1">🍃</span>
-        <span className="hero-banner-leaf leaf-2">🍂</span>
-        <span className="hero-banner-leaf leaf-3">🌿</span>
+      <div className="hero-banner-pattern" aria-hidden="true">
+        <svg className="hero-banner-leaf leaf-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+        <svg className="hero-banner-leaf leaf-2" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+        <svg className="hero-banner-leaf leaf-3" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
       </div>
       <div className="hero-banner-content">
         {banner.eyebrow && <p className="hero-banner-eyebrow">{banner.eyebrow}</p>}
