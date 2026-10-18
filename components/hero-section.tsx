@@ -582,16 +582,6 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
               Explore Bestsellers →
             </Link>
           </div>
-
-          {/* Quick-tap category pills for mobile */}
-          <div className="hero-mobile-categories">
-            <span className="hero-cat-tag">Shop:</span>
-            <Link href="/shop" className="hero-cat-pill">All Snacks</Link>
-            <Link href="/shop#categories" className="hero-cat-pill">Laddus</Link>
-            <Link href="/shop#categories" className="hero-cat-pill">Savouries</Link>
-            <Link href="/shop#categories" className="hero-cat-pill">Podis</Link>
-            <Link href="/#bestsellers" className="hero-cat-pill highlight">Bestsellers 🔥</Link>
-          </div>
         </div>
 
         {/* Right Showcase Column */}
