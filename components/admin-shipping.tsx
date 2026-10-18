@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
@@ -100,10 +100,10 @@ export function AdminShipping() {
       </header>
 
       <section className={styles.workspace}>
-        <div style={{ padding: "32px", maxWidth: 600 }}>
+        <div style={{ padding: "clamp(16px, 4vw, 32px)", maxWidth: 600, width: "100%", boxSizing: "border-box" }}>
 
           {/* Zone table */}
-          <div style={{ background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 12, padding: "20px 24px", marginBottom: 32 }}>
+          <div style={{ background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 12, padding: "clamp(14px, 3vw, 20px) clamp(12px, 3vw, 24px)", marginBottom: 32, overflowX: "auto" }}>
             <p style={{ margin: "0 0 4px", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", fontWeight: 600 }}>Zone Overview</p>
             <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 12 }}>
               <thead>

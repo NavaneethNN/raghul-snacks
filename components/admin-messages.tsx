@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
@@ -127,11 +127,11 @@ export function AdminMessages({ messages: initial }: { messages: Message[] }) {
                 <button
                   type="button"
                   onClick={() => openMessage(msg)}
-                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "16px 24px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "14px clamp(12px, 3vw, 24px)", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
                 >
                   <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: msg.read ? "transparent" : "var(--terracotta)", border: msg.read ? "1.5px solid var(--line)" : "none" }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <strong style={{ fontSize: 14, color: "var(--ink)", fontWeight: msg.read ? 500 : 700 }}>{msg.name}</strong>
                       <span style={{ fontSize: 12, color: "#6b7280" }}>{msg.email}</span>
                       {msg.phone && <span style={{ fontSize: 12, color: "#6b7280" }}>{msg.phone}</span>}
@@ -158,7 +158,7 @@ export function AdminMessages({ messages: initial }: { messages: Message[] }) {
 
                 {/* Expanded body */}
                 {expanded === msg.id && (
-                  <div style={{ padding: "0 24px 20px 46px" }}>
+                  <div style={{ padding: "0 clamp(12px, 3vw, 24px) 20px clamp(14px, 4vw, 46px)" }}>
                     {/* Customer message */}
                     <div style={{ background: "var(--paper)", border: "1px solid var(--line)", borderRadius: 10, padding: "14px 16px", marginBottom: 14, whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.7, color: "var(--ink)" }}>
                       {msg.message}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -65,7 +65,7 @@ export function AdminSettings() {
         <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
-      <section className={styles.workspace} style={{ maxWidth: 520, margin: "32px auto" }}>
+      <section className={styles.workspace} style={{ maxWidth: 520, margin: "20px auto", width: "calc(100% - 24px)", boxSizing: "border-box" }}>
         <div style={{ padding: "clamp(16px, 4vw, 32px)" }}>
           <h2 style={{ margin: "0 0 6px", fontSize: 20, fontWeight: 700, color: "var(--ink)", fontFamily: "'Playfair Display', serif" }}>
             Change Password

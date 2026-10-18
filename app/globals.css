@@ -1742,9 +1742,9 @@ h2 i {
 }
 .category-grid::-webkit-scrollbar { display: none; }
 .category-grid .category-card {
-  flex: 0 0 88vw;
-  max-width: 420px;
-  min-width: 300px;
+  flex: 0 0 84vw;
+  max-width: 340px;
+  min-width: 260px;
   scroll-snap-align: start;
 }
 
@@ -2788,40 +2788,51 @@ h2 i {
   }
 
   .stat-number {
-    font-size: 42px;
+    font-size: 22px;
+  }
+
+  .values-grid,
+  .process-steps {
+    gap: 12px;
   }
 
   .value-card,
   .process-step {
-    padding: 28px 24px;
+    padding: 18px 16px;
+    border-radius: 12px;
   }
 
   .value-icon {
-    width: 56px;
-    height: 56px;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    margin-bottom: 12px;
   }
 
   .value-card h3 {
-    font-size: 20px;
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+
+  .value-card p,
+  .process-step p {
+    font-size: 13.5px;
+    line-height: 1.5;
+    max-width: 100%;
   }
 
   .step-number {
-    font-size: 56px;
-    top: 16px;
-    right: 20px;
+    font-size: 38px;
+    margin-bottom: 6px;
   }
 
   .process-step h3 {
-    font-size: 22px;
-  }
-
-  .process-step p {
-    max-width: 100%;
-    font-size: 15px;
+    font-size: 18px;
+    margin-bottom: 6px;
   }
 
   .about-cta p {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .cta-actions {
@@ -3025,39 +3036,40 @@ h2 i {
 .story-stats {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 24px;
+  gap: 12px;
 }
 
 .stat-card {
   background: var(--paper);
-  padding: 32px;
-  border-radius: 16px;
+  padding: 14px 18px;
+  border-radius: 12px;
   border: 1px solid var(--line);
   transition: all 0.3s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(36, 49, 39, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(36, 49, 39, 0.06);
 }
 
 .stat-number {
-  font: 700 36px 'Playfair Display', serif;
+  font: 700 24px 'Playfair Display', serif;
   color: var(--terracotta);
-  margin: 0 0 8px;
+  margin: 0 0 2px;
+  line-height: 1.1;
 }
 
 .stat-label {
-  font: 600 16px 'DM Sans', sans-serif;
+  font: 600 13px 'DM Sans', sans-serif;
   color: var(--ink);
-  margin: 0 0 8px;
+  margin: 0 0 4px;
 }
 
 .stat-card p {
-  font-size: 14px;
+  font-size: 12px;
   color: #687267;
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .about-values {
