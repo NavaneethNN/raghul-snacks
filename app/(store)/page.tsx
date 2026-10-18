@@ -3,6 +3,7 @@ import { desc, eq, inArray } from "drizzle-orm";
 import { ProductCard } from "@/components/product/product-card";
 import { BestsellersSlider } from "@/components/bestsellers-slider";
 import { CombosSlider } from "@/components/combos-slider";
+import { CategoriesSlider } from "@/components/categories-slider";
 import { HeroSection } from "@/components/hero-section";
 import { ScrollAnimate } from "@/components/scroll-animate";
 import { getDb } from "@/lib/db";
@@ -111,27 +112,7 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="category-grid">
-            {categories.map((category: any, index: number) => (
-              <Link
-                href={`/shop/${category.slug}`}
-                className={`category-card card-${index}`}
-                key={category.slug}
-                style={{
-                  backgroundImage: category.image
-                    ? `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.45)), url(${category.image})`
-                    : 'linear-gradient(135deg, #243127 0%, #1a221b 60%, #a23c1c 100%)',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-              >
-                <span className="category-mark">0{index + 1}</span>
-                <h3>{category.name}</h3>
-                <p>{category.description || 'Handcrafted traditional recipe'}</p>
-                <b>Explore →</b>
-              </Link>
-            ))}
-          </div>
+          <CategoriesSlider categories={categories} />
         </ScrollAnimate>
       </section>
 

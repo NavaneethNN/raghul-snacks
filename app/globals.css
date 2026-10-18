@@ -167,23 +167,23 @@ main {
   transform: translateX(-50%) translateY(0);
 }
 
-/* ── Hero banner: responsive card track ── */
+/* ── Hero banner: compact card track ── */
 .hero-banner-track {
   position: relative;
   width: 100%;
   max-width: 100%;
   overflow: hidden;
-  border-radius: 14px;
+  border-radius: 12px;
   background: linear-gradient(135deg, #fffbf5 0%, #fff4e8 100%);
-  border: 1.5px dashed rgba(201, 95, 59, 0.35);
-  box-shadow: 0 4px 16px rgba(201, 95, 59, 0.08);
+  border: 1.5px dashed rgba(201, 95, 59, 0.4);
+  box-shadow: 0 8px 24px -4px rgba(36, 49, 39, 0.16), 0 2px 6px rgba(0, 0, 0, 0.06);
   z-index: 2;
 }
 
 .hero-banner-slide {
   width: 100%;
   min-height: auto;
-  padding: 16px 20px;
+  padding: 12px 14px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -251,7 +251,7 @@ main {
     min-height: 130px;
   }
 
-  .hero-banner-track {
+  .hero-visual .hero-banner-track {
     position: relative;
     top: auto;
     right: auto;
@@ -262,7 +262,7 @@ main {
     border-radius: 8px;
   }
 
-  .hero-banner-cta {
+  .hero-visual .hero-banner-cta {
     display: block;
     width: fit-content;
     margin: 8px auto 0;
@@ -330,8 +330,8 @@ main {
 }
 
 .hero-banner-eyebrow {
-  margin: 0 0 4px;
-  font: 700 10.5px 'DM Mono', monospace;
+  margin: 0 0 3px;
+  font: 700 8.5px 'DM Mono', monospace;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--terracotta);
@@ -340,12 +340,12 @@ main {
 }
 
 .hero-banner-title {
-  margin: 0 0 6px;
-  font: 700 clamp(16px, 2.5vw, 20px) / 1.25 'Playfair Display', serif;
+  margin: 0 0 4px;
+  font: 700 15px / 1.22 'Playfair Display', serif;
   color: var(--ink);
   white-space: normal;
   word-break: break-word;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   text-align: center;
   max-width: 100%;
 }
@@ -357,13 +357,13 @@ main {
 }
 
 .hero-banner-subtitle {
-  margin: 0 0 10px;
-  font-size: 13px;
+  margin: 0 0 8px;
+  font-size: 10.5px;
   color: #4b5563;
-  line-height: 1.45;
+  line-height: 1.35;
   white-space: normal;
   word-break: break-word;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   text-align: center;
   max-width: 100%;
 }
@@ -371,11 +371,11 @@ main {
 .hero-banner-coupon {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   border: 1.5px dashed var(--terracotta);
-  border-radius: 6px;
-  padding: 5px 14px;
-  margin: 0 auto 10px;
+  border-radius: 5px;
+  padding: 3px 10px;
+  margin: 0 auto 8px;
   background: rgba(255, 255, 255, 0.95);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -389,18 +389,18 @@ main {
 }
 
 .hero-banner-coupon-text {
-  font-size: 13px;
+  font-size: 11.5px;
   color: var(--ink);
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .hero-banner-coupon-text strong {
   color: var(--terracotta);
   font-weight: 700;
   font-family: 'DM Mono', monospace;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
 }
 
 .hero-banner-cta {
@@ -409,11 +409,11 @@ main {
   justify-content: center;
   background: var(--ink);
   color: white;
-  padding: 8px 18px;
+  padding: 6px 14px;
   border-radius: 6px;
-  font: 600 12.5px 'DM Sans', sans-serif;
+  font: 600 11px 'DM Sans', sans-serif;
   text-decoration: none;
-  margin: 0 auto 4px;
+  margin: 0 auto 3px;
   transition: background 0.2s ease, transform 0.2s ease;
   white-space: normal;
   text-align: center;
@@ -425,11 +425,43 @@ main {
 }
 
 .hero-banner-validity {
-  margin: 4px 0 0;
-  font-size: 11px;
+  margin: 3px 0 0;
+  font-size: 9.5px;
   color: #78716c;
   white-space: normal;
   text-align: center;
+}
+
+@media (max-width: 860px) {
+  .hero-banner-slide {
+    padding: 10px 10px;
+  }
+  .hero-banner-eyebrow {
+    font-size: 8px;
+    margin-bottom: 2px;
+  }
+  .hero-banner-title {
+    font-size: 13px;
+    margin-bottom: 3px;
+  }
+  .hero-banner-subtitle {
+    font-size: 9.5px;
+    margin-bottom: 6px;
+  }
+  .hero-banner-coupon {
+    padding: 2px 8px;
+    margin-bottom: 6px;
+  }
+  .hero-banner-coupon-text {
+    font-size: 10.5px;
+  }
+  .hero-banner-cta {
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+  .hero-banner-validity {
+    font-size: 8.5px;
+  }
 }
 
 .hero-banner-dots {
@@ -1717,17 +1749,10 @@ h2 i {
 }
 
 @media (min-width: 860px) {
-  .category-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 16px;
-    overflow-x: visible;
-    padding-bottom: 0;
-  }
   .category-grid .category-card {
-    flex: none;
-    max-width: none;
-    min-width: 0;
+    flex: 0 0 300px;
+    width: 300px;
+    min-height: 250px;
   }
 }
 
@@ -5125,17 +5150,9 @@ footer {
     font-size: 15px;
   }
 
-  .category-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 14px;
-    overflow-x: visible;
-    padding-bottom: 0;
-  }
   .category-grid .category-card {
-    flex: none;
-    min-width: 0;
-    max-width: none;
+    flex: 0 0 280px;
+    width: 280px;
   }
 
 
@@ -5426,17 +5443,9 @@ footer {
     margin-bottom: 28px;
   }
 
-  .category-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 16px;
-    overflow-x: visible;
-    padding-bottom: 0;
-  }
   .category-grid .category-card {
-    flex: none;
-    min-width: 0;
-    max-width: none;
+    flex: 0 0 300px;
+    width: 300px;
   }
 
 

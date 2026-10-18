@@ -165,7 +165,14 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
           display: flex;
           flex-direction: column;
           align-items: center;
+          justify-content: center;
           width: 100%;
+        }
+
+        .hero-visual-wrapper {
+          position: relative;
+          width: 100%;
+          max-width: 480px;
         }
 
         .hero-image-frame {
@@ -209,6 +216,7 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
           display: flex;
           align-items: center;
           gap: 6px;
+          z-index: 2;
         }
         .hero-badge-artisan .dot {
           width: 6px;
@@ -228,13 +236,16 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
           border-radius: 999px;
           font: 700 11.5px 'DM Sans', sans-serif;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+          z-index: 2;
         }
 
-        /* Hero banner placement */
+        /* Hero banner placement: compact card on top-right of hero image */
         .hero-banner-wrapper {
-          width: 100%;
-          max-width: 480px;
-          margin-top: 12px;
+          position: absolute;
+          top: -20px;
+          right: -12px;
+          width: 215px;
+          z-index: 10;
         }
 
         /* ── Mobile Layout Optimization ── */
@@ -282,6 +293,9 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
             font-size: 13.5px;
             text-align: center;
           }
+          .hero-visual-wrapper {
+            max-width: 440px;
+          }
           .hero-image-frame {
             max-width: 100%;
             aspect-ratio: 16 / 10;
@@ -293,8 +307,19 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
             display: none;
           }
           .hero-banner-wrapper {
-            max-width: 100%;
-            margin-top: 10px;
+            position: absolute;
+            top: -14px;
+            right: -6px;
+            width: 175px;
+            z-index: 10;
+          }
+        }
+
+        @media (max-width: 440px) {
+          .hero-banner-wrapper {
+            top: -10px;
+            right: 0px;
+            width: 160px;
           }
         }
       `}</style>
@@ -345,27 +370,29 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
 
         {/* Right Showcase Column */}
         <div className="hero-visual-col">
-          <div className="hero-image-frame">
-            <img
-              src="/hero.png"
-              alt="Handcrafted millet laddus, traditional snacks, and authentic podi varieties from Raghul Delights"
-              className="hero-main-photo"
-            />
-            <div className="hero-badge-artisan">
-              <span className="dot" />
-              <span>Fresh Batch Handcrafted</span>
+          <div className="hero-visual-wrapper">
+            <div className="hero-image-frame">
+              <img
+                src="/hero.png"
+                alt="Handcrafted millet laddus, traditional snacks, and authentic podi varieties from Raghul Delights"
+                className="hero-main-photo"
+              />
+              <div className="hero-badge-artisan">
+                <span className="dot" />
+                <span>Fresh Batch Handcrafted</span>
+              </div>
+              <div className="hero-badge-pure">
+                <span>Authentic Traditional Recipe</span>
+              </div>
             </div>
-            <div className="hero-badge-pure">
-              <span>Authentic Traditional Recipe</span>
-            </div>
-          </div>
 
-          {/* Active Promo Banner if available */}
-          {banners && banners.length > 0 && (
-            <div className="hero-banner-wrapper">
-              <HeroBanner initialBanners={banners} />
-            </div>
-          )}
+            {/* Active Promo Banner floating top-right of image */}
+            {banners && banners.length > 0 && (
+              <div className="hero-banner-wrapper">
+                <HeroBanner initialBanners={banners} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </section>
