@@ -8,23 +8,17 @@ import Link from "next/link";
 import { getDb } from "@/lib/db";
 import { categories } from "@/drizzle/schema";
 
-import { unstable_cache } from "next/cache";
-
-const getFooterCategories = unstable_cache(
-  async () => {
-    try {
-      const db = getDb();
-      return await db
-        .select({ name: categories.name, slug: categories.slug })
-        .from(categories)
-        .orderBy(categories.name);
-    } catch {
-      return [];
-    }
-  },
-  ["footer-categories-cache"],
-  { revalidate: 300 }
-);
+async function getFooterCategories() {
+  try {
+    const db = getDb();
+    return await db
+      .select({ name: categories.name, slug: categories.slug })
+      .from(categories)
+      .orderBy(categories.name);
+  } catch {
+    return [];
+  }
+}
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
   const footerCategories = await getFooterCategories();

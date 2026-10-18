@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db";
 import { categories, combos, comboItems, products } from "@/drizzle/schema";
 import { getProductsWithVariants } from "@/lib/db-queries";
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 async function getCategories() {
   try {

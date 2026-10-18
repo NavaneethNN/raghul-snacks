@@ -9,7 +9,7 @@ import { products, categories, productVariants } from "@/drizzle/schema";
 import { and, eq } from "drizzle-orm";
 import { getProductsWithVariants } from "@/lib/db-queries";
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 const getProduct = cache(async (slug: string) => {
   try {
