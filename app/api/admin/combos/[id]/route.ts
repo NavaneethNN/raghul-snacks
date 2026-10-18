@@ -79,6 +79,7 @@ export async function DELETE(
     const id = parseInt(idParam);
     const db = getDb();
 
+    await db.delete(comboItems).where(eq(comboItems.comboId, id));
     await db.delete(combos).where(eq(combos.id, id));
 
     return NextResponse.json({ success: true });

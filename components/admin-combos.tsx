@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
@@ -163,7 +163,7 @@ export function AdminCombos() {
     if (exists) {
       setSelectedItems(selectedItems.filter(item => item.productId !== productId));
     } else {
-      setSelectedItems([...selectedItems, { productId, quantity: 100 }]); // Default 100g
+      setSelectedItems([...selectedItems, { productId, quantity: 1 }]); // Default 1
     }
     setError("");
   }
@@ -179,9 +179,9 @@ export function AdminCombos() {
   }
 
   function handleWeightBlur(productId: number) {
-    // Ensure minimum weight of 1g on blur
+    // Ensure minimum quantity of 1 on blur
     setSelectedItems(selectedItems.map(item =>
-      item.productId === productId && item.quantity < 1 ? { ...item, quantity: 100 } : item
+      item.productId === productId && item.quantity < 1 ? { ...item, quantity: 1 } : item
     ));
   }
 
@@ -341,7 +341,7 @@ export function AdminCombos() {
                             <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
                               {combo.items.map((item) => (
                                 <span key={item.id} style={{ fontSize: "13px", color: "#6b7280" }}>
-                                  {item.productName} — {item.quantity}
+                                  {item.productName} × {item.quantity}
                                 </span>
                               ))}
                             </div>
@@ -393,7 +393,7 @@ export function AdminCombos() {
                                   <div className={styles.detailValue}>
                                     {combo.items.map((item) => (
                                       <div key={item.id} style={{ fontSize: 13, color: "var(--ink)", lineHeight: 1.8 }}>
-                                        {item.productName} — <span style={{ color: "#6b7280" }}>{item.quantity}g</span>
+                                        {item.productName} × <span style={{ color: "#6b7280" }}>{item.quantity}</span>
                                       </div>
                                     ))}
                                   </div>
@@ -678,7 +678,7 @@ export function AdminCombos() {
                                 value={item.quantity || ""}
                                 onChange={(e) => updateWeight(item.productId, e.target.value)}
                                 onBlur={() => handleWeightBlur(item.productId)}
-                                placeholder="100"
+                                placeholder="1"
                                 style={{ width: "72px", minWidth: 0, border: "1px solid #d1d5db", padding: "6px 10px", borderRadius: "4px", textAlign: "center", fontSize: "13px", fontWeight: 600, boxSizing: "border-box" }}
                               />
                             </label>

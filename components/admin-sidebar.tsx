@@ -13,6 +13,7 @@ const navGroups = [
     items: [
       { href: "/admin",            label: "Dashboard",     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> },
       { href: "/admin/orders",     label: "Orders",        icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> },
+      { href: "/admin/reviews",    label: "Reviews",       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> },
       { href: "/admin/customers",  label: "Customers",     icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
       { href: "/admin/messages",   label: "Messages",      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
     ],
@@ -45,7 +46,7 @@ const navGroups = [
 // Flat list for the scrollable bottom nav
 const allNavItems = navGroups.flatMap((g) => g.items);
 
-const badgeRoutes = { orders: "/admin/orders", messages: "/admin/messages" };
+const badgeRoutes = { orders: "/admin/orders", messages: "/admin/messages", reviews: "/admin/reviews" };
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -53,6 +54,7 @@ export function AdminSidebar() {
 
   const [unreadMessages,  setUnreadMessages]  = useState(0);
   const [newOrders,       setNewOrders]       = useState(0);
+  const [pendingReviews,  setPendingReviews]  = useState(0);
   const [confirmSignOut,  setConfirmSignOut]  = useState(false);
 
   useEffect(() => {
@@ -67,12 +69,19 @@ export function AdminSidebar() {
       .then((d: { newOrders?: number }) => {
         if (d.newOrders !== undefined) setNewOrders(d.newOrders);
       }).catch(() => {});
+
+    fetch("/api/admin/reviews?pending=true")
+      .then((r) => r.json())
+      .then((d: Array<unknown>) => {
+        if (Array.isArray(d)) setPendingReviews(d.length);
+      }).catch(() => {});
   }, []);
 
   useEffect(() => {
     setConfirmSignOut(false); // eslint-disable-line react-hooks/set-state-in-effect
     if (pathname === "/admin/messages") setUnreadMessages(0);
     if (pathname === "/admin/orders")   setNewOrders(0);
+    if (pathname === "/admin/reviews")  setPendingReviews(0);
   }, [pathname]);
 
   async function doSignOut() {
@@ -84,6 +93,7 @@ export function AdminSidebar() {
   function getBadge(href: string) {
     if (href === badgeRoutes.orders   && newOrders > 0)      return newOrders;
     if (href === badgeRoutes.messages && unreadMessages > 0) return unreadMessages;
+    if (href === badgeRoutes.reviews  && pendingReviews > 0)  return pendingReviews;
     return null;
   }
 

@@ -38,11 +38,16 @@ async function verifyAdminCookie(value: string): Promise<boolean> {
 }
 
 export async function middleware(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+
   // Always allow the login page through — pass pathname header so layout can detect it
   if (request.nextUrl.pathname === "/admin/login") {
-    const response = NextResponse.next();
-    response.headers.set("x-pathname", request.nextUrl.pathname);
-    return response;
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
 
   const cookieValue = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
@@ -51,9 +56,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const response = NextResponse.next();
-  response.headers.set("x-pathname", request.nextUrl.pathname);
-  return response;
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {

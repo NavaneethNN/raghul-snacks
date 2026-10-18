@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
@@ -307,8 +307,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
       weight: baseWeight || "—",
       categoryId: formData.get("categoryId") ? parseInt(formData.get("categoryId") as string) : null,
       image: imageValue,
-      featured: false,
-      bestseller: false,
+      featured: formData.get("featured") === "on",
+      bestseller: formData.get("bestseller") === "on",
       stock: formData.get("inStock") === "on" ? 1 : 0,
       shelfLife: (formData.get("shelfLife") as string) || null,
     };
@@ -784,10 +784,18 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
               </div>
 
               {/* Checkboxes */}
-              <div className={styles.checkboxGroup}>
+              <div className={styles.checkboxGroup} style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
                 <label className={styles.checkbox}>
                   <input type="checkbox" name="inStock" defaultChecked={(editingProduct as any)?.stock !== 0} />
                   <span>In Stock</span>
+                </label>
+                <label className={styles.checkbox}>
+                  <input type="checkbox" name="bestseller" defaultChecked={editingProduct?.bestseller ?? false} />
+                  <span>Bestseller</span>
+                </label>
+                <label className={styles.checkbox}>
+                  <input type="checkbox" name="featured" defaultChecked={editingProduct?.featured ?? false} />
+                  <span>Featured</span>
                 </label>
               </div>
 

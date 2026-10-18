@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
@@ -184,7 +184,7 @@ export function AdminCoupons() {
           name: formData.name || null,
           description: formData.description || null,
           discountType: formData.discountType,
-          value: parseFloat(formData.value),
+          value: parseFloat(formData.value) || 0,
           maxDiscount: formData.maxDiscount ? parseFloat(formData.maxDiscount) : null,
           minOrderValue: parseFloat(formData.minOrderValue) || 0,
           validFrom: formData.validFrom || null,

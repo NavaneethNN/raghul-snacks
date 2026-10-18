@@ -5,25 +5,8 @@ import { DeliveryNotification } from "@/components/delivery-notification";
 import { ReplyNotification } from "@/components/reply-notification";
 import { DeliveryReviewNudge } from "@/components/delivery-review-nudge";
 import Link from "next/link";
-import { getDb } from "@/lib/db";
-import { categories } from "@/drizzle/schema";
 
-async function getFooterCategories() {
-  try {
-    const db = getDb();
-    return await db
-      .select({ name: categories.name, slug: categories.slug })
-      .from(categories)
-      .orderBy(categories.name);
-  } catch {
-    return [];
-  }
-}
-
-export default async function StoreLayout({ children }: { children: React.ReactNode }) {
-  const footerCategories = await getFooterCategories();
-  const topCategories = footerCategories.slice(0, 5);
-
+export default function StoreLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <ScrollToTop />
@@ -76,19 +59,6 @@ export default async function StoreLayout({ children }: { children: React.ReactN
               </ul>
             </div>
             <div className="footer-column">
-              <h4>Categories</h4>
-              <ul>
-                {topCategories.map((cat) => (
-                  <li key={cat.slug}><Link href={`/shop/${cat.slug}`}>{cat.name}</Link></li>
-                ))}
-                <li>
-                  <Link href="/shop" className="footer-view-all">
-                    Explore all categories →
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div className="footer-column">
               <h4>Company</h4>
               <ul>
                 <li><Link href="/about">Our Story</Link></li>
@@ -107,20 +77,6 @@ export default async function StoreLayout({ children }: { children: React.ReactN
             </div>
           </div>
         </div>
-
-        {footerCategories.length > 0 && (
-          <div className="footer-category-strip">
-            <span className="strip-title">Popular Collections:</span>
-            <div className="strip-tags">
-              {footerCategories.map((cat, i) => (
-                <span key={cat.slug} className="strip-item">
-                  <Link href={`/shop/${cat.slug}`}>{cat.name}</Link>
-                  {i < footerCategories.length - 1 && <span className="strip-sep">·</span>}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div className="footer-bottom">
           <p>&copy; {new Date().getFullYear()} Raghul Delights. All rights reserved.</p>

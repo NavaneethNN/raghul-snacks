@@ -2691,18 +2691,18 @@ h2 i {
   .story-section,
   .about-values,
   .process-section {
-    padding: 80px 24px;
+    padding: 40px 20px;
   }
 
   .story-text h2,
   .values-intro h2,
   .process-container h2,
   .about-cta h2 {
-    font-size: 36px;
+    font-size: 32px;
   }
 
   .about-cta {
-    padding: 80px 24px;
+    padding: 40px 20px;
   }
 
   .product-page {
@@ -2773,7 +2773,7 @@ h2 i {
   .about-values,
   .process-section,
   .about-cta {
-    padding: 60px 16px;
+    padding: 32px 16px;
   }
 
   .story-text h2,
@@ -2928,10 +2928,10 @@ h2 i {
 .about-hero {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 80px 24px;
+  padding: 40px 24px 32px;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 60px;
+  gap: 36px;
   align-items: center;
 }
 
@@ -2940,13 +2940,13 @@ h2 i {
   font: 600 11px 'DM Mono', monospace;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin: 0 0 16px;
+  margin: 0 0 10px;
 }
 
 .about-hero-content h1 {
   font: 700 42px 'Playfair Display', serif;
   letter-spacing: -0.03em;
-  margin: 0 0 20px;
+  margin: 0 0 14px;
   line-height: 1.15;
   color: var(--ink);
 }
@@ -2983,7 +2983,7 @@ h2 i {
 
 .story-section {
   background: var(--cream);
-  padding: 100px 24px;
+  padding: 44px 24px;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
@@ -2993,7 +2993,7 @@ h2 i {
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 60px;
+  gap: 36px;
 }
 
 .story-text .eyebrow {
@@ -3001,13 +3001,13 @@ h2 i {
   font: 600 11px 'DM Mono', monospace;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin: 0 0 16px;
+  margin: 0 0 10px;
 }
 
 .story-text h2 {
   font: 700 32px 'Playfair Display', serif;
   letter-spacing: -0.02em;
-  margin: 0 0 24px;
+  margin: 0 0 16px;
   color: var(--ink);
 }
 
@@ -3015,7 +3015,7 @@ h2 i {
   font-size: 15px;
   line-height: 1.6;
   color: #687267;
-  margin: 0 0 20px;
+  margin: 0 0 14px;
 }
 
 .story-text p:last-child {
@@ -3061,7 +3061,7 @@ h2 i {
 }
 
 .about-values {
-  padding: 100px 24px;
+  padding: 44px 24px;
   background: var(--paper);
 }
 
@@ -3072,7 +3072,7 @@ h2 i {
 
 .values-intro {
   text-align: center;
-  margin-bottom: 60px;
+  margin-bottom: 28px;
 }
 
 .values-intro .eyebrow {
@@ -3080,7 +3080,7 @@ h2 i {
   font: 600 11px 'DM Mono', monospace;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin: 0 0 16px;
+  margin: 0 0 10px;
 }
 
 .values-intro h2 {
@@ -3093,12 +3093,12 @@ h2 i {
 .values-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 32px;
+  gap: 24px;
 }
 
 .value-card {
   background: var(--cream);
-  padding: 40px;
+  padding: 28px 24px;
   border-radius: 16px;
   border: 1px solid var(--line);
   transition: all 0.3s ease;
@@ -3111,14 +3111,14 @@ h2 i {
 }
 
 .value-icon {
-  width: 64px;
-  height: 64px;
+  width: 52px;
+  height: 52px;
   background: var(--terracotta);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .value-icon svg {
@@ -3128,7 +3128,7 @@ h2 i {
 .value-card h3 {
   font: 600 20px 'Playfair Display', serif;
   color: var(--ink);
-  margin: 0 0 10px;
+  margin: 0 0 8px;
 }
 
 .value-card p {
@@ -3140,7 +3140,7 @@ h2 i {
 
 .process-section {
   background: var(--cream);
-  padding: 100px 24px;
+  padding: 44px 24px;
   border-top: 1px solid var(--line);
 }
 
@@ -3154,7 +3154,7 @@ h2 i {
   font: 600 11px 'DM Mono', monospace;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin: 0 auto 16px;
+  margin: 0 auto 10px;
   text-align: center;
   padding-left: 0;
   display: block;
@@ -3168,7 +3168,7 @@ h2 i {
 .process-container h2 {
   font: 700 36px 'Playfair Display', serif;
   letter-spacing: -0.02em;
-  margin: 0 0 48px;
+  margin: 0 0 28px;
   color: var(--ink);
   text-align: center;
 }
@@ -3176,12 +3176,12 @@ h2 i {
 .process-steps {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 40px;
+  gap: 24px;
 }
 
 .process-step {
   background: var(--paper);
-  padding: 40px;
+  padding: 28px 24px;
   border-radius: 16px;
   border: 1px solid var(--line);
   position: relative;
@@ -3194,11 +3194,11 @@ h2 i {
 }
 
 .step-number {
-  font: 700 56px 'Playfair Display', serif;
+  font: 700 48px 'Playfair Display', serif;
   color: var(--cream);
   display: block;
   width: fit-content;
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   line-height: 1;
   -webkit-text-stroke: 1.5px var(--terracotta);
 }
@@ -3206,7 +3206,7 @@ h2 i {
 .process-step h3 {
   font: 600 20px 'Playfair Display', serif;
   color: var(--ink);
-  margin: 0 0 10px;
+  margin: 0 0 8px;
 }
 
 .process-step p {
@@ -3220,7 +3220,7 @@ h2 i {
 .about-cta {
   background: var(--cream);
   color: var(--ink);
-  padding: 80px 24px;
+  padding: 44px 24px;
   text-align: center;
   border-top: 1px solid var(--line);
 }
@@ -3233,7 +3233,7 @@ h2 i {
 .about-cta h2 {
   font: 700 36px 'Playfair Display', serif;
   letter-spacing: -0.02em;
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   color: var(--ink);
 }
 
@@ -3241,7 +3241,7 @@ h2 i {
   font-size: 16px;
   line-height: 1.6;
   color: #657165;
-  margin: 0 0 32px;
+  margin: 0 0 20px;
 }
 
 .cta-actions {
@@ -3284,7 +3284,7 @@ h2 i {
 /* Contact Page Styles */
 .contact-page-hero {
   background: linear-gradient(135deg, var(--cream) 0%, var(--paper) 100%);
-  padding: 48px 20px 36px;
+  padding: 32px 20px 24px;
   text-align: center;
   border-bottom: 1px solid var(--line);
 }
@@ -3299,13 +3299,13 @@ h2 i {
   font: 600 11px 'DM Mono', monospace;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin: 0 0 16px;
+  margin: 0 0 8px;
 }
 
 .contact-page-hero-content h1 {
   font: 700 clamp(28px, 6vw, 42px) 'Playfair Display', serif;
   letter-spacing: -0.03em;
-  margin: 0 0 20px;
+  margin: 0 0 10px;
   line-height: 1.15;
   color: var(--ink);
 }
@@ -3316,7 +3316,7 @@ h2 i {
 }
 
 .contact-page-main {
-  padding: 32px 16px;
+  padding: 24px 16px;
   background: var(--paper);
 }
 
@@ -3325,7 +3325,7 @@ h2 i {
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 24px;
+  gap: 20px;
 }
 
 .contact-page-form-wrapper {
@@ -3336,13 +3336,13 @@ h2 i {
 }
 
 .contact-form-header {
-  margin-bottom: 28px;
+  margin-bottom: 16px;
 }
 
 .contact-form-header h2 {
   font: 700 24px 'Playfair Display', serif;
   color: var(--ink);
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   letter-spacing: -0.02em;
 }
 
@@ -3355,7 +3355,7 @@ h2 i {
 
 .contact-page-form {
   display: grid;
-  gap: 20px;
+  gap: 16px;
 }
 
 .contact-page-form .form-row {
@@ -5212,8 +5212,8 @@ footer {
   }
 
   .footer-links {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
   }
 
   .footer-bottom {
@@ -5224,12 +5224,12 @@ footer {
 
   .about-hero {
     grid-template-columns: 1.2fr 1fr;
-    padding: 120px 40px;
+    padding: 48px 32px;
   }
 
   .story-container {
     grid-template-columns: 1.3fr 1fr;
-    gap: 80px;
+    gap: 48px;
   }
 
   .story-stats {
@@ -5250,7 +5250,7 @@ footer {
   }
 
   .contact-page-main {
-    padding: 40px 24px;
+    padding: 28px 24px;
   }
 
   .contact-info-card {
@@ -5258,11 +5258,11 @@ footer {
   }
 
   .contact-page-form-wrapper {
-    padding: 32px;
+    padding: 28px;
   }
 
   .contact-page-hero {
-    padding: 60px 24px 48px;
+    padding: 36px 24px 28px;
   }
 
   footer {
