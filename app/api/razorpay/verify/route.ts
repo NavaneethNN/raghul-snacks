@@ -145,26 +145,32 @@ export async function POST(request: Request) {
 
     // Send order confirmation email (non-fatal)
     if (payload.data.email) {
-      sendOrderConfirmationEmail({
-        customerName: payload.data.customerName,
-        customerEmail: payload.data.email,
-        orderNumber,
-        items: lines.map((line) => ({
-          name: line.product.name,
-          weight: line.product.weight as string | null,
-          quantity: line.quantity,
-          price: line.product.offerPrice,
-        })),
-        subtotal,
-        shipping,
-        discount,
-        total: subtotal - discount + shipping,
-        couponCode: payload.data.couponCode || null,
-        address: payload.data.address,
-        city: payload.data.city,
-        state: payload.data.state,
-        pincode: payload.data.pincode,
-      }).catch((err) => console.error("[email] Unhandled error:", err));
+      try {
+        await sendOrderConfirmationEmail({
+          customerName: payload.data.customerName,
+          customerEmail: payload.data.email,
+          phone: payload.data.phone,
+          orderNumber,
+          items: lines.map((line) => ({
+            name: line.product.name,
+            weight: line.product.weight as string | null,
+            quantity: line.quantity,
+            price: line.product.offerPrice,
+          })),
+          subtotal,
+          shipping,
+          discount,
+          total: subtotal - discount + shipping,
+          couponCode: payload.data.couponCode || null,
+          address: payload.data.address,
+          city: payload.data.city,
+          state: payload.data.state,
+          pincode: payload.data.pincode,
+          paymentMethod,
+        });
+      } catch (emailErr) {
+        console.error("[email] Failed to send order confirmation email:", emailErr);
+      }
     }
 
     try {

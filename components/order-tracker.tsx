@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import styles from "./order-tracker.module.css";
 
 type Result = { orderNumber: string; orderStatus: string; paymentStatus: string; createdAt: string };
@@ -92,12 +92,38 @@ function GuestReviewForm({ orderNumber, phone }: { orderNumber: string; phone: s
   );
 }
 
-export function OrderTracker({ initialOrder }: { initialOrder?: string }) {
+export function OrderTracker({ initialOrder, initialPhone }: { initialOrder?: string; initialPhone?: string }) {
   const [orderNumber, setOrderNumber] = useState(initialOrder || "");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(initialPhone || "");
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (
+      initialOrder &&
+      initialPhone &&
+      /^RS-\d{8}$/i.test(initialOrder) &&
+      /^[6-9]\d{9}$/.test(initialPhone)
+    ) {
+      setLoading(true);
+      fetch("/api/orders/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderNumber: initialOrder, phone: initialPhone }),
+      })
+        .then(async (res) => {
+          const data = (await res.json()) as { order?: Result; error?: string };
+          if (res.ok && data.order) {
+            setResult(data.order);
+          } else if (data.error) {
+            setError(data.error);
+          }
+        })
+        .catch(() => setError("Unable to connect to order tracker."))
+        .finally(() => setLoading(false));
+    }
+  }, [initialOrder, initialPhone]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
