@@ -251,9 +251,9 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
         /* ── Mobile-Only Hero Redesign (≤860px) ── */
         @media (max-width: 860px) {
           .hero-custom {
-            padding: 26px 16px 30px;
-            background: radial-gradient(ellipse at 50% 0%, rgba(229, 165, 47, 0.16) 0%, transparent 60%),
-                        radial-gradient(ellipse at 85% 90%, rgba(201, 95, 59, 0.08) 0%, transparent 50%),
+            padding: 24px 16px 28px;
+            background: radial-gradient(ellipse at 50% 0%, rgba(229, 165, 47, 0.18) 0%, transparent 65%),
+                        radial-gradient(ellipse at 85% 95%, rgba(201, 95, 59, 0.08) 0%, transparent 50%),
                         #fcfaf6;
           }
 
@@ -276,9 +276,9 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
           /* 1. Category Eyebrow Pill */
           .hero-eyebrow-pill {
             order: 1;
-            margin: 0 auto 12px;
+            margin: 0 auto 10px;
             font: 700 10.5px 'DM Mono', monospace;
-            padding: 5px 13px;
+            padding: 4px 12px;
             letter-spacing: 0.12em;
             background: rgba(201, 95, 59, 0.08);
             border: 1px solid rgba(201, 95, 59, 0.22);
@@ -290,9 +290,9 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
           /* 2. Headline */
           .hero-heading {
             order: 2;
-            font: 700 clamp(29px, 8.4vw, 36px) / 1.15 'Playfair Display', serif;
+            font: 700 clamp(28px, 8.2vw, 35px) / 1.15 'Playfair Display', serif;
             letter-spacing: -0.03em;
-            margin: 0 auto 10px;
+            margin: 0 auto 8px;
             text-align: center;
             max-width: 380px;
             color: var(--ink);
@@ -302,109 +302,176 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
           .hero-description {
             order: 3;
             font-size: 13.5px;
-            line-height: 1.55;
+            line-height: 1.5;
             color: #525a50;
-            margin: 0 auto 18px;
+            margin: 0 auto 14px;
             text-align: center;
             max-width: 360px;
           }
 
-          /* 4. Trust Pillars: placed above banner, single line per item, no boxes */
+          /* 4. Compact Horizontal Scrolling Trust Badges */
           .hero-trust-chips {
             order: 4;
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
+            flex-direction: row;
+            align-items: center;
             gap: 8px;
-            width: fit-content;
-            margin: 0 auto 18px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 2px 4px 12px;
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto 4px;
+            scrollbar-width: none;
+            justify-content: flex-start;
+          }
+
+          .hero-trust-chips::-webkit-scrollbar {
+            display: none;
           }
 
           .hero-trust-chip {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            background: none !important;
-            border: none !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-            font-size: 13px;
+            gap: 6px;
+            background: #ffffff !important;
+            border: 1px solid rgba(201, 95, 59, 0.18) !important;
+            box-shadow: 0 2px 6px -1px rgba(36, 49, 39, 0.06) !important;
+            padding: 6px 12px !important;
+            border-radius: 999px !important;
+            font-size: 11.5px;
             font-weight: 600;
             color: #374151;
             white-space: nowrap;
+            flex-shrink: 0;
           }
 
           .hero-trust-chip svg {
             color: var(--terracotta);
             flex-shrink: 0;
+            width: 13px;
+            height: 13px;
           }
 
-          @media (min-width: 480px) and (max-width: 860px) {
-            .hero-trust-chips {
-              display: grid;
-              grid-template-columns: repeat(2, auto);
-              gap: 10px 24px;
-            }
-          }
-
-          /* 5. Active Promo Offer Banner (if present) */
+          /* 5. Mobile Snack Visual Showcase & Promo Banner */
           .hero-visual-wrapper {
             order: 5;
             width: 100%;
             max-width: 420px;
-            margin: 0 auto;
+            margin: 0 auto 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            position: relative;
           }
 
-          /* Hide hero image frame & badges completely on mobile */
-          .hero-image-frame,
-          .hero-badge-artisan,
+          .hero-image-frame {
+            display: block !important;
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #fdfbf7;
+            border: 2px solid #ffffff;
+            box-shadow: 0 10px 26px -6px rgba(36, 49, 39, 0.14), 0 3px 10px rgba(0, 0, 0, 0.05);
+          }
+
+          .hero-main-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+          }
+
+          /* Floating badge: Fresh Batch (top-left) */
+          .hero-badge-artisan {
+            display: flex !important;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 4.5px 10px;
+            border-radius: 999px;
+            font: 700 10px 'DM Mono', monospace;
+            color: var(--ink);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            align-items: center;
+            gap: 5px;
+            z-index: 2;
+          }
+
+          .hero-badge-artisan .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #16a34a;
+            box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
+          }
+
+          /* Floating badge: Pure Cold-Pressed (bottom-right) */
           .hero-badge-pure {
-            display: none !important;
+            display: block !important;
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(36, 49, 39, 0.88);
+            backdrop-filter: blur(8px);
+            color: #ffe2ab;
+            padding: 5px 11px;
+            border-radius: 999px;
+            font: 700 11px 'DM Sans', sans-serif;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 2;
           }
 
-          /* On mobile, promo banner sits cleanly as an offer ticket card */
+          /* Promo banner sits cleanly below visual card */
           .hero-banner-wrapper {
             position: relative !important;
             top: auto !important;
             right: auto !important;
             width: 100% !important;
             max-width: 420px !important;
-            margin: 0 auto 18px !important;
+            margin: 12px auto 0 !important;
             z-index: 5 !important;
           }
 
-          /* 6. Action Buttons: Touch-friendly full-width CTAs */
+          /* 6. Action Buttons: Touch-friendly side-by-side CTAs */
           .hero-cta-row {
             order: 6;
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
             width: 100%;
             max-width: 420px;
-            margin: 0 auto 12px;
+            margin: 0 auto;
           }
 
           .hero-btn-primary {
             width: 100%;
-            padding: 14px 20px;
-            font-size: 15px;
+            padding: 13px 10px;
+            font-size: 13.5px;
             font-weight: 700;
             text-align: center;
             justify-content: center;
             border-radius: 12px;
             box-sizing: border-box;
             background: linear-gradient(135deg, #c95f3b 0%, #b34a26 100%);
+            color: #ffffff;
             border: none;
-            box-shadow: 0 4px 16px rgba(201, 95, 59, 0.3);
+            box-shadow: 0 4px 14px rgba(201, 95, 59, 0.32);
+            text-decoration: none;
+            white-space: nowrap;
           }
 
           .hero-btn-secondary {
             width: 100%;
-            padding: 12.5px 20px;
-            font-size: 14px;
+            padding: 12px 10px;
+            font-size: 13px;
             font-weight: 600;
             text-align: center;
             justify-content: center;
@@ -413,13 +480,16 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
             background: #ffffff;
             border: 1.5px solid rgba(201, 95, 59, 0.28);
             color: var(--ink);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            text-decoration: none;
+            white-space: nowrap;
           }
         }
 
         /* Ultra small screens (≤380px) */
         @media (max-width: 380px) {
           .hero-custom {
-            padding: 20px 12px 24px;
+            padding: 18px 12px 24px;
           }
 
           .hero-heading {
@@ -430,12 +500,18 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
             font-size: 12.5px;
           }
 
-          .hero-trust-chips {
-            gap: 7px;
+          .hero-image-frame {
+            border-radius: 14px;
           }
 
-          .hero-trust-chip {
+          .hero-btn-primary {
+            font-size: 12.5px;
+            padding: 12px 6px;
+          }
+
+          .hero-btn-secondary {
             font-size: 12px;
+            padding: 11px 6px;
           }
         }
       `}</style>
@@ -494,13 +570,15 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
               <picture>
                 <source
                   media="(max-width: 860px)"
-                  srcSet="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                  srcSet="/hero-mobile.webp"
+                  type="image/webp"
                 />
                 <source srcSet="/hero.webp" type="image/webp" />
                 <img
                   src="/hero.png"
                   alt="Handcrafted millet laddus, traditional snacks, and authentic podi varieties from Raghul Delights"
                   className="hero-main-photo"
+                  fetchPriority="high"
                 />
               </picture>
               <div className="hero-badge-artisan">
