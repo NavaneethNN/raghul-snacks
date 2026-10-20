@@ -199,7 +199,38 @@ export function OrderTracker({ initialOrder, initialPhone }: { initialOrder?: st
               <small>Used during checkout</small>
             </div>
 
-            {error && <p className={styles.error}>{error}</p>}
+            {error && (
+              <div className={styles.error}>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ flexShrink: 0, marginTop: 2 }}
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 600 }}>{error}</p>
+                  <p style={{ margin: "4px 0 0", fontSize: "12.5px" }}>
+                    Need help? WhatsApp us at{" "}
+                    <a
+                      href="https://wa.me/918667829041"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      +91 86678 29041
+                    </a>
+                  </p>
+                </div>
+              </div>
+            )}
 
             <button className="button button-dark" disabled={loading}>
               {loading ? "Checking…" : "Track order"}
