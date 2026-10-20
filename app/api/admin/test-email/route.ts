@@ -36,7 +36,9 @@ export async function GET(request: Request) {
         success: false,
         phase: "verify",
         error: errorMsg,
-        tip: errorMsg.includes("535")
+        tip: errorMsg.includes("525") || errorMsg.includes("Unauthorized IP")
+          ? "Brevo blocked this IP address (525): In Brevo, go to Settings > Security > Authorized IPs and click 'Deactivate' under 'Blocking unauthorized IP addresses', or click the verification link in the 'Validate your IP address' email Brevo just sent you."
+          : errorMsg.includes("535")
           ? "Authentication failed: Please check your Brevo account (Settings > SMTP & API > SMTP tab) for the exact Login and SMTP Key, or make sure transactional emails are activated on Brevo."
           : "Could not establish connection to the SMTP server. Check host, port, and firewall.",
       },
