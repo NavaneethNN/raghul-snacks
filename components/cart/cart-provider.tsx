@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Product } from "@/lib/catalog";
+import { getClientSession } from "@/lib/client-session";
 
 type CartItem = Product & { quantity: number };
 type CartContextValue = {
@@ -28,7 +29,7 @@ type ServerCartItem = {
     id: number; name: string; slug: string; description: string;
     ingredients: string | null; price: string; offerPrice: string | null;
     weight: string; categoryId: number | null; image: string | null;
-    stock: number; featured: boolean; bestseller: boolean;
+    active?: boolean; stock?: number; 
   } | null;
 };
 
@@ -52,9 +53,7 @@ async function fetchServerCart(): Promise<CartItem[]> {
           weight: p.weight,
           category: "",
           image: p.image ?? "",
-          featured: p.featured,
-          bestseller: p.bestseller,
-          quantity: row.quantity,
+                    quantity: row.quantity,
         } as CartItem;
       });
   } catch {
@@ -98,9 +97,7 @@ async function clearServerCart() {
 
 async function isLoggedIn(): Promise<boolean> {
   try {
-    const res = await fetch("/api/auth/session", { credentials: "include" });
-    if (!res.ok) return false;
-    const data = await res.json() as { account?: unknown };
+    const data = await getClientSession();
     return !!data.account;
   } catch {
     return false;

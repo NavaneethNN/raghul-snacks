@@ -1,19 +1,41 @@
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { banners, coupons } from "@/drizzle/schema";
 
 // Shared by the /api/banners route and the server-rendered homepage so both
 // return identical data (including validity text derived from the linked
 // coupon) without duplicating the query logic.
-export async function getBannersWithValidity() {
+export async function getBannersWithValidity(onlyActive = true) {
   const db = getDb();
-  const allBanners = await db
-    .select()
+  let query = db
+    .select({
+      id: banners.id,
+      eyebrow: banners.eyebrow,
+      title: banners.title,
+      subtitle: banners.subtitle,
+      offerText: banners.offerText,
+      couponCode: banners.couponCode,
+      buttonText: banners.buttonText,
+      validityText: banners.validityText,
+      image: banners.image,
+      href: banners.href,
+      active: banners.active,
+      createdAt: banners.createdAt,
+    })
     .from(banners)
-    .orderBy(desc(banners.createdAt));
+    .orderBy(desc(banners.createdAt))
+    .$dynamic();
 
-  // Fetch all coupons in a single query to avoid N+1 problem
-  const allCoupons = await db.select().from(coupons);
+  if (onlyActive) {
+    query = query.where(eq(banners.active, true));
+  }
+
+  const allBanners = await query;
+
+  // Fetch only needed columns (code, validUntil) rather than full coupon records
+  const allCoupons = await db
+    .select({ code: coupons.code, validUntil: coupons.validUntil })
+    .from(coupons);
   const couponMap = new Map(allCoupons.map((c) => [c.code, c]));
 
   return allBanners.map((banner) => {

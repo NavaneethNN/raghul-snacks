@@ -5,6 +5,7 @@ import { products, comboItems, orderItems, reviews, cartItems, categories } from
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
 import { invalidateCache } from "@/lib/cache";
+import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -34,9 +35,7 @@ export async function PATCH(
     if (body.weight !== undefined) updateData.weight = body.weight;
     if (body.categoryId !== undefined) updateData.categoryId = body.categoryId;
     if (body.image !== undefined) updateData.image = body.image;
-    if (body.featured !== undefined) updateData.featured = body.featured;
-    if (body.bestseller !== undefined) updateData.bestseller = body.bestseller;
-    if (body.stock !== undefined) updateData.stock = body.stock;
+        if (body.active !== undefined) updateData.active = Boolean(body.active);
     if (body.shelfLife !== undefined) updateData.shelfLife = body.shelfLife || null;
 
     const db = getDb();
@@ -58,6 +57,11 @@ export async function PATCH(
 
     invalidateCache("home:products");
     invalidateCache("shop:products");
+    try {
+      revalidatePath("/");
+      revalidatePath("/shop");
+      if (updated.slug) revalidatePath(`/product/${updated.slug}`);
+    } catch {}
 
     return NextResponse.json(updated);
   } catch (error) {
@@ -92,6 +96,10 @@ export async function DELETE(
 
     invalidateCache("home:products");
     invalidateCache("shop:products");
+    try {
+      revalidatePath("/");
+      revalidatePath("/shop");
+    } catch {}
 
     return NextResponse.json({ success: true });
   } catch (error) {

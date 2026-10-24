@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { getClientSession } from "@/lib/client-session";
 
 type DeliveredItem = {
   orderNumber: string;
@@ -18,10 +19,12 @@ export function DeliveryReviewNudge() {
   useEffect(() => {
     async function check() {
       try {
-        // Check if logged in
-        const sessionRes = await fetch("/api/auth/session");
-        if (!sessionRes.ok) return;
-        const session = await sessionRes.json() as { account?: { id: number } };
+        if (typeof window !== "undefined" && window.sessionStorage.getItem("delivery-nudge-dismissed")) {
+          return;
+        }
+
+        // Check if logged in via shared session utility
+        const session = await getClientSession();
         if (!session.account) return;
 
         // Get reviewed product IDs (always fresh fetch)

@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/lib/db";
 import { banners } from "@/drizzle/schema";
 import { getBannersWithValidity } from "@/lib/banners";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const bannersWithValidity = await getBannersWithValidity();
+    const { searchParams } = new URL(request.url);
+    const all = searchParams.get("all") === "true";
+    const bannersWithValidity = await getBannersWithValidity(!all);
     return NextResponse.json(bannersWithValidity);
   } catch (error) {
     console.error("Error fetching banners:", error);
@@ -42,6 +45,10 @@ export async function POST(request: Request) {
       .values(parsed.data)
       .returning();
     
+    try {
+      revalidatePath("/");
+    } catch {}
+
     return NextResponse.json(banner);
   } catch (error) {
     console.error("Error creating banner:", error);

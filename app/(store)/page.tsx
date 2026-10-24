@@ -13,7 +13,7 @@ import { getProductsWithVariants } from "@/lib/db-queries";
 
 import { getOrSetCache } from "@/lib/cache";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 120;
 
 async function getBanners() {
   return getOrSetCache("home:banners", 60, async () => {
@@ -42,7 +42,7 @@ async function getProducts() {
   return getOrSetCache("home:products", 60, async () => {
     try {
       const db = getDb();
-      return await getProductsWithVariants(db);
+      return await getProductsWithVariants(db, { limit: 10 });
     } catch (error) {
       console.error('Error fetching products:', error);
       return [];

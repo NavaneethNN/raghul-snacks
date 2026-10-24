@@ -21,7 +21,7 @@ export function ProductCard({ product }: { product: any }) {
     product.category?.replace("-", " ") ||
     "";
   const badge = null; // Bestseller/Featured badges removed
-  const isOutOfStock = typeof product.stock === "number" && product.stock <= 0;
+  const isOutOfStock = product.active === false || (typeof product.stock === "number" && product.stock <= 0);
 
   // The card advertises the first variant, so its cart entry is that variant too —
   // the same id the product page uses, so both add to a single cart line.

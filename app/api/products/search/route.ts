@@ -23,8 +23,6 @@ export async function GET(request: NextRequest) {
         id: products.id,
         name: products.name,
         slug: products.slug,
-        description: products.description,
-        ingredients: products.ingredients,
         price: products.price,
         offerPrice: products.offerPrice,
         weight: products.weight,
@@ -32,8 +30,6 @@ export async function GET(request: NextRequest) {
         categoryName: categories.name,
         categorySlug: categories.slug,
         image: products.image,
-        featured: products.featured,
-        bestseller: products.bestseller,
       })
       .from(products)
       .leftJoin(categories, eq(products.categoryId, categories.id))

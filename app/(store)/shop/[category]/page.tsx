@@ -6,7 +6,7 @@ import { categories } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { getProductsWithVariants } from "@/lib/db-queries";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 120;
 
 async function getCategory(slug: string) {
   try {
@@ -22,8 +22,7 @@ async function getCategory(slug: string) {
 async function getProductsByCategoryId(categoryId: number) {
   try {
     const db = getDb();
-    const allProducts = await getProductsWithVariants(db);
-    return allProducts.filter((p: any) => p.categoryId === categoryId);
+    return await getProductsWithVariants(db, { categoryId });
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];

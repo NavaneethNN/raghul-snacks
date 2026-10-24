@@ -35,9 +35,9 @@ type Order = {
       weight: string;
       categoryId: number | null;
       image: string | null;
-      stock: number;
-      featured: boolean;
-      bestseller: boolean;
+      active?: boolean;
+      stock?: number;
+      
       variants?: Array<{ id: number; weight: string; price: string; offerPrice: string | null }>;
     } | null;
   }>;
@@ -221,9 +221,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
           ingredients: "",
           image: p.image,
           stock: 1,
-          featured: false,
-          bestseller: false,
-        };
+                  };
         addItem(catalogProduct, item.quantity);
         addedCount++;
       } else {

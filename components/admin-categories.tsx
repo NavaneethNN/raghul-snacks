@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -80,9 +80,17 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ base64: b64, filename: file.name }),
           });
-          const data = await res.json() as { url?: string };
-          if (res.ok && data.url) setImagePreview(data.url);
-        } catch { /* keep base64 */ }
+          const data = await res.json() as { url?: string; error?: string };
+          if (res.ok && data.url) {
+            setImagePreview(data.url);
+          } else {
+            setImagePreview("");
+            setError(data.error || "Failed to upload image to Cloudflare R2.");
+          }
+        } catch {
+          setImagePreview("");
+          setError("Upload error. Cloudflare R2 may be unconfigured.");
+        }
       };
       img.src = objectUrl;
     }
@@ -90,6 +98,10 @@ export function AdminCategories({ categories }: { categories: Category[] }) {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (imageInputType === "file" && imagePreview.startsWith("data:image/")) {
+      setError("Image upload to Cloudflare R2 did not complete. Please re-select the image.");
+      return;
+    }
     setLoading(true);
     setError("");
 

@@ -4,6 +4,8 @@ import { eq } from "drizzle-orm";
 import { categories, products } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
+import { invalidateCache } from "@/lib/cache";
+import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +41,13 @@ export async function PATCH(
       return NextResponse.json({ error: "Category not found" }, { status: 404 });
     }
 
+    invalidateCache("home:categories");
+    invalidateCache("shop:categories");
+    try {
+      revalidatePath("/");
+      revalidatePath("/shop");
+    } catch {}
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Error updating category:", error);
@@ -64,6 +73,13 @@ export async function DELETE(
     // Unlink products from this category before deleting
     await db.update(products).set({ categoryId: null }).where(eq(products.categoryId, id));
     await db.delete(categories).where(eq(categories.id, id));
+
+    invalidateCache("home:categories");
+    invalidateCache("shop:categories");
+    try {
+      revalidatePath("/");
+      revalidatePath("/shop");
+    } catch {}
 
     return NextResponse.json({ success: true });
   } catch (error) {

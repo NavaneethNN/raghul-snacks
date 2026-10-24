@@ -5,6 +5,7 @@ import { products, categories } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
 import { invalidateCache } from "@/lib/cache";
+import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -36,9 +37,7 @@ export async function GET(request: NextRequest) {
         categoryId: products.categoryId,
         categoryName: categories.name,
         image: products.image,
-        featured: products.featured,
-        bestseller: products.bestseller,
-        stock: products.stock,
+                active: products.active,
         shelfLife: products.shelfLife,
         createdAt: products.createdAt,
       })
@@ -81,9 +80,7 @@ export async function POST(request: NextRequest) {
       weight,
       categoryId,
       image,
-      featured,
-      bestseller,
-      shelfLife,
+            shelfLife,
     } = body;
 
     // Generate slug if not provided
@@ -105,14 +102,16 @@ export async function POST(request: NextRequest) {
       weight,
       categoryId: categoryId || null,
       image: image || null,
-      featured: featured || false,
-      bestseller: bestseller || false,
-      stock: body.stock !== undefined ? body.stock : 1,
+            active: body.active !== undefined ? Boolean(body.active) : true,
       shelfLife: shelfLife || null,
     }).returning();
 
     invalidateCache("home:products");
     invalidateCache("shop:products");
+    try {
+      revalidatePath("/");
+      revalidatePath("/shop");
+    } catch {}
 
     return NextResponse.json(newProduct, { status: 201 });
   } catch (error) {

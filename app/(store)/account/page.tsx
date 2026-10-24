@@ -115,10 +115,8 @@ export default async function AccountPage() {
               weight: p.weight,
               categoryId: p.categoryId,
               image: p.image,
-              stock: p.stock,
-              featured: p.featured,
-              bestseller: p.bestseller,
-            }
+              active: p.active,
+                          }
           : null,
       };
     });

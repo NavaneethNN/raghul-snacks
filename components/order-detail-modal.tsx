@@ -32,9 +32,9 @@ type Order = {
       weight: string;
       categoryId: number | null;
       image: string | null;
-      stock: number;
-      featured: boolean;
-      bestseller: boolean;
+      active?: boolean;
+      stock?: number;
+      
     } | null;
   }>;
 };

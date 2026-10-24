@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
@@ -68,12 +68,13 @@ export function AdminBanners() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [imageInputType, setImageInputType] = useState<"url" | "file">("url");
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [imageUploading, setImageUploading] = useState(false);
   const [form, setForm] = useState(initialForm);
 
   const fetchBanners = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/banners");
+      const res = await fetch("/api/banners?all=true");
       if (res.ok) {
         const data = await res.json();
         setBanners(data);
@@ -131,6 +132,14 @@ export function AdminBanners() {
 
   async function saveBanner(e: React.FormEvent) {
     e.preventDefault();
+    if (imageUploading) {
+      showToast("Please wait for the image upload to complete.", false);
+      return;
+    }
+    if (imageInputType === "file" && imagePreview.startsWith("data:image/")) {
+      showToast("Image upload to R2 did not complete. Please retry.", false);
+      return;
+    }
     setSaving(true);
     try {
       const url = editingId ? `/api/banners/${editingId}` : "/api/banners";
@@ -175,11 +184,46 @@ export function AdminBanners() {
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = async () => {
+        URL.revokeObjectURL(objectUrl);
+        const canvas = document.createElement("canvas");
+        const MAX = 1400;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+          else { width = Math.round(width * MAX / height); height = MAX; }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+        const b64 = canvas.toDataURL("image/jpeg", 0.85);
+        setImagePreview(b64);
+        setImageUploading(true);
+
+        try {
+          const res = await fetch("/api/admin/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ base64: b64, filename: file.name }),
+          });
+          const data = await res.json() as { url?: string; error?: string };
+          if (res.ok && data.url) {
+            setImagePreview(data.url);
+            showToast("Banner image uploaded to Cloudflare R2.");
+          } else {
+            showToast(data.error || "R2 upload failed. Please try again.", false);
+            setImagePreview("");
+          }
+        } catch {
+          showToast("Upload error. Cloudflare R2 may be unconfigured.", false);
+          setImagePreview("");
+        } finally {
+          setImageUploading(false);
+        }
       };
-      reader.readAsDataURL(file);
+      img.src = objectUrl;
     }
   }
 

@@ -4,6 +4,8 @@ import { eq } from "drizzle-orm";
 import { combos, comboItems } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
+import { invalidateCache } from "@/lib/cache";
+import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +59,13 @@ export async function PATCH(
       );
     }
 
+    invalidateCache("home:combos");
+    invalidateCache("shop:combos");
+    try {
+      revalidatePath("/");
+      revalidatePath("/shop");
+    } catch {}
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error updating combo:", error);
@@ -81,6 +90,13 @@ export async function DELETE(
 
     await db.delete(comboItems).where(eq(comboItems.comboId, id));
     await db.delete(combos).where(eq(combos.id, id));
+
+    invalidateCache("home:combos");
+    invalidateCache("shop:combos");
+    try {
+      revalidatePath("/");
+      revalidatePath("/shop");
+    } catch {}
 
     return NextResponse.json({ success: true });
   } catch (error) {

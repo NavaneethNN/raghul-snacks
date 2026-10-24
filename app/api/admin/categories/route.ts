@@ -4,6 +4,8 @@ import { desc } from "drizzle-orm";
 import { categories } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
+import { invalidateCache } from "@/lib/cache";
+import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +47,13 @@ export async function POST(request: NextRequest) {
       description: description || null,
       image: image || null,
     }).returning();
+
+    invalidateCache("home:categories");
+    invalidateCache("shop:categories");
+    try {
+      revalidatePath("/");
+      revalidatePath("/shop");
+    } catch {}
 
     return NextResponse.json(newCategory, { status: 201 });
   } catch (error) {

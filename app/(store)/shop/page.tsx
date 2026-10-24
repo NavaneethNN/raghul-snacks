@@ -7,7 +7,7 @@ import { getProductsWithVariants } from "@/lib/db-queries";
 
 import { getOrSetCache } from "@/lib/cache";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 async function getCategories() {
   return getOrSetCache("shop:categories", 60, async () => {

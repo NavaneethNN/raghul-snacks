@@ -23,9 +23,8 @@ type Product = {
   categoryId: number | null;
   categoryName: string | null;
   image: string | null;
-  featured: boolean;
-  bestseller: boolean;
-  stock: number;
+    active?: boolean;
+  stock?: number;
   variantCount?: number;
   shelfLife?: string | null;
   createdAt: Date;
@@ -227,11 +226,14 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
           const data = await res.json() as { url?: string; error?: string };
           if (res.ok && data.url) {
             setImageData(data.url);
+            showToast("Product image uploaded to Cloudflare R2.");
           } else {
-            setImageData(b64);
+            setImageData("");
+            showToast(data.error || "R2 image upload failed. Please try again.", false);
           }
         } catch {
-          setImageData(b64);
+          setImageData("");
+          showToast("Image upload error. Cloudflare R2 may be unconfigured.", false);
         } finally {
           setImageUploading(false);
         }
@@ -278,6 +280,16 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     setError("");
 
     const formData = new FormData(e.currentTarget);
+    if (imageUploading) {
+      setError("Please wait for image upload to complete.");
+      setLoading(false);
+      return;
+    }
+    if (imageInputType === "file" && imageData.startsWith("data:image/")) {
+      setError("Image upload to Cloudflare R2 did not complete. Please re-select the image.");
+      setLoading(false);
+      return;
+    }
     const imageValue = imageInputType === "file" ? imageData : (formData.get("image") as string);
 
     // When hasVariants, use first draft variant's price as product base price
@@ -307,9 +319,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
       weight: baseWeight || "—",
       categoryId: formData.get("categoryId") ? parseInt(formData.get("categoryId") as string) : null,
       image: imageValue,
-      featured: formData.get("featured") === "on",
-      bestseller: formData.get("bestseller") === "on",
-      stock: formData.get("inStock") === "on" ? 1 : 0,
+            active: formData.get("active") === "on",
       shelfLife: (formData.get("shelfLife") as string) || null,
     };
 
@@ -414,8 +424,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16, padding: "clamp(12px, 4vw, 24px) clamp(12px, 4vw, 32px) 8px" }}>
         {[
           { label: "Total Products", value: products.length },
-          { label: "In Stock", value: products.filter(p => p.stock !== 0).length },
-          { label: "Out of Stock", value: products.filter(p => p.stock === 0).length },
+          { label: "Active", value: products.filter(p => p.active !== false && p.stock !== 0).length },
+          { label: "Out of Stock", value: products.filter(p => p.active === false || p.stock === 0).length },
           { label: "With Variants", value: products.filter(p => (p.variantCount ?? 0) > 0).length },
         ].map((stat) => (
           <div key={stat.label} style={{ background: "var(--paper)", border: "1px solid var(--line)", borderRadius: 10, padding: "18px 20px" }}>
@@ -461,14 +471,14 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                     )}
                     <div className={productStyles.mobileSubtext}>
                       {product.categoryName && <span>{product.categoryName}</span>}
-                      {product.stock === 0 && <span className={productStyles.mobileBadge} style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626" }}>Out of Stock</span>}
+                      {(product.active === false || product.stock === 0) && <span className={productStyles.mobileBadge} style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626" }}>Out of Stock</span>}
                     </div>
                   </td>
                   <td className={productStyles.hideOnMobile}>{product.categoryName ?? "—"}</td>
                   <td className={productStyles.hideOnMobile}>
-                    {product.stock === 0
+                    {(product.active === false || product.stock === 0)
                       ? <span className={`${styles.badge}`} style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626", border: "1px solid rgba(220,38,38,0.2)" }}>Out of Stock</span>
-                      : <span className={`${styles.badge} ${styles.success}`}>In Stock</span>
+                      : <span className={`${styles.badge} ${styles.success}`}>Active</span>
                     }
                   </td>
                   <td className={productStyles.hideOnMobile}>
@@ -786,18 +796,10 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
               {/* Checkboxes */}
               <div className={styles.checkboxGroup} style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
                 <label className={styles.checkbox}>
-                  <input type="checkbox" name="inStock" defaultChecked={(editingProduct as any)?.stock !== 0} />
-                  <span>In Stock</span>
+                  <input type="checkbox" name="active" defaultChecked={editingProduct ? (editingProduct.active !== false && editingProduct.stock !== 0) : true} />
+                  <span>Active (In Stock)</span>
                 </label>
-                <label className={styles.checkbox}>
-                  <input type="checkbox" name="bestseller" defaultChecked={editingProduct?.bestseller ?? false} />
-                  <span>Bestseller</span>
-                </label>
-                <label className={styles.checkbox}>
-                  <input type="checkbox" name="featured" defaultChecked={editingProduct?.featured ?? false} />
-                  <span>Featured</span>
-                </label>
-              </div>
+                </div>
 
               {error && (
                 <div style={{ padding: "12px", background: "#fee2e2", border: "1px solid #dc2626", borderRadius: "8px", color: "#991b1b", marginBottom: "12px" }}>{error}</div>

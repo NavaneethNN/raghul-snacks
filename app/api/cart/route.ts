@@ -64,10 +64,8 @@ export async function GET() {
             weight: products.weight,
             categoryId: products.categoryId,
             image: products.image,
-            stock: products.stock,
-            featured: products.featured,
-            bestseller: products.bestseller,
-          })
+            active: products.active,
+                      })
           .from(products)
           .where(inArray(products.id, [...productBaseIds]))
       : [],
@@ -111,9 +109,7 @@ export async function GET() {
           categoryId: null,
           image: c.image,
           stock: 1,
-          featured: false,
-          bestseller: false,
-        });
+                  });
       }
     } else {
       const vMatch = pid.match(/^(\d+)-v(\d+)$/);
@@ -134,10 +130,8 @@ export async function GET() {
             weight: v.weight,
             categoryId: p.categoryId,
             image: p.image,
-            stock: p.stock,
-            featured: p.featured,
-            bestseller: p.bestseller,
-          });
+            active: p.active,
+                      });
         }
       } else {
         const id = Number(pid);

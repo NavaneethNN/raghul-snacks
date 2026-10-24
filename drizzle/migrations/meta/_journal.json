@@ -141,6 +141,13 @@
       "when": 1792033664633,
       "tag": "0019_whole_vargas",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792823664000,
+      "tag": "0020_replace_stock_with_active",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { orders, orderItems } from "@/drizzle/schema";
@@ -63,29 +63,41 @@ export default async function AdminOrdersPage() {
       .orderBy(desc(orders.createdAt))
       .limit(100);
 
-    ordersWithItems = await Promise.all(
-      recentOrders.map(async (order) => {
-        const items = await db
+    const orderIds = recentOrders.map((o) => o.id);
+    const allItems = orderIds.length > 0
+      ? await db
           .select({
             id: orderItems.id,
+            orderId: orderItems.orderId,
             name: orderItems.name,
             quantity: orderItems.quantity,
-            price: orderItems.price
+            price: orderItems.price,
           })
           .from(orderItems)
-          .where(eq(orderItems.orderId, order.id));
+          .where(inArray(orderItems.orderId, orderIds))
+      : [];
 
-        return {
-          ...order,
-          total: Number(order.total),
-          createdAt: order.createdAt.toISOString(),
-          items: items.map(item => ({
-            ...item,
-            price: Number(item.price)
-          }))
-        };
-      })
-    );
+    const itemsByOrderId = new Map<number, typeof allItems>();
+    for (const item of allItems) {
+      const list = itemsByOrderId.get(item.orderId) ?? [];
+      list.push(item);
+      itemsByOrderId.set(item.orderId, list);
+    }
+
+    ordersWithItems = recentOrders.map((order) => {
+      const items = itemsByOrderId.get(order.id) ?? [];
+      return {
+        ...order,
+        total: Number(order.total),
+        createdAt: order.createdAt.toISOString(),
+        items: items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          price: Number(item.price),
+        })),
+      };
+    });
   } catch (error) {
     console.error("Error loading orders:", error);
   }

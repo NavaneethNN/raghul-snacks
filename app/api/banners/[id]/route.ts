@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getDb } from "@/lib/db";
 import { banners } from "@/drizzle/schema";
@@ -38,6 +39,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Banner not found" }, { status: 404 });
     }
     
+    try { revalidatePath("/"); } catch {}
+
     return NextResponse.json(banner);
   } catch (error) {
     console.error("Error updating banner:", error);
@@ -58,6 +61,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       return NextResponse.json({ error: "Banner not found" }, { status: 404 });
     }
     
+    try { revalidatePath("/"); } catch {}
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting banner:", error);

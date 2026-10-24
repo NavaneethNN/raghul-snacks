@@ -67,10 +67,8 @@ export async function GET() {
               price: products.price,
               offerPrice: products.offerPrice,
               weight: products.weight,
-              stock: products.stock,
-              featured: products.featured,
-              bestseller: products.bestseller,
-              categoryId: products.categoryId,
+              active: products.active,
+                            categoryId: products.categoryId,
               description: products.description,
               ingredients: products.ingredients,
             })

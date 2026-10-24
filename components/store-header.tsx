@@ -5,17 +5,17 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { useCart } from "@/components/cart/cart-provider";
 import { useWishlist } from "@/components/wishlist/wishlist-provider";
+import { getClientSession, invalidateClientSession } from "@/lib/client-session";
 
 // Module-level cache so session + categories are fetched once per browser
 // session, not on every client-side navigation.
-let cachedSession: { name: string; email: string } | null | undefined = undefined;
 let cachedCategories: any[] | undefined = undefined;
 
 export function StoreHeader() {
   const router = useRouter();
   const { count } = useCart();
   const { count: wishlistCount } = useWishlist();
-  const [account, setAccount] = useState<{ name: string; email: string } | null>(cachedSession ?? null);
+  const [account, setAccount] = useState<{ name: string; email: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
@@ -24,21 +24,13 @@ export function StoreHeader() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLFormElement>(null);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // Only fetch if not already cached
-    if (cachedSession === undefined) {
-      fetch("/api/auth/session")
-        .then(async (response) => {
-          const data = await response.json() as { account?: { name: string; email: string } | null };
-          cachedSession = data.account || null;
-          setAccount(cachedSession);
-        })
-        .catch(() => {
-          cachedSession = null;
-          setAccount(null);
-        });
-    }
+    // Shared deduplicated session check
+    getClientSession().then((d) => {
+      setAccount((d.account as any) || null);
+    });
 
     if (cachedCategories === undefined) {
       fetch("/api/categories")
@@ -105,20 +97,24 @@ export function StoreHeader() {
     }
   };
 
-  const handleSearchChange = async (value: string) => {
+  const handleSearchChange = (value: string) => {
     setSearchQuery(value);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+
     if (value.trim().length >= 2) {
-      try {
-        const res = await fetch(`/api/products/search?q=${encodeURIComponent(value.trim())}`);
-        if (res.ok) {
-          const data = await res.json();
-          setSearchResults(data || []);
-          setSearchOpen(true);
+      searchDebounceRef.current = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/products/search?q=${encodeURIComponent(value.trim())}`);
+          if (res.ok) {
+            const data = await res.json();
+            setSearchResults(data || []);
+            setSearchOpen(true);
+          }
+        } catch (error) {
+          console.error("Search error:", error);
+          setSearchResults([]);
         }
-      } catch (error) {
-        console.error("Search error:", error);
-        setSearchResults([]);
-      }
+      }, 300);
     } else {
       setSearchResults([]);
       setSearchOpen(false);
@@ -136,14 +132,10 @@ export function StoreHeader() {
   // so the header reflects the new auth state on the next render cycle.
   useEffect(() => {
     const invalidate = () => {
-      cachedSession = undefined;
-      fetch("/api/auth/session")
-        .then(async (r) => {
-          const d = await r.json() as { account?: { name: string; email: string } | null };
-          cachedSession = d.account || null;
-          setAccount(cachedSession);
-        })
-        .catch(() => { cachedSession = null; setAccount(null); });
+      invalidateClientSession();
+      getClientSession(true).then((d) => {
+        setAccount((d.account as any) || null);
+      });
     };
     window.addEventListener("session-changed", invalidate);
     return () => window.removeEventListener("session-changed", invalidate);

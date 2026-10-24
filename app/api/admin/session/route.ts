@@ -12,12 +12,20 @@ export async function POST(request: Request) {
   const body = bodySchema.safeParse(await request.json());
   if (!body.success) return NextResponse.json({ error: "Password is required." }, { status: 400 });
   try {
-    const db = getDb();
-    const dbSetting = await db
-      .select({ value: settings.value })
-      .from(settings)
-      .where(eq(settings.key, "adminPassword"))
-      .limit(1);
+    let dbSetting: Array<{ value: string }> = [];
+    try {
+      const db = getDb();
+      dbSetting = await db
+        .select({ value: settings.value })
+        .from(settings)
+        .where(eq(settings.key, "adminPassword"))
+        .limit(1);
+    } catch (dbErr) {
+      console.warn(
+        "[admin-session] Database query failed (e.g. quota/network), falling back to ADMIN_PASSWORD env var:",
+        dbErr instanceof Error ? dbErr.message : dbErr
+      );
+    }
 
     let valid = false;
     if (dbSetting.length > 0 && dbSetting[0].value) {

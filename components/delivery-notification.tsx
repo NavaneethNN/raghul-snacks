@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { getClientSession } from "@/lib/client-session";
 
 type DeliveredOrder = { orderNumber: string; reviewHref: string };
 
@@ -14,10 +15,16 @@ export function DeliveryNotification() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    // Check dismissal state first before any network activity
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const dismissedAt = stored ? parseInt(stored, 10) : 0;
+    if (Date.now() - dismissedAt < DISMISS_DURATION_MS) {
+      return;
+    }
+
     // Delay non-critical background checks to prioritize fast page load & rendering
     const initTimer = setTimeout(() => {
-      fetch("/api/auth/session")
-        .then((r) => r.json())
+      getClientSession()
         .then(async (d) => {
           if (!d.account) return;
 

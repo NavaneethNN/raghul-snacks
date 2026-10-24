@@ -9,7 +9,7 @@ import { products, categories, productVariants } from "@/drizzle/schema";
 import { and, eq } from "drizzle-orm";
 import { getProductsWithVariants } from "@/lib/db-queries";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 120;
 
 const getProduct = cache(async (slug: string) => {
   try {
@@ -28,9 +28,7 @@ const getProduct = cache(async (slug: string) => {
         categoryName: categories.name,
         categorySlug: categories.slug,
         image: products.image,
-        featured: products.featured,
-        bestseller: products.bestseller,
-        stock: products.stock,
+                active: products.active,
         shelfLife: products.shelfLife,
         createdAt: products.createdAt,
       })
@@ -58,13 +56,29 @@ async function getVariants(productId: number) {
   }
 }
 
-// Recommendations reuse the shared query so cards can show variant pricing.
-async function getProducts() {
+// Recommendations reuse the shared query with a limit to avoid loading the entire catalog.
+async function getRecommendations(categoryId: number | null, currentProductId: number) {
   try {
     const db = getDb();
-    return await getProductsWithVariants(db);
+    let recs: any[] = [];
+    if (categoryId) {
+      const sameCat = await getProductsWithVariants(db, { categoryId, limit: 4 });
+      recs = sameCat.filter((p: any) => p.id !== currentProductId);
+    }
+    if (recs.length < 3) {
+      const more = await getProductsWithVariants(db, { limit: 6 });
+      const existingIds = new Set([currentProductId, ...recs.map((r: any) => r.id)]);
+      for (const item of more) {
+        if (!existingIds.has(item.id)) {
+          recs.push(item);
+          existingIds.add(item.id);
+          if (recs.length >= 3) break;
+        }
+      }
+    }
+    return recs.slice(0, 3);
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error('Error fetching recommendations:', error);
     return [];
   }
 }
@@ -85,16 +99,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   if (!product) notFound();
 
-  const [variants, allProducts] = await Promise.all([
+  const [variants, recommendations] = await Promise.all([
     getVariants(product.id),
-    getProducts(),
+    getRecommendations(product.categoryId, product.id),
   ]);
-  const others = allProducts.filter((item: any) => item.id !== product.id);
-  const sameCat = product.categoryId
-    ? others.filter((item: any) => item.categoryId === product.categoryId)
-    : [];
-  const diffCat = others.filter((item: any) => item.categoryId !== product.categoryId);
-  const recommendations = [...sameCat, ...diffCat].slice(0, 3);
 
   return (
     <>

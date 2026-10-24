@@ -120,8 +120,16 @@ export function AdminCombos() {
             body: JSON.stringify({ base64: b64, filename: file.name }),
           });
           const data = await res.json() as { url?: string; error?: string };
-          setImageData(res.ok && data.url ? data.url : b64);
-        } catch { setImageData(b64); }
+          if (res.ok && data.url) {
+            setImageData(data.url);
+          } else {
+            setImageData("");
+            setError(data.error || "Failed to upload image to Cloudflare R2.");
+          }
+        } catch {
+          setImageData("");
+          setError("Upload error. Cloudflare R2 may be unconfigured.");
+        }
       };
       img.src = objectUrl;
     }
@@ -208,6 +216,12 @@ export function AdminCombos() {
     }
     if (selectedItems.length === 0) {
       setError("Please add at least one product to the combo");
+      setFormLoading(false);
+      return;
+    }
+
+    if (imageInputType === "file" && imageData.startsWith("data:image/")) {
+      setError("Image upload to Cloudflare R2 did not complete. Please re-select the image.");
       setFormLoading(false);
       return;
     }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { getClientSession } from "@/lib/client-session";
 
 const SEEN_KEY = "raghul-snacks-seen-replies";
 
@@ -49,8 +50,7 @@ export function ReplyNotification() {
     let cancelled = false;
     async function check() {
       try {
-        const sessionRes = await fetch("/api/auth/session", { credentials: "include" });
-        const session = await sessionRes.json() as { account?: unknown };
+        const session = await getClientSession();
         if (!session.account || cancelled) return;
 
         const msgRes = await fetch("/api/messages/mine", { credentials: "include" });

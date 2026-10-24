@@ -63,7 +63,7 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
   const inCart = cartQuantity > 0;
   const isAdded = added;
   const hasDiscount = displayPrice < basePrice;
-  const isOutOfStock = typeof product.stock === "number" && product.stock <= 0;
+  const isOutOfStock = product.active === false || (typeof product.stock === "number" && product.stock <= 0);
 
   const categoryName =
     product.categoryName ||

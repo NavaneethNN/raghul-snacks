@@ -4,6 +4,7 @@ import { asc, desc } from "drizzle-orm";
 import { announcements } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
+import { invalidateCache } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
       order: order || 0,
     }).returning();
 
+    invalidateCache("api:announcements");
     return NextResponse.json(newAnnouncement, { status: 201 });
   } catch (error) {
     console.error("Error creating announcement:", error);

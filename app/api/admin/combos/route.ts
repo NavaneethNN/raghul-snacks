@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { desc, eq } from "drizzle-orm";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
+import { invalidateCache } from "@/lib/cache";
+import { revalidatePath } from "next/cache";
 import { combos, comboItems, products } from "@/drizzle/schema";
 
 export const dynamic = "force-dynamic";
@@ -94,6 +96,13 @@ export async function POST(request: Request) {
         quantity: item.quantity,
       }))
     );
+
+    invalidateCache("home:combos");
+    invalidateCache("shop:combos");
+    try {
+      revalidatePath("/");
+      revalidatePath("/shop");
+    } catch {}
 
     return NextResponse.json(newCombo, { status: 201 });
   } catch (error) {

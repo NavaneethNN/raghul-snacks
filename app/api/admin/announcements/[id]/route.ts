@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { announcements } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
+import { invalidateCache } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Announcement not found" }, { status: 404 });
     }
 
+    invalidateCache("api:announcements");
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Error updating announcement:", error);
@@ -62,6 +65,8 @@ export async function DELETE(
     const db = getDb();
 
     await db.delete(announcements).where(eq(announcements.id, id));
+
+    invalidateCache("api:announcements");
 
     return NextResponse.json({ success: true });
   } catch (error) {
