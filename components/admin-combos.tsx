@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
@@ -653,9 +653,6 @@ export function AdminCombos() {
                               <div style={{ flex: 1 }}>
                                 <div style={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>
                                   {product.name}
-                                </div>
-                                <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "2px" }}>
-                                  {price.format(Number(product.price))}
                                 </div>
                               </div>
                               {isSelected && (
