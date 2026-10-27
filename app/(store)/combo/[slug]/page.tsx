@@ -130,15 +130,12 @@ export default async function ComboDetailPage({ params }: { params: Promise<{ sl
                     ) : (
                       <span className="combo-item-name">{item.name || "Product"}</span>
                     )}
-                    <span className="combo-item-meta">
-                      {item.weight ? formatWeight(item.weight) : "Standard Pack"}
-                    </span>
                   </div>
                   <span className="combo-item-badge">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    Qty: {item.quantity} {item.quantity === 1 ? "pack" : "packs"}
+                    Qty: {item.quantity}
                   </span>
                 </li>
               ))}
