@@ -32,10 +32,31 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
   const [animating, setAnimating] = useState(false);
   const [addedId, setAddedId] = useState<number | null>(null);
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const tabsTrackRef = useRef<HTMLDivElement | null>(null);
+  const tabButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const total = combos.length;
 
   const { addItem, getItemQuantity } = useCart();
   const { show } = useToast();
+
+  // Smoothly scroll active tab into view when activeIndex changes
+  useEffect(() => {
+    const activeBtn = tabButtonRefs.current[activeIndex];
+    if (activeBtn && tabsTrackRef.current) {
+      activeBtn.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [activeIndex]);
+
+  const scrollTabs = (direction: "left" | "right") => {
+    if (tabsTrackRef.current) {
+      const scrollAmount = direction === "left" ? -240 : 240;
+      tabsTrackRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
 
   const goTo = useCallback(
     (next: number) => {
@@ -189,56 +210,152 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
         }
 
         /* ── Tabs selector (multiple combos) ── */
+        .combo-tabs-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 22px;
+          width: 100%;
+        }
+
+        .combo-tabs-arrow {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: #ffffff;
+          border: 1.5px solid var(--line);
+          color: var(--ink);
+          cursor: pointer;
+          flex-shrink: 0;
+          transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .combo-tabs-arrow:hover {
+          background: #faf8f5;
+          border-color: var(--terracotta);
+          color: var(--terracotta);
+          transform: scale(1.08);
+          box-shadow: 0 4px 12px rgba(201, 95, 59, 0.18);
+        }
+
+        .combo-tabs-arrow:active {
+          transform: scale(0.95);
+        }
+
         .combo-tabs-bar {
           display: flex;
-          gap: 10px;
+          align-items: center;
+          gap: 8px;
           overflow-x: auto;
-          padding: 4px 2px 14px;
-          margin-bottom: 16px;
-          scrollbar-width: thin;
+          padding: 6px 8px;
+          background: rgba(36, 49, 39, 0.035);
+          border: 1px solid rgba(36, 49, 39, 0.08);
+          border-radius: 999px;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
           -webkit-overflow-scrolling: touch;
+          scroll-behavior: smooth;
+          flex: 1;
         }
+
+        .combo-tabs-bar::-webkit-scrollbar {
+          display: none;
+        }
+
         .combo-tab-pill {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          padding: 8px 16px;
-          background: #fff;
-          border: 1.5px solid var(--line);
+          padding: 8px 18px;
+          background: transparent;
+          border: 1.5px solid transparent;
           border-radius: 999px;
           font: 600 13px 'DM Sans', sans-serif;
-          color: var(--ink);
+          color: #4b5563;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
           white-space: nowrap;
           flex-shrink: 0;
+          user-select: none;
         }
+
         .combo-tab-pill:hover {
-          border-color: var(--terracotta);
-          background: #faf8f5;
+          background: rgba(255, 255, 255, 0.85);
+          color: var(--ink);
           transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
+
         .combo-tab-pill.active {
-          background: var(--terracotta);
-          border-color: var(--terracotta);
-          color: #fff;
-          box-shadow: 0 4px 12px rgba(201, 95, 59, 0.28);
+          background: #ffffff;
+          border-color: rgba(201, 95, 59, 0.28);
+          color: var(--terracotta);
+          font-weight: 700;
+          box-shadow: 0 4px 14px rgba(36, 49, 39, 0.08), 0 1px 3px rgba(201, 95, 59, 0.12);
         }
+
         .tab-pill-index {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
           font: 700 11px 'DM Mono', monospace;
-          opacity: 0.75;
+          opacity: 0.8;
+          color: #6b7280;
         }
+
+        .combo-tab-pill.active .tab-pill-index {
+          color: var(--terracotta);
+          opacity: 1;
+        }
+
+        .tab-pill-sparkle {
+          font-size: 10px;
+          color: var(--saffron);
+          animation: spinPulse 2.5s infinite ease-in-out;
+        }
+
+        @keyframes spinPulse {
+          0%, 100% { transform: scale(1); opacity: 0.85; }
+          50% { transform: scale(1.3); opacity: 1; }
+        }
+
+        .tab-pill-title {
+          letter-spacing: -0.01em;
+        }
+
         .tab-pill-badge {
-          font: 700 10px 'DM Sans', sans-serif;
-          padding: 2px 7px;
+          font: 700 10.5px 'DM Sans', sans-serif;
+          padding: 2.5px 8px;
           border-radius: 999px;
-          background: rgba(22, 163, 74, 0.12);
+          background: rgba(22, 163, 74, 0.1);
           color: #15803d;
-          letter-spacing: 0.02em;
+          border: 1px solid rgba(22, 163, 74, 0.2);
+          letter-spacing: 0.01em;
         }
+
         .combo-tab-pill.active .tab-pill-badge {
-          background: rgba(255, 255, 255, 0.25);
-          color: #fff;
+          background: rgba(201, 95, 59, 0.12);
+          color: var(--terracotta);
+          border-color: rgba(201, 95, 59, 0.25);
+        }
+
+        @media (max-width: 640px) {
+          .combo-tabs-arrow {
+            display: none;
+          }
+          .combo-tabs-bar {
+            padding: 4px;
+            gap: 6px;
+          }
+          .combo-tab-pill {
+            padding: 7px 14px;
+            font-size: 12.5px;
+          }
         }
 
         /* ── Showcase Card ── */
@@ -724,29 +841,62 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
 
       {/* Tabs Selector Bar (when multiple combos) */}
       {total > 1 && (
-        <div className="combo-tabs-bar" role="tablist" aria-label="Combo selections">
-          {combos.map((c, i) => {
-            const cOffer = c.discount && parseFloat(c.discount) > 0 ? parseFloat(c.discount) : parseFloat(c.price);
-            const cOrig = parseFloat(c.price);
-            const cSavings = cOffer < cOrig ? Math.round(cOrig - cOffer) : 0;
-            const isActive = i === activeIndex;
-            return (
-              <button
-                key={c.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                className={`combo-tab-pill ${isActive ? "active" : ""}`}
-                onClick={() => handleGoTo(i)}
-              >
-                <span className="tab-pill-index">0{i + 1}</span>
-                <span>{c.title}</span>
-                {cSavings > 0 && (
-                  <span className="tab-pill-badge">Save ₹{cSavings}</span>
-                )}
-              </button>
-            );
-          })}
+        <div className="combo-tabs-wrapper">
+          <button
+            type="button"
+            className="combo-tabs-arrow combo-tabs-arrow-left"
+            onClick={() => scrollTabs("left")}
+            aria-label="Scroll tabs left"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+
+          <div
+            ref={tabsTrackRef}
+            className="combo-tabs-bar"
+            role="tablist"
+            aria-label="Combo selections"
+          >
+            {combos.map((c, i) => {
+              const cOffer = c.discount && parseFloat(c.discount) > 0 ? parseFloat(c.discount) : parseFloat(c.price);
+              const cOrig = parseFloat(c.price);
+              const cSavings = cOffer < cOrig ? Math.round(cOrig - cOffer) : 0;
+              const isActive = i === activeIndex;
+              return (
+                <button
+                  key={c.id}
+                  ref={(el) => { tabButtonRefs.current[i] = el; }}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`combo-tab-pill ${isActive ? "active" : ""}`}
+                  onClick={() => handleGoTo(i)}
+                >
+                  <span className="tab-pill-index">
+                    {isActive && <span className="tab-pill-sparkle">✦</span>}
+                    0{i + 1}
+                  </span>
+                  <span className="tab-pill-title">{c.title}</span>
+                  {cSavings > 0 && (
+                    <span className="tab-pill-badge">Save ₹{cSavings}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            className="combo-tabs-arrow combo-tabs-arrow-right"
+            onClick={() => scrollTabs("right")}
+            aria-label="Scroll tabs right"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
         </div>
       )}
 
