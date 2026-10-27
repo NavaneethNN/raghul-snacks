@@ -244,7 +244,7 @@ export function AdminAnnouncements() {
                 <label>Announcement Text *</label>
                 <input
                   type="text"
-                  placeholder="e.g., Free delivery on orders above ₹499"
+                  placeholder="e.g., Authentic traditional sweets & savouries crafted fresh"
                   value={form.text}
                   onChange={(e) => setForm({ ...form, text: e.target.value })}
                   autoFocus

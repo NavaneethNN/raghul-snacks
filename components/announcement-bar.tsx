@@ -81,17 +81,13 @@ export function AnnouncementBar() {
     return () => clearInterval(interval);
   }, [announcements.length]);
 
-  if (announcements.length === 0) {
-    const text = loading ? "" : "Free delivery on orders above ₹499";
-    const icon = loading ? null : "truck";
-    return (
-      <div className="announcement">
-        <AnnouncementItem text={text} icon={icon} />
-      </div>
-    );
+  if (loading || announcements.length === 0) {
+    return null;
   }
 
   const current = announcements[currentIndex];
+  if (!current) return null;
+
   return (
     <div className="announcement">
       <AnnouncementItem key={current.id} text={current.text} icon={current.icon} />
