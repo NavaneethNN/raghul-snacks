@@ -607,13 +607,20 @@ body.mobile-menu-open .announcement {
   padding: 8px 16px;
   border-bottom: 1px solid var(--line);
   position: sticky;
-  top: 34px;
+  top: 0;
   z-index: 1000;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   overflow: visible;
   animation: fadeInDown 0.6s ease-out;
 }
+
+/* When announcement bar is present, header sticks right below it */
+.announcement ~ .site-header,
+body:has(.announcement) .site-header {
+  top: 34px;
+}
+
 
 .header-container {
   max-width: 1240px;

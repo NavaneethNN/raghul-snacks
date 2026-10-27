@@ -251,7 +251,7 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
         /* ── Mobile-Only Hero Redesign (≤860px) ── */
         @media (max-width: 860px) {
           .hero-custom {
-            padding: 24px 16px 28px;
+            padding: 30px 16px 28px;
             background: radial-gradient(ellipse at 50% 0%, rgba(229, 165, 47, 0.18) 0%, transparent 65%),
                         radial-gradient(ellipse at 85% 95%, rgba(201, 95, 59, 0.08) 0%, transparent 50%),
                         #fcfaf6;
@@ -489,7 +489,7 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
         /* Ultra small screens (≤380px) */
         @media (max-width: 380px) {
           .hero-custom {
-            padding: 18px 12px 24px;
+            padding: 24px 12px 24px;
           }
 
           .hero-heading {
