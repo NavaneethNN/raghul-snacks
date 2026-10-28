@@ -39,14 +39,18 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
   const { addItem, getItemQuantity } = useCart();
   const { show } = useToast();
 
-  // Smoothly scroll active tab into view when activeIndex changes
+  // Smoothly scroll active tab into view inside the tabs track ONLY
+  // (Avoids element.scrollIntoView which scrolls the entire window/page causing horizontal blowout)
   useEffect(() => {
     const activeBtn = tabButtonRefs.current[activeIndex];
-    if (activeBtn && tabsTrackRef.current) {
-      activeBtn.scrollIntoView({
+    const track = tabsTrackRef.current;
+    if (activeBtn && track) {
+      const trackRect = track.getBoundingClientRect();
+      const btnRect = activeBtn.getBoundingClientRect();
+      const targetScroll = track.scrollLeft + (btnRect.left - trackRect.left) - (trackRect.width / 2) + (btnRect.width / 2);
+      track.scrollTo({
+        left: Math.max(0, targetScroll),
         behavior: "smooth",
-        block: "nearest",
-        inline: "center",
       });
     }
   }, [activeIndex]);
@@ -217,6 +221,9 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           gap: 10px;
           margin-bottom: 22px;
           width: 100%;
+          max-width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
         }
 
         .combo-tabs-arrow {
@@ -252,6 +259,7 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           align-items: center;
           gap: 8px;
           overflow-x: auto;
+          overflow-y: hidden;
           padding: 6px 8px;
           background: rgba(36, 49, 39, 0.035);
           border: 1px solid rgba(36, 49, 39, 0.08);
@@ -260,7 +268,10 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           -ms-overflow-style: none;
           -webkit-overflow-scrolling: touch;
           scroll-behavior: smooth;
-          flex: 1;
+          flex: 1 1 0%;
+          min-width: 0;
+          max-width: 100%;
+          box-sizing: border-box;
         }
 
         .combo-tabs-bar::-webkit-scrollbar {
@@ -369,6 +380,9 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           color: #fff;
           overflow: hidden;
           padding: 40px;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
         }
         .combo-card-outer::before {
           content: '';
@@ -383,10 +397,14 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           position: relative;
           z-index: 1;
           display: grid;
-          grid-template-columns: 1.15fr 0.85fr;
+          grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
           gap: 44px;
           align-items: center;
           transition: opacity 0.25s ease, transform 0.25s ease;
+          width: 100%;
+          max-width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
         }
         .combo-card-inner.exit {
           opacity: 0;
@@ -394,6 +412,11 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
         }
 
         /* ── Info Column ── */
+        .combo-info-col {
+          min-width: 0;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
         .combo-badge-row {
           display: flex;
           align-items: center;
@@ -438,11 +461,13 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
         }
 
         .combo-card-title {
-          font: 700 clamp(26px, 3.8vw, 38px) 'Playfair Display', serif;
+          font: 700 clamp(24px, 3.8vw, 38px) 'Playfair Display', serif;
           letter-spacing: -0.03em;
           margin: 0 0 12px;
           color: #fff;
           line-height: 1.16;
+          word-break: break-word;
+          overflow-wrap: anywhere;
         }
         .combo-card-desc {
           margin: 0 0 20px;
@@ -450,6 +475,8 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           color: rgba(255, 255, 255, 0.88);
           line-height: 1.6;
           max-width: 580px;
+          word-break: break-word;
+          overflow-wrap: anywhere;
         }
 
         /* ── Chips: What's inside ── */
@@ -460,6 +487,9 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           padding: 14px 16px;
           margin-bottom: 20px;
           backdrop-filter: blur(6px);
+          max-width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
         }
         .combo-items-box-head {
           display: flex;
@@ -481,6 +511,8 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           display: flex;
           flex-wrap: wrap;
           gap: 8px;
+          max-width: 100%;
+          min-width: 0;
         }
         .combo-chip {
           display: inline-flex;
@@ -493,6 +525,9 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           font-size: 13px;
           color: #fff;
           transition: background 0.15s ease;
+          max-width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
         }
         .combo-chip:hover {
           background: rgba(255, 255, 255, 0.18);
@@ -507,9 +542,14 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           border-radius: 4px;
           object-fit: cover;
           border: 1px solid rgba(255, 255, 255, 0.3);
+          flex-shrink: 0;
         }
         .combo-chip-name {
           font-weight: 500;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          max-width: 180px;
         }
         .combo-chip-qty {
           font: 600 11px 'DM Mono', monospace;
@@ -779,36 +819,45 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
         /* ── Responsive Breakpoints ── */
         @media (max-width: 960px) {
           .combo-card-inner {
-            grid-template-columns: 1fr;
-            gap: 32px;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 28px;
           }
           .combo-card-outer {
-            padding: 32px 24px;
+            padding: 30px 22px;
           }
           .combo-image-card {
-            max-width: 520px;
+            max-width: 480px;
             margin: 0 auto;
           }
         }
         @media (max-width: 640px) {
           .combo-section {
-            margin-top: 28px;
-            margin-bottom: 36px;
-            padding: 0 14px;
+            margin-top: 24px;
+            margin-bottom: 32px;
+            padding: 0 12px;
+            overflow-x: clip;
           }
           .combo-section-header {
             flex-direction: column;
             align-items: flex-start;
-            gap: 14px;
+            gap: 12px;
           }
           .combo-card-outer {
-            padding: 24px 18px;
+            padding: 22px 16px;
             border-radius: 18px;
+          }
+          .combo-card-title {
+            font-size: clamp(22px, 6vw, 28px);
+          }
+          .combo-card-desc {
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 16px;
           }
           .combo-bottom-bar {
             flex-direction: column;
             align-items: stretch;
-            gap: 16px;
+            gap: 14px;
           }
           .combo-actions-group {
             flex-direction: column;
@@ -816,9 +865,54 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           }
           .combo-btn-primary, .combo-btn-details {
             width: 100%;
+            padding: 12px 14px;
+            font-size: 13.5px;
           }
           .combo-price-group {
             align-items: flex-start;
+          }
+          .combo-price-current {
+            font-size: 28px;
+          }
+          .combo-items-box {
+            padding: 12px 14px;
+          }
+          .combo-chip {
+            padding: 5px 8px;
+            font-size: 12px;
+          }
+          .combo-chip-name {
+            max-width: 140px;
+          }
+        }
+        @media (max-width: 440px) {
+          .combo-section {
+            padding: 0 8px;
+          }
+          .combo-card-outer {
+            padding: 18px 12px;
+            border-radius: 16px;
+          }
+          .combo-chip {
+            padding: 4px 7px;
+            font-size: 11.5px;
+            gap: 5px;
+          }
+          .combo-chip-name {
+            max-width: 110px;
+          }
+          .combo-tab-pill {
+            padding: 6px 11px;
+            font-size: 12px;
+            gap: 5px;
+          }
+          .tab-pill-badge {
+            font-size: 9.5px;
+            padding: 2px 6px;
+          }
+          .combo-badge-tag, .combo-count-tag, .combo-savings-glow-badge {
+            font-size: 10px;
+            padding: 3px 8px;
           }
         }
       `}</style>
