@@ -1048,14 +1048,6 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
               </div>
             )}
 
-            {/* Artisanal Note */}
-            <div className="combo-artisanal-note">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              <span>Crafted fresh in small batches · 100% natural ingredients, no preservatives</span>
-            </div>
-
             {/* Price & Actions */}
             <div className="combo-bottom-bar">
               <div className="combo-price-group">
