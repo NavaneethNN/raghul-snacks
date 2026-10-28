@@ -479,14 +479,14 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           overflow-wrap: anywhere;
         }
 
-        /* ── Chips: What's inside ── */
+        /* ── Items List: What's inside ── */
         .combo-items-box {
-          background: rgba(0, 0, 0, 0.16);
-          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: rgba(0, 0, 0, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.14);
           border-radius: 14px;
-          padding: 14px 16px;
-          margin-bottom: 20px;
-          backdrop-filter: blur(6px);
+          padding: 16px 18px;
+          margin-bottom: 22px;
+          backdrop-filter: blur(8px);
           max-width: 100%;
           min-width: 0;
           box-sizing: border-box;
@@ -495,66 +495,83 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 10px;
+          margin-bottom: 12px;
+          padding-bottom: 8px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         .combo-items-label {
-          font: 600 11px 'DM Mono', monospace;
-          letter-spacing: 0.1em;
+          font: 700 11.5px 'DM Mono', monospace;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           color: #ffe2ab;
         }
         .combo-items-count {
-          font: 500 11px 'DM Sans', sans-serif;
-          color: rgba(255, 255, 255, 0.7);
+          font: 600 11px 'DM Mono', monospace;
+          color: rgba(255, 255, 255, 0.85);
+          background: rgba(255, 255, 255, 0.12);
+          padding: 2.5px 8px;
+          border-radius: 999px;
         }
-        .combo-chips-grid {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
+        .combo-items-list {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 8px 12px;
           max-width: 100%;
           min-width: 0;
         }
-        .combo-chip {
-          display: inline-flex;
+        .combo-item-row {
+          display: flex;
           align-items: center;
-          gap: 8px;
-          background: rgba(255, 255, 255, 0.12);
-          border: 1px solid rgba(255, 255, 255, 0.16);
+          justify-content: space-between;
+          gap: 10px;
+          background: rgba(255, 255, 255, 0.09);
+          border: 1px solid rgba(255, 255, 255, 0.13);
           border-radius: 8px;
-          padding: 6px 10px;
-          font-size: 13px;
-          color: #fff;
+          padding: 8px 12px;
           transition: background 0.15s ease;
           max-width: 100%;
           min-width: 0;
           box-sizing: border-box;
         }
-        .combo-chip:hover {
-          background: rgba(255, 255, 255, 0.18);
+        .combo-item-row:hover {
+          background: rgba(255, 255, 255, 0.14);
         }
-        .combo-chip-bullet {
-          color: #ffe2ab;
-          font-size: 10px;
+        .combo-item-title-group {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          min-width: 0;
         }
-        .combo-chip-img {
-          width: 20px;
-          height: 20px;
-          border-radius: 4px;
-          object-fit: cover;
-          border: 1px solid rgba(255, 255, 255, 0.3);
+        .combo-item-check {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 17px;
+          height: 17px;
+          border-radius: 50%;
+          background: rgba(134, 239, 172, 0.2);
+          color: #86efac;
           flex-shrink: 0;
         }
-        .combo-chip-name {
-          font-weight: 500;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          max-width: 180px;
+        .combo-item-name {
+          font: 600 13.5px 'DM Sans', sans-serif;
+          color: #ffffff;
+          line-height: 1.3;
+          word-break: break-word;
+          overflow-wrap: anywhere;
         }
-        .combo-chip-qty {
-          font: 600 11px 'DM Mono', monospace;
+        .combo-item-qty {
+          display: inline-flex;
+          align-items: center;
+          font: 700 11px 'DM Mono', monospace;
           color: #ffe2ab;
-          opacity: 0.9;
+          background: rgba(0, 0, 0, 0.28);
+          padding: 2.5px 7px;
+          border-radius: 6px;
+          letter-spacing: 0.04em;
+          flex-shrink: 0;
+          white-space: nowrap;
+          border: 1px solid rgba(255, 226, 171, 0.2);
         }
 
         /* ── Artisanal Note ── */
@@ -817,19 +834,33 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
         }
 
         /* ── Responsive Breakpoints ── */
-        @media (max-width: 960px) {
+        /* Tablet & medium screens: maintain side-by-side columns (never wrap image below info) */
+        @media (min-width: 861px) and (max-width: 1040px) {
           .combo-card-inner {
-            grid-template-columns: minmax(0, 1fr);
-            gap: 28px;
+            grid-template-columns: minmax(0, 1.2fr) minmax(240px, 0.8fr);
+            gap: 24px;
+            align-items: center;
           }
           .combo-card-outer {
-            padding: 30px 22px;
-          }
-          .combo-image-card {
-            max-width: 480px;
-            margin: 0 auto;
+            padding: 28px 22px;
           }
         }
+
+        /* Mobile & compact viewports: hide visual column completely and let info fill 100% */
+        @media (max-width: 860px) {
+          .combo-visual-col {
+            display: none !important;
+          }
+          .combo-card-inner {
+            grid-template-columns: minmax(0, 1fr) !important;
+            gap: 0 !important;
+          }
+          .combo-card-outer {
+            padding: 24px 18px;
+            border-radius: 18px;
+          }
+        }
+
         @media (max-width: 640px) {
           .combo-section {
             margin-top: 24px;
@@ -877,12 +908,15 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           .combo-items-box {
             padding: 12px 14px;
           }
-          .combo-chip {
-            padding: 5px 8px;
-            font-size: 12px;
+          .combo-items-list {
+            grid-template-columns: 1fr;
+            gap: 6px;
           }
-          .combo-chip-name {
-            max-width: 140px;
+          .combo-item-row {
+            padding: 7px 10px;
+          }
+          .combo-item-name {
+            font-size: 13px;
           }
         }
         @media (max-width: 440px) {
@@ -893,13 +927,15 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
             padding: 18px 12px;
             border-radius: 16px;
           }
-          .combo-chip {
-            padding: 4px 7px;
-            font-size: 11.5px;
-            gap: 5px;
+          .combo-item-row {
+            padding: 6px 8px;
           }
-          .combo-chip-name {
-            max-width: 110px;
+          .combo-item-name {
+            font-size: 12.5px;
+          }
+          .combo-item-qty {
+            font-size: 10px;
+            padding: 2px 6px;
           }
           .combo-tab-pill {
             padding: 6px 11px;
@@ -1027,23 +1063,24 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
               <div className="combo-items-box">
                 <div className="combo-items-box-head">
                   <span className="combo-items-label">What&apos;s inside this box</span>
-                  <span className="combo-items-count">{combo.items.length} items included</span>
+                  <span className="combo-items-count">{combo.items.length} items</span>
                 </div>
-                <div className="combo-chips-grid">
-                  {combo.items.map((item, idx) => {
-                    const qtyText = item.quantity >= 10 ? `${item.quantity}g` : `×${item.quantity}`;
-                    return (
-                      <div key={idx} className="combo-chip" title={`${item.name || "Snack"} (${qtyText})`}>
-                        {item.image ? (
-                          <img src={item.image} alt={item.name || ""} className="combo-chip-img" loading="lazy" decoding="async" />
-                        ) : (
-                          <span className="combo-chip-bullet">✦</span>
-                        )}
-                        <span className="combo-chip-name">{item.name || "Traditional Snack"}</span>
-                        <span className="combo-chip-qty">{qtyText}</span>
+                <div className="combo-items-list">
+                  {combo.items.map((item, idx) => (
+                    <div key={idx} className="combo-item-row">
+                      <div className="combo-item-title-group">
+                        <span className="combo-item-check" aria-hidden="true">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </span>
+                        <span className="combo-item-name">{item.name || "Traditional Snack"}</span>
                       </div>
-                    );
-                  })}
+                      <span className="combo-item-qty">
+                        Qty: {item.quantity}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

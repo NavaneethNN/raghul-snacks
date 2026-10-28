@@ -66,6 +66,9 @@ export function BestsellersSlider({ products }: { products: any[] }) {
   return (
     <div style={{ position: "relative" }}>
       <style>{`
+        .bestsellers-track {
+          overflow-y: hidden !important;
+        }
         .bestsellers-track::-webkit-scrollbar { display: none }
         .slider-arrow:hover {
           background: #fff !important;
@@ -98,6 +101,7 @@ export function BestsellersSlider({ products }: { products: any[] }) {
           display: "flex",
           gap: 20,
           overflowX: "auto",
+          overflowY: "hidden",
           scrollSnapType: "x mandatory",
           paddingBottom: 8,
           scrollbarWidth: "none",
