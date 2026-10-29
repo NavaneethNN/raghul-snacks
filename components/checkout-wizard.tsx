@@ -640,9 +640,9 @@ export function CheckoutWizard() {
                     <input
                       autoComplete="tel"
                       required
-                      inputMode="numeric"
-                      pattern="[6-9][0-9]{9}"
-                      placeholder="10-digit number"
+                      inputMode="tel"
+                      pattern="(\+91[6-9][0-9]{9}|[6-9][0-9]{9})"
+                      placeholder="9876543210 or +919876543210"
                       value={form.phone}
                       onChange={(e) => update("phone", e.target.value)}
                     />
