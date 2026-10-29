@@ -168,7 +168,7 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
                     className={`variant-btn${isSelected ? " variant-btn--active" : ""}`}
                     onClick={() => handleVariantSelect(v)}
                   >
-                    <span className="variant-weight">{v.variantType === "pack" && v.approxWeight ? `${v.weight} (~${formatWeight(v.approxWeight)})` : formatWeight(v.weight)}</span>
+                    <span className="variant-weight">{formatWeight(v.weight)}</span>
                     <span className="variant-price">{formatPrice(vOffer)}</span>
                   </button>
                 );
