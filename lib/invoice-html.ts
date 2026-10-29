@@ -18,6 +18,7 @@ export type InvoiceData = {
     name: string;
     quantity: number;
     price: string | number;
+    weight?: string | null;
   }>;
 };
 
@@ -63,9 +64,18 @@ export function buildInvoiceHtml(data: InvoiceData): string {
   const itemRows = data.items
     .map((item, idx) => {
       const lineTotal = Number(item.price) * item.quantity;
+      const hasVariant = Boolean(
+        item.weight &&
+        item.weight.trim() !== "" &&
+        item.weight !== "-" &&
+        item.weight !== "—"
+      );
       return /* html */ `
       <tr class="${idx % 2 === 0 ? "row-even" : "row-odd"}">
-        <td class="item-name">${escapeHtml(item.name)}</td>
+        <td class="item-name">
+          ${escapeHtml(item.name)}
+          ${hasVariant ? `<div style="font-size:11px;color:#6b7280;margin-top:2px;">Variant: <strong>${escapeHtml(item.weight!)}</strong></div>` : ""}
+        </td>
         <td class="center">${item.quantity}</td>
         <td class="right">${INR(Number(item.price))}</td>
         <td class="right bold">${INR(lineTotal)}</td>

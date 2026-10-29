@@ -56,6 +56,7 @@ export async function GET(
         name: orderItems.name,
         quantity: orderItems.quantity,
         price: orderItems.price,
+        weight: orderItems.weight,
       })
       .from(orderItems)
       .where(eq(orderItems.orderId, order.id));

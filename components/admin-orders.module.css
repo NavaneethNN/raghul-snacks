@@ -420,6 +420,15 @@
   margin: 16px 0;
 }
 
+.orderItemsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.orderItemsHeader span,
 .orderItems > span {
   display: block;
   font-size: 11px;
@@ -427,9 +436,30 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #8a8479;
-  margin-bottom: 12px;
 }
 
+.invoiceBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.invoiceBtn:hover {
+  background: #fdf5f0;
+  border-color: var(--terracotta);
+  color: var(--terracotta);
+}
+
+.orderItemsList,
 .orderItems ul {
   list-style: none;
   padding: 0;
@@ -439,32 +469,120 @@
   gap: 8px;
 }
 
-.orderItems li {
+.orderItemRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 12px;
+  padding: 10px 14px;
   background: var(--paper);
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid var(--line);
+  gap: 12px;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.orderItems li strong {
+.orderItemRow:hover {
+  border-color: rgba(201, 95, 59, 0.35);
+}
+
+.orderItemMain {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.orderItemName {
   font-size: 14px;
   color: var(--ink);
   font-weight: 600;
+  line-height: 1.3;
 }
 
-.orderItems li span {
-  font-size: 13px;
+/* Variant Pill / Badge */
+.itemVariantBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fef3e7;
+  color: #92400e;
+  border: 1px solid #fed7aa;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.variantTagIcon {
+  color: var(--terracotta);
+  flex-shrink: 0;
+}
+
+.variantLabel {
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #b45309;
+  font-weight: 600;
+}
+
+.itemVariantBadge strong {
+  font-family: 'DM Mono', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  color: #7c2d12;
+}
+
+.orderItemMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.orderItemQtyPrice {
+  font-size: 12px;
   color: #6b7280;
   font-family: 'DM Mono', monospace;
+  white-space: nowrap;
+}
+
+.orderItemQtyPrice strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.orderItemLineTotal {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  font-family: 'DM Mono', monospace;
+  white-space: nowrap;
 }
 
 .orderItems li em {
   color: #9ca3af;
   font-style: italic;
   font-size: 13px;
+}
+
+@media (max-width: 580px) {
+  .orderItemRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .orderItemMeta {
+    width: 100%;
+    justify-content: space-between;
+    padding-top: 6px;
+    border-top: 1px dashed var(--line);
+  }
 }
 
 /* Details Section */

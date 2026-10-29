@@ -65,9 +65,11 @@ export default async function AccountPage() {
             id: orderItems.id,
             orderId: orderItems.orderId,
             productId: orderItems.productId,
+            variantId: orderItems.variantId,
             name: orderItems.name,
             quantity: orderItems.quantity,
             price: orderItems.price,
+            weight: orderItems.weight,
           })
           .from(orderItems)
           .where(inArray(orderItems.orderId, orderIds))
@@ -100,9 +102,11 @@ export default async function AccountPage() {
       return {
         id: item.id,
         productId: item.productId,
+        variantId: item.variantId,
         name: item.name,
         quantity: item.quantity,
         price: item.price,
+        weight: item.weight,
         product: p
           ? {
               id: p.id,

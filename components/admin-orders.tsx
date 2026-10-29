@@ -1,11 +1,19 @@
-﻿"use client";
+"use client";
 
 import { useMemo, useState } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
 import { useRouter } from "next/navigation";
 import styles from "./admin-orders.module.css";
 
-type OrderItem = { id: number; name: string; quantity: number; price: number };
+type OrderItem = {
+  id: number;
+  name: string;
+  quantity: number;
+  price: number;
+  weight?: string | null;
+  productId?: number | null;
+  variantId?: number | null;
+};
 type AdminOrder = {
   id: number;
   orderNumber: string;
@@ -270,15 +278,57 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
                     <div className={styles.orderDetail}>
                       {/* Items */}
                       <div className={styles.orderItems}>
-                        <span>Order Items</span>
-                        <ul>
+                        <div className={styles.orderItemsHeader}>
+                          <span>Order Items ({order.items?.length ?? 0})</span>
+                          <a
+                            href={`/api/orders/${order.orderNumber}/invoice`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.invoiceBtn}
+                            title="Print or view order invoice"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                              <rect x="6" y="14" width="12" height="8" />
+                            </svg>
+                            Print Invoice
+                          </a>
+                        </div>
+                        <ul className={styles.orderItemsList}>
                           {order.items?.length > 0
-                            ? order.items.map((item) => (
-                                <li key={item.id}>
-                                  <strong>{item.name}</strong>
-                                  <span>{item.quantity} × {fmt.format(item.price)} = {fmt.format(item.quantity * item.price)}</span>
-                                </li>
-                              ))
+                            ? order.items.map((item) => {
+                                const hasVariant = Boolean(
+                                  item.weight &&
+                                  item.weight.trim() !== "" &&
+                                  item.weight !== "-" &&
+                                  item.weight !== "—"
+                                );
+                                return (
+                                  <li key={item.id} className={styles.orderItemRow}>
+                                    <div className={styles.orderItemMain}>
+                                      <strong className={styles.orderItemName}>{item.name}</strong>
+                                      {hasVariant && (
+                                        <span className={styles.itemVariantBadge} title="Product Variant">
+                                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={styles.variantTagIcon}>
+                                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                                            <line x1="7" y1="7" x2="7.01" y2="7"/>
+                                          </svg>
+                                          <span className={styles.variantLabel}>Variant:</span>
+                                          <strong>{item.weight}</strong>
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className={styles.orderItemMeta}>
+                                      <span className={styles.orderItemQtyPrice}>
+                                        <strong>{item.quantity}</strong> × {fmt.format(item.price)}
+                                      </span>
+                                      <span className={styles.orderItemLineTotal}>
+                                        {fmt.format(item.quantity * item.price)}
+                                      </span>
+                                    </div>
+                                  </li>
+                                );
+                              })
                             : <li><em>No items found</em></li>}
                         </ul>
                       </div>
