@@ -13,6 +13,8 @@ type Variant = {
   id: number;
   productId: number;
   weight: string;
+  variantType?: string | null;
+  approxWeight?: string | null;
   price: string;
   offerPrice: string | null;
   sortOrder: number;
@@ -53,6 +55,8 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
     price: basePrice,
     offerPrice: displayPrice,
     weight: displayWeight,
+    approxWeight: selectedVariant?.approxWeight || selectedVariant?.weight || product.weight,
+    variantType: selectedVariant?.variantType || "weight",
     description: product.description || "",
     ingredients: product.ingredients || "",
     category: product.categorySlug || product.category || "",
@@ -164,7 +168,7 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
                     className={`variant-btn${isSelected ? " variant-btn--active" : ""}`}
                     onClick={() => handleVariantSelect(v)}
                   >
-                    <span className="variant-weight">{formatWeight(v.weight)}</span>
+                    <span className="variant-weight">{v.variantType === "pack" && v.approxWeight ? `${v.weight} (~${formatWeight(v.approxWeight)})` : formatWeight(v.weight)}</span>
                     <span className="variant-price">{formatPrice(vOffer)}</span>
                   </button>
                 );
@@ -182,7 +186,7 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
             </svg>
             <div>
               <span>Weight</span>
-              <strong>{formatWeight(displayWeight)}</strong>
+              <strong>{selectedVariant?.variantType === "pack" && selectedVariant?.approxWeight ? `${selectedVariant.weight} (approx. ${formatWeight(selectedVariant.approxWeight)})` : formatWeight(displayWeight)}</strong>
             </div>
           </div>
           <div className="detail-item">

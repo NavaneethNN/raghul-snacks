@@ -128,6 +128,8 @@ export async function GET() {
             price: v.price,
             offerPrice: v.offerPrice || v.price,
             weight: v.weight,
+            approxWeight: v.approxWeight || v.weight,
+            variantType: v.variantType || "weight",
             categoryId: p.categoryId,
             image: p.image,
             active: p.active,

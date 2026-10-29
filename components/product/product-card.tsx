@@ -33,6 +33,8 @@ export function ProductCard({ product }: { product: any }) {
     price: pricing.originalPrice,
     offerPrice: pricing.hasPrice ? pricing.displayPrice : pricing.originalPrice,
     weight: formatDisplayWeight(firstVariant ? firstVariant.weight : product.weight),
+    approxWeight: firstVariant?.approxWeight || firstVariant?.weight || product.weight,
+    variantType: firstVariant?.variantType || "weight",
     description: product.description || "",
     ingredients: product.ingredients || "",
     category: product.categorySlug || product.category || "",

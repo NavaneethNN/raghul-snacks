@@ -4,6 +4,8 @@ import { formatPrice, formatWeight } from "@/lib/catalog";
 export type VariantLike = {
   id: number;
   weight?: string | null;
+  variantType?: string | null;
+  approxWeight?: string | null;
   price?: string | number | null;
   offerPrice?: string | number | null;
   sortOrder?: number;

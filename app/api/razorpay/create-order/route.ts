@@ -73,12 +73,21 @@ export async function POST(request: Request) {
       let northRate = parseInt(s.shippingNorthIndia || "250");
       let extraRate = parseInt(s.shippingExtraKg || "30");
 
-      const ZONE3 = ["Kerala", "Karnataka", "Andhra Pradesh", "Telangana"];
-      const ZONE2 = ["Tamil Nadu"];
+            const stateNorm = (payload.data.state || "").trim().toLowerCase();
+      const isTN = stateNorm === "tamil nadu";
+      const isSouth = ["kerala", "karnataka", "andhra pradesh", "telangana"].includes(stateNorm);
+
       let baseRate: number;
-      if (ZONE2.includes(payload.data.state)) { baseRate = tnRate; }
-      else if (ZONE3.includes(payload.data.state)) { baseRate = southRate; courierName = "Delivery"; }
-      else { baseRate = northRate; courierName = "Air Delivery"; }
+      if (isTN) {
+        baseRate = tnRate;
+        courierName = "Delivery";
+      } else if (isSouth) {
+        baseRate = southRate;
+        courierName = "Delivery";
+      } else {
+        baseRate = northRate;
+        courierName = "Air Delivery";
+      }
 
       const totalWeightKg = Math.max(1, weight);
       const extraKg = Math.ceil(Math.max(0, totalWeightKg - 1));

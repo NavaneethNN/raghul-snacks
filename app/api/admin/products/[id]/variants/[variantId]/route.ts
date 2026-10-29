@@ -20,10 +20,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const productId = parseInt(id);
   const vId = parseInt(variantId);
   if (isNaN(productId) || isNaN(vId)) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
-  const body = await req.json() as { weight?: string; price?: number; offerPrice?: number | null; sortOrder?: number; active?: boolean };
+  const body = await req.json() as {
+    variantType?: string;
+    weight?: string;
+    approxWeight?: string | null;
+    price?: number;
+    offerPrice?: number | null;
+    sortOrder?: number;
+    active?: boolean;
+  };
   const db = getDb();
   const [updated] = await db.update(productVariants).set({
+    ...(body.variantType !== undefined ? { variantType: body.variantType === "pack" ? "pack" : "weight" } : {}),
     ...(body.weight !== undefined ? { weight: body.weight.trim() } : {}),
+    ...(body.approxWeight !== undefined ? { approxWeight: body.approxWeight ? body.approxWeight.trim() : null } : {}),
     ...(body.price !== undefined ? { price: String(body.price) } : {}),
     ...(body.offerPrice !== undefined ? { offerPrice: body.offerPrice ? String(body.offerPrice) : null } : {}),
     ...(body.sortOrder !== undefined ? { sortOrder: body.sortOrder } : {}),

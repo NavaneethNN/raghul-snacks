@@ -31,12 +31,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const productId = parseInt(id);
   if (isNaN(productId)) return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
-  const body = await req.json() as { weight: string; price: number; offerPrice?: number | null; sortOrder?: number };
-  if (!body.weight?.trim() || !body.price || body.price <= 0) return NextResponse.json({ error: "Weight and valid price are required" }, { status: 400 });
+  const body = await req.json() as {
+    variantType?: string;
+    weight: string;
+    approxWeight?: string | null;
+    price: number;
+    offerPrice?: number | null;
+    sortOrder?: number;
+  };
+  if (!body.weight?.trim() || !body.price || body.price <= 0) return NextResponse.json({ error: "Variant name/weight and valid price are required" }, { status: 400 });
+  const variantType = body.variantType === "pack" ? "pack" : "weight";
+  const approxWeight = variantType === "pack"
+    ? (body.approxWeight?.trim() || null)
+    : (body.approxWeight?.trim() || body.weight.trim());
+
   const db = getDb();
   const [variant] = await db.insert(productVariants).values({
     productId,
     weight: body.weight.trim(),
+    variantType,
+    approxWeight,
     price: String(body.price),
     offerPrice: body.offerPrice ? String(body.offerPrice) : null,
     sortOrder: body.sortOrder ?? 0,

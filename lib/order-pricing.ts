@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import { combos as combosTable, products as productsTable, productVariants } from "@/drizzle/schema";
 import { and, eq, inArray } from "drizzle-orm";
+import { parseWeightToKg } from "@/lib/catalog";
 
 export type RequestedItem = { productId: string; quantity: number };
 export type PricedLine = { product: { slug: string; categoryId: number | null; [key: string]: unknown }; quantity: number; lineTotal: number };
@@ -85,6 +86,7 @@ export async function priceOrder(items: RequestedItem[]) {
         },
         quantity: item.quantity,
         lineTotal: offerPrice * item.quantity,
+        unitWeightKg: parseWeightToKg("500g"),
       };
     }
 
@@ -97,15 +99,18 @@ export async function priceOrder(items: RequestedItem[]) {
     let offerPrice: number;
     let name = product.name;
     let weight = product.weight;
+    let approxWeight = product.weight;
 
     if (item.variantId !== null) {
       const variant = dbVariants.find((v) => v.id === item.variantId && v.productId === item.baseId);
       if (!variant) throw new Error(`Variant not found for product ${product.name}.`);
       offerPrice = variant.offerPrice ? parseFloat(variant.offerPrice) : parseFloat(variant.price);
       weight = variant.weight;
+      approxWeight = variant.approxWeight || variant.weight;
     } else {
       offerPrice = product.offerPrice ? parseFloat(product.offerPrice) : parseFloat(product.price);
     }
+    const unitWeightKg = parseWeightToKg(approxWeight || weight);
 
     return {
       product: {
@@ -119,10 +124,12 @@ export async function priceOrder(items: RequestedItem[]) {
       },
       quantity: item.quantity,
       lineTotal: offerPrice * item.quantity,
+      unitWeightKg,
     };
   });
 
   const subtotal = lines.reduce((sum, line) => sum + line.lineTotal, 0);
-  const weight = Math.max(0.25, lines.reduce((total, line) => total + line.quantity * 0.25, 0));
+  const totalWeightKg = lines.reduce((total, line) => total + line.quantity * line.unitWeightKg, 0);
+  const weight = Math.max(0.25, Math.round(totalWeightKg * 1000) / 1000);
   return { lines, subtotal, weight };
 }

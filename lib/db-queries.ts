@@ -9,6 +9,8 @@ export type ProductVariantRow = {
   offerPrice: string | null;
   sortOrder: number;
   active: boolean;
+  variantType?: string | null;
+  approxWeight?: string | null;
   createdAt: Date;
 };
 

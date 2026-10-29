@@ -4,7 +4,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCart } from "@/components/cart/cart-provider";
-import { formatPrice } from "@/lib/catalog";
+import { formatPrice, parseWeightToKg } from "@/lib/catalog";
 import { clearBuyNowItem, readBuyNowItem, type BuyNowItem } from "@/lib/buy-now";
 import styles from "./checkout-wizard.module.css";
 type CheckoutForm = { customerName: string; phone: string; email: string; address: string; city: string; state: string; pincode: string };
@@ -37,7 +37,6 @@ export function CheckoutWizard() {
     pincode: "",
   });
   const [states, setStates] = useState<string[]>([]);
-  const [cities, setCities] = useState<string[]>([]);
   const [quote, setQuote] = useState<ShippingQuote | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [paymentReady, setPaymentReady] = useState(
@@ -116,22 +115,6 @@ export function CheckoutWizard() {
   }, []);
 
   useEffect(() => {
-    if (!form.state) { setCities([]); return; } // eslint-disable-line react-hooks/set-state-in-effect
-    setCities([]);
-    setForm((c) => ({ ...c, city: "" }));
-    fetch(`/api/locations/cities?state=${encodeURIComponent(form.state)}`)
-      .then(async (res) => {
-        const data = (await res.json()) as {
-          cities?: string[];
-          error?: string;
-        };
-        if (!res.ok) throw new Error(data.error || "Unable to load cities.");
-        setCities(data.cities || []);
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : "Unable to load cities."));
-  }, [form.state]);
-
-  useEffect(() => {
     if (!itemPayload.length) { setQuote(null); return; } // eslint-disable-line react-hooks/set-state-in-effect
 
     // ── Manual shipping: weight-based fixed rates ──
@@ -140,11 +123,7 @@ export function CheckoutWizard() {
     if (MANUAL) {
       if (!form.state) { setQuote(null); return; }
 
-      const ZONE3_STATES = ["Kerala", "Karnataka", "Andhra Pradesh", "Telangana"];
-      const ZONE2_STATES = ["Tamil Nadu"];
-
-      // Read rates from DB asynchronously, then set quote
-      const computeQuote = async () => {
+            const computeQuote = async () => {
         let tnRate = 60, southRate = 100, northRate = 250, extraRate = 30;
         try {
           const settingsRes = await fetch("/api/settings");
@@ -157,17 +136,21 @@ export function CheckoutWizard() {
           }
         } catch { /* use defaults */ }
 
+        const stateNorm = (form.state || "").trim().toLowerCase();
+        const isTN = stateNorm === "tamil nadu";
+        const isSouth = ["kerala", "karnataka", "andhra pradesh", "telangana"].includes(stateNorm);
+
         let baseRate: number;
         let courierLabel: string;
-        if (ZONE2_STATES.includes(form.state)) {
+        if (isTN) {
           baseRate = tnRate; courierLabel = "Delivery";
-        } else if (ZONE3_STATES.includes(form.state)) {
+        } else if (isSouth) {
           baseRate = southRate; courierLabel = "Delivery";
         } else {
           baseRate = northRate; courierLabel = "Air Delivery";
         }
 
-        const totalWeightKg = Math.max(1, itemPayload.reduce((sum, item) => sum + item.quantity * 0.25, 0));
+        const totalWeightKg = Math.max(1, items.reduce((sum, item) => sum + item.quantity * parseWeightToKg((item as any).approxWeight || item.weight), 0));
         const extraKg = Math.ceil(Math.max(0, totalWeightKg - 1));
         const charge = baseRate + extraKg * extraRate;
 
@@ -206,7 +189,7 @@ export function CheckoutWizard() {
       }
     }, 450);
     return () => { controller.abort(); window.clearTimeout(timer); };
-  }, [form.state, form.pincode, itemPayload]);
+  }, [form.state, form.pincode, itemPayload, items]);
 
   // Load eligible coupons for this user (server filters firstPurchase, perCustomer limits)
   useEffect(() => {
@@ -331,7 +314,7 @@ export function CheckoutWizard() {
       if (!form.address.trim()) { setError("Please enter your delivery address."); return; }
       if (form.address.trim().length < 8) { setError("Address must be at least 8 characters long."); return; }
       if (!form.state) { setError("Please select your state."); return; }
-      if (!form.city) { setError("Please select your city."); return; }
+      if (!form.city.trim()) { setError("Please enter your district."); return; }
       if (!form.pincode) { setError("Please enter your PIN code."); return; }
       if (!/^\d{6}$/.test(form.pincode)) { setError("Please enter a valid 6-digit PIN code."); return; }
       if (!quote) {
@@ -739,20 +722,14 @@ export function CheckoutWizard() {
                     </select>
                   </label>
                   <label>
-                    City
-                    <select
+                    District
+                    <input
                       required
-                      disabled={!form.state || !cities.length}
+                      autoComplete="address-level2"
+                      placeholder="Enter district"
                       value={form.city}
                       onChange={(e) => update("city", e.target.value)}
-                    >
-                      <option value="">
-                        {form.state
-                          ? cities.length ? "Select city" : "Loading cities…"
-                          : "Select state first"}
-                      </option>
-                      {cities.map((c) => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                    />
                   </label>
                   <label>
                     PIN code

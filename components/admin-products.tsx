@@ -7,9 +7,9 @@ import { formatWeight } from "@/lib/catalog";
 import styles from "./admin-table.module.css";
 import productStyles from "./admin-products.module.css";
 
-type Variant = { id: number; weight: string; price: string; offerPrice: string | null; sortOrder: number; active: boolean };
+type Variant = { id: number; weight: string; variantType?: "weight" | "pack" | null; approxWeight?: string | null; price: string; offerPrice: string | null; sortOrder: number; active: boolean };
 // Draft variant (before saving to DB)
-type DraftVariant = { key: string; label: string; price: string; offerPrice: string };
+type DraftVariant = { key: string; variantType: "weight" | "pack"; label: string; approxWeight: string; price: string; offerPrice: string };
 
 type Product = {
   id: number;
@@ -69,11 +69,13 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
 
   // ── Variant state ──────────────────────────────────────────────────────────
   // hasVariants: toggle on the form
-  const [hasVariants, setHasVariants]       = useState(false);
+    const [hasVariants, setHasVariants]       = useState(false);
   const [variantType, setVariantType]       = useState<VariantType>("Weight");
   // draftVariants: in-form list before saving to DB
   const [draftVariants, setDraftVariants]   = useState<DraftVariant[]>([]);
+  const [draftVariantType, setDraftVariantType] = useState<"weight" | "pack">("weight");
   const [draftLabel, setDraftLabel]         = useState("");
+  const [draftApproxWeight, setDraftApproxWeight] = useState("");
   const [draftPrice, setDraftPrice]         = useState("");
   const [draftOffer, setDraftOffer]         = useState("");
   // savedVariants: loaded from DB when editing
@@ -81,7 +83,9 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
   const [variantSaving, setVariantSaving]   = useState(false);
   // inline editing of a saved variant
   const [editingVariantId, setEditingVariantId] = useState<number | null>(null);
+  const [editVariantType, setEditVariantType]   = useState<"weight" | "pack">("weight");
   const [editWeight, setEditWeight] = useState("");
+  const [editApproxWeight, setEditApproxWeight] = useState("");
   const [editPrice, setEditPrice]   = useState("");
   const [editOffer, setEditOffer]   = useState("");
   // inline editing of a draft variant (before save)
@@ -98,14 +102,16 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     } catch { setSavedVariants([]); }
   }
 
-  async function saveDraftVariantsToDb(productId: number) {
+    async function saveDraftVariantsToDb(productId: number) {
     for (let i = 0; i < draftVariants.length; i++) {
       const v = draftVariants[i];
       await fetch(`/api/admin/products/${productId}/variants`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          variantType: v.variantType,
           weight: v.label,
+          approxWeight: v.approxWeight,
           price: parseFloat(v.price),
           offerPrice: v.offerPrice ? parseFloat(v.offerPrice) : null,
           sortOrder: i,
@@ -140,15 +146,18 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     await syncProductPriceFromVariants(productId);
   }
 
-  async function saveVariantEdit(productId: number, variantId: number) {
+    async function saveVariantEdit(productId: number, variantId: number) {
     if (!editWeight.trim() || !editPrice) return;
     setVariantSaving(true);
     try {
+      const approx = editVariantType === "pack" ? (editApproxWeight.trim() || null) : (editApproxWeight.trim() || editWeight.trim());
       await fetch(`/api/admin/products/${productId}/variants/${variantId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          variantType: editVariantType,
           weight: editWeight.trim(),
+          approxWeight: approx,
           price: parseFloat(editPrice),
           offerPrice: editOffer ? parseFloat(editOffer) : null,
         }),
@@ -159,15 +168,18 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     } finally { setVariantSaving(false); }
   }
 
-  async function addSavedVariant(productId: number) {
+    async function addSavedVariant(productId: number) {
     if (!draftLabel.trim() || !draftPrice) return;
     setVariantSaving(true);
     try {
+      const approx = draftVariantType === "pack" ? (draftApproxWeight.trim() || null) : (draftApproxWeight.trim() || draftLabel.trim());
       await fetch(`/api/admin/products/${productId}/variants`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          variantType: draftVariantType,
           weight: draftLabel.trim(),
+          approxWeight: approx,
           price: parseFloat(draftPrice),
           offerPrice: draftOffer ? parseFloat(draftOffer) : null,
           sortOrder: savedVariants.length,
@@ -175,14 +187,22 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
       });
       await loadSavedVariants(productId);
       await syncProductPriceFromVariants(productId);
-      setDraftLabel(""); setDraftPrice(""); setDraftOffer("");
+      setDraftLabel(""); setDraftApproxWeight(""); setDraftPrice(""); setDraftOffer("");
     } finally { setVariantSaving(false); }
   }
 
   function addDraftVariant() {
     if (!draftLabel.trim() || !draftPrice) return;
-    setDraftVariants(prev => [...prev, { key: `${Date.now()}`, label: draftLabel.trim(), price: draftPrice, offerPrice: draftOffer }]);
-    setDraftLabel(""); setDraftPrice(""); setDraftOffer("");
+    const approx = draftVariantType === "pack" ? (draftApproxWeight.trim() || "") : (draftApproxWeight.trim() || draftLabel.trim());
+    setDraftVariants(prev => [...prev, {
+      key: `${Date.now()}`,
+      variantType: draftVariantType,
+      label: draftLabel.trim(),
+      approxWeight: approx,
+      price: draftPrice,
+      offerPrice: draftOffer,
+    }]);
+    setDraftLabel(""); setDraftApproxWeight(""); setDraftPrice(""); setDraftOffer("");
   }
 
   function removeDraftVariant(key: string) {
@@ -604,30 +624,72 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                     <div style={{ marginBottom: 12 }}>
                       <p style={{ margin: "0 0 8px", fontSize: 12, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Saved variants</p>
                       {savedVariants.map(v => (
-                        <div key={v.id} style={{ padding: "8px 10px", background: "var(--paper)", borderRadius: 7, border: `1px solid ${editingVariantId === v.id ? "var(--terracotta)" : "var(--line)"}`, marginBottom: 5 }}>
+                        <div key={v.id} style={{ padding: "8px 10px", background: "var(--paper)", borderRadius: 7, border: `1px solid ${editingVariantId === v.id ? "var(--terracotta)" : "var(--line)"}`, marginBottom: 6 }}>
                           {editingVariantId === v.id ? (
                             // ── Inline edit mode ──
-                            <div className={styles.variantEditRow}>
-                              <input type="text" value={editWeight} onChange={e => setEditWeight(e.target.value)} placeholder="Weight" style={{ padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13, fontFamily: "'DM Sans',sans-serif" }} />
-                              <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="Price" style={{ padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
-                              <input type="number" value={editOffer} onChange={e => setEditOffer(e.target.value)} placeholder="Offer (opt)" style={{ padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
-                              <button type="button" className={styles.primaryButton} style={{ padding: "4px 12px", fontSize: 12, whiteSpace: "nowrap" }}
-                                disabled={variantSaving || !editWeight.trim() || !editPrice}
-                                onClick={() => saveVariantEdit(editingProduct!.id, v.id)}>
-                                {variantSaving ? "…" : "Save"}
-                              </button>
-                              <button type="button" className={styles.secondaryButton} style={{ padding: "4px 10px", fontSize: 12 }}
-                                onClick={() => setEditingVariantId(null)}>
-                                Cancel
-                              </button>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%" }}>
+                              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                                <select
+                                  value={editVariantType}
+                                  onChange={e => setEditVariantType(e.target.value as "weight" | "pack")}
+                                  style={{ padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 12, fontWeight: 600 }}
+                                >
+                                  <option value="weight">Weight-based</option>
+                                  <option value="pack">Pack-based</option>
+                                </select>
+                                <input
+                                  type="text"
+                                  value={editWeight}
+                                  onChange={e => setEditWeight(e.target.value)}
+                                  placeholder={editVariantType === "pack" ? "Pack Name (e.g. Pack of 3)" : "Weight (e.g. 250g)"}
+                                  style={{ flex: 1, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13, fontFamily: "'DM Sans',sans-serif" }}
+                                />
+                                {editVariantType === "pack" && (
+                                  <input
+                                    type="text"
+                                    value={editApproxWeight}
+                                    onChange={e => setEditApproxWeight(e.target.value)}
+                                    placeholder="Approx weight (e.g. 100g)"
+                                    style={{ flex: 1, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13, fontFamily: "'DM Sans',sans-serif" }}
+                                  />
+                                )}
+                              </div>
+                              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                                <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="Price" style={{ width: 85, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
+                                <input type="number" value={editOffer} onChange={e => setEditOffer(e.target.value)} placeholder="Offer (opt)" style={{ width: 85, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
+                                <button type="button" className={styles.primaryButton} style={{ padding: "4px 12px", fontSize: 12, whiteSpace: "nowrap" }}
+                                  disabled={variantSaving || !editWeight.trim() || !editPrice}
+                                  onClick={() => saveVariantEdit(editingProduct!.id, v.id)}>
+                                  {variantSaving ? "…" : "Save"}
+                                </button>
+                                <button type="button" className={styles.secondaryButton} style={{ padding: "4px 10px", fontSize: 12 }}
+                                  onClick={() => setEditingVariantId(null)}>
+                                  Cancel
+                                </button>
+                              </div>
                             </div>
                           ) : (
                             // ── Display mode ──
                             <div className={styles.variantEditRow}>
-                              <span style={{ flex: 1, font: "600 13px 'DM Sans',sans-serif" }}>{v.weight}</span>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, flexWrap: "wrap" }}>
+                                <span style={{ font: "600 13px 'DM Sans',sans-serif" }}>{v.weight}</span>
+                                <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", padding: "1px 5px", borderRadius: 4, background: v.variantType === "pack" ? "#eff6ff" : "#f3f4f6", color: v.variantType === "pack" ? "#1d4ed8" : "#4b5563" }}>
+                                  {v.variantType === "pack" ? "Pack" : "Weight"}
+                                </span>
+                                {v.variantType === "pack" && v.approxWeight && (
+                                  <span style={{ fontSize: 12, color: "#6b7280" }}>(approx. {v.approxWeight})</span>
+                                )}
+                              </div>
                               <span style={{ fontSize: 12, color: "#6b7280" }}>₹{v.price}{v.offerPrice ? ` → ₹${v.offerPrice}` : ""}</span>
                               <button type="button" className={styles.iconButton} title="Edit variant"
-                                onClick={() => { setEditingVariantId(v.id); setEditWeight(v.weight); setEditPrice(v.price); setEditOffer(v.offerPrice ?? ""); }}>
+                                onClick={() => {
+                                  setEditingVariantId(v.id);
+                                  setEditVariantType(v.variantType === "pack" ? "pack" : "weight");
+                                  setEditWeight(v.weight);
+                                  setEditApproxWeight(v.approxWeight || "");
+                                  setEditPrice(v.price);
+                                  setEditOffer(v.offerPrice ?? "");
+                                }}>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                               </button>
                               <button type="button" className={styles.iconButton} onClick={() => deleteSavedVariant(editingProduct!.id, v.id)} title="Remove">
@@ -645,31 +707,74 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                     <div style={{ marginBottom: 12 }}>
                       <p style={{ margin: "0 0 8px", fontSize: 12, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Added variants</p>
                       {draftVariants.map(v => (
-                        <div key={v.key} style={{ padding: "8px 10px", background: "var(--paper)", borderRadius: 7, border: `1px solid ${editingDraftKey === v.key ? "var(--terracotta)" : "var(--line)"}`, marginBottom: 5 }}>
+                        <div key={v.key} style={{ padding: "8px 10px", background: "var(--paper)", borderRadius: 7, border: `1px solid ${editingDraftKey === v.key ? "var(--terracotta)" : "var(--line)"}`, marginBottom: 6 }}>
                           {editingDraftKey === v.key ? (
-                            <div className={styles.variantEditRow}>
-                              <input type="text" value={editWeight} onChange={e => setEditWeight(e.target.value)} placeholder="Weight" style={{ padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13, fontFamily: "'DM Sans',sans-serif" }} />
-                              <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="Price" style={{ padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
-                              <input type="number" value={editOffer} onChange={e => setEditOffer(e.target.value)} placeholder="Offer (opt)" style={{ padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
-                              <button type="button" className={styles.primaryButton} style={{ padding: "4px 12px", fontSize: 12, whiteSpace: "nowrap" }}
-                                disabled={!editWeight.trim() || !editPrice}
-                                onClick={() => {
-                                  setDraftVariants(prev => prev.map(d => d.key === v.key ? { ...d, label: editWeight.trim(), price: editPrice, offerPrice: editOffer } : d));
-                                  setEditingDraftKey(null);
-                                }}>
-                                Save
-                              </button>
-                              <button type="button" className={styles.secondaryButton} style={{ padding: "4px 10px", fontSize: 12 }}
-                                onClick={() => setEditingDraftKey(null)}>
-                                Cancel
-                              </button>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%" }}>
+                              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                                <select
+                                  value={editVariantType}
+                                  onChange={e => setEditVariantType(e.target.value as "weight" | "pack")}
+                                  style={{ padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 12, fontWeight: 600 }}
+                                >
+                                  <option value="weight">Weight-based</option>
+                                  <option value="pack">Pack-based</option>
+                                </select>
+                                <input
+                                  type="text"
+                                  value={editWeight}
+                                  onChange={e => setEditWeight(e.target.value)}
+                                  placeholder={editVariantType === "pack" ? "Pack Name (e.g. Pack of 3)" : "Weight (e.g. 250g)"}
+                                  style={{ flex: 1, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13, fontFamily: "'DM Sans',sans-serif" }}
+                                />
+                                {editVariantType === "pack" && (
+                                  <input
+                                    type="text"
+                                    value={editApproxWeight}
+                                    onChange={e => setEditApproxWeight(e.target.value)}
+                                    placeholder="Approx weight (e.g. 100g)"
+                                    style={{ flex: 1, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13, fontFamily: "'DM Sans',sans-serif" }}
+                                  />
+                                )}
+                              </div>
+                              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                                <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="Price" style={{ width: 85, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
+                                <input type="number" value={editOffer} onChange={e => setEditOffer(e.target.value)} placeholder="Offer (opt)" style={{ width: 85, padding: "4px 8px", border: "1.5px solid var(--line)", borderRadius: 6, fontSize: 13 }} />
+                                <button type="button" className={styles.primaryButton} style={{ padding: "4px 12px", fontSize: 12, whiteSpace: "nowrap" }}
+                                  disabled={!editWeight.trim() || !editPrice}
+                                  onClick={() => {
+                                    const approx = editVariantType === "pack" ? (editApproxWeight.trim() || "") : (editApproxWeight.trim() || editWeight.trim());
+                                    setDraftVariants(prev => prev.map(d => d.key === v.key ? { ...d, variantType: editVariantType, label: editWeight.trim(), approxWeight: approx, price: editPrice, offerPrice: editOffer } : d));
+                                    setEditingDraftKey(null);
+                                  }}>
+                                  Save
+                                </button>
+                                <button type="button" className={styles.secondaryButton} style={{ padding: "4px 10px", fontSize: 12 }}
+                                  onClick={() => setEditingDraftKey(null)}>
+                                  Cancel
+                                </button>
+                              </div>
                             </div>
                           ) : (
                             <div className={styles.variantEditRow}>
-                              <span style={{ flex: 1, font: "600 13px 'DM Sans',sans-serif" }}>{v.label}</span>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, flexWrap: "wrap" }}>
+                                <span style={{ font: "600 13px 'DM Sans',sans-serif" }}>{v.label}</span>
+                                <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", padding: "1px 5px", borderRadius: 4, background: v.variantType === "pack" ? "#eff6ff" : "#f3f4f6", color: v.variantType === "pack" ? "#1d4ed8" : "#4b5563" }}>
+                                  {v.variantType === "pack" ? "Pack" : "Weight"}
+                                </span>
+                                {v.variantType === "pack" && v.approxWeight && (
+                                  <span style={{ fontSize: 12, color: "#6b7280" }}>(approx. {v.approxWeight})</span>
+                                )}
+                              </div>
                               <span style={{ fontSize: 12, color: "#6b7280" }}>₹{v.price}{v.offerPrice ? ` → ₹${v.offerPrice}` : ""}</span>
                               <button type="button" className={styles.iconButton} title="Edit"
-                                onClick={() => { setEditingDraftKey(v.key); setEditWeight(v.label); setEditPrice(v.price); setEditOffer(v.offerPrice ?? ""); }}>
+                                onClick={() => {
+                                  setEditingDraftKey(v.key);
+                                  setEditVariantType(v.variantType);
+                                  setEditWeight(v.label);
+                                  setEditApproxWeight(v.approxWeight || "");
+                                  setEditPrice(v.price);
+                                  setEditOffer(v.offerPrice ?? "");
+                                }}>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                               </button>
                               <button type="button" className={styles.iconButton} onClick={() => removeDraftVariant(v.key)} title="Remove">
@@ -683,24 +788,84 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                   )}
 
                   {/* Add variant row */}
-                  <p style={{ margin: "0 0 8px", fontSize: 12, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                    Add a variant
-                  </p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end" }}>
-                    <div className={styles.field} style={{ flex: "1 1 100px", minWidth: 90 }}>
-                      <label>Weight / Size</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 250g or Pack of 3"
-                        value={draftLabel}
-                        onChange={(e) => setDraftLabel(e.target.value)}
-                      />
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
+                    <p style={{ margin: 0, fontSize: 12, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      Add a variant
+                    </p>
+                    <div style={{ display: "inline-flex", background: "var(--line)", padding: 2, borderRadius: 6, gap: 2 }}>
+                      <button
+                        type="button"
+                        onClick={() => { setDraftVariantType("weight"); setDraftLabel(""); setDraftApproxWeight(""); }}
+                        style={{
+                          padding: "3px 10px",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          borderRadius: 5,
+                          border: "none",
+                          cursor: "pointer",
+                          background: draftVariantType === "weight" ? "var(--terracotta)" : "transparent",
+                          color: draftVariantType === "weight" ? "#fff" : "var(--ink)",
+                        }}
+                      >
+                        Weight-based
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setDraftVariantType("pack"); setDraftLabel(""); setDraftApproxWeight(""); }}
+                        style={{
+                          padding: "3px 10px",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          borderRadius: 5,
+                          border: "none",
+                          cursor: "pointer",
+                          background: draftVariantType === "pack" ? "var(--terracotta)" : "transparent",
+                          color: draftVariantType === "pack" ? "#fff" : "var(--ink)",
+                        }}
+                      >
+                        Pack-based
+                      </button>
                     </div>
-                    <div className={styles.field} style={{ flex: "1 1 90px", minWidth: 80 }}>
+                  </div>
+
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end" }}>
+                    {draftVariantType === "weight" ? (
+                      <div className={styles.field} style={{ flex: "1 1 120px", minWidth: 100 }}>
+                        <label>Weight (e.g. 250g, 500g, 1kg)</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 250g"
+                          value={draftLabel}
+                          onChange={(e) => setDraftLabel(e.target.value)}
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <div className={styles.field} style={{ flex: "1 1 110px", minWidth: 90 }}>
+                          <label>Pack Name</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Pack of 3"
+                            value={draftLabel}
+                            onChange={(e) => setDraftLabel(e.target.value)}
+                          />
+                        </div>
+                        <div className={styles.field} style={{ flex: "1 1 110px", minWidth: 90 }}>
+                          <label>Approx Weight (for shipping)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 100g, 150g"
+                            value={draftApproxWeight}
+                            onChange={(e) => setDraftApproxWeight(e.target.value)}
+                          />
+                        </div>
+                      </>
+                    )}
+                    <div className={styles.field} style={{ flex: "1 1 85px", minWidth: 75 }}>
                       <label>Price (₹)</label>
                       <input type="number" min="0" step="0.01" placeholder="0.00" value={draftPrice} onChange={(e) => setDraftPrice(e.target.value)} />
                     </div>
-                    <div className={styles.field} style={{ flex: "1 1 90px", minWidth: 80 }}>
+                    <div className={styles.field} style={{ flex: "1 1 85px", minWidth: 75 }}>
                       <label>Offer Price</label>
                       <input type="number" min="0" step="0.01" placeholder="Optional" value={draftOffer} onChange={(e) => setDraftOffer(e.target.value)} />
                     </div>
@@ -708,17 +873,17 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                       <button
                         type="button"
                         className={styles.primaryButton}
-                        disabled={variantSaving || !draftLabel.trim() || !draftPrice}
+                        disabled={variantSaving || !draftLabel.trim() || !draftPrice || (draftVariantType === "pack" && !draftApproxWeight.trim())}
                         onClick={() => addSavedVariant(editingProduct.id)}
                         style={{ flexShrink: 0, whiteSpace: "nowrap" }}
                       >
-                        {variantSaving ? "Saving…" : `+ Add`}
+                        {variantSaving ? "Saving…" : "+ Add"}
                       </button>
                     ) : (
                       <button
                         type="button"
                         className={styles.primaryButton}
-                        disabled={!draftLabel.trim() || !draftPrice}
+                        disabled={!draftLabel.trim() || !draftPrice || (draftVariantType === "pack" && !draftApproxWeight.trim())}
                         onClick={addDraftVariant}
                         style={{ flexShrink: 0, whiteSpace: "nowrap" }}
                       >
@@ -726,6 +891,11 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                       </button>
                     )}
                   </div>
+                  {draftVariantType === "pack" && (
+                    <p style={{ margin: "6px 0 0", fontSize: 11, color: "#6b7280" }}>
+                      * Approx weight is used to calculate courier shipping charges accurately at checkout.
+                    </p>
+                  )}
                 </div>
               )}
 
