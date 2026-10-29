@@ -307,7 +307,10 @@ export function CheckoutWizard() {
       if (!form.customerName.trim()) { setError("Please enter your full name."); return; }
       if (form.customerName.trim().length < 3) { setError("Name must be at least 3 characters long."); return; }
       if (!form.phone) { setError("Please enter your mobile number."); return; }
-      if (!/^[6-9]\d{9}$/.test(form.phone)) { setError("Please enter a valid 10-digit Indian mobile number starting with 6-9."); return; }
+      if (!/^(\+91)?[6-9]\d{9}$/.test(form.phone)) {
+        setError("Please enter a valid Indian mobile number with or without +91.");
+        return;
+      }
       // For guests, validate email if provided
       if (!account && form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
         setError("Please enter a valid email address."); return;
