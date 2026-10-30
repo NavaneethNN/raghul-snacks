@@ -22,6 +22,7 @@ export async function GET() {
             id: comboItems.id,
             productId: comboItems.productId,
             quantity: comboItems.quantity,
+            unitWeight: comboItems.unitWeight,
             name: products.name,
           })
           .from(comboItems)
@@ -35,6 +36,6 @@ export async function GET() {
     return NextResponse.json(combosWithItems);
   } catch (error) {
     console.error("Error fetching combos:", error);
-    return NextResponse.json({ error: "Failed to fetch combos" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create combo" }, { status: 500 });
   }
 }

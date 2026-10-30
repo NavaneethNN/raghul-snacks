@@ -22,6 +22,10 @@ export function ProductCard({ product }: { product: any }) {
     "";
   const badge = null; // Bestseller/Featured badges removed
   const isOutOfStock = product.active === false || (typeof product.stock === "number" && product.stock <= 0);
+  const isCombo =
+    product.categorySlug === "combos" ||
+    product.categoryName?.toLowerCase() === "combos" ||
+    product.category?.toLowerCase() === "combos";
 
   // The card advertises the first variant, so its cart entry is that variant too —
   // the same id the product page uses, so both add to a single cart line.
@@ -32,7 +36,7 @@ export function ProductCard({ product }: { product: any }) {
     name: product.name || "",
     price: pricing.originalPrice,
     offerPrice: pricing.hasPrice ? pricing.displayPrice : pricing.originalPrice,
-    weight: formatDisplayWeight(firstVariant ? firstVariant.weight : product.weight),
+    weight: isCombo ? "Combo Pack" : formatDisplayWeight(firstVariant ? firstVariant.weight : product.weight),
     approxWeight: firstVariant?.approxWeight || firstVariant?.weight || product.weight,
     variantType: firstVariant?.variantType || "weight",
     description: product.description || "",
@@ -65,11 +69,18 @@ export function ProductCard({ product }: { product: any }) {
           </div>
         )}
         {isOutOfStock && <b className="out-of-stock-label">Out of Stock</b>}
+        {isCombo && (
+          <span style={{ position: "absolute", top: 10, left: 10, zIndex: 2, background: "var(--terracotta)", color: "#fff", padding: "3px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Combo</span>
+        )}
         {variants.length > 0 && <VariantStackFlag count={variants.length} />}
       </Link>
       <WishlistButton product={wishlistProduct} />
       <div className="product-copy">
-        {pricing.displayWeight && <p>{pricing.displayWeight}</p>}
+        {isCombo ? (
+          <p style={{ color: "var(--terracotta)", fontWeight: 700, textTransform: "uppercase", fontSize: 11, letterSpacing: "0.06em" }}>Combo Pack</p>
+        ) : (
+          pricing.displayWeight && <p>{pricing.displayWeight}</p>
+        )}
         <Link href={`/product/${product.slug}`}>
           <h3>{product.name}</h3>
         </Link>

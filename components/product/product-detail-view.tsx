@@ -42,6 +42,23 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
     : (product.offerPrice ? parseFloat(product.offerPrice) : basePrice);
   const displayWeight = selectedVariant ? selectedVariant.weight : product.weight;
 
+
+  const isCombo =
+    product.categorySlug === "combos" ||
+    product.categoryName?.toLowerCase() === "combos" ||
+    product.category?.toLowerCase() === "combos";
+
+  const comboItemsList = isCombo && product.ingredients
+    ? product.ingredients.split(",").map((s: string) => {
+        const itemStr = s.trim();
+        const match = itemStr.match(/^(.+?)\s*\((.+?)\)$/);
+        if (match) {
+          return { name: match[1].trim(), spec: match[2].trim() };
+        }
+        return { name: itemStr, spec: null };
+      }).filter((it: any) => Boolean(it.name))
+    : [];
+
   // Cart item ID is unique per product+variant to allow multiple variants in cart
   const cartItemId = selectedVariant
     ? `${product.id}-v${selectedVariant.id}`
@@ -54,7 +71,7 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
     name: product.name || "",
     price: basePrice,
     offerPrice: displayPrice,
-    weight: displayWeight,
+    weight: isCombo ? "Combo Pack" : displayWeight,
     approxWeight: selectedVariant?.approxWeight || selectedVariant?.weight || product.weight,
     variantType: selectedVariant?.variantType || "weight",
     description: product.description || "",
@@ -83,7 +100,7 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
   function handleAddToCart() {
     if (added) return;
     addItem(cartProduct, quantity);
-    show(`✓ ${product.name} (${formatWeight(displayWeight)}) added to cart`);
+    show(`✓ ${product.name} ${isCombo ? "(Combo Pack)" : `(${formatWeight(displayWeight)})`} added to cart`);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 2200);
   }
@@ -127,12 +144,12 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
 
       <div className="product-large-visual">
         <img src={product.image || "/hero.png"} alt={product.name} />
-        <span className="category-badge">{categoryName}</span>
+        <span className="category-badge">{isCombo ? "Combo Pack" : categoryName}</span>
         <WishlistButton product={cartProduct} className="product-detail-wishlist" />
       </div>
 
       <div className="product-detail">
-        <p className="eyebrow">Made fresh in small batches</p>
+        <p className="eyebrow">{isCombo ? "Value Combo Pack" : "Made fresh in small batches"}</p>
         <h1>{product.name}</h1>
 
         {/* Price */}
@@ -179,15 +196,52 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
 
         <p className="description">{product.description}</p>
 
+        {isCombo && comboItemsList.length > 0 && (
+          <div style={{ margin: "20px 0 24px", padding: "16px 20px", background: "var(--cream)", borderRadius: 12, border: "1px solid var(--line)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+              <h3 style={{ margin: 0, font: "700 16px 'Playfair Display',serif", color: "var(--ink)" }}>What&apos;s inside this box</h3>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--terracotta)", background: "rgba(201, 95, 59, 0.1)", padding: "2px 8px", borderRadius: 999, textTransform: "uppercase", letterSpacing: "0.05em" }}>{comboItemsList.length} items</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {comboItemsList.map((item: any, idx: number) => (
+                <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6, padding: "8px 12px", background: "var(--paper)", borderRadius: 8, border: "1px solid rgba(0,0,0,0.04)" }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>{item.name}</span>
+                  {item.spec && (
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--terracotta)", background: "rgba(201, 95, 59, 0.1)", padding: "2px 8px", borderRadius: 6 }}>
+                      {item.spec}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="detail-list">
           <div className="detail-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-            </svg>
-            <div>
-              <span>Weight</span>
-              <strong>{selectedVariant?.variantType === "pack" && selectedVariant?.approxWeight ? `${selectedVariant.weight} (approx. ${formatWeight(selectedVariant.approxWeight)})` : formatWeight(displayWeight)}</strong>
-            </div>
+            {isCombo ? (
+              <>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="8" width="18" height="12" rx="2" />
+                  <path d="M12 8v-4" />
+                  <path d="M8 4h8" />
+                </svg>
+                <div>
+                  <span>Package</span>
+                  <strong>Curated Combo Pack</strong>
+                </div>
+              </>
+            ) : (
+              <>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                </svg>
+                <div>
+                  <span>Weight</span>
+                  <strong>{selectedVariant?.variantType === "pack" && selectedVariant?.approxWeight ? `${selectedVariant.weight} (approx. ${formatWeight(selectedVariant.approxWeight)})` : formatWeight(displayWeight)}</strong>
+                </div>
+              </>
+            )}
           </div>
           <div className="detail-item">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -199,16 +253,18 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
               <strong>{product.shelfLife || '30 days'}</strong>
             </div>
           </div>
-          <div className="detail-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z" />
-              <path d="M9 2v4M15 2v4M3 9h18" />
-            </svg>
-            <div>
-              <span>Ingredients</span>
-              <strong>{product.ingredients}</strong>
+          {!isCombo && product.ingredients && (
+            <div className="detail-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z" />
+                <path d="M9 2v4M15 2v4M3 9h18" />
+              </svg>
+              <div>
+                <span>Ingredients</span>
+                <strong>{product.ingredients}</strong>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Purchase row */}

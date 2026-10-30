@@ -1,21 +1,41 @@
 import { z } from "zod";
 
+const cleanPhone = (val: string) => {
+  const digits = val.replace(/\D/g, "");
+  if (digits.length === 12 && digits.startsWith("91")) return digits.slice(2);
+  if (digits.length === 11 && digits.startsWith("0")) return digits.slice(1);
+  return digits;
+};
+
 export const orderItemSchema = z.object({
   productId: z.string().min(1),
-  quantity: z.number().int().min(1).max(20),
+  quantity: z.number().int().min(1).max(500),
 });
 
 const checkoutFields = z.object({
-  customerName: z.string().trim().min(2).max(100),
-  phone: z.string().trim().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number."),
-  email: z.string().trim().email().optional().or(z.literal("")),
-  address: z.string().trim().min(8).max(300),
-  city: z.string().trim().min(2).max(80),
-  state: z.string().trim().min(2).max(80),
+  customerName: z.string().trim().min(2, "Name must be at least 2 characters.").max(100),
+  phone: z
+    .string()
+    .trim()
+    .transform(cleanPhone)
+    .refine((val) => /^[6-9]\d{9}$/.test(val), "Enter a valid 10-digit Indian mobile number."),
+  email: z
+    .string()
+    .trim()
+    .optional()
+    .nullable()
+    .transform((val) => val || "")
+    .refine(
+      (val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+      "Please enter a valid email address."
+    ),
+  address: z.string().trim().min(8, "Address must be at least 8 characters long.").max(300),
+  city: z.string().trim().min(2, "District / City must be at least 2 characters.").max(80),
+  state: z.string().trim().min(2, "Please select your state.").max(80),
   pincode: z.string().trim().regex(/^\d{6}$/, "Enter a valid 6-digit PIN code."),
-  items: z.array(orderItemSchema).min(1).max(20),
-  couponCode: z.string().trim().max(40).optional(),
-  shipping: z.number().min(0).optional(), // client-calculated shipping charge
+  items: z.array(orderItemSchema).min(1, "Your cart is empty.").max(100),
+  couponCode: z.string().trim().max(40).optional().nullable(),
+  shipping: z.number().min(0).optional().nullable(), // client-calculated shipping charge
 });
 
 export const checkoutSchema = checkoutFields;

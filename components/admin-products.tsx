@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
@@ -59,6 +59,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting]             = useState(false);
   const [searchQuery, setSearchQuery]       = useState("");
+  const [tabFilter, setTabFilter]           = useState<"all" | "regular" | "combos">("all");
+  const [statusFilter, setStatusFilter]     = useState<"all" | "active" | "outofstock">("all");
   const [imageInputType, setImageInputType] = useState<"url" | "file">("url");
   const [imagePreview, setImagePreview]     = useState<string>("");
   const [imageData, setImageData]           = useState<string>("");
@@ -66,6 +68,28 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
   const imageFileRef                        = React.useRef<HTMLInputElement>(null);
   const [productName, setProductName]       = useState("");
   const [productSlug, setProductSlug]       = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [formCategoryId, setFormCategoryId] = useState<number | string>("");
+
+  const isFormCombo = Boolean(
+    formCategoryId &&
+    categories.some(c => String(c.id) === String(formCategoryId) && (c.slug === "combos" || c.name.toLowerCase() === "combos"))
+  );
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const catParam = params.get("category");
+      if (catParam) {
+        if (catParam.toLowerCase() === "combos") {
+          setTabFilter("combos");
+          setCategoryFilter("");
+        } else {
+          setCategoryFilter(catParam.toLowerCase());
+        }
+      }
+    }
+  }, []);
 
   // ── Variant state ──────────────────────────────────────────────────────────
   // hasVariants: toggle on the form
@@ -266,6 +290,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     setEditingProduct(product);
     setProductName(product.name);
     setProductSlug(product.slug);
+    setFormCategoryId(product.categoryId ?? "");
     setShowForm(true);
     setImageInputType(product.image?.startsWith("data:") || product.image?.startsWith("https://") ? "file" : "url");
     setImagePreview(product.image || "");
@@ -280,6 +305,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     setShowForm(false);
     setEditingProduct(null);
     setProductName(""); setProductSlug("");
+    setFormCategoryId("");
     setImagePreview(""); setImageData("");
     setError("");
     setHasVariants(false);
@@ -287,6 +313,15 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     setDraftVariants([]);
     setSavedVariants([]);
     setDraftLabel(""); setDraftPrice(""); setDraftOffer("");
+  }
+
+  function handleAddCombo() {
+    handleCloseForm();
+    const comboCat = categories.find(c => c.slug === "combos" || c.name.toLowerCase() === "combos");
+    if (comboCat) {
+      setFormCategoryId(comboCat.id);
+    }
+    setShowForm(true);
   }
 
   function handleNameChange(name: string) {
@@ -407,11 +442,60 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     }
   }
 
-  const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const comboCategory = categories.find(c => c.slug === "combos" || c.name.toLowerCase() === "combos");
+  const comboCategoryId = comboCategory?.id;
 
-  const fmt = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" });
+  const isCombo = (p: Product) => {
+    return (p.categoryName || "").toLowerCase() === "combos" || (comboCategoryId != null && p.categoryId === comboCategoryId);
+  };
+
+  const totalCount = products.length;
+  const combosCount = products.filter(isCombo).length;
+  const regularCount = totalCount - combosCount;
+  const activeCount = products.filter(p => p.active !== false && p.stock !== 0).length;
+  const outOfStockCount = totalCount - activeCount;
+
+  const filteredProducts = products.filter((p) => {
+    const pIsCombo = isCombo(p);
+
+    // Tab filter
+    if (tabFilter === "combos" && !pIsCombo) return false;
+    if (tabFilter === "regular" && pIsCombo) return false;
+
+    // Search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const matchName = p.name.toLowerCase().includes(q);
+      const matchCategory = (p.categoryName || "").toLowerCase().includes(q);
+      const matchIngredients = (p.ingredients || "").toLowerCase().includes(q);
+      if (!matchName && !matchCategory && !matchIngredients) return false;
+    }
+
+    // Category filter dropdown
+    if (categoryFilter) {
+      if (categoryFilter === "combos") {
+        if (!pIsCombo) return false;
+      } else {
+        const matchCategory = (p.categoryName || "").toLowerCase() === categoryFilter.toLowerCase() || String(p.categoryId) === categoryFilter;
+        if (!matchCategory) return false;
+      }
+    }
+
+    // Status filter
+    if (statusFilter === "active" && (p.active === false || p.stock === 0)) return false;
+    if (statusFilter === "outofstock" && (p.active !== false && p.stock !== 0)) return false;
+
+    return true;
+  });
+
+  const hasActiveFilters = searchQuery.trim() !== "" || categoryFilter !== "" || statusFilter !== "all" || tabFilter !== "all";
+
+  function handleResetFilters() {
+    setSearchQuery("");
+    setCategoryFilter("");
+    setStatusFilter("all");
+    setTabFilter("all");
+  }
 
   return (
     <div className={styles.page}>
@@ -429,105 +513,405 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
       {/* Header */}
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>Product Management</p>
+          <p className={styles.eyebrow}>Catalog Management</p>
           <h1>Products</h1>
-          <p>Add, edit, and manage your product catalog.</p>
+          <p>Manage snacks, variety packs, and festive combo gift boxes.</p>
         </div>
-        <button className={styles.primaryButton} onClick={() => setShowForm(true)}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add Product
-        </button>
+        <div className={productStyles.headerBtnGroup}>
+          <button className={styles.primaryButton} onClick={() => { handleCloseForm(); setShowForm(true); }} type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            + Add Product
+          </button>
+        </div>
         <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
-      {/* Stat banners — match dashboard metric card style */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16, padding: "clamp(12px, 4vw, 24px) clamp(12px, 4vw, 32px) 8px" }}>
-        {[
-          { label: "Total Products", value: products.length },
-          { label: "Active", value: products.filter(p => p.active !== false && p.stock !== 0).length },
-          { label: "Out of Stock", value: products.filter(p => p.active === false || p.stock === 0).length },
-          { label: "With Variants", value: products.filter(p => (p.variantCount ?? 0) > 0).length },
-        ].map((stat) => (
-          <div key={stat.label} style={{ background: "var(--paper)", border: "1px solid var(--line)", borderRadius: 10, padding: "18px 20px" }}>
-            <span style={{ display: "block", color: "#6b7280", font: "600 10px 'DM Mono', monospace", letterSpacing: "0.08em", textTransform: "uppercase" }}>{stat.label}</span>
-            <strong style={{ display: "block", margin: "8px 0 4px", fontSize: 28, fontWeight: 700, fontFamily: "'DM Sans',sans-serif", color: "var(--ink)", letterSpacing: "-0.02em", lineHeight: 1 }}>{stat.value}</strong>
-          </div>
-        ))}
+      {/* Stat Banners / Quick Filter Cards */}
+      <div className={productStyles.statsGrid}>
+        <div
+          className={`${productStyles.statCard} ${tabFilter === "all" && statusFilter === "all" && !categoryFilter ? productStyles.statCardActive : ""}`}
+          onClick={() => { setTabFilter("all"); setCategoryFilter(""); setStatusFilter("all"); }}
+          role="button"
+          tabIndex={0}
+        >
+          <span className={productStyles.statLabel}>Total Catalog</span>
+          <strong className={productStyles.statValue}>{totalCount}</strong>
+          <span className={productStyles.statHint}>All items</span>
+        </div>
+        <div
+          className={`${productStyles.statCard} ${tabFilter === "regular" ? productStyles.statCardActive : ""}`}
+          onClick={() => { setTabFilter("regular"); setCategoryFilter(""); }}
+          role="button"
+          tabIndex={0}
+        >
+          <span className={productStyles.statLabel}>Single Snacks</span>
+          <strong className={productStyles.statValue}>{regularCount}</strong>
+          <span className={productStyles.statHint}>Regular products</span>
+        </div>
+        <div
+          className={`${productStyles.statCard} ${tabFilter === "combos" ? productStyles.statCardActive : ""}`}
+          onClick={() => { setTabFilter("combos"); setCategoryFilter(""); }}
+          role="button"
+          tabIndex={0}
+        >
+          <span className={productStyles.statLabel}> Combos</span>
+          <strong className={productStyles.statValue} style={{ color: "#b45309" }}>{combosCount}</strong>
+          <span className={productStyles.statHint}>Curated gift boxes</span>
+        </div>
+        <div
+          className={`${productStyles.statCard} ${statusFilter === "active" ? productStyles.statCardActive : ""}`}
+          onClick={() => setStatusFilter(statusFilter === "active" ? "all" : "active")}
+          role="button"
+          tabIndex={0}
+        >
+          <span className={productStyles.statLabel}>Active</span>
+          <strong className={productStyles.statValue} style={{ color: "#166534" }}>{activeCount}</strong>
+          <span className={productStyles.statHint}>Available for sale</span>
+        </div>
+        <div
+          className={`${productStyles.statCard} ${statusFilter === "outofstock" ? productStyles.statCardActive : ""}`}
+          onClick={() => setStatusFilter(statusFilter === "outofstock" ? "all" : "outofstock")}
+          role="button"
+          tabIndex={0}
+        >
+          <span className={productStyles.statLabel}>Out of Stock</span>
+          <strong className={productStyles.statValue} style={{ color: outOfStockCount > 0 ? "#dc2626" : "var(--ink)" }}>{outOfStockCount}</strong>
+          <span className={productStyles.statHint}>Needs restock</span>
+        </div>
       </div>
 
-      {/* Table */}
+      {/* Main Catalog Workspace */}
       <section className={styles.workspace}>
-        <div className={styles.toolbar}>
-          <div className={styles.toolbarSearch}>
-            <span className={styles.searchIcon}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        {/* Top Segment Tabs */}
+        <div className={productStyles.tabBar}>
+          <button
+            type="button"
+            className={`${productStyles.tabButton} ${tabFilter === "all" ? productStyles.tabButtonActive : ""}`}
+            onClick={() => { setTabFilter("all"); setCategoryFilter(""); }}
+          >
+            All Products
+            <span className={productStyles.tabBadge}>{totalCount}</span>
+          </button>
+          <button
+            type="button"
+            className={`${productStyles.tabButton} ${tabFilter === "regular" ? productStyles.tabButtonActive : ""}`}
+            onClick={() => { setTabFilter("regular"); setCategoryFilter(""); }}
+          >
+            Single Snacks
+            <span className={productStyles.tabBadge}>{regularCount}</span>
+          </button>
+          <button
+            type="button"
+            className={`${productStyles.tabButton} ${tabFilter === "combos" ? productStyles.tabButtonActive : ""}`}
+            onClick={() => { setTabFilter("combos"); setCategoryFilter(""); }}
+          >
+             Combos
+            <span className={productStyles.tabBadge}>{combosCount}</span>
+          </button>
+        </div>
+
+        {/* Unified Clean Toolbar */}
+        <div className={productStyles.toolbar}>
+          {/* Search */}
+          <div className={productStyles.searchBox}>
+            <span className={productStyles.searchIcon}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
             </span>
-            <input type="text" placeholder="Search products…" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ paddingLeft: "36px" }} />
+            <input
+              type="text"
+              className={productStyles.searchInput}
+              placeholder={tabFilter === "combos" ? "Search combo boxes or items inside…" : "Search snacks by name, category, ingredients…"}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className={productStyles.clearSearchBtn}
+                onClick={() => setSearchQuery("")}
+                title="Clear search"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Filter dropdowns */}
+          <div className={productStyles.filterControls}>
+            {/* Category dropdown (only for All or Regular items) */}
+            {tabFilter !== "combos" && (
+              <div className={productStyles.selectWrap}>
+                <span className={productStyles.selectIcon}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                  </svg>
+                </span>
+                <select
+                  className={productStyles.customSelect}
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  aria-label="Filter products by category"
+                >
+                  <option value="">All Categories ({tabFilter === "regular" ? regularCount : totalCount})</option>
+                  {categories.filter(c => c.slug !== "combos").map((c) => {
+                    const count = products.filter(p => p.categoryId === c.id).length;
+                    return (
+                      <option key={c.id} value={c.name}>
+                        {c.name} ({count})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            )}
+
+            {/* Status dropdown */}
+            <div className={productStyles.selectWrap}>
+              <select
+                className={productStyles.customSelect}
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "outofstock")}
+                aria-label="Filter by stock status"
+                style={{ paddingLeft: 14 }}
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active ({activeCount})</option>
+                <option value="outofstock">Out of Stock ({outOfStockCount})</option>
+              </select>
+            </div>
+
+            {/* Clear filters button */}
+            {hasActiveFilters && (
+              <button
+                type="button"
+                className={productStyles.resetBtn}
+                onClick={handleResetFilters}
+                title="Reset all filters"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+                Reset
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Products Table */}
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
             <thead>
               <tr>
                 <th>Product</th>
                 <th className={productStyles.hideOnMobile}>Category</th>
+                <th className={productStyles.hideOnMobile}>Price</th>
                 <th className={productStyles.hideOnMobile}>Status</th>
-                <th className={productStyles.hideOnMobile}>Type</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredProducts.length === 0 ? (
-                <tr><td colSpan={5} className={styles.emptyState}><div><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5c-1.5-1-3.5-1-5 0"/></svg><h3>No products yet</h3><p>Add your first product to get started.</p><button className={styles.primaryButton} onClick={() => setShowForm(true)}>Add Product</button></div></td></tr>
-              ) : filteredProducts.map((product) => (
-                <tr key={product.id}>
-                  <td>
-                    <strong>{product.name}</strong><br />
-                    {product.weight && product.weight !== "—" && product.weight !== "-" && (product.variantCount ?? 0) === 0 && (
-                      <small style={{ color: "#6b7280" }}>{formatWeight(product.weight)}</small>
-                    )}
-                    {(product.variantCount ?? 0) > 0 && (
-                      <small style={{ color: "#9ca3af" }}>{product.variantCount} variant{(product.variantCount ?? 0) !== 1 ? "s" : ""}</small>
-                    )}
-                    <div className={productStyles.mobileSubtext}>
-                      {product.categoryName && <span>{product.categoryName}</span>}
-                      {(product.active === false || product.stock === 0) && <span className={productStyles.mobileBadge} style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626" }}>Out of Stock</span>}
-                    </div>
-                  </td>
-                  <td className={productStyles.hideOnMobile}>{product.categoryName ?? "—"}</td>
-                  <td className={productStyles.hideOnMobile}>
-                    {(product.active === false || product.stock === 0)
-                      ? <span className={`${styles.badge}`} style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626", border: "1px solid rgba(220,38,38,0.2)" }}>Out of Stock</span>
-                      : <span className={`${styles.badge} ${styles.success}`}>Active</span>
-                    }
-                  </td>
-                  <td className={productStyles.hideOnMobile}>
-                    {(product.variantCount ?? 0) > 0 ? (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="2" y="7" width="20" height="14" rx="2"/>
-                          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-                          <line x1="12" y1="12" x2="12" y2="17"/>
-                          <line x1="9.5" y1="14.5" x2="14.5" y2="14.5"/>
-                        </svg>
-                        {product.variantCount} variant{(product.variantCount ?? 0) !== 1 ? "s" : ""}
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: 13, color: "#6b7280" }}>Single</span>
-                    )}
-                  </td>
-                  <td>
-                    <div className={styles.actionButtons}>
-                      <button className={styles.iconButton} onClick={() => handleEdit(product)} title="Edit product">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                      </button>
-                      <button className={styles.iconButton} onClick={() => setConfirmDeleteId(product.id)} title="Delete product">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                <tr>
+                  <td colSpan={5} className={styles.emptyState}>
+                    <div>
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <circle cx="12" cy="8" r="6"/>
+                        <path d="M15.5 13.5c-1.5-1-3.5-1-5 0"/>
+                      </svg>
+                      <h3>No products match your filters</h3>
+                      <p>Try clearing your search or category filters to see more products.</p>
+                      <button className={styles.primaryButton} onClick={handleResetFilters} type="button">
+                        Clear Filters
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : filteredProducts.map((product) => {
+                const productIsCombo = isCombo(product);
+                const hasOffer = Boolean(
+                  product.offerPrice &&
+                  parseFloat(product.offerPrice) > 0 &&
+                  parseFloat(product.offerPrice) < parseFloat(product.price)
+                );
+                const discountPct = hasOffer
+                  ? Math.round(((parseFloat(product.price) - parseFloat(product.offerPrice!)) / parseFloat(product.price)) * 100)
+                  : null;
+                const isOutOfStock = product.active === false || product.stock === 0;
+
+                return (
+                  <tr key={product.id}>
+                    <td>
+                      <div className={productStyles.productCell}>
+                        {product.image ? (
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className={productStyles.productThumb}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className={productStyles.productThumbFallback}>
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <rect x="2" y="7" width="20" height="14" rx="2" />
+                              <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                            </svg>
+                          </div>
+                        )}
+
+                        <div className={productStyles.productDetails}>
+                          <div className={productStyles.productNameRow}>
+                            <span className={productStyles.productNameText}>{product.name}</span>
+                            {productIsCombo && (
+                              <span className={productStyles.comboBadge}>
+                                 Combo Pack
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Combo contents or Regular specs */}
+                          {productIsCombo ? (
+                            <>
+                              {product.ingredients && (
+                                <div className={productStyles.comboContents} title="Box contents">
+                                  <strong>Inside:</strong> {product.ingredients}
+                                </div>
+                              )}
+                              {product.weight && product.weight !== "—" && (
+                                <span className={productStyles.shippingWeightBadge}>
+                                  📦 Courier Shipping Wt: {product.weight}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                              {product.weight && product.weight !== "—" && (product.variantCount ?? 0) === 0 && (
+                                <span className={productStyles.weightBadge}>
+                                  ⚖️ {formatWeight(product.weight)}
+                                </span>
+                              )}
+                              {(product.variantCount ?? 0) > 0 && (
+                                <span className={productStyles.variantCountBadge}>
+                                  🏷️ {product.variantCount} variant{(product.variantCount ?? 0) !== 1 ? "s" : ""}
+                                </span>
+                              )}
+                              {product.shelfLife && (
+                                <span style={{ fontSize: 11, color: "#9ca3af" }}>
+                                  • Shelf life: {product.shelfLife}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Mobile subtext */}
+                          <div className={productStyles.mobileSubtext}>
+                            {product.categoryName && (
+                              <span className={productStyles.categoryTag} style={{ fontSize: 11, padding: "2px 6px" }}>
+                                {product.categoryName}
+                              </span>
+                            )}
+                            <span className={productStyles.mobilePriceBadge}>
+                              {hasOffer ? `₹${product.offerPrice}` : `₹${product.price}`}
+                            </span>
+                            {isOutOfStock ? (
+                              <span className={productStyles.statusOut} style={{ fontSize: 11, padding: "2px 8px" }}>
+                                <span className={productStyles.statusOutDot} />Out of Stock
+                              </span>
+                            ) : (
+                              <span className={productStyles.statusActive} style={{ fontSize: 11, padding: "2px 8px" }}>
+                                <span className={productStyles.statusActiveDot} />Active
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Category */}
+                    <td className={productStyles.hideOnMobile}>
+                      <span className={productStyles.categoryTag}>
+                        {product.categoryName ?? "—"}
+                      </span>
+                    </td>
+
+                    {/* Price */}
+                    <td className={productStyles.hideOnMobile}>
+                      <div className={productStyles.priceBlock}>
+                        <div className={productStyles.priceRow}>
+                          <span className={productStyles.currentPrice}>
+                            {(product.variantCount ?? 0) > 0 && !hasOffer ? `From ` : ""}
+                            ₹{hasOffer ? product.offerPrice : product.price}
+                          </span>
+                          {hasOffer && (
+                            <>
+                              <span className={productStyles.originalPrice}>₹{product.price}</span>
+                              {discountPct !== null && (
+                                <span className={productStyles.discountBadge}>-{discountPct}%</span>
+                              )}
+                            </>
+                          )}
+                        </div>
+                        {(product.variantCount ?? 0) > 0 && (
+                          <span className={productStyles.variantCountBadge}>
+                            {product.variantCount} variant prices
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Status */}
+                    <td className={productStyles.hideOnMobile}>
+                      {isOutOfStock ? (
+                        <span className={productStyles.statusOut}>
+                          <span className={productStyles.statusOutDot} />
+                          Out of Stock
+                        </span>
+                      ) : (
+                        <span className={productStyles.statusActive}>
+                          <span className={productStyles.statusActiveDot} />
+                          Active
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Actions */}
+                    <td>
+                      <div className={productStyles.actionGroup}>
+                        <a
+                          href={`/product/${product.slug}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={productStyles.viewStoreLink}
+                          title="View on store ↗"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                          </svg>
+                        </a>
+                        <button className={styles.iconButton} onClick={() => handleEdit(product)} title="Edit product" type="button">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                        </button>
+                        <button className={`${styles.iconButton} ${productStyles.deleteBtn}`} onClick={() => setConfirmDeleteId(product.id)} title="Delete product" type="button">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -575,29 +959,35 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                 </div>
                 <div className={styles.field}>
                   <label>Category</label>
-                  <select name="categoryId" defaultValue={editingProduct?.categoryId ?? ""}>
+                  <select
+                    name="categoryId"
+                    value={formCategoryId}
+                    onChange={(e) => setFormCategoryId(e.target.value)}
+                  >
                     <option value="">Select category</option>
                     {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                   </select>
                 </div>
               </div>
 
-              {/* ── Has variants toggle ── */}
-              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, margin: "0 0 20px", cursor: "pointer", userSelect: "none" }}>
-                <input
-                  type="checkbox"
-                  checked={hasVariants}
-                  onChange={(e) => { setHasVariants(e.target.checked); setDraftVariants([]); }}
-                  style={{ width: 18, height: 18, marginTop: 2, cursor: "pointer", accentColor: "var(--terracotta)", flexShrink: 0 }}
-                />
-                <div>
-                  <span style={{ font: "600 14px 'DM Sans',sans-serif", color: "var(--ink)", display: "block" }}>Has variants</span>
-                  <span style={{ fontSize: 12, color: "#6b7280" }}>e.g. different weights or sizes with different prices</span>
-                </div>
-              </label>
+              {/* ── Has variants toggle (hidden for Combos) ── */}
+              {!isFormCombo && (
+                <label style={{ display: "flex", alignItems: "flex-start", gap: 10, margin: "0 0 20px", cursor: "pointer", userSelect: "none" }}>
+                  <input
+                    type="checkbox"
+                    checked={hasVariants}
+                    onChange={(e) => { setHasVariants(e.target.checked); setDraftVariants([]); }}
+                    style={{ width: 18, height: 18, marginTop: 2, cursor: "pointer", accentColor: "var(--terracotta)", flexShrink: 0 }}
+                  />
+                  <div>
+                    <span style={{ font: "600 14px 'DM Sans',sans-serif", color: "var(--ink)", display: "block" }}>Has variants</span>
+                    <span style={{ fontSize: 12, color: "#6b7280" }}>e.g. different weights or sizes with different prices</span>
+                  </div>
+                </label>
+              )}
 
-              {/* ── Single price/weight (shown when NO variants) ── */}
-              {!hasVariants && (
+              {/* ── Single price/weight (shown when NO variants or is combo) ── */}
+              {(!hasVariants || isFormCombo) && (
                 <div className={styles.formGrid}>
                   <div className={styles.field}>
                     <label>Price (₹)</label>
@@ -608,14 +998,31 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                     <input type="number" name="offerPrice" step="0.01" min="0" placeholder="Leave blank if no discount" defaultValue={editingProduct?.offerPrice ?? ""} />
                   </div>
                   <div className={styles.field}>
-                    <label>Weight</label>
-                    <input type="text" name="weight" placeholder="e.g., 250g" defaultValue={editingProduct?.weight} required />
+                    <label>
+                      {isFormCombo
+                        ? "Total Parcel Weight (Courier Shipping Weight)"
+                        : "Weight"}
+                    </label>
+                    <input
+                      type="text"
+                      name="weight"
+                      placeholder={isFormCombo
+                        ? "e.g., 500g, 800g, 1.2kg"
+                        : "e.g., 250g"}
+                      defaultValue={editingProduct?.weight}
+                      required
+                    />
+                    {isFormCombo && (
+                      <small style={{ color: "#b45309", fontSize: "11px", display: "block", marginTop: 4 }}>
+                        * Used behind the scenes to calculate courier delivery charges at checkout. Kept hidden from customer view.
+                      </small>
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* ── Variant builder (shown when HAS variants) ── */}
-              {hasVariants && (
+              {/* ── Variant builder (shown when HAS variants and NOT combo) ── */}
+              {hasVariants && !isFormCombo && (
                 <div style={{ marginBottom: 20, padding: "16px", background: "var(--cream)", borderRadius: 10, border: "1px solid var(--line)" }}>
                   {/* Variant type selector removed - not stored in DB */}
 
@@ -905,8 +1312,24 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                 <textarea name="description" rows={4} placeholder="Product description…" defaultValue={editingProduct?.description} required></textarea>
               </div>
               <div className={styles.field}>
-                <label>Ingredients</label>
-                <textarea name="ingredients" rows={3} placeholder="List ingredients…" defaultValue={editingProduct?.ingredients ?? ""}></textarea>
+                <label>
+                  {isFormCombo
+                    ? "What's inside this combo box (shown to customers)"
+                    : "Ingredients"}
+                </label>
+                <textarea
+                  name="ingredients"
+                  rows={3}
+                  placeholder={isFormCombo
+                    ? "e.g. Butter Murukku (500g), Special Mixture (3 nos), Sweet Boondi (250g)"
+                    : "List ingredients…"}
+                  defaultValue={editingProduct?.ingredients ?? ""}
+                ></textarea>
+                {isFormCombo && (
+                  <small style={{ color: "#6b7280", fontSize: "11px", display: "block", marginTop: 4 }}>
+                    List items inside this combo separated by commas. Each item will be displayed as a distinct item with its weight/nos on the website.
+                  </small>
+                )}
               </div>
               <div className={styles.field}>
                 <label>Shelf Life <small style={{ color: "#9ca3af", fontWeight: 400 }}>optional</small></label>

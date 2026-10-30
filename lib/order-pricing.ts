@@ -61,6 +61,7 @@ export async function priceOrder(items: RequestedItem[]) {
           price: combosTable.price,
           discount: combosTable.discount,
           image: combosTable.image,
+          weight: combosTable.weight,
         }).from(combosTable).where(inArray(combosTable.id, uniqueComboIds))
       : Promise.resolve([]),
   ]);
@@ -78,7 +79,8 @@ export async function priceOrder(items: RequestedItem[]) {
           slug: combo.slug,
           price: parseFloat(combo.price),
           offerPrice,
-          weight: "Combo",
+          weight: combo.weight || "Combo",
+          approxWeight: combo.weight || "300g",
           variantId: null,
           categoryId: null,
           isCombo: true,
@@ -86,7 +88,7 @@ export async function priceOrder(items: RequestedItem[]) {
         },
         quantity: item.quantity,
         lineTotal: offerPrice * item.quantity,
-        unitWeightKg: parseWeightToKg("500g"),
+        unitWeightKg: parseWeightToKg(combo.weight || "300g"),
       };
     }
 

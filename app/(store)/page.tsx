@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, ne } from "drizzle-orm";
 import { ProductCard } from "@/components/product/product-card";
 import { BestsellersSlider } from "@/components/bestsellers-slider";
 import { CombosSlider } from "@/components/combos-slider";
@@ -30,7 +30,7 @@ async function getCategories() {
   return getOrSetCache("home:categories", 60, async () => {
     try {
       const db = getDb();
-      return await db.select().from(categories);
+      return await db.select().from(categories).where(ne(categories.slug, "combos"));
     } catch (error) {
       console.error('Error fetching categories:', error);
       return [];
@@ -54,36 +54,47 @@ async function getCombos() {
   return getOrSetCache("home:combos", 60, async () => {
     try {
       const db = getDb();
-      const allCombos = await db.select().from(combos).orderBy(desc(combos.createdAt));
-      if (!allCombos || allCombos.length === 0) return [];
-
-      const comboIds = allCombos.map((c) => c.id);
-      const allItems = await db
+      const comboProducts = await db
         .select({
-          id: comboItems.id,
-          comboId: comboItems.comboId,
-          productId: comboItems.productId,
-          quantity: comboItems.quantity,
-          name: products.name,
+          id: products.id,
+          title: products.name,
+          slug: products.slug,
+          description: products.description,
+          price: products.price,
+          discount: products.offerPrice,
           image: products.image,
           weight: products.weight,
-          slug: products.slug,
+          ingredients: products.ingredients,
         })
-        .from(comboItems)
-        .leftJoin(products, eq(comboItems.productId, products.id))
-        .where(inArray(comboItems.comboId, comboIds));
+        .from(products)
+        .innerJoin(categories, eq(products.categoryId, categories.id))
+        .where(and(eq(categories.slug, "combos"), eq(products.active, true)))
+        .orderBy(desc(products.createdAt));
 
-      const itemsByCombo = new Map<number, any[]>();
-      for (const item of allItems) {
-        const list = itemsByCombo.get(item.comboId) || [];
-        list.push(item);
-        itemsByCombo.set(item.comboId, list);
-      }
+      return comboProducts.map((p) => {
+        const parsedItems = p.ingredients
+          ? p.ingredients.split(",").map((s, idx) => {
+              const itemStr = s.trim();
+              const match = itemStr.match(/^(.+?)\s*\((.+?)\)$/);
+              if (match) {
+                return { id: idx, productId: null, quantity: 1, name: match[1].trim(), unitWeight: match[2].trim() };
+              }
+              return { id: idx, productId: null, quantity: 1, name: itemStr, unitWeight: null };
+            }).filter((it) => Boolean(it.name))
+          : [];
 
-      return allCombos.map((combo) => ({
-        ...combo,
-        items: itemsByCombo.get(combo.id) || [],
-      }));
+        return {
+          id: p.id,
+          title: p.title,
+          slug: p.slug,
+          description: p.description,
+          price: p.price,
+          discount: p.discount,
+          image: p.image,
+          weight: p.weight,
+          items: parsedItems,
+        };
+      });
     } catch (error) {
       console.error('Error fetching combos:', error);
       return [];
@@ -100,9 +111,9 @@ export default async function HomePage() {
   ]);
 
   // Only show combos that still have at least one item
-  const validCombos = combos ? combos.filter((c: any) => c.items && c.items.length > 0) : [];
+  const validCombos = combos ? combos.filter((c: any) => c.title) : [];
   // Show up to 10 most recently added products in bestsellers
-  const products = allProducts.slice(0, 10);
+  const products = allProducts.filter((p: any) => p.categorySlug !== "combos" && p.categoryName?.toLowerCase() !== "combos").slice(0, 10);
 
   return (
     <>

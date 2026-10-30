@@ -9,6 +9,7 @@ type ComboItem = {
   id: number;
   productId: number | null;
   quantity: number;
+  unitWeight?: string | null;
   name?: string | null;
   image?: string | null;
   weight?: string | null;
@@ -23,6 +24,7 @@ type Combo = {
   price: string;
   discount?: string | null;
   image?: string | null;
+  weight?: string | null;
   items: ComboItem[];
 };
 
@@ -103,12 +105,13 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
     const op = c.discount && parseFloat(c.discount) > 0 ? parseFloat(c.discount) : parseFloat(c.price);
     const orig = parseFloat(c.price);
     const cartItem = {
-      id: `combo-${c.id}`,
+      id: String(c.id),
       slug: c.slug,
       name: c.title,
       price: orig,
       offerPrice: op,
-      weight: `${c.items?.length || 0} items`,
+      weight: "Combo Pack",
+      approxWeight: c.weight || "300g",
       description: c.description || `Combo with ${c.items?.length || 0} products`,
       ingredients: c.items?.map((it) => it.name).filter(Boolean).join(", ") || "",
       category: "combo",
@@ -1073,7 +1076,7 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
                         <span className="combo-item-name">{item.name || "Traditional Snack"}</span>
                       </div>
                       <span className="combo-item-qty">
-                        Qty: {item.quantity}
+                        {item.unitWeight ? item.unitWeight : `Qty: ${item.quantity}`}
                       </span>
                     </div>
                   ))}
@@ -1110,7 +1113,7 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
                     <>Add to Cart · ₹{Math.round(displayPrice)}</>
                   )}
                 </button>
-                <Link href={`/combo/${combo.slug}`} className="combo-btn-details">
+                <Link href={`/product/${combo.slug}`} className="combo-btn-details">
                   View Details →
                 </Link>
               </div>
@@ -1119,7 +1122,7 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
 
           {/* Visual Column */}
           <div className="combo-visual-col">
-            <Link href={`/combo/${combo.slug}`} className="combo-image-link" tabIndex={-1} aria-label={`View ${combo.title}`}>
+            <Link href={`/product/${combo.slug}`} className="combo-image-link" tabIndex={-1} aria-label={`View ${combo.title}`}>
               <div className="combo-image-card">
                 {combo.image ? (
                   <img src={combo.image} alt={combo.title} className="combo-hero-image" loading="lazy" decoding="async" />

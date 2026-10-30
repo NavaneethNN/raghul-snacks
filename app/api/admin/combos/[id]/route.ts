@@ -23,7 +23,7 @@ export async function PATCH(
     const { id: idParam } = await params;
     const id = parseInt(idParam);
     const body = await request.json();
-    const { title, slug, price, offerPrice, description, image, items } = body;
+    const { title, slug, price, offerPrice, description, image, weight, items } = body;
 
     if (!title || !slug || !price) {
       return NextResponse.json(
@@ -44,6 +44,7 @@ export async function PATCH(
         discount: offerPrice ? offerPrice.toString() : "0",
         description: description || null,
         image: image || null,
+        weight: weight ? weight.trim() : "300g",
       })
       .where(eq(combos.id, id));
 
@@ -51,10 +52,11 @@ export async function PATCH(
     if (items && items.length > 0) {
       await db.delete(comboItems).where(eq(comboItems.comboId, id));
       await db.insert(comboItems).values(
-        items.map((item: { productId: number; quantity: number }) => ({
+        items.map((item: { productId: number; quantity: number; unitWeight?: string | null }) => ({
           comboId: id,
           productId: item.productId,
           quantity: item.quantity,
+          unitWeight: item.unitWeight || null,
         }))
       );
     }

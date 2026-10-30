@@ -64,9 +64,14 @@ export function parseWeightToKg(weight: string | number | null | undefined): num
     return Number.isFinite(val) && val > 0 ? val / 1000 : 0.25;
   }
 
+  // If it mentions items/pieces without weight units (e.g. "6 items"), do NOT treat count as kilograms!
+  if (/\b(?:items?|pieces?|box|boxes)\b/i.test(str)) {
+    return 0.25;
+  }
+
   // Pure numeric string: e.g. "500" -> assume grams if >= 10, else kg
-  const num = parseFloat(str);
-  if (Number.isFinite(num) && num > 0) {
+  if (/^\d+(?:\.\d+)?$/.test(str)) {
+    const num = parseFloat(str);
     return num >= 10 ? num / 1000 : num;
   }
 

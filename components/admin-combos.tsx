@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
@@ -14,7 +14,8 @@ type Product = {
 
 type ComboItem = {
   productId: number;
-  quantity: number; // Represents weight in grams
+  quantity: number;
+  unitWeight?: string;
 };
 
 type Combo = {
@@ -24,8 +25,9 @@ type Combo = {
   price: string;
   discount: string;
   image: string | null;
+  weight?: string;
   createdAt: Date;
-  items?: Array<{ id: number; productId: number; quantity: number; productName: string }>;
+  items?: Array<{ id: number; productId: number; quantity: number; unitWeight?: string; productName: string }>;
 };
 
 export function AdminCombos() {
@@ -45,6 +47,7 @@ export function AdminCombos() {
     offerPrice: "",
     description: "",
     image: "",
+    weight: "300g",
   });
   const [selectedItems, setSelectedItems] = useState<ComboItem[]>([]);
   const [showProductList, setShowProductList] = useState(false);
@@ -144,10 +147,12 @@ export function AdminCombos() {
       offerPrice: combo.discount, // Map discount to offerPrice
       description: (combo as any).description || "",
       image: combo.image || "",
+      weight: combo.weight || "300g",
     });
     setSelectedItems(combo.items?.map(item => ({
       productId: item.productId,
-      quantity: item.quantity
+      quantity: item.quantity,
+      unitWeight: item.unitWeight || undefined,
     })) || []);
     setImageInputType(combo.image?.startsWith("data:") || combo.image?.startsWith("https://") ? "file" : "url");
     setImagePreview(combo.image || "");
@@ -158,7 +163,7 @@ export function AdminCombos() {
   function handleCloseForm() {
     setShowForm(false);
     setEditingCombo(null);
-    setFormData({ title: "", slug: "", price: "", offerPrice: "", description: "", image: "" });
+    setFormData({ title: "", slug: "", price: "", offerPrice: "", description: "", image: "", weight: "300g" });
     setSelectedItems([]);
     setShowProductList(false);
     setImagePreview("");
@@ -190,6 +195,12 @@ export function AdminCombos() {
     // Ensure minimum quantity of 1 on blur
     setSelectedItems(selectedItems.map(item =>
       item.productId === productId && item.quantity < 1 ? { ...item, quantity: 1 } : item
+    ));
+  }
+
+  function updateUnitWeight(productId: number, unitWeight: string) {
+    setSelectedItems(selectedItems.map(item =>
+      item.productId === productId ? { ...item, unitWeight: unitWeight.trim() || undefined } : item
     ));
   }
 
@@ -244,6 +255,7 @@ export function AdminCombos() {
           offerPrice: formData.offerPrice ? parseFloat(formData.offerPrice) : null,
           description: formData.description || null,
           image: imageValue || null,
+          weight: formData.weight || "300g",
           items: selectedItems,
         }),
       });
@@ -355,7 +367,7 @@ export function AdminCombos() {
                             <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
                               {combo.items.map((item) => (
                                 <span key={item.id} style={{ fontSize: "13px", color: "#6b7280" }}>
-                                  {item.productName} × {item.quantity}
+                                  {item.productName} × {item.quantity}{item.unitWeight ? ` (${item.unitWeight})` : ""}
                                 </span>
                               ))}
                             </div>
@@ -407,7 +419,7 @@ export function AdminCombos() {
                                   <div className={styles.detailValue}>
                                     {combo.items.map((item) => (
                                       <div key={item.id} style={{ fontSize: 13, color: "var(--ink)", lineHeight: 1.8 }}>
-                                        {item.productName} × <span style={{ color: "#6b7280" }}>{item.quantity}</span>
+                                        {item.productName} × <span style={{ color: "#6b7280" }}>{item.quantity}{item.unitWeight ? ` (${item.unitWeight})` : ""}</span>
                                       </div>
                                     ))}
                                   </div>
@@ -508,6 +520,19 @@ export function AdminCombos() {
                     onChange={(e) => handleInputChange("offerPrice", e.target.value)}
                   />
                 </div>
+              </div>
+              <div className={styles.field}>
+                <label>Total Shipping Weight (Hidden from customers)</label>
+                <input
+                  type="text"
+                  placeholder="e.g., 500g, 800g, 1.2kg"
+                  value={formData.weight}
+                  onChange={(e) => handleInputChange("weight", e.target.value)}
+                  required
+                />
+                <small style={{ color: "#6b7280", fontSize: "12px" }}>
+                  Used internally for courier delivery charges at checkout. Not displayed to customers on the site.
+                </small>
               </div>
               <div className={styles.field}>
                 <label>Combo Image</label>
@@ -681,18 +706,30 @@ export function AdminCombos() {
                             <span style={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>
                               {product?.name}
                             </span>
-                            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#6b7280" }}>
-                              Qty:
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                value={item.quantity || ""}
-                                onChange={(e) => updateWeight(item.productId, e.target.value)}
-                                onBlur={() => handleWeightBlur(item.productId)}
-                                placeholder="1"
-                                style={{ width: "72px", minWidth: 0, border: "1px solid #d1d5db", padding: "6px 10px", borderRadius: "4px", textAlign: "center", fontSize: "13px", fontWeight: 600, boxSizing: "border-box" }}
-                              />
-                            </label>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                              <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", color: "#6b7280" }}>
+                                Display (e.g. 500g / 3 nos):
+                                <input
+                                  type="text"
+                                  value={item.unitWeight || ""}
+                                  onChange={(e) => updateUnitWeight(item.productId, e.target.value)}
+                                  placeholder="e.g. 500g or 3 nos"
+                                  style={{ width: "125px", minWidth: 0, border: "1px solid #d1d5db", padding: "5px 8px", borderRadius: "4px", fontSize: "12px", boxSizing: "border-box" }}
+                                />
+                              </label>
+                              <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", color: "#6b7280" }}>
+                                Qty:
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  value={item.quantity || ""}
+                                  onChange={(e) => updateWeight(item.productId, e.target.value)}
+                                  onBlur={() => handleWeightBlur(item.productId)}
+                                  placeholder="1"
+                                  style={{ width: "54px", minWidth: 0, border: "1px solid #d1d5db", padding: "5px 8px", borderRadius: "4px", textAlign: "center", fontSize: "12px", fontWeight: 600, boxSizing: "border-box" }}
+                                />
+                              </label>
+                            </div>
                           </div>
                         );
                       })}

@@ -31,6 +31,7 @@ export async function GET() {
             id: comboItems.id,
             productId: comboItems.productId,
             quantity: comboItems.quantity,
+            unitWeight: comboItems.unitWeight,
             productName: products.name,
           })
           .from(comboItems)
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { title, slug, price, offerPrice, description, image, items } = body;
+    const { title, slug, price, offerPrice, description, image, weight, items } = body;
 
     if (!title || !slug || !price) {
       return NextResponse.json(
@@ -85,15 +86,17 @@ export async function POST(request: Request) {
         discount: offerPrice ? offerPrice.toString() : "0",
         description: description || null,
         image: image || null,
+        weight: weight ? weight.trim() : "300g",
       })
       .returning();
 
     // Add combo items
     await db.insert(comboItems).values(
-      items.map((item: { productId: number; quantity: number }) => ({
+      items.map((item: { productId: number; quantity: number; unitWeight?: string | null }) => ({
         comboId: newCombo.id,
         productId: item.productId,
         quantity: item.quantity,
+        unitWeight: item.unitWeight || null,
       }))
     );
 
