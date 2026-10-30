@@ -83,7 +83,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
       if (catParam) {
         if (catParam.toLowerCase() === "combos") {
           setTabFilter("combos");
-          setCategoryFilter("");
+          setCategoryFilter("combos");
         } else {
           setCategoryFilter(catParam.toLowerCase());
         }
@@ -552,8 +552,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
           <span className={productStyles.statHint}>Regular products</span>
         </div>
         <div
-          className={`${productStyles.statCard} ${tabFilter === "combos" ? productStyles.statCardActive : ""}`}
-          onClick={() => { setTabFilter("combos"); setCategoryFilter(""); }}
+          className={`${productStyles.statCard} ${tabFilter === "combos" || categoryFilter === "combos" ? productStyles.statCardActive : ""}`}
+          onClick={() => { setTabFilter("combos"); setCategoryFilter("combos"); }}
           role="button"
           tabIndex={0}
         >
@@ -589,7 +589,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
         <div className={productStyles.tabBar}>
           <button
             type="button"
-            className={`${productStyles.tabButton} ${tabFilter === "all" ? productStyles.tabButtonActive : ""}`}
+            className={`${productStyles.tabButton} ${tabFilter === "all" && categoryFilter !== "combos" ? productStyles.tabButtonActive : ""}`}
             onClick={() => { setTabFilter("all"); setCategoryFilter(""); }}
           >
             All Products
@@ -597,18 +597,18 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
           </button>
           <button
             type="button"
-            className={`${productStyles.tabButton} ${tabFilter === "regular" ? productStyles.tabButtonActive : ""}`}
-            onClick={() => { setTabFilter("regular"); setCategoryFilter(""); }}
+            className={`${productStyles.tabButton} ${tabFilter === "regular" && categoryFilter !== "combos" ? productStyles.tabButtonActive : ""}`}
+            onClick={() => { setTabFilter("regular"); if (categoryFilter === "combos") setCategoryFilter(""); }}
           >
             Single Snacks
             <span className={productStyles.tabBadge}>{regularCount}</span>
           </button>
           <button
             type="button"
-            className={`${productStyles.tabButton} ${tabFilter === "combos" ? productStyles.tabButtonActive : ""}`}
-            onClick={() => { setTabFilter("combos"); setCategoryFilter(""); }}
+            className={`${productStyles.tabButton} ${tabFilter === "combos" || categoryFilter === "combos" ? productStyles.tabButtonActive : ""}`}
+            onClick={() => { setTabFilter("combos"); setCategoryFilter("combos"); }}
           >
-             Combos
+             Combos &amp; Gift Packs
             <span className={productStyles.tabBadge}>{combosCount}</span>
           </button>
         </div>
@@ -645,32 +645,43 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
 
           {/* Filter dropdowns */}
           <div className={productStyles.filterControls}>
-            {/* Category dropdown (only for All or Regular items) */}
-            {tabFilter !== "combos" && (
-              <div className={productStyles.selectWrap}>
-                <span className={productStyles.selectIcon}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-                  </svg>
-                </span>
-                <select
-                  className={productStyles.customSelect}
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  aria-label="Filter products by category"
-                >
-                  <option value="">All Categories ({tabFilter === "regular" ? regularCount : totalCount})</option>
-                  {categories.filter(c => c.slug !== "combos").map((c) => {
-                    const count = products.filter(p => p.categoryId === c.id).length;
-                    return (
-                      <option key={c.id} value={c.name}>
-                        {c.name} ({count})
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-            )}
+            {/* Category dropdown (lists ALL categories including Combos) */}
+            <div className={productStyles.selectWrap}>
+              <span className={productStyles.selectIcon}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                </svg>
+              </span>
+              <select
+                className={productStyles.customSelect}
+                value={categoryFilter}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setCategoryFilter(val);
+                  if (val === "combos" || (comboCategoryId != null && val === String(comboCategoryId))) {
+                    setTabFilter("combos");
+                  } else if (val !== "") {
+                    setTabFilter("regular");
+                  } else {
+                    setTabFilter("all");
+                  }
+                }}
+                aria-label="Filter products by category"
+              >
+                <option value="">All Categories ({products.length})</option>
+                {/*  Combos option */}
+                <option value="combos"> Combos ({combosCount})</option>
+                {/* Regular categories */}
+                {categories.filter(c => c.slug !== "combos" && c.name.toLowerCase() !== "combos").map((c) => {
+                  const count = products.filter(p => p.categoryId === c.id).length;
+                  return (
+                    <option key={c.id} value={c.name}>
+                      {c.name} ({count})
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
 
             {/* Status dropdown */}
             <div className={productStyles.selectWrap}>
@@ -883,19 +894,6 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                     {/* Actions */}
                     <td>
                       <div className={productStyles.actionGroup}>
-                        <a
-                          href={`/product/${product.slug}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className={productStyles.viewStoreLink}
-                          title="View on store ↗"
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                            <polyline points="15 3 21 3 21 9" />
-                            <line x1="10" y1="14" x2="21" y2="3" />
-                          </svg>
-                        </a>
                         <button className={styles.iconButton} onClick={() => handleEdit(product)} title="Edit product" type="button">
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
