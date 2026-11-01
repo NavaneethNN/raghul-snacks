@@ -4539,16 +4539,26 @@ footer {
   transform: none;
   box-shadow: none;
 }
-@media (max-width: 400px) {
+@media (max-width: 480px) {
   .product-purchase-row {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
   }
-  .quantity-selector-compact {
-    align-self: flex-start;
+  .product-purchase-row .quantity-selector-compact {
+    grid-column: 1;
+    align-self: stretch;
+    height: 46px;
   }
   .product-purchase-row .wide-button {
     flex: 1 1 auto;
     min-width: unset;
+    height: 46px;
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  .product-purchase-row .buy-now-button {
+    grid-column: 1 / -1;
     width: 100%;
   }
 }
@@ -4742,7 +4752,7 @@ footer {
 
 .cart-item {
   display: grid;
-  grid-template-columns: 50px 1fr auto;
+  grid-template-columns: 56px 1fr auto auto;
   gap: 10px;
   align-items: center;
   padding: 12px;

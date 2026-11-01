@@ -462,6 +462,11 @@
 
 /* ── Responsive ──────────────────────────────── */
 
+/* Mobile order summary accordion bar */
+.mobileSummaryToggle {
+  display: none;
+}
+
 /* Tablet — collapse to single column */
 @media (max-width: 820px) {
   .page { padding: 20px 16px 55px; }
@@ -470,10 +475,38 @@
     grid-template-columns: 1fr;
   }
 
+  .mobileSummaryToggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+    font: 600 14px 'DM Sans', sans-serif;
+    color: var(--ink);
+    margin-bottom: 16px;
+    user-select: none;
+    order: -2;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .mobileSummaryToggle:active {
+    background: var(--cream);
+  }
+
   .summary {
     position: static;
     order: -1;           /* show summary above the form */
     padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: none;
+  }
+
+  .summaryMobileOpen {
+    display: block;
   }
 
   .summary h2 { font-size: 22px; }

@@ -333,6 +333,47 @@ export function StoreHeader() {
           </button>
         </div>
 
+        {/* Mobile Search */}
+        <div style={{ padding: "16px 20px 8px" }}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (searchQuery.trim()) {
+                setMenuOpen(false);
+                router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+              }
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              background: "#fff",
+              border: "1.5px solid var(--line)",
+              borderRadius: "24px",
+              padding: "8px 14px",
+              gap: "8px",
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" style={{ color: "#6b7280", flexShrink: 0 }}>
+              <circle cx="7.5" cy="7.5" r="6" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M11.5 11.5L16 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search snacks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                border: "none",
+                outline: "none",
+                width: "100%",
+                font: "14px 'DM Sans', sans-serif",
+                background: "transparent",
+                color: "var(--ink)",
+              }}
+            />
+          </form>
+        </div>
+
         <nav className="mobile-nav">
           <Link href="/shop" onClick={() => setMenuOpen(false)}>Shop All</Link>
           <button
@@ -343,6 +384,7 @@ export function StoreHeader() {
           </button>
           <Link href="/about" onClick={() => setMenuOpen(false)}>Our Story</Link>
           <Link href="/contact" onClick={() => setMenuOpen(false)}>Contact</Link>
+          <Link href="/track" onClick={() => setMenuOpen(false)}>Track Order</Link>
           <Link href="/wishlist" onClick={() => setMenuOpen(false)}>
             Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
           </Link>

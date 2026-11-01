@@ -52,6 +52,7 @@ export function CheckoutWizard() {
   const [couponError, setCouponError] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [publicCoupons, setPublicCoupons] = useState<PublicCoupon[]>([]);
+  const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
 
   const itemPayload = useMemo(
     () => items.map((item) => ({ productId: item.id, quantity: item.quantity })),
@@ -293,7 +294,13 @@ export function CheckoutWizard() {
   function update(field: keyof CheckoutForm, value: string) {
     setError("");
     setSuccess("");
-    setForm((c) => ({ ...c, [field]: value }));
+    let sanitized = value;
+    if (field === "phone") {
+      sanitized = value.replace(/[^\d+]/g, "").slice(0, 13);
+    } else if (field === "pincode") {
+      sanitized = value.replace(/\D/g, "").slice(0, 6);
+    }
+    setForm((c) => ({ ...c, [field]: sanitized }));
   }
 
   function continueTo(nextStep: number) {
@@ -845,8 +852,41 @@ export function CheckoutWizard() {
             </div>
           </form>
 
+          {/* Mobile expandable order summary bar */}
+          <div
+            className={styles.mobileSummaryToggle}
+            onClick={() => setMobileSummaryOpen((prev) => !prev)}
+            role="button"
+            tabIndex={0}
+            aria-expanded={mobileSummaryOpen}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+              <span>{mobileSummaryOpen ? "Hide order summary" : `Order summary (${items.reduce((s, i) => s + i.quantity, 0)} item${items.reduce((s, i) => s + i.quantity, 0) !== 1 ? "s" : ""})`}</span>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                style={{
+                  transition: "transform 0.2s ease",
+                  transform: mobileSummaryOpen ? "rotate(180deg)" : "rotate(0deg)",
+                }}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+            <strong style={{ fontSize: 16, fontFamily: "'DM Sans',sans-serif" }}>{formatPrice(total)}</strong>
+          </div>
+
           {/* ── Right: order summary ── */}
-          <aside className={styles.summary}>
+          <aside className={`${styles.summary} ${mobileSummaryOpen ? styles.summaryMobileOpen : ""}`}>
             <p className={styles.summaryLabel}>Order summary</p>
             <h2>Your fresh picks.</h2>
             <div className={styles.items}>
