@@ -8,11 +8,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ orderNumber: string }> | { orderNumber: string } },
+  context: { params: Promise<{ orderNumber: string }> },
 ) {
   try {
-    const resolvedParams =
-      context.params instanceof Promise ? await context.params : context.params;
+    const resolvedParams = await context.params;
     const rawOrderNumber = resolvedParams?.orderNumber;
     const orderNumber = (
       rawOrderNumber ||

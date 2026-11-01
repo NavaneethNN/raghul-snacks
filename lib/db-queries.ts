@@ -91,9 +91,32 @@ export async function getProductsWithVariants(db: any, options?: ProductFilterOp
     group.sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id);
   }
 
-  // Merge variants onto each product
-  return rows.map((row: any) => ({
-    ...row,
-    variants: variantsByProduct.get(row.id) ?? [],
-  }));
+  // Merge variants onto each product, ensuring price reflects lowest active variant price if product price is 0
+  return rows.map((row: any) => {
+    const pVars = variantsByProduct.get(row.id) ?? [];
+    let price = row.price;
+    let offerPrice = row.offerPrice;
+    if (pVars.length > 0) {
+      let minP = Infinity;
+      let minOffer: string | null = null;
+      for (const v of pVars) {
+        const numP = parseFloat(v.price);
+        if (!isNaN(numP) && numP > 0 && numP < minP) {
+          minP = numP;
+          minOffer = v.offerPrice;
+        }
+      }
+      const curPriceNum = parseFloat(price);
+      if (minP !== Infinity && (isNaN(curPriceNum) || curPriceNum <= 0)) {
+        price = minP.toFixed(2);
+        offerPrice = minOffer;
+      }
+    }
+    return {
+      ...row,
+      price,
+      offerPrice,
+      variants: pVars,
+    };
+  });
 }

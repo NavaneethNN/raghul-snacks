@@ -57,8 +57,9 @@ export default function CartPage() {
   }, [items]);
 
   function handleMoveToWishlist(item: CartItem) {
+    const baseId = item.id.toString().split("-v")[0];
     addToWishlist({
-      id: item.id,
+      id: baseId,
       name: item.name,
       slug: item.slug ?? "",
       price: item.price,

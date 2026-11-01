@@ -77,3 +77,17 @@ export function parseWeightToKg(weight: string | number | null | undefined): num
 
   return 0.25;
 }
+
+/**
+ * Dynamic packaging box buffer based on snack weight:
+ * - Small pouch / single light item (<= 0.35 kg): 80g packaging (mailer envelope / mini box)
+ * - Small to Medium parcel (0.35 kg - 1.2 kg): 150g packaging (standard small box)
+ * - Medium to Large parcel (1.2 kg - 2.5 kg): 250g packaging (medium corrugated box)
+ * - Bulk / Combo parcel (> 2.5 kg): 400g packaging (heavy-duty master carton)
+ */
+export function calculatePackagingBufferKg(snackWeightKg: number): number {
+  if (snackWeightKg <= 0.35) return 0.08;
+  if (snackWeightKg <= 1.20) return 0.15;
+  if (snackWeightKg <= 2.50) return 0.25;
+  return 0.40;
+}

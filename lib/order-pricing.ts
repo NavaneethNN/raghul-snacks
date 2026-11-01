@@ -1,7 +1,9 @@
 import { getDb } from "@/lib/db";
 import { combos as combosTable, products as productsTable, productVariants } from "@/drizzle/schema";
 import { and, eq, inArray } from "drizzle-orm";
-import { parseWeightToKg } from "@/lib/catalog";
+import { parseWeightToKg, calculatePackagingBufferKg } from "@/lib/catalog";
+
+export { calculatePackagingBufferKg } from "@/lib/catalog";
 
 export type RequestedItem = { productId: string; quantity: number };
 export type PricedLine = { product: { slug: string; categoryId: number | null; [key: string]: unknown }; quantity: number; lineTotal: number };
@@ -132,6 +134,8 @@ export async function priceOrder(items: RequestedItem[]) {
 
   const subtotal = lines.reduce((sum, line) => sum + line.lineTotal, 0);
   const totalWeightKg = lines.reduce((total, line) => total + line.quantity * line.unitWeightKg, 0);
-  const weight = Math.max(0.25, Math.round(totalWeightKg * 1000) / 1000);
-  return { lines, subtotal, weight };
+  // Dynamic packaging buffer based on snack parcel volume
+  const packagingBufferKg = calculatePackagingBufferKg(totalWeightKg);
+  const weight = Math.max(0.15, Math.round((totalWeightKg + packagingBufferKg) * 1000) / 1000);
+  return { lines, subtotal, weight, rawSnackWeightKg: totalWeightKg, packagingBufferKg };
 }

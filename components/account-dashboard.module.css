@@ -946,3 +946,430 @@
     white-space: normal;
   }
 }
+
+
+/* ── Two-Column Sidebar Layout ── */
+.layoutGrid {
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .layoutGrid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+.sidebarCard {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+  position: sticky;
+  top: 96px;
+}
+
+.sidebarUser {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 18px;
+}
+
+.sidebarAvatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(201, 95, 59, 0.1);
+  border: 2px solid var(--terracotta);
+  color: var(--terracotta);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 18px 'DM Mono', monospace;
+  flex-shrink: 0;
+}
+
+.sidebarUserInfo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sidebarUserName {
+  font: 700 16px 'DM Sans', sans-serif;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebarUserEmail {
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adminBadge {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font: 700 10px 'DM Mono', monospace;
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 860px) {
+  .sidebarNav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    gap: 8px;
+  }
+}
+
+.sidebarBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink);
+  font: 600 14px 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: left;
+}
+
+.sidebarBtn:hover {
+  background: var(--cream);
+  border-color: var(--line);
+}
+
+.sidebarBtnActive {
+  background: rgba(201, 95, 59, 0.08) !important;
+  border-color: var(--terracotta) !important;
+  color: var(--terracotta) !important;
+}
+
+.sidebarBtnLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.sidebarCount {
+  background: var(--terracotta);
+  color: #ffffff;
+  border-radius: 12px;
+  padding: 1px 8px;
+  font: 700 11px 'DM Mono', monospace;
+}
+
+.sidebarReplied {
+  background: #166534;
+  color: #ffffff;
+  border-radius: 12px;
+  padding: 1px 8px;
+  font: 700 11px 'DM Mono', monospace;
+}
+
+.adminBridgeLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #166534;
+  background: #f0fdf4;
+  color: #166534;
+  font: 700 14px 'DM Sans', sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+
+.adminBridgeLink:hover {
+  background: #dcfce7;
+  border-color: #15803d;
+}
+
+.sidebarFooter {
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.savedAddressCard {
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 20px;
+}
+
+.savedAddressTitle {
+  font: 700 12px 'DM Mono', monospace;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin: 0 0 8px;
+}
+
+.savedAddressText {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Saved Addresses Management */
+.addressSection {
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+
+.addressHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.addressHeader h3 {
+  margin: 0;
+  font: 700 18px 'Playfair Display', serif;
+  color: var(--ink);
+}
+
+.addAddressBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--paper);
+  border: 1.5px solid var(--terracotta);
+  color: var(--terracotta);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font: 600 13px 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.addAddressBtn:hover {
+  background: var(--terracotta);
+  color: #ffffff;
+}
+
+.addressGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.addressCard {
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: border-color 0.15s;
+}
+
+.addressCardDefault {
+  border-color: #86efac;
+  background: #fcfdfc;
+}
+
+.addressRecipient {
+  font: 700 14px 'DM Sans', sans-serif;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+
+.addressPhone {
+  font: 500 12px 'DM Mono', monospace;
+  color: #6b7280;
+  margin: 0 0 8px;
+}
+
+.addressBody {
+  font: 400 13px/1.5 'DM Sans', sans-serif;
+  color: #374151;
+  margin: 0 0 14px;
+  flex: 1;
+}
+
+.addressBadgeRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.defaultBadge {
+  background: #dcfce7;
+  color: #166534;
+  font: 700 10px 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.addressCardActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.setDefaultBtn {
+  background: none;
+  border: 1px solid var(--line);
+  color: #4b5563;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font: 600 11px 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.setDefaultBtn:hover {
+  border-color: var(--terracotta);
+  color: var(--terracotta);
+}
+
+.deleteAddressBtn {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font: 600 11px 'DM Sans', sans-serif;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: auto;
+}
+
+.deleteAddressBtn:hover {
+  text-decoration: underline;
+}
+
+/* Inline Add Address Form Card */
+.addressFormCard {
+  background: var(--cream);
+  border: 1.5px solid var(--terracotta);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.addressFormTitle {
+  font: 700 16px 'Playfair Display', serif;
+  color: var(--ink);
+  margin: 0 0 14px;
+}
+
+.addressFormGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.addressFormFull {
+  grid-column: 1 / -1;
+}
+
+.addressFormInput {
+  width: 100%;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: 500 13px 'DM Sans', sans-serif;
+  color: var(--ink);
+  box-sizing: border-box;
+}
+
+.addressFormInput:focus {
+  outline: none;
+  border-color: var(--terracotta);
+}
+
+.addressCheckboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 500 13px 'DM Sans', sans-serif;
+  color: var(--ink);
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.addressFormActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.addressFormCancelBtn {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: #4b5563;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font: 600 13px 'DM Sans', sans-serif;
+  cursor: pointer;
+}
+
+.addressFormSaveBtn {
+  background: var(--terracotta);
+  color: #ffffff;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font: 600 13px 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.addressFormSaveBtn:hover:not(:disabled) {
+  background: #b04928;
+}
+
+.addressFormSaveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+

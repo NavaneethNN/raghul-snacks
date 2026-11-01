@@ -141,6 +141,7 @@ export default async function AccountPage() {
         name: accountData.name,
         email: accountData.email,
         createdAt: accountData.createdAt,
+        isAdmin: Boolean(accountData.isAdmin),
       }}
       orders={ordersWithItems}
     />

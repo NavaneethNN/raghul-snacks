@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
@@ -23,9 +23,11 @@ type Product = {
   categoryId: number | null;
   categoryName: string | null;
   image: string | null;
-    active?: boolean;
+  active?: boolean;
   stock?: number;
   variantCount?: number;
+  minVariantPrice?: string | null;
+  minVariantOfferPrice?: string | null;
   shelfLife?: string | null;
   createdAt: Date;
 };
@@ -557,7 +559,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
           role="button"
           tabIndex={0}
         >
-          <span className={productStyles.statLabel}> Combos</span>
+          <span className={productStyles.statLabel}>Combos</span>
           <strong className={productStyles.statValue} style={{ color: "#b45309" }}>{combosCount}</strong>
           <span className={productStyles.statHint}>Curated gift boxes</span>
         </div>
@@ -608,7 +610,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
             className={`${productStyles.tabButton} ${tabFilter === "combos" || categoryFilter === "combos" ? productStyles.tabButtonActive : ""}`}
             onClick={() => { setTabFilter("combos"); setCategoryFilter("combos"); }}
           >
-             Combos &amp; Gift Packs
+            Combos &amp; Gift Packs
             <span className={productStyles.tabBadge}>{combosCount}</span>
           </button>
         </div>
@@ -669,8 +671,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                 aria-label="Filter products by category"
               >
                 <option value="">All Categories ({products.length})</option>
-                {/*  Combos option */}
-                <option value="combos"> Combos ({combosCount})</option>
+                {/* Combos option */}
+                <option value="combos">Combos ({combosCount})</option>
                 {/* Regular categories */}
                 {categories.filter(c => c.slug !== "combos" && c.name.toLowerCase() !== "combos").map((c) => {
                   const count = products.filter(p => p.categoryId === c.id).length;
@@ -746,13 +748,29 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                 </tr>
               ) : filteredProducts.map((product) => {
                 const productIsCombo = isCombo(product);
+                const hasVariants = (product.variantCount ?? 0) > 0;
+
+                // Base and offer price resolution:
+                // For variant products, show the minimum price among all active variants
+                const basePriceNum = hasVariants && product.minVariantPrice && parseFloat(product.minVariantPrice) > 0
+                  ? parseFloat(product.minVariantPrice)
+                  : parseFloat(product.price) || 0;
+
+                const offerPriceNum = hasVariants && product.minVariantOfferPrice && parseFloat(product.minVariantOfferPrice) > 0
+                  ? parseFloat(product.minVariantOfferPrice)
+                  : (product.offerPrice && parseFloat(product.offerPrice) > 0 ? parseFloat(product.offerPrice) : null);
+
                 const hasOffer = Boolean(
-                  product.offerPrice &&
-                  parseFloat(product.offerPrice) > 0 &&
-                  parseFloat(product.offerPrice) < parseFloat(product.price)
+                  offerPriceNum &&
+                  offerPriceNum > 0 &&
+                  offerPriceNum < basePriceNum
                 );
+
+                const displayPriceNum = hasOffer ? offerPriceNum! : basePriceNum;
+                const displayPriceStr = displayPriceNum > 0 ? displayPriceNum.toFixed(2) : "0.00";
+                const originalPriceStr = basePriceNum > 0 ? basePriceNum.toFixed(2) : "0.00";
                 const discountPct = hasOffer
-                  ? Math.round(((parseFloat(product.price) - parseFloat(product.offerPrice!)) / parseFloat(product.price)) * 100)
+                  ? Math.round(((basePriceNum - offerPriceNum!) / basePriceNum) * 100)
                   : null;
                 const isOutOfStock = product.active === false || product.stock === 0;
 
@@ -781,7 +799,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                             <span className={productStyles.productNameText}>{product.name}</span>
                             {productIsCombo && (
                               <span className={productStyles.comboBadge}>
-                                 Combo Pack
+                                Combo Pack
                               </span>
                             )}
                           </div>
@@ -796,7 +814,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                               )}
                               {product.weight && product.weight !== "—" && (
                                 <span className={productStyles.shippingWeightBadge}>
-                                  📦 Courier Shipping Wt: {product.weight}
+                                  Courier Shipping Wt: {product.weight}
                                 </span>
                               )}
                             </>
@@ -804,12 +822,12 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                               {product.weight && product.weight !== "—" && (product.variantCount ?? 0) === 0 && (
                                 <span className={productStyles.weightBadge}>
-                                  ⚖️ {formatWeight(product.weight)}
+                                  {formatWeight(product.weight)}
                                 </span>
                               )}
                               {(product.variantCount ?? 0) > 0 && (
                                 <span className={productStyles.variantCountBadge}>
-                                  🏷️ {product.variantCount} variant{(product.variantCount ?? 0) !== 1 ? "s" : ""}
+                                  {product.variantCount} variant{(product.variantCount ?? 0) !== 1 ? "s" : ""}
                                 </span>
                               )}
                               {product.shelfLife && (
@@ -828,7 +846,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                               </span>
                             )}
                             <span className={productStyles.mobilePriceBadge}>
-                              {hasOffer ? `₹${product.offerPrice}` : `₹${product.price}`}
+                              {hasVariants ? "From " : ""}₹{displayPriceStr}
                             </span>
                             {isOutOfStock ? (
                               <span className={productStyles.statusOut} style={{ fontSize: 11, padding: "2px 8px" }}>
@@ -856,19 +874,18 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                       <div className={productStyles.priceBlock}>
                         <div className={productStyles.priceRow}>
                           <span className={productStyles.currentPrice}>
-                            {(product.variantCount ?? 0) > 0 && !hasOffer ? `From ` : ""}
-                            ₹{hasOffer ? product.offerPrice : product.price}
+                            {hasVariants ? "From " : ""}₹{displayPriceStr}
                           </span>
                           {hasOffer && (
                             <>
-                              <span className={productStyles.originalPrice}>₹{product.price}</span>
+                              <span className={productStyles.originalPrice}>₹{originalPriceStr}</span>
                               {discountPct !== null && (
                                 <span className={productStyles.discountBadge}>-{discountPct}%</span>
                               )}
                             </>
                           )}
                         </div>
-                        {(product.variantCount ?? 0) > 0 && (
+                        {hasVariants && (
                           <span className={productStyles.variantCountBadge}>
                             {product.variantCount} variant prices
                           </span>
@@ -1359,7 +1376,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                         />
                       )}
                       {imageUploading && (
-                        <p style={{ fontSize: 12, color: "var(--terracotta)", margin: "4px 0" }}>⏳ Uploading to cloud…</p>
+                        <p style={{ fontSize: 12, color: "var(--terracotta)", margin: "4px 0" }}>Uploading to cloud…</p>
                       )}
                       {imagePreview && !imageUploading && (
                         <div

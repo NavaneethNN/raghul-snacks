@@ -1,17 +1,14 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
-import { customerAccounts, customers, orderItems, orders, products } from "@/drizzle/schema";
+import { and, eq } from "drizzle-orm";
+import { customerAccounts, customerAddresses, customers, orderItems, orders, products } from "@/drizzle/schema";
 import { createCustomerSession, customerCookieName, getCustomerSession } from "@/lib/customer-auth";
 import { getDb } from "@/lib/db";
 import { razorpayVerifiedOrderSchema } from "@/lib/order-input";
 import { priceOrder } from "@/lib/order-pricing";
 import { validateCoupon } from "@/lib/coupons";
 import { verifyRazorpaySignature } from "@/lib/razorpay";
-import { createShiprocketShipment } from "@/lib/shiprocket";
 import { sendOrderConfirmationEmail } from "@/lib/email";
-
-const isManual = process.env.DELIVERY_MODE === "manual";
 
 export async function POST(request: Request) {
   const payload = razorpayVerifiedOrderSchema.safeParse(await request.json());
@@ -102,6 +99,8 @@ export async function POST(request: Request) {
     const rpOrder = (await rpOrderRes.json()) as { amount?: number; amount_paid?: number };
     const totalPaid = rpOrder.amount ? rpOrder.amount / 100 : subtotal - discount;
     const shipping = Math.max(0, Math.round((totalPaid - (subtotal - discount)) * 100) / 100);
+    const shippingExtra = shipping > 0 ? 2 : 0;
+    const shippingActual = Math.max(0, Math.round((shipping - shippingExtra) * 100) / 100);
 
     const [order] = await db
       .insert(orders)
@@ -123,6 +122,8 @@ export async function POST(request: Request) {
         paymentMethod,
         orderStatus: "placed",
         paymentOrderId: payload.data.razorpayOrderId,
+        shippingActual: String(shippingActual),
+        shippingExtra: String(shippingExtra),
       })
       .returning({ id: orders.id });
 
@@ -143,8 +144,46 @@ export async function POST(request: Request) {
       })
     );
 
+    // Auto-save address to customer account if logged in
+    if (accountId) {
+      try {
+        const existingAddresses = await db
+          .select({ id: customerAddresses.id })
+          .from(customerAddresses)
+          .where(
+            and(
+              eq(customerAddresses.accountId, accountId),
+              eq(customerAddresses.address, payload.data.address),
+              eq(customerAddresses.pincode, payload.data.pincode)
+            )
+          )
+          .limit(1);
+
+        if (existingAddresses.length === 0) {
+          const countRes = await db
+            .select({ id: customerAddresses.id })
+            .from(customerAddresses)
+            .where(eq(customerAddresses.accountId, accountId));
+
+          await db.insert(customerAddresses).values({
+            accountId,
+            name: payload.data.customerName,
+            phone: payload.data.phone,
+            address: payload.data.address,
+            city: payload.data.city,
+            state: payload.data.state,
+            pincode: payload.data.pincode,
+            isDefault: countRes.length === 0, // First address becomes default
+          });
+        }
+      } catch (addrErr) {
+        console.error("[razorpay/verify] Failed to auto-save customer address:", addrErr);
+      }
+    }
+
     // Send order confirmation email to customer + admin packing alert (non-fatal)
     const targetCustomerEmail = (payload.data.email || accountEmail || "").trim();
+    console.log(`[razorpay/verify] Sending confirmation email for ${orderNumber} to customer '${targetCustomerEmail}'`);
     try {
       await sendOrderConfirmationEmail({
         customerName: payload.data.customerName,
@@ -170,37 +209,6 @@ export async function POST(request: Request) {
       });
     } catch (emailErr) {
       console.error("[email] Failed to send order confirmation email:", emailErr);
-    }
-
-    try {
-      if (!isManual) {
-        const shipment = await createShiprocketShipment({
-          orderNumber,
-          customerName: payload.data.customerName,
-          phone: payload.data.phone,
-          email: payload.data.email || null,
-          address: payload.data.address,
-          city: payload.data.city,
-          state: payload.data.state,
-          pincode: payload.data.pincode,
-          subtotal,
-          shipping,
-          courierId: null,
-          lines,
-        });
-        if (shipment)
-          await db
-            .update(orders)
-            .set({
-              shiprocketOrderId: String(shipment.order_id),
-              shipmentId: shipment.shipment_id ? String(shipment.shipment_id) : null,
-              awbCode: shipment.awb_code ?? null,
-              shippingStatus: "created",
-            })
-            .where(eq(orders.id, order.id));
-      }
-    } catch {
-      await db.update(orders).set({ shippingStatus: "failed" }).where(eq(orders.id, order.id));
     }
 
     const response = NextResponse.json({ verified: true, orderNumber });

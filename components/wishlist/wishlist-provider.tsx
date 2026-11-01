@@ -59,19 +59,39 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   }, [items, hydrated]);
 
   const addItem = (item: WishlistItem) => {
+    const targetStr = String(item.id);
+    const targetBase = targetStr.split("-v")[0];
     setItems((current) => {
-      const exists = current.find((i) => String(i.id) === String(item.id));
+      const exists = current.some((i) => {
+        const itemStr = String(i.id);
+        const itemBase = itemStr.split("-v")[0];
+        return itemStr === targetStr || itemBase === targetBase;
+      });
       if (exists) return current;
-      return [...current, item];
+      return [...current, { ...item, id: targetBase }];
     });
   };
 
   const removeItem = (id: string | number) => {
-    setItems((current) => current.filter((item) => String(item.id) !== String(id)));
+    const targetStr = String(id);
+    const targetBase = targetStr.split("-v")[0];
+    setItems((current) =>
+      current.filter((item) => {
+        const itemStr = String(item.id);
+        const itemBase = itemStr.split("-v")[0];
+        return itemStr !== targetStr && itemBase !== targetBase;
+      })
+    );
   };
 
   const isInWishlist = (id: string | number) => {
-    return items.some((item) => String(item.id) === String(id));
+    const targetStr = String(id);
+    const targetBase = targetStr.split("-v")[0];
+    return items.some((item) => {
+      const itemStr = String(item.id);
+      const itemBase = itemStr.split("-v")[0];
+      return itemStr === targetStr || itemBase === targetBase;
+    });
   };
 
   const clearWishlist = () => {

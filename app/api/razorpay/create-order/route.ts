@@ -47,43 +47,51 @@ export async function POST(request: Request) {
       discount = couponResult.discountAmount;
     }
 
-    // Calculate shipping server-side from DB settings (same logic as client)
+    // Calculate shipping server-side (Shiprocket minimum quote + ₹2 platform fee)
     let shippingCharge = 0;
     let courierName = "Delivery";
-    const estimatedDeliveryDays: string | null = "3–7 business days";
+    let estimatedDeliveryDays: string | null = "3–7 business days";
 
-    if (!isManual) {
-      // Shiprocket mode
-      const { getShiprocketQuote } = await import("@/lib/shiprocket");
-      const quote = await getShiprocketQuote(payload.data.pincode, weight, subtotal - discount);
-      if (!quote)
-        return NextResponse.json({ error: "Shiprocket delivery configuration is incomplete." }, { status: 503 });
-      shippingCharge = quote.charge;
-      courierName = quote.courierName;
-    } else {
-      // Manual mode: calculate from DB settings
+    const deliveryMode = process.env.DELIVERY_MODE || "automated";
+
+    if (deliveryMode !== "manual" && payload.data.pincode) {
+      try {
+        const { getShiprocketQuote } = await import("@/lib/shiprocket");
+        const quote = await getShiprocketQuote(payload.data.pincode, weight, subtotal - discount);
+        if (quote) {
+          shippingCharge = Math.round((quote.charge + 2) * 100) / 100;
+          courierName = quote.courierName;
+          estimatedDeliveryDays = quote.estimatedDeliveryDays;
+        }
+      } catch (err) {
+        console.warn("[razorpay/create-order] Live Shiprocket quote failed, applying regional fallback:", err);
+      }
+    }
+
+    if (shippingCharge === 0) {
+      // Fallback or manual mode: calculate from DB settings + ₹2 platform surcharge
       const db = getDb();
       const { settings } = await import("@/drizzle/schema");
       const allSettings = await db.select().from(settings);
       const s: Record<string, string> = {};
-      allSettings.forEach(row => { s[row.key] = row.value; });
+      allSettings.forEach((row) => { s[row.key] = row.value; });
 
-      let tnRate = parseInt(s.shippingTamilNadu || "60");
-      let southRate = parseInt(s.shippingSouthIndia || "100");
-      let northRate = parseInt(s.shippingNorthIndia || "250");
-      let extraRate = parseInt(s.shippingExtraKg || "30");
+      let tnRate = parseInt(s.shippingTamilNadu || "60", 10);
+      let southRate = parseInt(s.shippingSouthIndia || "100", 10);
+      let northRate = parseInt(s.shippingNorthIndia || "250", 10);
+      let extraRate = parseInt(s.shippingExtraKg || "30", 10);
 
-            const stateNorm = (payload.data.state || "").trim().toLowerCase();
+      const stateNorm = (payload.data.state || "").trim().toLowerCase();
       const isTN = stateNorm === "tamil nadu";
       const isSouth = ["kerala", "karnataka", "andhra pradesh", "telangana"].includes(stateNorm);
 
       let baseRate: number;
       if (isTN) {
         baseRate = tnRate;
-        courierName = "Delivery";
+        courierName = "Surface Delivery";
       } else if (isSouth) {
         baseRate = southRate;
-        courierName = "Delivery";
+        courierName = "Express Delivery";
       } else {
         baseRate = northRate;
         courierName = "Air Delivery";
@@ -91,7 +99,7 @@ export async function POST(request: Request) {
 
       const totalWeightKg = Math.max(1, weight);
       const extraKg = Math.ceil(Math.max(0, totalWeightKg - 1));
-      shippingCharge = baseRate + extraKg * extraRate;
+      shippingCharge = baseRate + extraKg * extraRate + 2; // includes ₹2 platform fee
     }
 
     const total = Math.round((subtotal - discount + shippingCharge) * 100) / 100;

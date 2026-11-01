@@ -3,7 +3,7 @@ import { promisify } from "node:util";
 
 const scrypt = promisify(scryptCallback);
 const cookieName = "raghul_customer_session";
-type CustomerSession = { id: number; email: string; name: string };
+type CustomerSession = { id: number; email: string; name: string; isAdmin?: boolean };
 
 function sessionSecret() {
   const secret = process.env.CUSTOMER_SESSION_SECRET;

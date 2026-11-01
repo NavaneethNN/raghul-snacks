@@ -58,16 +58,66 @@ export function CheckoutWizard() {
     [items],
   );
 
-  // Saved address for logged-in users
-  const [savedAddress, setSavedAddress] = useState<{ address: string; city: string; state: string; pincode: string } | null>(null);
+  type SavedAddressItem = {
+    id: number;
+    name: string;
+    phone: string;
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+    isDefault: boolean;
+  };
+
+  // Saved addresses for logged-in users
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddressItem[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | "new">("new");
+
   useEffect(() => {
-    fetch("/api/account/address")
-      .then(r => r.json())
-      .then((d: { address: { address: string; city: string; state: string; pincode: string } | null }) => {
-        if (d.address) setSavedAddress(d.address);
+    fetch("/api/account/addresses")
+      .then((r) => r.json())
+      .then((d: { addresses?: SavedAddressItem[] }) => {
+        if (d.addresses && d.addresses.length > 0) {
+          setSavedAddresses(d.addresses);
+          const def = d.addresses.find((a) => a.isDefault) || d.addresses[0];
+          setSelectedAddressId(def.id);
+          setForm((c) => ({
+            ...c,
+            customerName: c.customerName || def.name,
+            phone: c.phone || def.phone,
+            address: def.address,
+            city: def.city,
+            state: def.state,
+            pincode: def.pincode,
+          }));
+        }
       })
       .catch(() => {});
   }, []);
+
+  function handleSelectSavedAddress(addr: SavedAddressItem) {
+    setSelectedAddressId(addr.id);
+    setForm((c) => ({
+      ...c,
+      customerName: c.customerName || addr.name,
+      phone: c.phone || addr.phone,
+      address: addr.address,
+      city: addr.city,
+      state: addr.state,
+      pincode: addr.pincode,
+    }));
+  }
+
+  function handleSelectNewAddress() {
+    setSelectedAddressId("new");
+    setForm((c) => ({
+      ...c,
+      address: "",
+      city: "",
+      state: "",
+      pincode: "",
+    }));
+  }
 
   const shipping = quote?.charge ?? 0;
   const discount = appliedCoupon?.discountAmount ?? 0;
@@ -117,54 +167,12 @@ export function CheckoutWizard() {
   useEffect(() => {
     if (!itemPayload.length) { setQuote(null); return; } // eslint-disable-line react-hooks/set-state-in-effect
 
-    // ── Manual shipping: weight-based fixed rates ──
-    // Rates read from DB settings, falling back to hardcoded defaults.
-    const MANUAL = true;
-    if (MANUAL) {
-      if (!form.state) { setQuote(null); return; }
-
-            const computeQuote = async () => {
-        let tnRate = 60, southRate = 100, northRate = 250, extraRate = 30;
-        try {
-          const settingsRes = await fetch("/api/settings");
-          if (settingsRes.ok) {
-            const s = await settingsRes.json() as Record<string, string>;
-            if (s.shippingTamilNadu)  tnRate    = parseInt(s.shippingTamilNadu);
-            if (s.shippingSouthIndia) southRate  = parseInt(s.shippingSouthIndia);
-            if (s.shippingNorthIndia) northRate  = parseInt(s.shippingNorthIndia);
-            if (s.shippingExtraKg)    extraRate  = parseInt(s.shippingExtraKg);
-          }
-        } catch { /* use defaults */ }
-
-        const stateNorm = (form.state || "").trim().toLowerCase();
-        const isTN = stateNorm === "tamil nadu";
-        const isSouth = ["kerala", "karnataka", "andhra pradesh", "telangana"].includes(stateNorm);
-
-        let baseRate: number;
-        let courierLabel: string;
-        if (isTN) {
-          baseRate = tnRate; courierLabel = "Delivery";
-        } else if (isSouth) {
-          baseRate = southRate; courierLabel = "Delivery";
-        } else {
-          baseRate = northRate; courierLabel = "Air Delivery";
-        }
-
-        const totalWeightKg = Math.max(1, items.reduce((sum, item) => sum + item.quantity * parseWeightToKg((item as any).approxWeight || item.weight), 0));
-        const extraKg = Math.ceil(Math.max(0, totalWeightKg - 1));
-        const charge = baseRate + extraKg * extraRate;
-
-        setQuote((prev) => {
-          if (prev?.charge === charge && prev?.courierName === courierLabel) return prev;
-          return { charge, courierName: courierLabel, estimatedDeliveryDays: null };
-        });
-      };
-      computeQuote();
+    const hasPincode = /^\d{6}$/.test(form.pincode);
+    if (!hasPincode && !form.state) {
+      setQuote(null);
       return;
     }
 
-    // ── Shiprocket mode (kept for future use) ──
-    if (!/^\d{6}$/.test(form.pincode)) { setQuote(null); return; }
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setQuoteLoading(true);
@@ -174,7 +182,11 @@ export function CheckoutWizard() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal: controller.signal,
-          body: JSON.stringify({ pincode: form.pincode, items: itemPayload }),
+          body: JSON.stringify({
+            pincode: hasPincode ? form.pincode : undefined,
+            state: form.state || undefined,
+            items: itemPayload,
+          }),
         });
         const data = (await res.json()) as ShippingQuote & { error?: string };
         if (!res.ok) throw new Error(data.error || "Unable to calculate delivery.");
@@ -187,9 +199,9 @@ export function CheckoutWizard() {
       } finally {
         if (!controller.signal.aborted) setQuoteLoading(false);
       }
-    }, 450);
+    }, 350);
     return () => { controller.abort(); window.clearTimeout(timer); };
-  }, [form.state, form.pincode, itemPayload, items]);
+  }, [form.state, form.pincode, itemPayload]);
 
   // Load eligible coupons for this user (server filters firstPurchase, perCustomer limits)
   useEffect(() => {
@@ -674,84 +686,119 @@ export function CheckoutWizard() {
                   </span>
                 </div>
 
-                {/* Saved address card */}
-                {savedAddress && (
-                  <div style={{ margin: "0 0 20px", padding: "14px 16px", background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 10 }}>
-                    <p style={{ margin: "0 0 6px", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.08em", color: "#9ca3af", fontWeight: 600 }}>Saved address</p>
-                    <p style={{ margin: "0 0 10px", fontSize: 14, color: "var(--ink)", lineHeight: 1.5 }}>
-                      {savedAddress.address}, {savedAddress.city}, {savedAddress.state} – {savedAddress.pincode}
+                {/* Saved addresses selector */}
+                {savedAddresses.length > 0 && (
+                  <div className={styles.addressSelectorGroup}>
+                    <p style={{ margin: "0 0 6px", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", fontWeight: 700 }}>
+                      Delivery Address
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        update("address", savedAddress.address);
-                        update("city", savedAddress.city);
-                        update("state", savedAddress.state);
-                        update("pincode", savedAddress.pincode);
-                      }}
-                      style={{ fontSize: 13, fontWeight: 600, color: "var(--terracotta)", background: "none", border: "1px solid var(--terracotta)", borderRadius: 7, padding: "6px 14px", cursor: "pointer" }}
+                    {savedAddresses.map((addr) => {
+                      const isSelected = selectedAddressId === addr.id;
+                      return (
+                        <label
+                          key={addr.id}
+                          className={`${styles.addressRadioCard} ${isSelected ? styles.addressRadioCardActive : ""}`}
+                        >
+                          <input
+                            type="radio"
+                            name="deliveryAddressChoice"
+                            checked={isSelected}
+                            onChange={() => handleSelectSavedAddress(addr)}
+                          />
+                          <div className={styles.addressRadioContent}>
+                            <div className={styles.addressRadioHead}>
+                              <span className={styles.addressRadioName}>{addr.name}</span>
+                              {addr.phone && <span className={styles.addressRadioPhone}>· {addr.phone}</span>}
+                              {addr.isDefault && <span className={styles.addressRadioBadge}>Default</span>}
+                            </div>
+                            <p className={styles.addressRadioText}>
+                              {addr.address}, {addr.city}, {addr.state} – {addr.pincode}
+                            </p>
+                          </div>
+                        </label>
+                      );
+                    })}
+
+                    <label
+                      className={`${styles.newAddressToggle} ${selectedAddressId === "new" ? styles.newAddressToggleActive : ""}`}
                     >
-                      Use this address
-                    </button>
+                      <input
+                        type="radio"
+                        name="deliveryAddressChoice"
+                        checked={selectedAddressId === "new"}
+                        onChange={handleSelectNewAddress}
+                        style={{ accentColor: "var(--terracotta)", width: 16, height: 16, margin: 0 }}
+                      />
+                      <span>+ Deliver to a different / new address</span>
+                    </label>
                   </div>
                 )}
 
-                <div className={styles.fields}>
-                  <label className={styles.full}>
-                    Street address
-                    <textarea
-                      autoComplete="street-address"
-                      required
-                      minLength={8}
-                      placeholder="House / flat number, street and area"
-                      value={form.address}
-                      onChange={(e) => update("address", e.target.value)}
-                    />
-                  </label>
-                  <label>
-                    State
-                    <select
-                      required
-                      value={form.state}
-                      onChange={(e) => update("state", e.target.value)}
-                    >
-                      <option value="">
-                        {states.length ? "Select state" : "Loading states…"}
-                      </option>
-                      {states.map((s) => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </label>
-                  <label>
-                    District
-                    <input
-                      required
-                      autoComplete="address-level2"
-                      placeholder="Enter district"
-                      value={form.city}
-                      onChange={(e) => update("city", e.target.value)}
-                    />
-                  </label>
-                  <label>
-                    PIN code
-                    <input
-                      autoComplete="postal-code"
-                      required
-                      inputMode="numeric"
-                      pattern="[0-9]{6}"
-                      placeholder="6-digit PIN"
-                      value={form.pincode}
-                      onChange={(e) => update("pincode", e.target.value)}
-                    />
-                  </label>
-                </div>
+                {/* Show manual address inputs if 'new' is chosen OR if no saved addresses exist */}
+                {(selectedAddressId === "new" || savedAddresses.length === 0) && (
+                  <div className={styles.fields}>
+                    <label className={styles.full}>
+                      Street address
+                      <textarea
+                        autoComplete="street-address"
+                        required
+                        minLength={8}
+                        placeholder="House / flat number, street and area"
+                        value={form.address}
+                        onChange={(e) => update("address", e.target.value)}
+                      />
+                    </label>
+                    <label>
+                      State
+                      <select
+                        required
+                        value={form.state}
+                        onChange={(e) => update("state", e.target.value)}
+                      >
+                        <option value="">
+                          {states.length ? "Select state" : "Loading states…"}
+                        </option>
+                        {states.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </label>
+                    <label>
+                      District
+                      <input
+                        required
+                        autoComplete="address-level2"
+                        placeholder="Enter district"
+                        value={form.city}
+                        onChange={(e) => update("city", e.target.value)}
+                      />
+                    </label>
+                    <label>
+                      PIN code
+                      <input
+                        autoComplete="postal-code"
+                        required
+                        inputMode="numeric"
+                        pattern="[0-9]{6}"
+                        placeholder="6-digit PIN"
+                        value={form.pincode}
+                        onChange={(e) => update("pincode", e.target.value)}
+                      />
+                    </label>
+                  </div>
+                )}
 
                 {/* Delivery charge */}
                 <div className={styles.courier}>
                   <div>
                     <strong>Delivery</strong>
-                    <span>{quote ? "Delivered to your door" : "Select your state to see delivery charge"}</span>
+                    <span>
+                      {quoteLoading
+                        ? "Finding cheapest courier rate…"
+                        : quote
+                        ? `${quote.courierName || "Courier Delivery"}${quote.estimatedDeliveryDays ? ` · Est: ${quote.estimatedDeliveryDays}` : ""}`
+                        : "Enter 6-digit PIN code to see delivery charge"}
+                    </span>
                   </div>
-                  <b>{quote ? formatPrice(shipping) : "—"}</b>
+                  <b>{quoteLoading ? "…" : quote ? formatPrice(shipping) : "—"}</b>
                 </div>
 
                 {/* Coupon */}
@@ -782,14 +829,16 @@ export function CheckoutWizard() {
                 <button
                   className="button button-dark"
                   type="submit"
-                  disabled={loading || !paymentReady || !quote}
+                  disabled={loading || !paymentReady || !quote || quoteLoading}
                 >
                   {loading
                     ? "Opening secure payment…"
+                    : quoteLoading
+                    ? "Finding cheapest courier…"
                     : paymentReady && quote
                     ? `Pay ${formatPrice(total)} securely`
                     : !quote
-                    ? "Select your state first"
+                    ? "Enter 6-digit PIN code"
                     : "Loading secure payment…"}
                 </button>
               )}
@@ -813,7 +862,7 @@ export function CheckoutWizard() {
             </div>
             <p><span>Subtotal</span><strong>{formatPrice(subtotal)}</strong></p>
             {summaryCouponLine}
-            <p><span>Delivery</span><strong>{quote ? formatPrice(shipping) : "Calculated next"}</strong></p>
+            <p><span>Delivery</span><strong>{quoteLoading ? "Calculating…" : quote ? formatPrice(shipping) : "Calculated next"}</strong></p>
             <div className={styles.total}>
               <span>Total</span>
               <strong>{formatPrice(total)}</strong>

@@ -1,4 +1,4 @@
-import { desc, eq, inArray } from "drizzle-orm";
+import { desc, inArray } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { orders, orderItems, productVariants, products } from "@/drizzle/schema";
@@ -25,6 +25,8 @@ export default async function AdminOrdersPage() {
     state: string;
     pincode: string;
     total: number;
+    shippingActual: number;
+    shippingExtra: number;
     paymentStatus: string;
     paymentMethod: string | null;
     orderStatus: string;
@@ -59,6 +61,8 @@ export default async function AdminOrdersPage() {
         state: orders.state,
         pincode: orders.pincode,
         total: orders.total,
+        shippingActual: orders.shippingActual,
+        shippingExtra: orders.shippingExtra,
         paymentStatus: orders.paymentStatus,
         paymentMethod: orders.paymentMethod,
         orderStatus: orders.orderStatus,
@@ -138,6 +142,8 @@ export default async function AdminOrdersPage() {
       return {
         ...order,
         total: Number(order.total),
+        shippingActual: Number(order.shippingActual ?? 0),
+        shippingExtra: Number(order.shippingExtra ?? 0),
         createdAt: order.createdAt.toISOString(),
         items: items.map((item) => {
           const resolvedWeight =

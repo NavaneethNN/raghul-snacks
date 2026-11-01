@@ -92,6 +92,19 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
     product.category?.replace("-", " ") ||
     "";
 
+  // Wishlist is keyed by base product ID so favoriting persists across all variant selections
+  const wishlistProduct = {
+    ...cartProduct,
+    id: String(product.id),
+    variants: variants.map((v) => ({
+      id: v.id,
+      weight: v.weight,
+      price: v.price,
+      offerPrice: v.offerPrice,
+      sortOrder: v.sortOrder,
+    })),
+  };
+
   function handleVariantSelect(variant: Variant) {
     setSelectedVariant(variant);
     setAdded(false); // reset added state when switching variant
@@ -145,7 +158,7 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
       <div className="product-large-visual">
         <img src={product.image || "/hero.png"} alt={product.name} />
         <span className="category-badge">{isCombo ? "Combo Pack" : categoryName}</span>
-        <WishlistButton product={cartProduct} className="product-detail-wishlist" />
+        <WishlistButton product={wishlistProduct} className="product-detail-wishlist" />
       </div>
 
       <div className="product-detail">

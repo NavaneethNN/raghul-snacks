@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useWishlist } from "@/components/wishlist/wishlist-provider";
 import { formatPrice } from "@/lib/catalog";
-import { resolveCardPricing, sortVariants } from "@/lib/product-pricing";
+import { formatDisplayWeight, getDefaultVariant, resolveCardPricing, sortVariants } from "@/lib/product-pricing";
 import { VariantStackFlag } from "@/components/product/variant-stack-flag";
 import { WishlistButton } from "@/components/wishlist-button";
+import { AddToCart } from "@/components/product/add-to-cart";
 
 export default function WishlistPage() {
-  const { items, hydrated } = useWishlist();
+  const { items, hydrated, removeItem, clearWishlist } = useWishlist();
 
   if (!hydrated) return (
     <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -69,9 +70,61 @@ export default function WishlistPage() {
                     {pricing.hasDiscount && <s>{formatPrice(pricing.originalPrice)}</s>}
                   </div>
                 )}
-                <Link href={`/product/${item.slug}`} className="button button-dark">
-                  View Product
-                </Link>
+                {(() => {
+                  const firstVariant = getDefaultVariant(item.variants);
+                  const isCombo = item.slug?.startsWith("combo-") || item.weight === "Combo";
+                  const cartProduct = {
+                    id: firstVariant ? `${item.id}-v${firstVariant.id}` : String(item.id),
+                    slug: item.slug || "",
+                    name: item.name || "",
+                    price: pricing.originalPrice,
+                    offerPrice: pricing.hasPrice ? pricing.displayPrice : pricing.originalPrice,
+                    weight: isCombo ? "Combo Pack" : formatDisplayWeight(firstVariant ? firstVariant.weight : item.weight),
+                    approxWeight: firstVariant?.approxWeight || firstVariant?.weight || item.weight,
+                    variantType: firstVariant?.variantType || "weight",
+                    description: "",
+                    ingredients: "",
+                    category: "",
+                    image: item.image || "",
+                  };
+
+                  return (
+                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                      {variants.length > 1 ? (
+                        <Link href={`/product/${item.slug}`} className="button button-dark" style={{ flex: 1, textAlign: "center", textDecoration: "none" }}>
+                          Select Size
+                        </Link>
+                      ) : (
+                        <div style={{ flex: 1 }}>
+                          <AddToCart product={cartProduct as any} className="button-dark wide-button" />
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.id)}
+                        title="Remove from wishlist"
+                        aria-label="Remove from wishlist"
+                        style={{
+                          background: "var(--cream)",
+                          border: "1.5px solid var(--line)",
+                          borderRadius: 6,
+                          padding: "8px 10px",
+                          cursor: "pointer",
+                          color: "#6b7280",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             </article>
           );

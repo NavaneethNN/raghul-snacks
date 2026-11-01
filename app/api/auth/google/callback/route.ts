@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { customerAccounts } from "@/drizzle/schema";
 import { createCustomerSession, customerCookieName } from "@/lib/customer-auth";
+import { adminCookieName, createAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -60,7 +61,12 @@ export async function GET(request: NextRequest) {
 
     let account = (
       await db
-        .select({ id: customerAccounts.id, name: customerAccounts.name, email: customerAccounts.email })
+        .select({
+          id: customerAccounts.id,
+          name: customerAccounts.name,
+          email: customerAccounts.email,
+          isAdmin: customerAccounts.isAdmin,
+        })
         .from(customerAccounts)
         .where(eq(customerAccounts.email, email))
         .limit(1)
@@ -70,20 +76,43 @@ export async function GET(request: NextRequest) {
       [account] = await db
         .insert(customerAccounts)
         .values({ name, email, googleId: profile.sub })
-        .returning({ id: customerAccounts.id, name: customerAccounts.name, email: customerAccounts.email });
+        .returning({
+          id: customerAccounts.id,
+          name: customerAccounts.name,
+          email: customerAccounts.email,
+          isAdmin: customerAccounts.isAdmin,
+        });
     } else {
       // Link this Google identity to the existing account (e.g. one created via email/password).
       await db.update(customerAccounts).set({ googleId: profile.sub }).where(eq(customerAccounts.id, account.id));
     }
 
+    const sessionData = {
+      id: account.id,
+      name: account.name,
+      email: account.email,
+      isAdmin: Boolean(account.isAdmin),
+    };
+
     const response = NextResponse.redirect(new URL(safeReturnTo, appUrl));
-    response.cookies.set(customerCookieName(), createCustomerSession(account), {
+    response.cookies.set(customerCookieName(), createCustomerSession(sessionData), {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 60 * 60 * 24 * 30,
     });
+
+    if (account.isAdmin) {
+      response.cookies.set(adminCookieName(), createAdminSession(), {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30,
+      });
+    }
+
     return response;
   } catch (error) {
     console.error("Google OAuth callback error:", error);

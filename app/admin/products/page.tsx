@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { count, desc, eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
 import { products, categories, productVariants } from "@/drizzle/schema";
@@ -40,19 +40,52 @@ export default async function AdminProductsPage() {
       .leftJoin(categories, eq(products.categoryId, categories.id))
       .orderBy(desc(products.createdAt));
 
-    // Get variant counts per product in one query
-    const variantCounts = await db
-      .select({ productId: productVariants.productId, count: count() })
+    // Get all active variants with price and offerPrice
+    const allVariants = await db
+      .select({
+        productId: productVariants.productId,
+        price: productVariants.price,
+        offerPrice: productVariants.offerPrice,
+      })
       .from(productVariants)
-      .where(eq(productVariants.active, true))
-      .groupBy(productVariants.productId);
+      .where(eq(productVariants.active, true));
 
-    const variantCountMap = new Map(variantCounts.map((v) => [v.productId, Number(v.count)]));
+    const variantStatsMap = new Map<number, { count: number; minPrice: number; minOffer: string | null }>();
+    for (const v of allVariants) {
+      const stats = variantStatsMap.get(v.productId) ?? { count: 0, minPrice: Infinity, minOffer: null };
+      stats.count += 1;
+      const priceNum = parseFloat(v.price);
+      if (!isNaN(priceNum) && priceNum > 0 && priceNum < stats.minPrice) {
+        stats.minPrice = priceNum;
+        stats.minOffer = v.offerPrice;
+      }
+      variantStatsMap.set(v.productId, stats);
+    }
 
-    productList = rows.map((p) => ({
-      ...p,
-      variantCount: variantCountMap.get(p.id) ?? 0,
-    }));
+    productList = rows.map((p) => {
+      const stats = variantStatsMap.get(p.id);
+      const varCount = stats?.count ?? 0;
+      const minVarPrice = stats && stats.minPrice !== Infinity ? stats.minPrice.toFixed(2) : null;
+      const minVarOffer = stats?.minOffer ?? null;
+
+      // Ensure price is never 0 if variants exist
+      const pPriceNum = parseFloat(p.price);
+      const finalPrice = minVarPrice && (isNaN(pPriceNum) || pPriceNum <= 0)
+        ? minVarPrice
+        : p.price;
+      const finalOfferPrice = minVarPrice && (isNaN(pPriceNum) || pPriceNum <= 0)
+        ? minVarOffer
+        : p.offerPrice;
+
+      return {
+        ...p,
+        price: finalPrice,
+        offerPrice: finalOfferPrice,
+        variantCount: varCount,
+        minVariantPrice: minVarPrice,
+        minVariantOfferPrice: minVarOffer,
+      };
+    });
 
     categoryList = await db.select().from(categories).orderBy(categories.name);
   } catch (error) {

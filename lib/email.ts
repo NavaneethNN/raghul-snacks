@@ -250,7 +250,7 @@ export function buildAdminNotificationHtml(data: OrderEmailData): string {
 <body style="font-family:'DM Sans',Arial,sans-serif;background:#faf8f5;padding:24px;color:#243127;">
   <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:28px;border:1px solid #ebd9c8;">
     <div style="background:#c95f3b;color:#fff;padding:12px 16px;border-radius:8px;font-weight:700;font-size:16px;margin-bottom:20px;">
-      🎉 New Order Received: ${data.orderNumber}
+      New Order Received: ${data.orderNumber}
     </div>
 
     <p style="font-size:14px;margin:0 0 14px;">
@@ -308,7 +308,7 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData): Promise<
     process.env.BREVO_SENDER_EMAIL ||
     process.env.SMTP_FROM_EMAIL ||
     process.env.BREVO_LOGIN_EMAIL ||
-    "orders@raghuldelights.com"
+    "orders@raghuldelights.in"
   ).trim();
 
   const senderName = (

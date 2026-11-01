@@ -26,10 +26,12 @@ type ServerCartItem = {
   productId: string;
   quantity: number;
   product: {
-    id: number; name: string; slug: string; description: string;
+    id: number | string; name: string; slug: string; description: string;
     ingredients: string | null; price: string; offerPrice: string | null;
     weight: string; categoryId: number | null; image: string | null;
-    active?: boolean; stock?: number; 
+    active?: boolean; stock?: number;
+    approxWeight?: string | null;
+    variantType?: string | null;
   } | null;
 };
 
@@ -53,7 +55,9 @@ async function fetchServerCart(): Promise<CartItem[]> {
           weight: p.weight,
           category: "",
           image: p.image ?? "",
-                    quantity: row.quantity,
+          approxWeight: p.approxWeight || p.weight,
+          variantType: p.variantType || "weight",
+          quantity: row.quantity,
         } as CartItem;
       });
   } catch {

@@ -12,7 +12,7 @@ let cachedAnnouncements: Announcement[] | undefined = undefined;
 
 function renderAnnouncementIcon(icon: string | null) {
   if (!icon) return null;
-  if (icon === "🚚" || icon === "truck") {
+  if (icon === "truck" || icon === "delivery") {
     return (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}>
         <rect x="1" y="3" width="15" height="13"></rect>
