@@ -470,27 +470,6 @@ export function ProductReviews({ productId }: { productId: number }) {
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                   <strong style={{ fontSize: 14, color: "var(--ink)" }}>{r.customerName}</strong>
-                  {r.verifiedPurchase && (
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 4,
-                        fontSize: 11,
-                        background: "#f0fdf4",
-                        border: "1px solid #bbf7d0",
-                        color: "#166534",
-                        padding: "2px 7px",
-                        borderRadius: 20,
-                        fontWeight: 600,
-                      }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      Verified Buyer
-                    </span>
-                  )}
                   <StarRating rating={r.rating} size={14} />
                 </div>
                 {r.createdAt && (
