@@ -18,6 +18,7 @@ export type PincodeServiceabilityResult = {
   region?: string;
   courierName?: string | null;
   estimatedDeliveryDays?: string | null;
+  prepDays?: number;
   message: string;
 };
 
@@ -373,7 +374,8 @@ export async function checkPincodeServiceability(
       region: validation.region,
       courierName: isTN ? "Express Courier" : "Standard Courier",
       estimatedDeliveryDays: fallbackEstimate,
-      message: `Available for delivery to ${cleanPin} (${validation.state}) · Estimated delivery: ${fallbackEstimate}`,
+      prepDays,
+      message: `Available for delivery to ${cleanPin} (${validation.state}) · Estimated delivery: ${fallbackEstimate} (includes ${prepDays} days fresh preparation & packing)`,
     };
     serviceabilityCache.set(cacheKey, { data: res, expiresAt: now + 5 * 60 * 1000 });
     return res;
@@ -391,7 +393,8 @@ export async function checkPincodeServiceability(
         region: validation.region,
         courierName: cleanCourierName(best.name),
         estimatedDeliveryDays: best.etd || fallbackEstimate,
-        message: `Available for delivery to ${cleanPin} (${validation.state}) · Estimated delivery: ${best.etd || fallbackEstimate}`,
+        prepDays,
+        message: `Available for delivery to ${cleanPin} (${validation.state}) · Estimated delivery: ${best.etd || fallbackEstimate} (includes ${prepDays} days fresh preparation & packing)`,
       };
       serviceabilityCache.set(cacheKey, { data: res, expiresAt: now + 5 * 60 * 1000 });
       return res;
@@ -403,6 +406,7 @@ export async function checkPincodeServiceability(
         pincode: cleanPin,
         state: validation.state,
         region: validation.region,
+        prepDays,
         message: `Delivery is currently not available to PIN code ${cleanPin} (${validation.state}). We are expanding our coverage soon.`,
       };
       serviceabilityCache.set(cacheKey, { data: res, expiresAt: now + 5 * 60 * 1000 });
@@ -416,6 +420,7 @@ export async function checkPincodeServiceability(
         pincode: cleanPin,
         state: validation.state,
         region: validation.region,
+        prepDays,
         message: `Delivery is currently not available to PIN code ${cleanPin} (${validation.state}). We are expanding our coverage soon.`,
       };
       serviceabilityCache.set(cacheKey, { data: res, expiresAt: now + 5 * 60 * 1000 });
@@ -431,7 +436,8 @@ export async function checkPincodeServiceability(
       region: validation.region,
       courierName: isTN ? "Express Courier" : "Standard Courier",
       estimatedDeliveryDays: fallbackEstimate,
-      message: `Delivery estimated in ${fallbackEstimate} for ${cleanPin} (${validation.state})`,
+      prepDays,
+      message: `Delivery estimated in ${fallbackEstimate} for ${cleanPin} (${validation.state}) (includes ${prepDays} days fresh preparation & packing)`,
     };
     return res;
   }

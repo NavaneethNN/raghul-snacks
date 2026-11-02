@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { formatPrice, formatWeight } from "@/lib/catalog";
+import { formatPrice, formatWeight, parseWeightToKg } from "@/lib/catalog";
 import { useCart } from "@/components/cart/cart-provider";
 import { useToast } from "@/components/toast-provider";
 import { setBuyNowItem } from "@/lib/buy-now";
@@ -56,7 +56,9 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
     setCheckingPincode(true);
     setPincodeStatus(null);
     try {
-      const res = await fetch(`/api/shipping/check-pincode?pincode=${encodeURIComponent(clean)}`);
+      const currentWeightStr = selectedVariant ? selectedVariant.weight : product.weight;
+      const weightKg = parseWeightToKg(currentWeightStr);
+      const res = await fetch(`/api/shipping/check-pincode?pincode=${encodeURIComponent(clean)}&weight=${weightKg}`);
       const data = await res.json();
       if (!res.ok || !data.serviceable) {
         setPincodeStatus({
@@ -69,7 +71,7 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
         } catch {}
         setPincodeStatus({
           success: true,
-          message: data.message || `Available for PIN ${clean} · Delivery in ${data.estimatedDeliveryDays || "2–4 business days"}`,
+          message: data.message || `Available for PIN ${clean} · Delivery in ${data.estimatedDeliveryDays || "2–4 business days"} (includes fresh preparation)`,
         });
       }
     } catch {
