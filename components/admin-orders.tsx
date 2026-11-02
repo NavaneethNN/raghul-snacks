@@ -500,6 +500,18 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
       setBookingError("Please enter a valid weight in kg (e.g. 0.65)");
       return;
     }
+
+    if (bookingProvider === "shiprocket") {
+      const selectedCourier = liveCouriers.find((c) => c.id === selectedCourierId);
+      const courierRate = selectedCourier?.rate ?? 0;
+      if (wallet && wallet.configured && courierRate > 0 && wallet.balance < courierRate) {
+        setBookingError(
+          `Insufficient Shiprocket wallet balance (₹${wallet.balance.toFixed(2)}). This courier requires ₹${courierRate.toFixed(2)}. Please recharge your wallet before booking, or switch to Manual Booking.`
+        );
+        return;
+      }
+    }
+
     setBookingLoading(true);
     setBookingError("");
     try {
@@ -657,9 +669,9 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
                   {walletLoading ? (
                     "Checking…"
                   ) : wallet?.configured ? (
-                    <span style={{ color: wallet.balance < 200 ? "#dc2626" : "#15803d" }}>
+                    <span style={{ color: wallet.balance < 100 ? "#dc2626" : "#15803d" }}>
                       ₹{wallet.balance.toFixed(2)}
-                      {wallet.balance < 200 && (
+                      {wallet.balance < 100 && (
                         <span style={{ fontSize: 10, marginLeft: 5, background: "#fee2e2", color: "#991b1b", padding: "1px 5px", borderRadius: 4 }}>
                           Low
                         </span>
@@ -1336,7 +1348,17 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
       </section>
 
       {/* Book Courier Modal */}
-      {bookingOrder && (
+      {bookingOrder && (() => {
+        const selectedCourier = liveCouriers.find((c) => c.id === selectedCourierId) || liveCouriers[0];
+        const selectedCourierRate = selectedCourier?.rate ?? 0;
+        const isBalanceInsufficientForCourier = Boolean(
+          bookingProvider === "shiprocket" &&
+          wallet?.configured &&
+          selectedCourierRate > 0 &&
+          (wallet.balance ?? 0) < selectedCourierRate
+        );
+
+        return (
         <div className={styles.modalOverlay} onClick={() => setBookingOrder(null)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
@@ -1558,51 +1580,68 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
-                        padding: "8px 12px",
-                        background:
-                          wallet.balance < (liveCouriers.find((c) => c.id === selectedCourierId)?.rate || 100)
-                            ? "#fef2f2"
-                            : "#f0fdf4",
+                        padding: "10px 14px",
+                        background: isBalanceInsufficientForCourier
+                          ? "#fef2f2"
+                          : wallet.balance < 100
+                          ? "#fffbeb"
+                          : "#f0fdf4",
                         border: `1px solid ${
-                          wallet.balance < (liveCouriers.find((c) => c.id === selectedCourierId)?.rate || 100)
+                          isBalanceInsufficientForCourier
                             ? "#fecaca"
+                            : wallet.balance < 100
+                            ? "#fde68a"
                             : "#bbf7d0"
                         }`,
                         borderRadius: 8,
                         fontSize: 12,
                         marginTop: 10,
+                        gap: 10,
+                        flexWrap: "wrap",
                       }}
                     >
-                      <span
-                        style={{
-                          color:
-                            wallet.balance < (liveCouriers.find((c) => c.id === selectedCourierId)?.rate || 100)
+                      <div>
+                        <span
+                          style={{
+                            color: isBalanceInsufficientForCourier
                               ? "#991b1b"
+                              : wallet.balance < 100
+                              ? "#92400e"
                               : "#166534",
-                          fontWeight: 500,
-                        }}
-                      >
-                        Shiprocket Wallet: <strong>₹{wallet.balance.toFixed(2)}</strong>
-                        {wallet.balance < (liveCouriers.find((c) => c.id === selectedCourierId)?.rate || 100) && (
-                          <span style={{ marginLeft: 6, fontWeight: 700, color: "#dc2626" }}>
-                            · Low balance for this courier
-                          </span>
-                        )}
-                      </span>
+                            fontWeight: 600,
+                          }}
+                        >
+                          Shiprocket Wallet: <strong>₹{wallet.balance.toFixed(2)}</strong>
+                        </span>
+                        {isBalanceInsufficientForCourier ? (
+                          <p style={{ margin: "3px 0 0", color: "#dc2626", fontWeight: 600, fontSize: 11.5 }}>
+                            Cannot book: Wallet balance (₹{wallet.balance.toFixed(2)}) is less than courier fee (₹{selectedCourierRate.toFixed(2)}). Please recharge or switch to Manual Booking.
+                          </p>
+                        ) : wallet.balance < 100 ? (
+                          <p style={{ margin: "3px 0 0", color: "#b45309", fontSize: 11.5 }}>
+                            Warning: Low wallet balance (below ₹100). Please recharge soon.
+                          </p>
+                        ) : null}
+                      </div>
                       <a
                         href="https://app.shiprocket.in/billing/recharge"
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{
-                          color: "var(--terracotta)",
+                          color: isBalanceInsufficientForCourier ? "#fff" : "var(--terracotta)",
+                          background: isBalanceInsufficientForCourier ? "#dc2626" : "rgba(201, 95, 59, 0.1)",
+                          padding: "5px 12px",
+                          borderRadius: 6,
                           fontWeight: 600,
+                          fontSize: 11.5,
                           textDecoration: "none",
+                          whiteSpace: "nowrap",
                           display: "inline-flex",
                           alignItems: "center",
                           gap: 4,
                         }}
                       >
-                        <span>Recharge</span>
+                        <span>Recharge Wallet</span>
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                           <polyline points="15 3 21 3 21 9" />
@@ -1683,10 +1722,14 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
                 <button
                   type="submit"
                   className={styles.modalSubmitBtn}
-                  disabled={bookingLoading}
+                  disabled={bookingLoading || isBalanceInsufficientForCourier}
+                  style={isBalanceInsufficientForCourier ? { background: "#9ca3af", cursor: "not-allowed", opacity: 0.75 } : undefined}
+                  title={isBalanceInsufficientForCourier ? `Cannot book: Courier costs ₹${selectedCourierRate.toFixed(2)} but wallet balance is ₹${wallet?.balance.toFixed(2)}` : undefined}
                 >
                   {bookingLoading
                     ? "Saving…"
+                    : isBalanceInsufficientForCourier
+                    ? "Insufficient Balance to Book"
                     : bookingProvider === "manual"
                     ? "Save Tracking & Mark Dispatched"
                     : "Confirm & Book Courier"}
@@ -1695,7 +1738,8 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
             </form>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* ── Create Order Modal (WhatsApp / Instagram / Offline) ── */}
       {showCreateModal && (

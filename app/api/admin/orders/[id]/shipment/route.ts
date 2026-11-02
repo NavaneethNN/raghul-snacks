@@ -10,6 +10,7 @@ import {
   createShiprocketShipment,
   generateShiprocketLabel,
   isShiprocketConfigured,
+  getShiprocketWalletBalance,
 } from "@/lib/shiprocket";
 
 export const dynamic = "force-dynamic";
@@ -162,6 +163,14 @@ export async function POST(
     let awbCode: string | null = null;
 
     if (shiprocketActive) {
+      // Validate wallet balance before initiating shipment to prevent 0-balance booking failures
+      const wallet = await getShiprocketWalletBalance();
+      if (wallet.configured && wallet.balance <= 0) {
+        throw new Error(
+          `Insufficient Shiprocket wallet balance (₹${wallet.balance.toFixed(2)}). Please recharge your wallet at app.shiprocket.in before booking, or choose Manual Booking.`
+        );
+      }
+
       // Book through Shiprocket External API
       const lines = items.map((it) => ({
         product: { name: it.name, slug: `sku-${it.id}` },

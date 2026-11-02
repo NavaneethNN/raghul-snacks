@@ -95,7 +95,7 @@ export function AdminDashboard() {
   }).format(new Date());
 
   const isWalletLow = Boolean(
-    data?.wallet?.configured && data.wallet.balance < 200
+    data?.wallet?.configured && data.wallet.balance < 100
   );
 
   return (
@@ -156,7 +156,7 @@ export function AdminDashboard() {
             </svg>
             <div>
               <strong>Low Shiprocket Wallet Balance: ₹{data?.wallet?.balance.toFixed(2)}</strong>
-              <p>Recharge your courier balance to avoid shipping label generation disruptions.</p>
+              <p>Recharge your courier balance (below ₹100 threshold) to avoid shipping label generation disruptions.</p>
             </div>
           </div>
           <a
@@ -258,9 +258,9 @@ export function AdminDashboard() {
             {loading ? (
               <span className={styles.skeleton} />
             ) : data?.wallet?.configured ? (
-              <span style={{ color: data.wallet.balance < 200 ? "#dc2626" : "var(--ink)", display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <span style={{ color: data.wallet.balance < 100 ? "#dc2626" : "var(--ink)", display: "inline-flex", alignItems: "center", gap: 6 }}>
                 {fmt.format(data.wallet.balance)}
-                {data.wallet.balance < 200 && (
+                {data.wallet.balance < 100 && (
                   <span style={{ fontSize: 10.5, background: "#fee2e2", color: "#991b1b", padding: "1px 6px", borderRadius: 4, fontWeight: 700 }}>
                     Low
                   </span>
