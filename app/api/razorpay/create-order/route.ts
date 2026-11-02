@@ -8,6 +8,8 @@ import { checkoutSchema } from "@/lib/order-input";
 import { priceOrder } from "@/lib/order-pricing";
 import { validateCoupon } from "@/lib/coupons";
 import { createRazorpayOrder, getRazorpayKeyId } from "@/lib/razorpay";
+import { validateIndianPincode } from "@/lib/pincode";
+import { UnserviceablePincodeError } from "@/lib/shiprocket";
 
 const isManual = process.env.DELIVERY_MODE === "manual";
 
@@ -15,6 +17,16 @@ export async function POST(request: Request) {
   const payload = checkoutSchema.safeParse(await request.json());
   if (!payload.success)
     return NextResponse.json({ error: "Please check the delivery details and cart." }, { status: 400 });
+
+  if (payload.data.pincode) {
+    const pinValidation = validateIndianPincode(payload.data.pincode);
+    if (!pinValidation.valid) {
+      return NextResponse.json(
+        { error: pinValidation.error || "Please enter a valid 6-digit Indian PIN code." },
+        { status: 400 }
+      );
+    }
+  }
   try {
     const db = getDb();
     const cookieStore = await cookies();
@@ -69,6 +81,15 @@ export async function POST(request: Request) {
           estimatedDeliveryDays = quote.estimatedDeliveryDays;
         }
       } catch (err) {
+        if (
+          err instanceof UnserviceablePincodeError ||
+          (err instanceof Error && err.message.toLowerCase().includes("unavailable for pin"))
+        ) {
+          return NextResponse.json(
+            { error: `Delivery is currently not available to PIN code ${payload.data.pincode}. Please enter a serviceable delivery address.` },
+            { status: 422 }
+          );
+        }
         console.warn("[razorpay/create-order] Live Shiprocket quote failed, applying regional fallback:", err);
       }
     }

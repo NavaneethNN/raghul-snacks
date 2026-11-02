@@ -1,4 +1,25 @@
 import { calculatePackagingBufferKg } from "@/lib/catalog";
+import { validateIndianPincode } from "@/lib/pincode";
+
+export class UnserviceablePincodeError extends Error {
+  pincode: string;
+  constructor(pincode: string, message?: string) {
+    super(message || `Delivery is unavailable for PIN code ${pincode}.`);
+    this.name = "UnserviceablePincodeError";
+    this.pincode = pincode;
+  }
+}
+
+export type PincodeServiceabilityResult = {
+  serviceable: boolean;
+  valid: boolean;
+  pincode: string;
+  state?: string;
+  region?: string;
+  courierName?: string | null;
+  estimatedDeliveryDays?: string | null;
+  message: string;
+};
 
 type ShippingQuote = { charge: number; courierId: number; courierName: string; estimatedDeliveryDays: string | null };
 
@@ -305,6 +326,117 @@ export function cleanCourierName(name?: string | null): string {
   );
 }
 
+const serviceabilityCache = new Map<string, { data: PincodeServiceabilityResult; expiresAt: number }>();
+
+export async function checkPincodeServiceability(
+  deliveryPincode: string,
+  weightKg = 0.5
+): Promise<PincodeServiceabilityResult> {
+  const cleanPin = (deliveryPincode || "").trim();
+  const validation = validateIndianPincode(cleanPin);
+  if (!validation.valid) {
+    return {
+      serviceable: false,
+      valid: false,
+      pincode: cleanPin,
+      message: validation.error || "Please enter a valid 6-digit Indian PIN code.",
+    };
+  }
+
+  const cacheKey = `${cleanPin}_${weightKg}`;
+  const now = Date.now();
+  const cached = serviceabilityCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    return cached.data;
+  }
+
+  const prepDays = weightKg > 3 ? 3 : 2;
+  const isTN = validation.state?.toLowerCase() === "tamil nadu";
+  const isSouth = ["tamil nadu", "kerala", "karnataka", "andhra pradesh", "telangana"].includes(
+    (validation.state || "").toLowerCase()
+  );
+  const fallbackEstimate = isTN
+    ? `${2 + prepDays}–${3 + prepDays} business days`
+    : isSouth
+    ? `${3 + prepDays}–${5 + prepDays} business days`
+    : `${4 + prepDays}–${7 + prepDays} business days`;
+
+  const configuration = getShiprocketConfiguration();
+
+  // If Shiprocket is not configured, rely on Indian postal network routing
+  if (!configuration) {
+    const res: PincodeServiceabilityResult = {
+      serviceable: true,
+      valid: true,
+      pincode: cleanPin,
+      state: validation.state,
+      region: validation.region,
+      courierName: isTN ? "Express Courier" : "Standard Courier",
+      estimatedDeliveryDays: fallbackEstimate,
+      message: `Available for delivery to ${cleanPin} (${validation.state}) · Estimated delivery: ${fallbackEstimate}`,
+    };
+    serviceabilityCache.set(cacheKey, { data: res, expiresAt: now + 5 * 60 * 1000 });
+    return res;
+  }
+
+  try {
+    const couriers = await getAvailableCouriers(cleanPin, weightKg, 300);
+    if (couriers.length > 0) {
+      const best = couriers.find((c) => c.isCheapest) || couriers[0];
+      const res: PincodeServiceabilityResult = {
+        serviceable: true,
+        valid: true,
+        pincode: cleanPin,
+        state: validation.state,
+        region: validation.region,
+        courierName: cleanCourierName(best.name),
+        estimatedDeliveryDays: best.etd || fallbackEstimate,
+        message: `Available for delivery to ${cleanPin} (${validation.state}) · Estimated delivery: ${best.etd || fallbackEstimate}`,
+      };
+      serviceabilityCache.set(cacheKey, { data: res, expiresAt: now + 5 * 60 * 1000 });
+      return res;
+    } else {
+      // Shiprocket checked and returned 0 couriers: this PIN is NOT serviceable by courier!
+      const res: PincodeServiceabilityResult = {
+        serviceable: false,
+        valid: true,
+        pincode: cleanPin,
+        state: validation.state,
+        region: validation.region,
+        message: `Delivery is currently not available to PIN code ${cleanPin} (${validation.state}). We are expanding our coverage soon.`,
+      };
+      serviceabilityCache.set(cacheKey, { data: res, expiresAt: now + 5 * 60 * 1000 });
+      return res;
+    }
+  } catch (err) {
+    if (err instanceof UnserviceablePincodeError) {
+      const res: PincodeServiceabilityResult = {
+        serviceable: false,
+        valid: true,
+        pincode: cleanPin,
+        state: validation.state,
+        region: validation.region,
+        message: `Delivery is currently not available to PIN code ${cleanPin} (${validation.state}). We are expanding our coverage soon.`,
+      };
+      serviceabilityCache.set(cacheKey, { data: res, expiresAt: now + 5 * 60 * 1000 });
+      return res;
+    }
+
+    console.warn(`[checkPincodeServiceability] Shiprocket lookup failed for ${cleanPin}, falling back:`, err);
+    const res: PincodeServiceabilityResult = {
+      serviceable: true,
+      valid: true,
+      pincode: cleanPin,
+      state: validation.state,
+      region: validation.region,
+      courierName: isTN ? "Express Courier" : "Standard Courier",
+      estimatedDeliveryDays: fallbackEstimate,
+      message: `Delivery estimated in ${fallbackEstimate} for ${cleanPin} (${validation.state})`,
+    };
+    return res;
+  }
+}
+
 export async function getShiprocketQuote(
   deliveryPincode: string,
   weight: number,
@@ -315,7 +447,7 @@ export async function getShiprocketQuote(
   if (couriers.length === 0) {
     const configuration = getShiprocketConfiguration();
     if (!configuration) return null;
-    throw new Error("Delivery is unavailable for this PIN code.");
+    throw new UnserviceablePincodeError(deliveryPincode, `Delivery is unavailable for PIN code ${deliveryPincode}.`);
   }
   const cheapest = couriers.find((c) => c.isCheapest) || couriers[0];
   return {

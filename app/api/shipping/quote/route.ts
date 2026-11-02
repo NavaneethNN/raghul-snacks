@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { priceOrder } from "@/lib/order-pricing";
-import { getShiprocketQuote } from "@/lib/shiprocket";
+import { getShiprocketQuote, UnserviceablePincodeError } from "@/lib/shiprocket";
+import { validateIndianPincode } from "@/lib/pincode";
 import { getDb } from "@/lib/db";
 import { settings } from "@/drizzle/schema";
 
@@ -30,6 +31,19 @@ export async function POST(request: Request) {
       { error: "Enter a valid 6-digit PIN code to calculate delivery." },
       { status: 400 }
     );
+  }
+
+  if (payload.data.pincode) {
+    const pinValidation = validateIndianPincode(payload.data.pincode);
+    if (!pinValidation.valid) {
+      return NextResponse.json(
+        {
+          error: pinValidation.error || "Please enter a valid 6-digit Indian PIN code.",
+          serviceable: false,
+        },
+        { status: 400 }
+      );
+    }
   }
 
   try {
@@ -62,9 +76,22 @@ export async function POST(request: Request) {
             rawSnackWeightKg,
             packagingBufferKg,
             source: "shiprocket_automated",
+            serviceable: true,
           });
         }
       } catch (shiprocketErr) {
+        if (
+          shiprocketErr instanceof UnserviceablePincodeError ||
+          (shiprocketErr instanceof Error && shiprocketErr.message.toLowerCase().includes("unavailable for pin"))
+        ) {
+          return NextResponse.json(
+            {
+              error: `Delivery is currently not available to PIN code ${payload.data.pincode}. Please provide an alternative delivery address.`,
+              serviceable: false,
+            },
+            { status: 422 }
+          );
+        }
         console.warn(
           `[shipping/quote] Live Shiprocket rate unavailable for PIN ${payload.data.pincode}, applying regional fallback:`,
           shiprocketErr instanceof Error ? shiprocketErr.message : shiprocketErr
@@ -136,6 +163,7 @@ export async function POST(request: Request) {
       rawSnackWeightKg,
       packagingBufferKg,
       source: "regional_settings",
+      serviceable: true,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to calculate delivery charges.";

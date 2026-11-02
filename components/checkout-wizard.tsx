@@ -6,6 +6,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import { useCart } from "@/components/cart/cart-provider";
 import { formatPrice, parseWeightToKg } from "@/lib/catalog";
 import { clearBuyNowItem, readBuyNowItem, type BuyNowItem } from "@/lib/buy-now";
+import { validateIndianPincode } from "@/lib/pincode";
 import styles from "./checkout-wizard.module.css";
 type CheckoutForm = { customerName: string; phone: string; email: string; address: string; city: string; state: string; pincode: string };
 type ShippingQuote = { charge: number; courierName: string; estimatedDeliveryDays: string | null };
@@ -25,23 +26,8 @@ function cleanCourierDisplayName(name?: string | null): string {
 }
 
 function inferStateFromPincode(pincode: string): string | null {
-  const prefix = parseInt(pincode.slice(0, 2), 10);
-  if (prefix >= 60 && prefix <= 64) return "Tamil Nadu";
-  if (prefix >= 67 && prefix <= 69) return "Kerala";
-  if (prefix >= 56 && prefix <= 59) return "Karnataka";
-  if (prefix >= 50 && prefix <= 53) return "Andhra Pradesh";
-  if (prefix >= 40 && prefix <= 44) return "Maharashtra";
-  if (prefix >= 36 && prefix <= 39) return "Gujarat";
-  if (prefix >= 30 && prefix <= 34) return "Rajasthan";
-  if (prefix >= 20 && prefix <= 28) return "Uttar Pradesh";
-  if (prefix >= 14 && prefix <= 16) return "Punjab";
-  if (prefix >= 12 && prefix <= 13) return "Haryana";
-  if (prefix === 11) return "Delhi";
-  if (prefix >= 70 && prefix <= 74) return "West Bengal";
-  if (prefix >= 75 && prefix <= 77) return "Odisha";
-  if (prefix >= 80 && prefix <= 85) return "Bihar";
-  if (prefix >= 45 && prefix <= 49) return "Madhya Pradesh";
-  return null;
+  const validation = validateIndianPincode(pincode);
+  return validation.state || null;
 }
 
 export function CheckoutWizard() {
@@ -209,6 +195,15 @@ export function CheckoutWizard() {
       return;
     }
 
+    if (hasPincode) {
+      const pinValidation = validateIndianPincode(form.pincode);
+      if (!pinValidation.valid) {
+        setQuote(null);
+        setError(pinValidation.error || "Please enter a valid 6-digit Indian PIN code.");
+        return;
+      }
+    }
+
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setQuoteLoading(true);
@@ -333,7 +328,14 @@ export function CheckoutWizard() {
     } else if (field === "pincode") {
       sanitized = value.replace(/\D/g, "").slice(0, 6);
       if (sanitized.length === 6) {
-        const detectedState = inferStateFromPincode(sanitized);
+        const pinValidation = validateIndianPincode(sanitized);
+        if (!pinValidation.valid) {
+          setError(pinValidation.error || "Please enter a valid 6-digit Indian PIN code.");
+          setQuote(null);
+        } else {
+          setError("");
+        }
+        const detectedState = pinValidation.state || inferStateFromPincode(sanitized);
         setForm((c) => ({
           ...c,
           pincode: sanitized,
@@ -396,8 +398,9 @@ export function CheckoutWizard() {
       setError("Please enter your PIN code.");
       return;
     }
-    if (!/^\d{6}$/.test(form.pincode)) {
-      setError("Please enter a valid 6-digit PIN code.");
+    const pinValidation = validateIndianPincode(form.pincode);
+    if (!pinValidation.valid) {
+      setError(pinValidation.error || "Please enter a valid 6-digit Indian PIN code.");
       return;
     }
     if (quoteLoading) {
@@ -405,7 +408,7 @@ export function CheckoutWizard() {
       return;
     }
     if (!quote) {
-      setError("Unable to calculate delivery charge. Please verify your PIN code or select your state.");
+      setError(error || "Delivery is unavailable for this PIN code. Please verify your address.");
       return;
     }
 
@@ -841,7 +844,9 @@ export function CheckoutWizard() {
                   <strong>Delivery</strong>
                   <span>
                     {quoteLoading
-                      ? "Finding cheapest courier rate…"
+                      ? "Checking courier serviceability…"
+                      : error && (error.toLowerCase().includes("not available") || error.toLowerCase().includes("pin"))
+                      ? <span style={{ color: "#dc2626", fontWeight: 500 }}>{error}</span>
                       : quote
                       ? `${cleanCourierDisplayName(quote.courierName)}${quote.estimatedDeliveryDays ? ` · Est: ${quote.estimatedDeliveryDays}` : ""}`
                       : "Enter 6-digit PIN code to see delivery charge"}
@@ -875,9 +880,11 @@ export function CheckoutWizard() {
                 {loading
                   ? "Opening secure payment…"
                   : quoteLoading
-                  ? "Finding cheapest courier…"
+                  ? "Checking courier rates…"
                   : paymentReady && quote
                   ? `Pay ${formatPrice(total)} securely`
+                  : error && (error.toLowerCase().includes("not available") || error.toLowerCase().includes("pin"))
+                  ? "Delivery not available for this PIN code"
                   : !quote
                   ? "Enter 6-digit PIN code"
                   : "Loading secure payment…"}

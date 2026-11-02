@@ -8,6 +8,7 @@ import { useToast } from "@/components/toast-provider";
 import { setBuyNowItem } from "@/lib/buy-now";
 import { useRouter } from "next/navigation";
 import { WishlistButton } from "@/components/wishlist-button";
+import { validateIndianPincode } from "@/lib/pincode";
 
 type Variant = {
   id: number;
@@ -32,6 +33,7 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
   // Pincode checker state
   const [pincodeInput, setPincodeInput] = useState("");
   const [pincodeStatus, setPincodeStatus] = useState<{ success: boolean; message: string } | null>(null);
+  const [checkingPincode, setCheckingPincode] = useState(false);
 
   // Sticky mobile bottom bar state
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -40,13 +42,53 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
   const hasVariants = variants.length > 0;
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(hasVariants ? variants[0] : null);
 
+  async function checkPincodeServiceability(pin: string) {
+    const clean = pin.trim();
+    const validation = validateIndianPincode(clean);
+    if (!validation.valid) {
+      setPincodeStatus({
+        success: false,
+        message: validation.error || "Please enter a valid 6-digit Indian PIN code.",
+      });
+      return;
+    }
+
+    setCheckingPincode(true);
+    setPincodeStatus(null);
+    try {
+      const res = await fetch(`/api/shipping/check-pincode?pincode=${encodeURIComponent(clean)}`);
+      const data = await res.json();
+      if (!res.ok || !data.serviceable) {
+        setPincodeStatus({
+          success: false,
+          message: data.message || `Delivery is currently not available for PIN code ${clean}.`,
+        });
+      } else {
+        try {
+          window.localStorage.setItem("raghul-customer-pincode", clean);
+        } catch {}
+        setPincodeStatus({
+          success: true,
+          message: data.message || `Available for PIN ${clean} · Delivery in ${data.estimatedDeliveryDays || "2–4 business days"}`,
+        });
+      }
+    } catch {
+      setPincodeStatus({
+        success: false,
+        message: "Unable to verify PIN code serviceability. Please try again.",
+      });
+    } finally {
+      setCheckingPincode(false);
+    }
+  }
+
   // Pre-load saved pincode from previous checks
   useEffect(() => {
     try {
       const savedPin = window.localStorage.getItem("raghul-customer-pincode");
       if (savedPin && /^\d{6}$/.test(savedPin)) {
         setPincodeInput(savedPin);
-        evaluatePincode(savedPin);
+        checkPincodeServiceability(savedPin);
       }
     } catch {
       // LocalStorage not accessible
@@ -66,34 +108,8 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  function evaluatePincode(pin: string) {
-    const prefix = parseInt(pin.slice(0, 2), 10);
-    let estimate = "";
-    if (prefix >= 60 && prefix <= 64) {
-      estimate = "Usually delivers in 2–3 business days (Tamil Nadu & Pondicherry) • Express Courier";
-    } else if ((prefix >= 50 && prefix <= 53) || (prefix >= 56 && prefix <= 59) || (prefix >= 67 && prefix <= 69)) {
-      estimate = "Usually delivers in 3–4 business days (South India) • Express Courier";
-    } else {
-      estimate = "Delivers across India in 4–7 business days • Nitrogen moisture barrier packaging";
-    }
-    setPincodeStatus({
-      success: true,
-      message: `Available for PIN ${pin}: ${estimate}`,
-    });
-  }
-
   function handleCheckPincode() {
-    if (!/^\d{6}$/.test(pincodeInput)) {
-      setPincodeStatus({
-        success: false,
-        message: "Please enter a valid 6-digit Indian PIN code.",
-      });
-      return;
-    }
-    try {
-      window.localStorage.setItem("raghul-customer-pincode", pincodeInput);
-    } catch {}
-    evaluatePincode(pincodeInput);
+    checkPincodeServiceability(pincodeInput);
   }
 
   // Prices come from selected variant when available, otherwise fall back to product
@@ -375,16 +391,45 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
               <button
                 type="button"
                 onClick={handleCheckPincode}
-                disabled={pincodeInput.length !== 6}
+                disabled={pincodeInput.length !== 6 || checkingPincode}
               >
-                Check
+                {checkingPincode ? "Checking…" : "Check"}
               </button>
             </div>
             {pincodeStatus && (
-              <div className={`pincode-status ${pincodeStatus.success ? "pincode-success" : "pincode-error"}`} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                {pincodeStatus.success && (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <div
+                className={`pincode-status ${pincodeStatus.success ? "pincode-success" : "pincode-error"}`}
+                style={{ display: "flex", alignItems: "flex-start", gap: 6 }}
+              >
+                {pincodeStatus.success ? (
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ flexShrink: 0, marginTop: 2 }}
+                  >
                     <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ flexShrink: 0, marginTop: 2 }}
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
                   </svg>
                 )}
                 <span>{pincodeStatus.message}</span>
