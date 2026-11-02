@@ -2,6 +2,32 @@ import { calculatePackagingBufferKg } from "@/lib/catalog";
 
 type ShippingQuote = { charge: number; courierId: number; courierName: string; estimatedDeliveryDays: string | null };
 
+export type AvailableCourier = {
+  id: number;
+  name: string;
+  rate: number;
+  etd: string | null;
+  rating?: number | string | null;
+  isCheapest: boolean;
+  isFastest: boolean;
+};
+
+export type TrackingActivity = {
+  date: string;
+  status: string;
+  activity: string;
+  location: string;
+};
+
+export type ShiprocketTrackingResult = {
+  awb: string;
+  currentStatus: string;
+  courierName?: string;
+  estimatedDeliveryDate?: string | null;
+  activities: TrackingActivity[];
+  trackingUrl: string;
+};
+
 export type ShipmentInput = {
   orderNumber: string;
   customerName: string;
@@ -14,6 +40,7 @@ export type ShipmentInput = {
   subtotal: number;
   shipping: number;
   courierId?: number | null;
+  courierName?: string | null;
   weight?: number; // Weight in kg
   length?: number; // cm
   breadth?: number; // cm
@@ -46,20 +73,110 @@ export function isShiprocketConfigured(): boolean {
   return Boolean(getShiprocketConfiguration());
 }
 
+let cachedAuthToken: { token: string; expiresAt: number } | null = null;
+let cachedWalletBalance: { data: ShiprocketWalletResult; expiresAt: number } | null = null;
+
 async function authenticate(configuration: NonNullable<ReturnType<typeof getShiprocketConfiguration>>) {
-  const authResponse = await fetch(`${apiBase}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: configuration.email, password: configuration.password }),
-  });
-  const auth = (await authResponse.json()) as { token?: string; message?: string };
-  if (!authResponse.ok || !auth.token) throw new Error(auth.message || "Shiprocket authentication failed.");
-  return auth.token;
+  const now = Date.now();
+  if (cachedAuthToken && cachedAuthToken.expiresAt > now) {
+    return cachedAuthToken.token;
+  }
+
+  try {
+    const authResponse = await fetch(`${apiBase}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: configuration.email, password: configuration.password }),
+      signal: AbortSignal.timeout(5000),
+    });
+    const auth = (await authResponse.json()) as { token?: string; message?: string };
+    if (!authResponse.ok || !auth.token) throw new Error(auth.message || "Shiprocket authentication failed.");
+
+    // Cache token for 24 hours (Shiprocket tokens are valid for up to 10 days)
+    cachedAuthToken = {
+      token: auth.token,
+      expiresAt: now + 24 * 60 * 60 * 1000,
+    };
+    return auth.token;
+  } catch (err) {
+    // If cache expired but exists, fallback to cached token on network error
+    if (cachedAuthToken?.token) {
+      return cachedAuthToken.token;
+    }
+    throw err;
+  }
 }
 
-export async function getShiprocketQuote(deliveryPincode: string, weight: number, declaredValue: number): Promise<ShippingQuote | null> {
+export type ShiprocketWalletResult = {
+  configured: boolean;
+  balance: number;
+  currency: string;
+  error?: string;
+};
+
+export async function getShiprocketWalletBalance(forceRefresh = false): Promise<ShiprocketWalletResult> {
   const configuration = getShiprocketConfiguration();
-  if (!configuration) return null;
+  if (!configuration) {
+    return { configured: false, balance: 0, currency: "INR" };
+  }
+
+  const now = Date.now();
+  if (!forceRefresh && cachedWalletBalance && cachedWalletBalance.expiresAt > now) {
+    return cachedWalletBalance.data;
+  }
+
+  try {
+    const token = await authenticate(configuration);
+    const response = await fetch(`${apiBase}/account/details/wallet-balance`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      signal: AbortSignal.timeout(3500),
+    });
+
+    if (!response.ok) {
+      if (cachedWalletBalance) return cachedWalletBalance.data;
+      return { configured: true, balance: 0, currency: "INR", error: "Could not fetch wallet balance from Shiprocket" };
+    }
+
+    const data = await response.json();
+    const rawBalance = data?.data?.balance ?? data?.data?.balance_amount ?? data?.balance ?? 0;
+    const balance = typeof rawBalance === "number" ? rawBalance : parseFloat(String(rawBalance)) || 0;
+
+    const result: ShiprocketWalletResult = {
+      configured: true,
+      balance: Math.round(balance * 100) / 100,
+      currency: data?.data?.currency || "INR",
+    };
+
+    // Cache wallet balance for 60 seconds to avoid hammering Shiprocket and freezing page renders
+    cachedWalletBalance = {
+      data: result,
+      expiresAt: now + 60 * 1000,
+    };
+
+    return result;
+  } catch (error) {
+    if (cachedWalletBalance) return cachedWalletBalance.data;
+    return {
+      configured: true,
+      balance: 0,
+      currency: "INR",
+      error: error instanceof Error ? error.message : "Shiprocket wallet balance unavailable",
+    };
+  }
+}
+
+export async function getAvailableCouriers(
+  deliveryPincode: string,
+  weight: number,
+  declaredValue: number,
+  dimensions?: { length?: number; breadth?: number; height?: number }
+): Promise<AvailableCourier[]> {
+  const configuration = getShiprocketConfiguration();
+  if (!configuration) return [];
   const token = await authenticate(configuration);
   const parameters = new URLSearchParams({
     pickup_postcode: configuration.pickupPincode,
@@ -68,6 +185,10 @@ export async function getShiprocketQuote(deliveryPincode: string, weight: number
     cod: "0",
     declared_value: String(declaredValue),
   });
+  if (dimensions?.length) parameters.set("length", String(dimensions.length));
+  if (dimensions?.breadth) parameters.set("breadth", String(dimensions.breadth));
+  if (dimensions?.height) parameters.set("height", String(dimensions.height));
+
   const response = await fetch(`${apiBase}/courier/serviceability/?${parameters}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -78,28 +199,130 @@ export async function getShiprocketQuote(deliveryPincode: string, weight: number
         courier_company_id?: number | string;
         courier_name?: string;
         etd?: string;
+        rating?: number | string;
+        min_weight?: number | string;
+        charge_weight?: number | string;
       }[];
     };
     message?: string;
   };
-  const couriers = result.data?.available_courier_companies || [];
-  const courier = couriers.reduce<typeof couriers[number] | null>((cheapest, candidate) => {
-    const candidateRate = Number(candidate.rate);
-    const cheapestRate = Number(cheapest?.rate);
-    if (!Number.isFinite(candidateRate) || candidateRate < 0 || !Number.isFinite(Number(candidate.courier_company_id))) return cheapest;
-    return !cheapest || candidateRate < cheapestRate ? candidate : cheapest;
-  }, null);
-  const rate = Number(courier?.rate);
-  const charge = Math.round(rate * 100) / 100;
-  const courierId = Number(courier?.courier_company_id);
-  if (!response.ok || !Number.isFinite(charge) || charge < 0 || !Number.isFinite(courierId)) {
-    throw new Error(result.message || "Delivery is unavailable for this PIN code.");
+
+  const rawCouriers = result.data?.available_courier_companies || [];
+  const validCouriers = rawCouriers
+    .map((c) => {
+      const rate = Number(c.rate);
+      const id = Number(c.courier_company_id);
+      const minWeight = c.min_weight !== undefined && c.min_weight !== null ? Number(c.min_weight) : undefined;
+      const chargeWeight = c.charge_weight !== undefined && c.charge_weight !== null ? Number(c.charge_weight) : undefined;
+      const nameSlabMatch = c.courier_name?.match(/(\d+(?:\.\d+)?)\s*(kg|kgs|gm|gms|g)/i);
+      const nameSlab = nameSlabMatch
+        ? nameSlabMatch[2].toLowerCase().startsWith("g")
+          ? `${Number(nameSlabMatch[1]) / 1000} kg`
+          : `${nameSlabMatch[1]} kg`
+        : undefined;
+
+      const billWeight = Number.isFinite(chargeWeight)
+        ? `${chargeWeight} kg`
+        : Number.isFinite(minWeight)
+        ? `${minWeight} kg`
+        : nameSlab;
+
+      return {
+        id,
+        name: c.courier_name || "Courier Partner",
+        rate: Math.round(rate * 100) / 100,
+        etd: c.etd || null,
+        rating: c.rating ?? null,
+        minWeight: Number.isFinite(minWeight) ? minWeight : undefined,
+        chargeWeight: Number.isFinite(chargeWeight) ? chargeWeight : undefined,
+        billWeight,
+      };
+    })
+    .filter((c) => Number.isFinite(c.rate) && c.rate > 0 && Number.isFinite(c.id));
+
+  if (validCouriers.length === 0) return [];
+
+  // Sort by rate ascending
+  validCouriers.sort((a, b) => a.rate - b.rate);
+  const minRate = validCouriers[0].rate;
+
+  return validCouriers.map((c, index) => ({
+    ...c,
+    etd: adjustEstimatedDelivery(c.etd, weight),
+    isCheapest: c.rate === minRate,
+    isFastest: index === 0 && Boolean(c.etd?.toLowerCase().includes("1") || c.name.toLowerCase().includes("air")),
+  }));
+}
+
+export function adjustEstimatedDelivery(etd: string | null | undefined, weightKg: number): string | null {
+  const prepDays = weightKg > 3 ? 3 : 2;
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  if (!etd || typeof etd !== "string" || !etd.trim()) {
+    return `${2 + prepDays}–${5 + prepDays} business days`;
   }
+
+  const trimmed = etd.trim();
+
+  // 1. Try parsing as a specific calendar date (e.g. 'Nov 04, 2026', '2026-11-04')
+  const parsedDate = new Date(trimmed);
+  if (!isNaN(parsedDate.getTime()) && parsedDate.getFullYear() >= 2024) {
+    parsedDate.setDate(parsedDate.getDate() + prepDays);
+    const m = months[parsedDate.getMonth()];
+    const d = String(parsedDate.getDate()).padStart(2, "0");
+    const y = parsedDate.getFullYear();
+    return `${m} ${d}, ${y}`;
+  }
+
+  // 2. Try range format: e.g. '2–3 business days', '3-5 days', '2 to 4 days'
+  const rangeMatch = trimmed.match(/^(\d+)\s*(?:–|-|to)\s*(\d+)\s*(.*)$/i);
+  if (rangeMatch) {
+    const min = parseInt(rangeMatch[1], 10) + prepDays;
+    const max = parseInt(rangeMatch[2], 10) + prepDays;
+    const unit = rangeMatch[3].trim() || "business days";
+    return `${min}–${max} ${unit}`;
+  }
+
+  // 3. Try single day format: e.g. '3 days', '4 business days'
+  const singleMatch = trimmed.match(/^(\d+)\s*(.*)$/i);
+  if (singleMatch && /day/i.test(singleMatch[2])) {
+    const days = parseInt(singleMatch[1], 10) + prepDays;
+    const unit = singleMatch[2].trim() || "business days";
+    return `${days} ${unit}`;
+  }
+
+  return `${2 + prepDays}–${5 + prepDays} business days`;
+}
+
+export function cleanCourierName(name?: string | null): string {
+  if (!name) return "Courier Delivery";
+  return (
+    name
+      .replace(/(?:^|[\s\(\[\{—\-])\d+(\.\d+)?\s*(kg|kgs|gm|gms|g)\b[\)\]\}]?/gi, "")
+      .replace(/\s*-\s*$/, "")
+      .replace(/\s{2,}/g, " ")
+      .trim() || name || "Courier Delivery"
+  );
+}
+
+export async function getShiprocketQuote(
+  deliveryPincode: string,
+  weight: number,
+  declaredValue: number,
+  dimensions?: { length?: number; breadth?: number; height?: number }
+): Promise<ShippingQuote | null> {
+  const couriers = await getAvailableCouriers(deliveryPincode, weight, declaredValue, dimensions);
+  if (couriers.length === 0) {
+    const configuration = getShiprocketConfiguration();
+    if (!configuration) return null;
+    throw new Error("Delivery is unavailable for this PIN code.");
+  }
+  const cheapest = couriers.find((c) => c.isCheapest) || couriers[0];
   return {
-    charge,
-    courierId,
-    courierName: courier?.courier_name || "Shiprocket courier",
-    estimatedDeliveryDays: courier?.etd || null,
+    charge: cheapest.rate,
+    courierId: cheapest.id,
+    courierName: cleanCourierName(cheapest.name),
+    estimatedDeliveryDays: cheapest.etd,
   };
 }
 
@@ -171,13 +394,19 @@ export async function createShiprocketShipment(input: ShipmentInput): Promise<Sh
 
   // If courierId is provided, assign courier and generate AWB
   let courierToAssign = input.courierId;
+  let assignedCourierName = input.courierName;
 
   // If no courierId specified, query serviceability and pick cheapest
   if (!courierToAssign) {
     try {
-      const quote = await getShiprocketQuote(input.pincode, finalWeight, input.subtotal);
+      const quote = await getShiprocketQuote(input.pincode, finalWeight, input.subtotal, {
+        length: input.length,
+        breadth: input.breadth,
+        height: input.height,
+      });
       if (quote?.courierId) {
         courierToAssign = quote.courierId;
+        assignedCourierName = quote.courierName;
       }
     } catch {
       // Non-fatal if auto-lookup fails
@@ -198,6 +427,7 @@ export async function createShiprocketShipment(input: ShipmentInput): Promise<Sh
 
   return {
     ...order,
+    courier_name: assignedCourierName || order.courier_name,
     awb_code: awb.response?.data?.awb_code || awb.awb_code || order.awb_code,
   };
 }
@@ -214,3 +444,141 @@ export async function generateShiprocketLabel(shipmentId: string | number): Prom
   const data = (await response.json()) as { label_url?: string; label_created?: number };
   return data.label_url || null;
 }
+
+export async function getShiprocketTracking(awbCode: string): Promise<ShiprocketTrackingResult> {
+  const trackingUrl = `https://shiprocket.co/tracking/${encodeURIComponent(awbCode)}`;
+  const configuration = getShiprocketConfiguration();
+  if (!configuration) {
+    return {
+      awb: awbCode,
+      currentStatus: "Dispatched",
+      activities: [],
+      trackingUrl,
+    };
+  }
+
+  try {
+    const token = await authenticate(configuration);
+    const response = await fetch(`${apiBase}/courier/track/awb/${encodeURIComponent(awbCode)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) {
+      return {
+        awb: awbCode,
+        currentStatus: "Dispatched",
+        activities: [],
+        trackingUrl,
+      };
+    }
+    const data = (await response.json()) as {
+      tracking_data?: {
+        shipment_track?: Array<{
+          current_status?: string;
+          courier_name?: string;
+          edd?: string;
+        }>;
+        shipment_track_activities?: Array<{
+          date?: string;
+          status?: string;
+          activity?: string;
+          location?: string;
+        }>;
+      };
+    };
+
+    const track = data.tracking_data?.shipment_track?.[0];
+    const rawActivities = data.tracking_data?.shipment_track_activities || [];
+    const activities: TrackingActivity[] = rawActivities.map((a) => ({
+      date: a.date || "",
+      status: a.status || "",
+      activity: a.activity || "",
+      location: a.location || "",
+    }));
+
+    return {
+      awb: awbCode,
+      currentStatus: track?.current_status || "In Transit",
+      courierName: track?.courier_name,
+      estimatedDeliveryDate: track?.edd || null,
+      activities,
+      trackingUrl,
+    };
+  } catch (err) {
+    console.warn("[shiprocket] Tracking lookup failed for AWB", awbCode, err);
+    return {
+      awb: awbCode,
+      currentStatus: "Dispatched",
+      activities: [],
+      trackingUrl,
+    };
+  }
+}
+
+/**
+ * Cancels an AWB on Shiprocket.
+ * Automatically voids the courier booking and initiates a wallet balance refund.
+ * Must be requested before the courier partner physically picks up the parcel.
+ */
+export async function cancelShiprocketAwb(
+  awbCode: string
+): Promise<{ success: boolean; message?: string }> {
+  const configuration = getShiprocketConfiguration();
+  if (!configuration) {
+    return { success: false, message: "Shiprocket is not configured." };
+  }
+
+  try {
+    const token = await authenticate(configuration);
+    const response = await fetch(`${apiBase}/orders/cancel/shipment/awbs`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ awbs: [awbCode.trim()] }),
+    });
+
+    const data = (await response.json()) as { message?: string };
+    if (!response.ok) {
+      console.warn("[shiprocket] cancel AWB warning:", data);
+      return { success: false, message: data.message || "Failed to cancel AWB on Shiprocket." };
+    }
+    return { success: true, message: data.message || "Shipment AWB cancelled successfully." };
+  } catch (err) {
+    console.error("[shiprocket] cancel AWB error:", err);
+    return { success: false, message: err instanceof Error ? err.message : "Error cancelling AWB." };
+  }
+}
+
+/**
+ * Cancels a Shiprocket order by internal Shiprocket order ID.
+ */
+export async function cancelShiprocketOrder(
+  orderId: number | string
+): Promise<{ success: boolean; message?: string }> {
+  const configuration = getShiprocketConfiguration();
+  if (!configuration) {
+    return { success: false, message: "Shiprocket is not configured." };
+  }
+
+  try {
+    const token = await authenticate(configuration);
+    const response = await fetch(`${apiBase}/orders/cancel`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ ids: [orderId] }),
+    });
+
+    const data = (await response.json()) as { message?: string };
+    return { success: response.ok, message: data.message };
+  } catch (err) {
+    return { success: false, message: err instanceof Error ? err.message : "Error cancelling order." };
+  }
+}
+
+export { getCourierTrackingUrl } from "@/lib/shipping-utils";
+
+

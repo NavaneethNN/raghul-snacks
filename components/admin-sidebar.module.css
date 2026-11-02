@@ -25,7 +25,7 @@
 
 /* Brand */
 .brand {
-  padding: 32px 24px 24px;
+  padding: 22px 18px 18px;
   border-bottom: 1px solid rgba(201, 95, 59, 0.15);
   flex-shrink: 0;
 }
@@ -42,9 +42,12 @@
 }
 
 .shopName {
-  font: 700 20px / 1.2 'Playfair Display', serif;
+  font: 700 16.5px / 1.2 'Playfair Display', serif;
   color: var(--cream);
   white-space: nowrap;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Nav groups */
@@ -370,6 +373,9 @@
 
   .bottomNavLabel {
     white-space: nowrap;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
   }
 }
 

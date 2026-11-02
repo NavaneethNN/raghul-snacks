@@ -1996,7 +1996,7 @@ h2 i {
 }
 
 .combo ul {
-  list-style: '✦  ';
+  list-style: square;
   padding-left: 15px;
   line-height: 1.8;
   margin: 20px 0;
@@ -5702,5 +5702,163 @@ footer {
   .product-visual .variant-flag svg {
     width: 11px;
     height: 11px;
+  }
+}
+
+
+/* ===== PINCODE DELIVERY CHECKER ===== */
+.pincode-check-card {
+  margin: 18px 0 22px;
+  padding: 14px 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.pincode-check-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.pincode-check-header svg {
+  color: var(--terracotta);
+}
+
+.pincode-check-form {
+  display: flex;
+  gap: 8px;
+}
+
+.pincode-check-form input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'DM Mono', monospace;
+  outline: none;
+  background: var(--cream);
+  color: var(--ink);
+}
+
+.pincode-check-form input:focus {
+  border-color: var(--terracotta);
+  background: #fff;
+}
+
+.pincode-check-form button {
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.pincode-check-form button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pincode-status {
+  margin-top: 10px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.pincode-success {
+  color: #15803d;
+  font-weight: 500;
+}
+
+.pincode-error {
+  color: #dc2626;
+}
+
+/* ===== STICKY MOBILE BAR ===== */
+.sticky-mobile-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sticky-mobile-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top: 1px solid var(--line);
+    padding: 10px 16px;
+    z-index: 9998;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    gap: 12px;
+    animation: stickySlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes stickySlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .sticky-mobile-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .sticky-mobile-info img {
+    width: 42px;
+    height: 42px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+
+  .sticky-mobile-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+
+  .sticky-mobile-price {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--terracotta);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .sticky-mobile-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .sticky-mobile-actions button {
+    padding: 9px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 8px;
   }
 }

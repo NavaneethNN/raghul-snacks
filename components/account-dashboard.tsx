@@ -171,8 +171,13 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
     }
   }
 
-  async function downloadInvoice(orderNumber: string) {
-    window.open(`/api/orders/${orderNumber}/invoice`, "_blank");
+  function downloadInvoice(orderNumber: string) {
+    const link = document.createElement("a");
+    link.href = `/api/orders/${orderNumber}/invoice`;
+    link.download = `Invoice-${orderNumber}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   function startEditingName() {
@@ -317,7 +322,15 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
       setReviewingItemId(null);
       setReviewRating(0);
       setReviewContent("");
+      try {
+        localStorage.setItem("review-posted", "true");
+        localStorage.setItem(`reviewed-prod-${productId}`, "true");
+        localStorage.setItem("delivery-nudge-dismissed", "true");
+        sessionStorage.setItem("delivery-nudge-dismissed", "true");
+        localStorage.setItem("delivery-notification-dismissed-permanently", "true");
+      } catch {}
       window.dispatchEvent(new Event("review-submitted"));
+      window.dispatchEvent(new CustomEvent("product-reviewed", { detail: { productId } }));
     } catch (err) {
       setReviewError(err instanceof Error ? err.message : "Failed to submit review.");
     } finally {

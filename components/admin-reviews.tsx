@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
@@ -17,12 +17,31 @@ type Review = {
   productName: string | null;
 };
 
-const STARS = "★★★★★";
+function StarIcons({ rating }: { rating: number }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <svg
+          key={i}
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill={i <= rating ? "#e5a52f" : "#e5e7eb"}
+          stroke={i <= rating ? "#e5a52f" : "#d1d5db"}
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+        >
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+      ))}
+    </span>
+  );
+}
 
 export function AdminReviews() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "pending" | "approved">("pending");
+  const [filter, setFilter] = useState<"all" | "pending" | "approved">("all");
   const [busy, setBusy] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
@@ -34,8 +53,8 @@ export function AdminReviews() {
   useEffect(() => {
     fetch("/api/admin/reviews")
       .then((r) => r.json())
-      .then((d) => setReviews(d))
-      .catch(() => {})
+      .then((d) => setReviews(Array.isArray(d) ? d : []))
+      .catch(() => setReviews([]))
       .finally(() => setLoading(false));
   }, []);
 
@@ -89,8 +108,8 @@ export function AdminReviews() {
           <p>Approve or remove product reviews.</p>
         </div>
         {pendingCount > 0 && (
-          <div style={{ background: "#fef3c7", border: "1px solid #fde047", borderRadius: 8, padding: "10px 16px" }}>
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#92400e" }}>{pendingCount} pending</p>
+          <div style={{ background: "#fef3c7", border: "1px solid #fde047", borderRadius: 8, padding: "8px 14px" }}>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: "#92400e" }}>{pendingCount} pending approval</p>
           </div>
         )}
         <div className={styles.headerBell}><AdminHeaderActions /></div>
@@ -99,11 +118,15 @@ export function AdminReviews() {
       <section className={styles.workspace}>
         <div className={styles.toolbar}>
           <div className={styles.filters}>
-            <button className={filter === "all"      ? styles.activeFilter : ""} onClick={() => setFilter("all")}>All ({reviews.length})</button>
-            <button className={filter === "pending"  ? styles.activeFilter : ""} onClick={() => setFilter("pending")}>
+            <button className={filter === "all" ? styles.activeFilter : ""} onClick={() => setFilter("all")}>
+              All ({reviews.length})
+            </button>
+            <button className={filter === "pending" ? styles.activeFilter : ""} onClick={() => setFilter("pending")}>
               Pending {pendingCount > 0 && <span style={{ background: "#f59e0b", color: "#fff", borderRadius: "999px", padding: "1px 6px", fontSize: 10, fontWeight: 700, marginLeft: 4 }}>{pendingCount}</span>}
             </button>
-            <button className={filter === "approved" ? styles.activeFilter : ""} onClick={() => setFilter("approved")}>Approved ({approvedCount})</button>
+            <button className={filter === "approved" ? styles.activeFilter : ""} onClick={() => setFilter("approved")}>
+              Approved ({approvedCount})
+            </button>
           </div>
         </div>
 
@@ -128,16 +151,16 @@ export function AdminReviews() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className={styles.emptyState}><div><p>Loading…</p></div></td></tr>
+                <tr><td colSpan={8} className={styles.emptyState}><div><p>Loading reviews…</p></div></td></tr>
               ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={8} className={styles.emptyState}>
                     <div>
-                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                       </svg>
                       <h3>No reviews</h3>
-                      <p>{filter === "pending" ? "No pending reviews." : "No reviews yet."}</p>
+                      <p>{filter === "pending" ? "No pending reviews." : "No reviews found."}</p>
                     </div>
                   </td>
                 </tr>
@@ -146,15 +169,14 @@ export function AdminReviews() {
                 return (
                   <React.Fragment key={r.id}>
                     {/* Main row */}
-                      <tr
-                        key={`row-${r.id}`}
-                        onClick={() => toggle(r.id)}
-                        className={`${styles.expandableRow} ${isOpen ? styles.rowOpen : ""}`}
-                      >
+                    <tr
+                      key={`row-${r.id}`}
+                      onClick={() => toggle(r.id)}
+                      className={`${styles.expandableRow} ${isOpen ? styles.rowOpen : ""}`}
+                    >
                       <td><strong>{r.customerName}</strong></td>
                       <td>
-                        <span style={{ color: "#e5a52f" }}>{STARS.slice(0, r.rating)}</span>
-                        <span style={{ color: "#e5e7eb" }}>{STARS.slice(r.rating)}</span>
+                        <StarIcons rating={r.rating} />
                       </td>
                       <td>
                         <span style={{
@@ -165,7 +187,7 @@ export function AdminReviews() {
                           {r.approved ? "Approved" : "Pending"}
                         </span>
                       </td>
-                      <td className={styles.colHide}>{r.productName ?? "—"}</td>
+                      <td className={styles.colHide}>{r.productName ?? "General Review"}</td>
                       <td className={styles.colHide} style={{ maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {r.content}
                       </td>
@@ -173,16 +195,16 @@ export function AdminReviews() {
                       <td onClick={(e) => e.stopPropagation()}>
                         <div className={styles.actionButtons}>
                           {r.approved ? (
-                            <button className={styles.iconButton} title="Hide" disabled={busy === r.id} onClick={() => setApproved(r.id, false)}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            <button className={styles.iconButton} title="Hide Review" disabled={busy === r.id} onClick={() => setApproved(r.id, false)}>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                             </button>
                           ) : (
-                            <button className={styles.iconButton} title="Approve" disabled={busy === r.id} onClick={() => setApproved(r.id, true)}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            <button className={styles.iconButton} title="Approve Review" disabled={busy === r.id} onClick={() => setApproved(r.id, true)}>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
                             </button>
                           )}
-                          <button className={styles.iconButton} title="Delete" disabled={busy === r.id} onClick={() => setConfirmDeleteId(r.id)}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                          <button className={styles.iconButton} title="Delete Review" disabled={busy === r.id} onClick={() => setConfirmDeleteId(r.id)}>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                           </button>
                         </div>
                       </td>
@@ -200,7 +222,7 @@ export function AdminReviews() {
                           <div className={styles.rowDetail}>
                             <div className={styles.detailRow}>
                               <span className={styles.detailLabel}>Product</span>
-                              <span className={styles.detailValue}>{r.productName ?? "—"}</span>
+                              <span className={styles.detailValue}>{r.productName ?? "General Review"}</span>
                             </div>
                             <div className={styles.detailRow}>
                               <span className={styles.detailLabel}>Date</span>

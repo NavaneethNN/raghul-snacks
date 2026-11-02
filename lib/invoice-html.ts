@@ -14,6 +14,11 @@ export type InvoiceData = {
   discount: string | number;
   total: string | number;
   logoDataUri?: string;
+  packageBoxName?: string | null;
+  billedWeight?: string | number | null;
+  packageDimensions?: string | null;
+  courierName?: string | null;
+  awbCode?: string | null;
   items: Array<{
     name: string;
     quantity: number;
@@ -98,7 +103,11 @@ export function buildInvoiceHtml(data: InvoiceData): string {
       color: #1a1a1a;
       background: #fff;
       padding: 40px 48px;
-      line-height: 1.5;
+    }
+
+    @media print {
+      body { padding: 0; }
+      @page { margin: 16mm; size: A4; }
     }
 
     /* ── Header ── */
@@ -106,27 +115,29 @@ export function buildInvoiceHtml(data: InvoiceData): string {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      border-bottom: 3px solid ${BRAND};
-      padding-bottom: 24px;
       margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid ${BRAND};
     }
     .brand-name {
-      font-size: 26px;
-      font-weight: 800;
+      font-size: 24px;
+      font-weight: 700;
       color: ${BRAND};
       letter-spacing: -0.5px;
     }
     .brand-tagline {
       font-size: 11px;
       color: #6b7280;
-      margin-top: 3px;
+      margin-top: 2px;
     }
-    .invoice-label { text-align: right; }
+    .invoice-label {
+      text-align: right;
+    }
     .invoice-label h2 {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 700;
       color: #1a1a1a;
-      letter-spacing: 2px;
+      letter-spacing: 1px;
       text-transform: uppercase;
     }
     .invoice-label p {
@@ -140,7 +151,7 @@ export function buildInvoiceHtml(data: InvoiceData): string {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 24px;
-      margin-bottom: 28px;
+      margin-bottom: 20px;
     }
     .meta-box {
       background: #f9fafb;
@@ -190,11 +201,14 @@ export function buildInvoiceHtml(data: InvoiceData): string {
       overflow: hidden;
       border: 1px solid #e5e7eb;
     }
-    table { width: 100%; border-collapse: collapse; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
     thead th {
-      background: ${BRAND};
-      color: #fff;
-      font-size: 11px;
+      background: #f3f4f6;
+      color: #374151;
+      font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.8px;
@@ -315,6 +329,16 @@ export function buildInvoiceHtml(data: InvoiceData): string {
         <span>Coupon</span>
         <strong style="color:${BRAND};">${escapeHtml(data.couponCode)}</strong>
       </div>` : ""}
+      ${data.courierName ? `
+      <div class="meta-row">
+        <span>Courier</span>
+        <strong>${escapeHtml(data.courierName.replace(/(?:^|[\s\(\[\{—\-])\d+(\.\d+)?\s*(kg|kgs|gm|gms|g)\b[\)\]\}]?/gi, "").replace(/\s*-\s*$/, "").replace(/\s{2,}/g, " ").trim() || data.courierName)}</strong>
+      </div>` : ""}
+      ${data.awbCode ? `
+      <div class="meta-row">
+        <span>AWB / Tracking</span>
+        <strong style="font-family:monospace;letter-spacing:0.5px;">${escapeHtml(data.awbCode)}</strong>
+      </div>` : ""}
     </div>
   </div>
 
@@ -359,8 +383,8 @@ export function buildInvoiceHtml(data: InvoiceData): string {
 
   <!-- Footer -->
   <div class="footer">
-    <strong>Raghul Delights</strong><br/>
-    WhatsApp: +91 86678 29041 &nbsp;·&nbsp; raghuldelights@gmail.com<br/>
+    <strong>Raghul Delights &bull; Authentic South Indian Snacks</strong><br/>
+    4/664 Kurinji Nagar, Thoppampatti, Coimbatore, Tamil Nadu &ndash; 641017, India &nbsp;&bull;&nbsp; Tel / WhatsApp: +91 86678 29041 &nbsp;&bull;&nbsp; raghuldelights@gmail.com<br/>
     Thank you for shopping with us!
   </div>
 

@@ -3,7 +3,6 @@ import { cache } from "react";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductDetailView } from "@/components/product/product-detail-view";
 import { ProductReviews } from "@/components/product/product-reviews";
-import { ReviewForm } from "@/components/product/review-form";
 import { getDb } from "@/lib/db";
 import { products, categories, productVariants } from "@/drizzle/schema";
 import { and, eq } from "drizzle-orm";
@@ -109,8 +108,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <ProductDetailView product={product} variants={variants} />
 
       <ProductReviews productId={product.id} />
-
-      <ReviewForm productId={product.id} />
 
       <section className="section shop-page">
         <div className="section-heading">

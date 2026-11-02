@@ -13,7 +13,7 @@ let cachedCategories: any[] | undefined = undefined;
 
 export function StoreHeader() {
   const router = useRouter();
-  const { count } = useCart();
+  const { count, openCart } = useCart();
   const { count: wishlistCount } = useWishlist();
   const [account, setAccount] = useState<{ name: string; email: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -291,13 +291,20 @@ export function StoreHeader() {
             <span>Account</span>
           </Link>
 
-          <Link href="/cart" className="action-icon cart-icon" title={`Bag${count > 0 ? ` (${count} items)` : ''}`}>
+          <button
+            type="button"
+            onClick={openCart}
+            className="action-icon cart-icon"
+            title={`Bag${count > 0 ? ` (${count} items)` : ''}`}
+            aria-label={`Shopping bag with ${count} items`}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M4 6H16V17C16 17.5523 15.5523 18 15 18H5C4.44772 18 4 17.5523 4 17V6Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
               <path d="M7 6V5C7 3.34315 8.34315 2 10 2C11.6569 2 13 3.34315 13 5V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             {count > 0 && <span className="cart-badge">{count}</span>}
-          </Link>
+          </button>
 
           <button
             className="hamburger-btn"
@@ -388,6 +395,19 @@ export function StoreHeader() {
           <Link href="/wishlist" onClick={() => setMenuOpen(false)}>
             Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
           </Link>
+          <button
+            type="button"
+            onClick={() => { setMenuOpen(false); openCart(); }}
+            className="mobile-nav-link"
+            style={{ textAlign: "left", width: "100%", background: "none", border: "none", font: "inherit", padding: 0, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+          >
+            <span>Your Bag</span>
+            {count > 0 && (
+              <span style={{ background: "var(--terracotta)", color: "#fff", padding: "2px 8px", borderRadius: "999px", fontSize: "12px", fontWeight: "700" }}>
+                {count}
+              </span>
+            )}
+          </button>
           <Link href={account ? "/account" : "/login"} onClick={() => setMenuOpen(false)}>
             {account ? "My Account" : "Login"}
           </Link>

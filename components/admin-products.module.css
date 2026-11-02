@@ -614,6 +614,29 @@
 
   .mobileSubtext {
     display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin-top: 4px;
+  }
+
+  .productCell {
+    min-width: 0;
+    gap: 10px;
+  }
+
+  .productThumb,
+  .productThumbFallback {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+  }
+
+  .comboContents {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .toolbar {

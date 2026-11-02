@@ -118,20 +118,20 @@ export function AdminAnnouncements() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div>
+        <div className={styles.headerTitleWrap}>
           <p className={styles.eyebrow}>Announcement Management</p>
           <h1>Announcements</h1>
           <p>These rotate in the announcement bar above the site header.</p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className={styles.headerActions}>
           <button className={styles.primaryButton} onClick={openCreate}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             Add Announcement
           </button>
+          <div className={styles.headerBell}><AdminHeaderActions /></div>
         </div>
-        <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
       {message && <p className={styles.message}>{message}</p>}

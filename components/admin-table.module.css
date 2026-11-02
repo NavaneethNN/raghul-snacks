@@ -518,13 +518,27 @@
   color: var(--terracotta);
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) and (min-width: 769px) {
   .header {
-    padding: 20px 28px;
+    flex-wrap: wrap;
+    padding: 18px 24px;
+    gap: 12px;
+  }
+
+  .headerTitleWrap,
+  .header > div:first-child {
+    flex: 1 1 240px;
+    min-width: 0;
+  }
+
+  .headerActions {
+    flex: 1 1 auto;
+    justify-content: flex-end;
+    flex-wrap: wrap;
   }
 
   .workspace {
-    margin: 20px 28px;
+    margin: 16px 24px;
   }
 
   .formGrid {
@@ -555,11 +569,16 @@
 
 @media (max-width: 768px) {
   .header {
+    position: relative !important;
+    top: auto !important;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     padding: 14px 16px;
-    top: 52px;
     gap: 12px;
+    box-shadow: none;
+    border-bottom: 1px solid var(--line);
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .header h1 {
@@ -589,8 +608,9 @@
   }
 
   .workspace {
-    margin: 10px;
+    margin: 8px 10px 16px;
     border-radius: 8px;
+    overflow: hidden;
   }
 
   .toolbar {
@@ -602,10 +622,35 @@
     max-width: none;
   }
 
+  .tableWrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    display: block;
+  }
+
+  .table {
+    width: 100%;
+    min-width: 100%;
+  }
+
   .table th,
   .table td {
-    padding: 10px 12px;
+    padding: 10px 10px;
     font-size: 13px;
+  }
+
+  .actionButtons {
+    display: inline-flex;
+    gap: 6px;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .iconButton {
+    min-width: 32px;
+    min-height: 32px;
+    padding: 6px;
   }
 
   .modalContent {
@@ -878,22 +923,6 @@ div:has(> img + .imageDeleteButton):hover img {
   padding-top: 4px;
 }
 
-@media (max-width: 600px) {
-  /* Keep horizontal scroll — just hide low-priority columns */
-  .colHide {
-    display: none;
-  }
-
-  /* Show the chevron column and detail expand rows on mobile */
-  .colHideDesktop {
-    display: table-cell;
-  }
-
-  .detailRowWrapper {
-    display: table-row;
-  }
-}
-
 /* ── Notification bell visibility ──
    Desktop: show in page header.
    Mobile: hide from page header (bell is in the fixed top bar instead).
@@ -902,21 +931,9 @@ div:has(> img + .imageDeleteButton):hover img {
   display: flex;
 }
 
-@media (max-width: 768px) {
-  .headerBell {
-    display: none;
-  }
-}
-
 /* Show only on mobile — complementary to colHide */
 .mobileOnly {
   display: none !important;
-}
-
-@media (max-width: 600px) {
-  .mobileOnly {
-    display: inline-flex !important;
-  }
 }
 
 /* Expandable rows — pointer cursor only on mobile where expand is meaningful */
@@ -924,12 +941,166 @@ div:has(> img + .imageDeleteButton):hover img {
   cursor: default;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  /* Hide low-priority columns on mobile */
+  .colHide {
+    display: none !important;
+  }
+
+  /* Show the chevron column and detail expand rows on mobile */
+  .colHideDesktop {
+    display: table-cell !important;
+  }
+
+  .detailRowWrapper {
+    display: table-row !important;
+  }
+
+  .headerBell {
+    display: none !important;
+  }
+
+  .mobileOnly {
+    display: inline-flex !important;
+  }
+
   .expandableRow {
     cursor: pointer;
   }
 
   .expandableRow:hover {
     background: var(--cream);
+  }
+}
+
+/* ─────────────────────────────────────────
+   Packaging & Courier Simulator styles
+   ───────────────────────────────────────── */
+.packagingInfo {
+  background: #eff6ff;
+  border-bottom: 1px solid #bfdbfe;
+  padding: 16px 24px;
+  font-size: 13.5px;
+  color: #1e40af;
+  line-height: 1.6;
+}
+
+.packagingInfoTitle {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.simulatorSection {
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+  padding: 24px 32px;
+}
+
+.simulatorHeader h3 {
+  margin: 0 0 6px;
+  font: 700 18px 'Playfair Display', serif;
+  color: var(--ink);
+}
+
+.simulatorHeader p {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.simulatorForm {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-top: 16px;
+}
+
+.simulatorGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 140px;
+}
+
+.simulatorGroup label {
+  font: 600 12px 'DM Sans', sans-serif;
+  color: #374151;
+}
+
+.simulatorGroup input {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--line);
+  background: var(--cream);
+  font: 14px 'DM Sans', sans-serif;
+  color: var(--ink);
+  transition: all 0.2s;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.simulatorGroup input:focus {
+  outline: none;
+  border-color: var(--terracotta);
+  background: var(--paper);
+  box-shadow: 0 0 0 3px rgba(201, 95, 59, 0.1);
+}
+
+.simulatorCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.simulatorCard {
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.simulatorCardMatched {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.courierGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.courierItem {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .packagingInfo {
+    padding: 12px 16px;
+    font-size: 12.5px;
+  }
+  .simulatorSection {
+    padding: 16px;
+  }
+  .simulatorForm {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .simulatorGroup {
+    width: 100%;
   }
 }

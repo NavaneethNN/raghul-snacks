@@ -13,7 +13,36 @@ type PaymentOrder = { razorpayOrderId: string; amount: number; currency: string;
 type AppliedCoupon = { code: string; name: string | null; discountType: string; value: string; discountAmount: number };
 type PublicCoupon = { id: number; code: string; name: string | null; description: string | null; discountType: string; value: string; maxDiscount: string | null; minOrderValue: string; applyTo: string; applicableProducts: string[] | null; applicableCategories: string[] | null };
 
-const steps = ["Contact", "Delivery"];
+function cleanCourierDisplayName(name?: string | null): string {
+  if (!name) return "Courier Delivery";
+  return (
+    name
+      .replace(/(?:^|[\s\(\[\{—\-])\d+(\.\d+)?\s*(kg|kgs|gm|gms|g)\b[\)\]\}]?/gi, "")
+      .replace(/\s*-\s*$/, "")
+      .replace(/\s{2,}/g, " ")
+      .trim() || name || "Courier Delivery"
+  );
+}
+
+function inferStateFromPincode(pincode: string): string | null {
+  const prefix = parseInt(pincode.slice(0, 2), 10);
+  if (prefix >= 60 && prefix <= 64) return "Tamil Nadu";
+  if (prefix >= 67 && prefix <= 69) return "Kerala";
+  if (prefix >= 56 && prefix <= 59) return "Karnataka";
+  if (prefix >= 50 && prefix <= 53) return "Andhra Pradesh";
+  if (prefix >= 40 && prefix <= 44) return "Maharashtra";
+  if (prefix >= 36 && prefix <= 39) return "Gujarat";
+  if (prefix >= 30 && prefix <= 34) return "Rajasthan";
+  if (prefix >= 20 && prefix <= 28) return "Uttar Pradesh";
+  if (prefix >= 14 && prefix <= 16) return "Punjab";
+  if (prefix >= 12 && prefix <= 13) return "Haryana";
+  if (prefix === 11) return "Delhi";
+  if (prefix >= 70 && prefix <= 74) return "West Bengal";
+  if (prefix >= 75 && prefix <= 77) return "Odisha";
+  if (prefix >= 80 && prefix <= 85) return "Bihar";
+  if (prefix >= 45 && prefix <= 49) return "Madhya Pradesh";
+  return null;
+}
 
 export function CheckoutWizard() {
   const { items: cartItems, subtotal: cartSubtotal, clearCart, addItem, hydrated: cartHydrated, syncing: cartSyncing } = useCart();
@@ -24,7 +53,6 @@ export function CheckoutWizard() {
   const buyNowChecked = true; // always ready — synchronous read, no async needed
   const items = useMemo(() => (buyNowItem ? [buyNowItem] : cartItems), [buyNowItem, cartItems]);
   const subtotal = buyNowItem ? buyNowItem.offerPrice * buyNowItem.quantity : cartSubtotal;
-  const [step, setStep] = useState(1);
   const [account, setAccount] = useState<{ name: string; email: string } | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [form, setForm] = useState<CheckoutForm>({
@@ -84,8 +112,8 @@ export function CheckoutWizard() {
           setSelectedAddressId(def.id);
           setForm((c) => ({
             ...c,
-            customerName: c.customerName || def.name,
-            phone: c.phone || def.phone,
+            customerName: def.name || c.customerName,
+            phone: def.phone || c.phone,
             address: def.address,
             city: def.city,
             state: def.state,
@@ -100,8 +128,8 @@ export function CheckoutWizard() {
     setSelectedAddressId(addr.id);
     setForm((c) => ({
       ...c,
-      customerName: c.customerName || addr.name,
-      phone: c.phone || addr.phone,
+      customerName: addr.name || c.customerName,
+      phone: addr.phone || c.phone,
       address: addr.address,
       city: addr.city,
       state: addr.state,
@@ -140,8 +168,8 @@ export function CheckoutWizard() {
           setAccount(data.account);
           setForm((c) => ({
             ...c,
-            customerName: data.account!.name,
-            email: data.account!.email,
+            customerName: c.customerName || data.account!.name,
+            email: c.email || data.account!.email,
           }));
         }
         setCheckingAuth(false);
@@ -150,6 +178,13 @@ export function CheckoutWizard() {
         // Network error — still allow guest checkout
         setCheckingAuth(false);
       });
+
+    try {
+      const savedPin = window.localStorage.getItem("raghul-customer-pincode");
+      if (savedPin && /^\d{6}$/.test(savedPin)) {
+        setForm((c) => (c.pincode ? c : { ...c, pincode: savedPin }));
+      }
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -216,14 +251,12 @@ export function CheckoutWizard() {
       .catch(() => { /* non-critical */ });
   }, [subtotal]);
 
-  // When a buy-now item is present, add it to the regular cart once fully synced
-  // so it survives page reloads. Only add once (track with ref).
-  const buyNowAddedRef = useRef(false);
+  // Check if Razorpay is already attached to window
   useEffect(() => {
-    if (!buyNowItem || !cartHydrated || cartSyncing || buyNowAddedRef.current) return;
-    buyNowAddedRef.current = true;
-    addItem(buyNowItem, buyNowItem.quantity);
-  }, [buyNowItem, cartHydrated, cartSyncing, addItem]);
+    if (typeof window !== "undefined" && !!(window as any).Razorpay) {
+      setPaymentReady(true);
+    }
+  }, []);
 
   // Clear buy-now from sessionStorage only when navigating away (not on reload)
   useEffect(() => {
@@ -299,28 +332,17 @@ export function CheckoutWizard() {
       sanitized = value.replace(/[^\d+]/g, "").slice(0, 13);
     } else if (field === "pincode") {
       sanitized = value.replace(/\D/g, "").slice(0, 6);
-    }
-    setForm((c) => ({ ...c, [field]: sanitized }));
-  }
-
-  function continueTo(nextStep: number) {
-    setError("");
-    if (step === 1) {
-      if (!form.customerName.trim()) { setError("Please enter your full name."); return; }
-      if (form.customerName.trim().length < 3) { setError("Name must be at least 3 characters long."); return; }
-      if (!form.phone) { setError("Please enter your mobile number."); return; }
-      if (!/^(\+91)?[6-9]\d{9}$/.test(form.phone)) {
-        setError("Please enter a valid Indian mobile number with or without +91.");
+      if (sanitized.length === 6) {
+        const detectedState = inferStateFromPincode(sanitized);
+        setForm((c) => ({
+          ...c,
+          pincode: sanitized,
+          state: c.state || detectedState || "",
+        }));
         return;
       }
-      // For guests, validate email if provided
-      if (!account && form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-        setError("Please enter a valid email address."); return;
-      }
     }
-    setStep(nextStep);
-    // Scroll to top so the new step header is visible, especially on mobile
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setForm((c) => ({ ...c, [field]: sanitized }));
   }
 
   // ── Payment ────────────────────────────────────────────────────────────────
@@ -329,20 +351,65 @@ export function CheckoutWizard() {
     event.preventDefault();
     setError("");
 
-    if (step === 2) {
-      if (!form.address.trim()) { setError("Please enter your delivery address."); return; }
-      if (form.address.trim().length < 8) { setError("Address must be at least 8 characters long."); return; }
-      if (!form.state) { setError("Please select your state."); return; }
-      if (!form.city.trim()) { setError("Please enter your district."); return; }
-      if (!form.pincode) { setError("Please enter your PIN code."); return; }
-      if (!/^\d{6}$/.test(form.pincode)) { setError("Please enter a valid 6-digit PIN code."); return; }
-      if (!quote) {
-        setError("Please select your state to see the delivery charge.");
-        return;
-      }
+    if (!form.customerName.trim()) {
+      setError("Please enter your full name.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    if (form.customerName.trim().length < 3) {
+      setError("Name must be at least 3 characters long.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    if (!form.phone) {
+      setError("Please enter your mobile number.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    if (!/^(\+91)?[6-9]\d{9}$/.test(form.phone)) {
+      setError("Please enter a valid Indian mobile number with or without +91.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    if (!account && form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setError("Please enter a valid email address.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    if (!form.address.trim()) {
+      setError("Please enter your delivery address.");
+      return;
+    }
+    if (form.address.trim().length < 8) {
+      setError("Address must be at least 8 characters long.");
+      return;
+    }
+    if (!form.state) {
+      setError("Please select your state.");
+      return;
+    }
+    if (!form.city.trim()) {
+      setError("Please enter your district or city.");
+      return;
+    }
+    if (!form.pincode) {
+      setError("Please enter your PIN code.");
+      return;
+    }
+    if (!/^\d{6}$/.test(form.pincode)) {
+      setError("Please enter a valid 6-digit PIN code.");
+      return;
+    }
+    if (quoteLoading) {
+      setError("Calculating delivery charge, please wait a moment…");
+      return;
+    }
+    if (!quote) {
+      setError("Unable to calculate delivery charge. Please verify your PIN code or select your state.");
+      return;
     }
 
-    if (!quote || !paymentReady) return;
+    if (!paymentReady) return;
     setLoading(true);
     setError("");
 
@@ -396,9 +463,10 @@ export function CheckoutWizard() {
               if (!verifyRes.ok || !verified.orderNumber)
                 throw new Error(verified.error || "Your payment needs support review. Please contact us.");
 
+              const cleanPhone = form.phone.replace(/^\+91/, "").replace(/\D/g, "");
               window.localStorage.setItem(
                 "raghul-snacks-last-order",
-                JSON.stringify({ orderNumber: verified.orderNumber, phone: form.phone }),
+                JSON.stringify({ orderNumber: verified.orderNumber, phone: cleanPhone }),
               );
               if (buyNowItem) clearBuyNowItem(); else clearCart();
               orderPlacedRef.current = true;
@@ -416,6 +484,10 @@ export function CheckoutWizard() {
           },
         };
         const rzp = new window.Razorpay(options);
+        rzp.on("payment.failed", (resp: any) => {
+          setLoading(false);
+          setError(resp.error?.description || "Payment was unsuccessful. Please check your card or UPI details and try again.");
+        });
         rzp.open();
       });
     } catch (e) {
@@ -555,7 +627,7 @@ export function CheckoutWizard() {
                         {c.discountType === "bogo" && (
                           <span style={{ fontWeight: 600, color: bogoClear ? "#15803d" : "#92400e" }}>
                             {bogoClear
-                              ? `✓ Eligible — ${Math.floor(eligibleUnits / 2)} unit${Math.floor(eligibleUnits / 2) > 1 ? "s" : ""} will be free`
+                              ? `Eligible — ${Math.floor(eligibleUnits / 2)} unit${Math.floor(eligibleUnits / 2) > 1 ? "s" : ""} will be free`
                               : `Min. 2 eligible units required · Add ${2 - eligibleUnits} more`}
                           </span>
                         )}
@@ -563,7 +635,7 @@ export function CheckoutWizard() {
                         {c.discountType !== "bogo" && parseFloat(c.minOrderValue || "0") > 0 && (
                           <span>
                             {meetsMin
-                              ? "✓ Eligible on your order"
+                              ? "Eligible on your order"
                               : `Min. order ₹${parseFloat(c.minOrderValue)} · Add ₹${Math.ceil(parseFloat(c.minOrderValue) - subtotal)} more`}
                           </span>
                         )}
@@ -588,7 +660,13 @@ export function CheckoutWizard() {
         onReady={() => setPaymentReady(true)}
       />
       <main className={styles.page}>
-        <Link className={styles.back} href="/cart">← Back to bag</Link>
+        <Link className={styles.back} href="/cart" onClick={() => clearBuyNowItem()}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 4 }}>
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          Back to bag
+        </Link>
         <div className={styles.intro}>
           <p className="eyebrow">Secure checkout</p>
           <h1>Fresh snacks, <em>on their way.</em></h1>
@@ -597,45 +675,74 @@ export function CheckoutWizard() {
         <div className={styles.layout}>
           {/* ── Left: form ── */}
           <form className={styles.card} onSubmit={pay}>
-            <nav className={styles.steps} aria-label="Checkout progress">
-              {steps.map((label, index) => {
-                const number = index + 1;
-                return (
-                  <button
-                    type="button"
-                    key={label}
-                    className={
-                      number === step
-                        ? styles.activeStep
-                        : number < step
-                        ? styles.completeStep
-                        : ""
-                    }
-                    disabled={number > step}
-                    onClick={() => { setStep(number); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                  >
-                    <span>{number < step ? "✓" : number}</span>
-                    {label}
-                  </button>
-                );
-              })}
-            </nav>
+            <section className={styles.panel}>
+              <div className={styles.panelHead}>
+                <p>Delivery Details</p>
+                <h2>Where should we deliver?</h2>
+                <span>
+                  {savedAddresses.length > 0
+                    ? "Select your delivery address or enter new details below."
+                    : "Enter your contact and address details to calculate live delivery and pay."}
+                </span>
+              </div>
 
-            {/* Step 1 – Contact */}
-            {step === 1 && (
-              <section className={styles.panel}>
-                <div className={styles.panelHead}>
-                  <p>Step 1 of 2</p>
-                  <h2>How can we reach you?</h2>
-                  <span>We use this only for delivery updates.</span>
+              {/* Saved addresses selector */}
+              {savedAddresses.length > 0 && (
+                <div className={styles.addressSelectorGroup}>
+                  <p style={{ margin: "0 0 8px", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", fontWeight: 700 }}>
+                    Saved Delivery Addresses
+                  </p>
+                  {savedAddresses.map((addr) => {
+                    const isSelected = selectedAddressId === addr.id;
+                    return (
+                      <label
+                        key={addr.id}
+                        className={`${styles.addressRadioCard} ${isSelected ? styles.addressRadioCardActive : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          name="deliveryAddressChoice"
+                          checked={isSelected}
+                          onChange={() => handleSelectSavedAddress(addr)}
+                        />
+                        <div className={styles.addressRadioContent}>
+                          <div className={styles.addressRadioHead}>
+                            <span className={styles.addressRadioName}>{addr.name}</span>
+                            {addr.phone && <span className={styles.addressRadioPhone}>· {addr.phone}</span>}
+                            {addr.isDefault && <span className={styles.addressRadioBadge}>Default</span>}
+                          </div>
+                          <p className={styles.addressRadioText}>
+                            {addr.address}, {addr.city}, {addr.state} – {addr.pincode}
+                          </p>
+                        </div>
+                      </label>
+                    );
+                  })}
+
+                  <label
+                    className={`${styles.newAddressToggle} ${selectedAddressId === "new" ? styles.newAddressToggleActive : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="deliveryAddressChoice"
+                      checked={selectedAddressId === "new"}
+                      onChange={handleSelectNewAddress}
+                      style={{ accentColor: "var(--terracotta)", width: 16, height: 16, margin: 0 }}
+                    />
+                    <span>+ Deliver to a different / new address</span>
+                  </label>
                 </div>
+              )}
+
+              {/* Show manual contact + address inputs if 'new' is chosen OR if no saved addresses exist */}
+              {(selectedAddressId === "new" || savedAddresses.length === 0) && (
                 <div className={styles.fields}>
                   <label>
                     Full name
                     <input
                       autoComplete="name"
-                      autoFocus
                       required
+                      placeholder="Your full name"
                       value={form.customerName}
                       onChange={(e) => update("customerName", e.target.value)}
                     />
@@ -647,15 +754,15 @@ export function CheckoutWizard() {
                       required
                       inputMode="tel"
                       pattern="(\+91[6-9][0-9]{9}|[6-9][0-9]{9})"
-                      placeholder="9876543210 or +919876543210"
+                      placeholder="10-digit mobile (e.g. 9876543210)"
                       value={form.phone}
                       onChange={(e) => update("phone", e.target.value)}
                     />
                   </label>
+
                   {account ? (
-                    <p className={styles.full}>
-                      Signed in as <strong>{account.name}</strong> ({account.email}).
-                      Your order will be added to this account.
+                    <p className={styles.full} style={{ fontSize: 13, color: "#687267", margin: "2px 0 6px" }}>
+                      Signed in as <strong>{account.name}</strong> ({account.email}). Your order will be linked to your account.
                     </p>
                   ) : (
                     <>
@@ -664,191 +771,117 @@ export function CheckoutWizard() {
                         <input
                           autoComplete="email"
                           type="email"
-                          placeholder="For order confirmation"
+                          placeholder="For order receipt and tracking updates"
                           value={form.email}
                           onChange={(e) => update("email", e.target.value)}
                         />
                       </label>
-                      <p className={styles.full} style={{ fontSize: 13, color: "#687267" }}>
+                      <p className={styles.full} style={{ fontSize: 12.5, color: "#687267", margin: "-6px 0 6px" }}>
                         Checking out as guest.{" "}
                         <a href="/login?returnTo=/checkout" style={{ color: "var(--terracotta)", fontWeight: 600 }}>
                           Sign in
                         </a>{" "}
-                        to save this order to your account.
+                        to use saved addresses.
                       </p>
                     </>
                   )}
-                </div>
-              </section>
-            )}
 
-            {/* Step 2 – Delivery + coupon */}
-            {step === 2 && (
-              <section className={styles.panel}>
-                <div className={styles.panelHead}>
-                  <p>Step 2 of 2</p>
-                  <h2>Where should we deliver?</h2>
+                  <label className={styles.full}>
+                    Street address
+                    <textarea
+                      autoComplete="street-address"
+                      required
+                      minLength={8}
+                      placeholder="House / flat number, building name, street, area, landmark"
+                      value={form.address}
+                      onChange={(e) => update("address", e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    State
+                    <select
+                      required
+                      value={form.state}
+                      onChange={(e) => update("state", e.target.value)}
+                    >
+                      <option value="">
+                        {states.length ? "Select state" : "Loading states…"}
+                      </option>
+                      {states.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    District / City
+                    <input
+                      required
+                      autoComplete="address-level2"
+                      placeholder="Enter district or city"
+                      value={form.city}
+                      onChange={(e) => update("city", e.target.value)}
+                    />
+                  </label>
+                  <label className={styles.full}>
+                    PIN code
+                    <input
+                      autoComplete="postal-code"
+                      required
+                      inputMode="numeric"
+                      pattern="[0-9]{6}"
+                      placeholder="6-digit postal PIN"
+                      value={form.pincode}
+                      onChange={(e) => update("pincode", e.target.value)}
+                    />
+                  </label>
+                </div>
+              )}
+
+              {/* Delivery charge */}
+              <div className={styles.courier} style={{ marginTop: 24 }}>
+                <div>
+                  <strong>Delivery</strong>
                   <span>
-                    Choose your location to calculate a live courier rate and complete payment.
+                    {quoteLoading
+                      ? "Finding cheapest courier rate…"
+                      : quote
+                      ? `${cleanCourierDisplayName(quote.courierName)}${quote.estimatedDeliveryDays ? ` · Est: ${quote.estimatedDeliveryDays}` : ""}`
+                      : "Enter 6-digit PIN code to see delivery charge"}
                   </span>
                 </div>
+                <b>{quoteLoading ? "…" : quote ? formatPrice(shipping) : "—"}</b>
+              </div>
 
-                {/* Saved addresses selector */}
-                {savedAddresses.length > 0 && (
-                  <div className={styles.addressSelectorGroup}>
-                    <p style={{ margin: "0 0 6px", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", fontWeight: 700 }}>
-                      Delivery Address
-                    </p>
-                    {savedAddresses.map((addr) => {
-                      const isSelected = selectedAddressId === addr.id;
-                      return (
-                        <label
-                          key={addr.id}
-                          className={`${styles.addressRadioCard} ${isSelected ? styles.addressRadioCardActive : ""}`}
-                        >
-                          <input
-                            type="radio"
-                            name="deliveryAddressChoice"
-                            checked={isSelected}
-                            onChange={() => handleSelectSavedAddress(addr)}
-                          />
-                          <div className={styles.addressRadioContent}>
-                            <div className={styles.addressRadioHead}>
-                              <span className={styles.addressRadioName}>{addr.name}</span>
-                              {addr.phone && <span className={styles.addressRadioPhone}>· {addr.phone}</span>}
-                              {addr.isDefault && <span className={styles.addressRadioBadge}>Default</span>}
-                            </div>
-                            <p className={styles.addressRadioText}>
-                              {addr.address}, {addr.city}, {addr.state} – {addr.pincode}
-                            </p>
-                          </div>
-                        </label>
-                      );
-                    })}
+              {/* Coupon */}
+              {couponSection}
 
-                    <label
-                      className={`${styles.newAddressToggle} ${selectedAddressId === "new" ? styles.newAddressToggleActive : ""}`}
-                    >
-                      <input
-                        type="radio"
-                        name="deliveryAddressChoice"
-                        checked={selectedAddressId === "new"}
-                        onChange={handleSelectNewAddress}
-                        style={{ accentColor: "var(--terracotta)", width: 16, height: 16, margin: 0 }}
-                      />
-                      <span>+ Deliver to a different / new address</span>
-                    </label>
-                  </div>
-                )}
-
-                {/* Show manual address inputs if 'new' is chosen OR if no saved addresses exist */}
-                {(selectedAddressId === "new" || savedAddresses.length === 0) && (
-                  <div className={styles.fields}>
-                    <label className={styles.full}>
-                      Street address
-                      <textarea
-                        autoComplete="street-address"
-                        required
-                        minLength={8}
-                        placeholder="House / flat number, street and area"
-                        value={form.address}
-                        onChange={(e) => update("address", e.target.value)}
-                      />
-                    </label>
-                    <label>
-                      State
-                      <select
-                        required
-                        value={form.state}
-                        onChange={(e) => update("state", e.target.value)}
-                      >
-                        <option value="">
-                          {states.length ? "Select state" : "Loading states…"}
-                        </option>
-                        {states.map((s) => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </label>
-                    <label>
-                      District
-                      <input
-                        required
-                        autoComplete="address-level2"
-                        placeholder="Enter district"
-                        value={form.city}
-                        onChange={(e) => update("city", e.target.value)}
-                      />
-                    </label>
-                    <label>
-                      PIN code
-                      <input
-                        autoComplete="postal-code"
-                        required
-                        inputMode="numeric"
-                        pattern="[0-9]{6}"
-                        placeholder="6-digit PIN"
-                        value={form.pincode}
-                        onChange={(e) => update("pincode", e.target.value)}
-                      />
-                    </label>
-                  </div>
-                )}
-
-                {/* Delivery charge */}
-                <div className={styles.courier}>
-                  <div>
-                    <strong>Delivery</strong>
-                    <span>
-                      {quoteLoading
-                        ? "Finding cheapest courier rate…"
-                        : quote
-                        ? `${quote.courierName || "Courier Delivery"}${quote.estimatedDeliveryDays ? ` · Est: ${quote.estimatedDeliveryDays}` : ""}`
-                        : "Enter 6-digit PIN code to see delivery charge"}
-                    </span>
-                  </div>
-                  <b>{quoteLoading ? "…" : quote ? formatPrice(shipping) : "—"}</b>
-                </div>
-
-                {/* Coupon */}
-                {couponSection}
-
-                <p className={styles.security}>
-                  ▣ Your payment is encrypted and processed securely. We never store card details.
-                </p>
-              </section>
-            )}
+              <p className={styles.security} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <span>Your payment is encrypted and processed securely. We never store card details.</span>
+              </p>
+            </section>
 
             {success && <p className={styles.success}>{success}</p>}
             {error && <p className={styles.error}>{error}</p>}
 
             <div className={styles.actions}>
-              {step > 1 ? (
-                <button className={styles.secondary} type="button" onClick={() => { setStep(step - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
-                  ← Back
-                </button>
-              ) : (
-                <span />
-              )}
-              {step < 2 ? (
-                <button className="button button-dark" type="button" onClick={() => continueTo(step + 1)}>
-                  Continue →
-                </button>
-              ) : (
-                <button
-                  className="button button-dark"
-                  type="submit"
-                  disabled={loading || !paymentReady || !quote || quoteLoading}
-                >
-                  {loading
-                    ? "Opening secure payment…"
-                    : quoteLoading
-                    ? "Finding cheapest courier…"
-                    : paymentReady && quote
-                    ? `Pay ${formatPrice(total)} securely`
-                    : !quote
-                    ? "Enter 6-digit PIN code"
-                    : "Loading secure payment…"}
-                </button>
-              )}
+              <button
+                className="button button-dark"
+                type="submit"
+                disabled={loading || !paymentReady || !quote || quoteLoading}
+                style={{ width: "100%", padding: "16px 24px", fontSize: 16, fontWeight: 700 }}
+              >
+                {loading
+                  ? "Opening secure payment…"
+                  : quoteLoading
+                  ? "Finding cheapest courier…"
+                  : paymentReady && quote
+                  ? `Pay ${formatPrice(total)} securely`
+                  : !quote
+                  ? "Enter 6-digit PIN code"
+                  : "Loading secure payment…"}
+              </button>
             </div>
           </form>
 

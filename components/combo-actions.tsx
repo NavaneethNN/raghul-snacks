@@ -43,7 +43,7 @@ export function ComboActions({ combo }: { combo: any }) {
     addItem(cartCombo, quantity);
     setAdded(true);
     // Show "Go to Cart" toast with a link-style message for 5 seconds
-    show("✓ Added to cart", { duration: 5000, href: "/cart" });
+    show("Added to cart", { duration: 5000, href: "/cart" });
     window.setTimeout(() => setAdded(false), 3000);
   }
 
@@ -85,7 +85,14 @@ export function ComboActions({ combo }: { combo: any }) {
           disabled={added}
           style={added ? { cursor: "default" } : undefined}
         >
-          {added ? "✓ Added to Cart" : inCart ? "+ Add More" : "Add Combo to Cart"}
+          {added ? (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Added to Cart
+            </span>
+          ) : inCart ? "+ Add More" : "Add Combo to Cart"}
         </button>
 
         {/* Buy Now */}

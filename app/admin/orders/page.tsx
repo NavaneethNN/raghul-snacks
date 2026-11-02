@@ -33,6 +33,12 @@ export default async function AdminOrdersPage() {
     shippingStatus: string;
     shipmentId: string | null;
     awbCode: string | null;
+    billedWeight?: number | null;
+    packageLength?: number | null;
+    packageBreadth?: number | null;
+    packageHeight?: number | null;
+    packageBoxName?: string | null;
+    orderSource?: string | null;
     createdAt: string;
     items: {
       id: number;
@@ -40,6 +46,7 @@ export default async function AdminOrdersPage() {
       quantity: number;
       price: number;
       weight?: string | null;
+      approxWeight?: string | null;
       productId?: number | null;
       variantId?: number | null;
     }[];
@@ -69,6 +76,12 @@ export default async function AdminOrdersPage() {
         shippingStatus: orders.shippingStatus,
         shipmentId: orders.shipmentId,
         awbCode: orders.awbCode,
+        billedWeight: orders.billedWeight,
+        packageLength: orders.packageLength,
+        packageBreadth: orders.packageBreadth,
+        packageHeight: orders.packageHeight,
+        packageBoxName: orders.packageBoxName,
+        orderSource: orders.orderSource,
         createdAt: orders.createdAt
       })
       .from(orders)
@@ -87,6 +100,7 @@ export default async function AdminOrdersPage() {
             quantity: orderItems.quantity,
             price: orderItems.price,
             weight: orderItems.weight,
+            approxWeight: orderItems.approxWeight,
           })
           .from(orderItems)
           .where(inArray(orderItems.orderId, orderIds))
@@ -144,6 +158,11 @@ export default async function AdminOrdersPage() {
         total: Number(order.total),
         shippingActual: Number(order.shippingActual ?? 0),
         shippingExtra: Number(order.shippingExtra ?? 0),
+        billedWeight: order.billedWeight ? Number(order.billedWeight) : null,
+        packageLength: order.packageLength ? Number(order.packageLength) : null,
+        packageBreadth: order.packageBreadth ? Number(order.packageBreadth) : null,
+        packageHeight: order.packageHeight ? Number(order.packageHeight) : null,
+        packageBoxName: order.packageBoxName ?? null,
         createdAt: order.createdAt.toISOString(),
         items: items.map((item) => {
           const resolvedWeight =
@@ -160,6 +179,7 @@ export default async function AdminOrdersPage() {
             quantity: item.quantity,
             price: Number(item.price),
             weight: resolvedWeight,
+            approxWeight: item.approxWeight || null,
           };
         }),
       };

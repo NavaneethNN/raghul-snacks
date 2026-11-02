@@ -11,7 +11,11 @@ type CartContextValue = {
   subtotal: number;
   hydrated: boolean;
   syncing: boolean;
-  addItem: (product: Product, quantity?: number) => void;
+  isCartOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
+  toggleCart: () => void;
+  addItem: (product: Product, quantity?: number, openDrawer?: boolean) => void;
   updateQuantity: (id: string, quantity: number) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
@@ -137,6 +141,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [syncing, setSyncing] = useState(true); // start true — stays true until full init completes
   const [loggedIn, setLoggedIn] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  const openCart = useCallback(() => setIsCartOpen(true), []);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
+  const toggleCart = useCallback(() => setIsCartOpen((prev) => !prev), []);
   // Prevent push-back during the initial server merge
   const mergingRef = useRef(false);
   // Debounce timer for syncing local changes to server
@@ -258,8 +267,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     subtotal: items.reduce((t, i) => t + i.offerPrice * i.quantity, 0),
     hydrated,
     syncing,
+    isCartOpen,
+    openCart,
+    closeCart,
+    toggleCart,
 
-    addItem: (product: Product, quantity = 1) => {
+    addItem: (product: Product, quantity = 1, openDrawer = true) => {
       setItems((current) => {
         const existing = current.find((i) => i.id === product.id);
         const next = existing
@@ -268,6 +281,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         scheduleSync(next);
         return next;
       });
+      if (openDrawer) {
+        setIsCartOpen(true);
+      }
     },
 
     updateQuantity: (id: string, quantity: number) => {
@@ -298,7 +314,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const item = items.find((i) => i.id === id || i.id === String(id));
       return item ? item.quantity : 0;
     },
-  }), [items, loggedIn, scheduleSync, hydrated, syncing]);
+  }), [items, loggedIn, scheduleSync, hydrated, syncing, isCartOpen, openCart, closeCart, toggleCart]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

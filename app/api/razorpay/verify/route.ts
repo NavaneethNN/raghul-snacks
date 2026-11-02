@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const { lines, subtotal } = await priceOrder(payload.data.items);
+    const { lines, subtotal, packageBox } = await priceOrder(payload.data.items);
 
     let discount = 0;
     if (payload.data.couponCode) {
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
     const rpOrder = (await rpOrderRes.json()) as { amount?: number; amount_paid?: number };
     const totalPaid = rpOrder.amount ? rpOrder.amount / 100 : subtotal - discount;
     const shipping = Math.max(0, Math.round((totalPaid - (subtotal - discount)) * 100) / 100);
-    const shippingExtra = shipping > 0 ? 2 : 0;
+    const shippingExtra = shipping > 0 ? 5 : 0;
     const shippingActual = Math.max(0, Math.round((shipping - shippingExtra) * 100) / 100);
 
     const [order] = await db
@@ -124,6 +124,11 @@ export async function POST(request: Request) {
         paymentOrderId: payload.data.razorpayOrderId,
         shippingActual: String(shippingActual),
         shippingExtra: String(shippingExtra),
+        billedWeight: String(packageBox.totalWeightKg),
+        packageLength: String(packageBox.length),
+        packageBreadth: String(packageBox.breadth),
+        packageHeight: String(packageBox.height),
+        packageBoxName: packageBox.boxName,
       })
       .returning({ id: orders.id });
 
@@ -132,6 +137,7 @@ export async function POST(request: Request) {
         const baseId = typeof line.product.id === "number" ? line.product.id : null;
         // Parse variant ID from cart product ID format "6-v12" → variantId=12
         const variantId = line.product.variantId ?? null;
+        const approxWeight = (line.product.approxWeight as string) ?? (line.product.weight as string) ?? null;
         return {
           orderId: order.id,
           productId: baseId,
@@ -140,6 +146,7 @@ export async function POST(request: Request) {
           quantity: line.quantity,
           price: String(line.product.offerPrice),
           weight: (line.product.weight as string) ?? null,
+          approxWeight,
         };
       })
     );

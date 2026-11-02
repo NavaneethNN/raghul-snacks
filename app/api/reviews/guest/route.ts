@@ -1,51 +1,78 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
-import { orders, reviews } from "@/drizzle/schema";
+import { orderItems, orders, reviews } from "@/drizzle/schema";
 import { getDb } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
-  const body = await request.json() as { orderNumber?: string; phone?: string; customerName?: string; rating?: number; content?: string };
+  const body = (await request.json()) as {
+    orderNumber?: string;
+    phone?: string;
+    customerName?: string;
+    rating?: number;
+    content?: string;
+  };
   const { orderNumber, phone, customerName, rating, content } = body;
 
   if (!orderNumber || !phone || !customerName || !rating) {
-    return NextResponse.json({ error: "Order number, phone, name and rating are required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Order number, phone, name, and rating are required." },
+      { status: 400 }
+    );
   }
   if (rating < 1 || rating > 5) {
-    return NextResponse.json({ error: "Rating must be between 1 and 5." }, { status: 400 });
+    return NextResponse.json({ error: "Rating must be between 1 and 5 stars." }, { status: 400 });
   }
-  if (!/^RS-\d{8}$/i.test(orderNumber)) {
+  if (!/^RS-[A-Za-z0-9-]+$/i.test(orderNumber.trim())) {
     return NextResponse.json({ error: "Invalid order number." }, { status: 400 });
   }
 
   const db = getDb();
 
-  // Verify the order exists, belongs to this phone, and is delivered
+  // Verify the order exists and belongs to this phone
   const order = await db
     .select({ id: orders.id, orderStatus: orders.orderStatus })
     .from(orders)
-    .where(and(eq(orders.orderNumber, orderNumber.toUpperCase()), eq(orders.phone, phone)))
+    .where(and(eq(orders.orderNumber, orderNumber.trim().toUpperCase()), eq(orders.phone, phone.trim())))
     .limit(1);
 
   if (!order[0]) {
-    return NextResponse.json({ error: "Order not found. Please check your order number and phone number." }, { status: 404 });
+    return NextResponse.json(
+      { error: "Order not found. Please check your order number and phone number." },
+      { status: 404 }
+    );
   }
   if (order[0].orderStatus !== "delivered") {
-    return NextResponse.json({ error: "You can only review after your order has been delivered." }, { status: 403 });
+    return NextResponse.json(
+      { error: "You can submit a review once your order has been delivered." },
+      { status: 403 }
+    );
   }
 
-  // Prevent duplicate guest review for same order
+  // Prevent duplicate review for this order
   const existing = await db
     .select({ id: reviews.id })
     .from(reviews)
-    .where(and(eq(reviews.orderId, order[0].id), eq(reviews.customerName, customerName.trim())))
+    .where(eq(reviews.orderId, order[0].id))
     .limit(1);
 
   if (existing.length > 0) {
-    return NextResponse.json({ error: "You have already submitted a review for this order." }, { status: 409 });
+    return NextResponse.json(
+      { error: "A review has already been submitted for this order. Thank you!" },
+      { status: 409 }
+    );
   }
 
+  // Find the first product in this order to associate the review with
+  const items = await db
+    .select({ productId: orderItems.productId })
+    .from(orderItems)
+    .where(eq(orderItems.orderId, order[0].id))
+    .limit(1);
+
+  const matchedProductId = items[0]?.productId ?? null;
+
   await db.insert(reviews).values({
-    productId: null,
+    productId: matchedProductId,
     orderId: order[0].id,
     accountId: null,
     customerName: customerName.trim(),

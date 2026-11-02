@@ -48,6 +48,15 @@ export async function GET() {
         .from(reviews)
         .where(and(eq(reviews.orderId, order.id), eq(reviews.accountId, session.id)));
 
+      // If the customer has already submitted a review for this order, don't nag them again
+      if (existingReviews.length > 0) continue;
+
+      const accountReviewedProducts = await db
+        .select({ productId: reviews.productId })
+        .from(reviews)
+        .where(and(eq(reviews.accountId, session.id), inArray(reviews.productId, productIds)));
+      if (accountReviewedProducts.length > 0) continue;
+
       const reviewedIds = new Set(existingReviews.map((r) => r.productId));
 
       const unreviewed = productRows.find((p) => !reviewedIds.has(p.id));

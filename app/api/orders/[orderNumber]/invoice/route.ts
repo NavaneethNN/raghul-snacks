@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { orders, orderItems } from "@/drizzle/schema";
 import { getDb } from "@/lib/db";
 import { buildInvoiceHtml } from "@/lib/invoice-html";
+import { generateInvoicePdf } from "@/lib/invoice-pdf";
 
 export const dynamic = "force-dynamic";
 
@@ -36,11 +37,21 @@ export async function GET(
         state: orders.state,
         pincode: orders.pincode,
         total: orders.total,
+        shippingActual: orders.shippingActual,
+        shippingExtra: orders.shippingExtra,
+        paymentMethod: orders.paymentMethod,
         couponCode: orders.couponCode,
         discount: orders.discount,
         paymentStatus: orders.paymentStatus,
         orderStatus: orders.orderStatus,
         createdAt: orders.createdAt,
+        packageBoxName: orders.packageBoxName,
+        billedWeight: orders.billedWeight,
+        packageLength: orders.packageLength,
+        packageBreadth: orders.packageBreadth,
+        packageHeight: orders.packageHeight,
+        shipmentId: orders.shipmentId,
+        awbCode: orders.awbCode,
       })
       .from(orders)
       .where(eq(orders.orderNumber, orderNumber))
@@ -56,21 +67,50 @@ export async function GET(
         quantity: orderItems.quantity,
         price: orderItems.price,
         weight: orderItems.weight,
+        approxWeight: orderItems.approxWeight,
       })
       .from(orderItems)
       .where(eq(orderItems.orderId, order.id));
 
-    const html = buildInvoiceHtml({ ...order, items, logoDataUri: "" });
+    const courierName =
+      order.shipmentId && !/^\d+$/.test(order.shipmentId)
+        ? order.shipmentId
+        : order.awbCode
+        ? "Shiprocket Express"
+        : null;
 
-    // Inject auto-print script so the browser opens print dialog immediately
-    const printableHtml = html.replace(
-      "</body>",
-      `<script>window.onload = function() { window.print(); }</script></body>`
-    );
+    const url = new URL(request.url);
+    const viewHtml = url.searchParams.get("view") === "html";
 
-    return new NextResponse(printableHtml, {
+    // If explicit HTML view requested (e.g. for previewing in iframe), return clean HTML without auto-print
+    if (viewHtml) {
+      const html = buildInvoiceHtml({
+        ...order,
+        courierName,
+        items,
+        logoDataUri: "",
+      });
+
+      return new NextResponse(html, {
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "no-store",
+        },
+      });
+    }
+
+    // Default: Generate and automatically download clean vector Tax Invoice PDF
+    const pdfBuffer = generateInvoicePdf({
+      ...order,
+      courierName,
+      items,
+    });
+
+    return new Response(pdfBuffer as unknown as BodyInit, {
+      status: 200,
       headers: {
-        "Content-Type": "text/html; charset=utf-8",
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="Invoice-${orderNumber}.pdf"`,
         "Cache-Control": "no-store",
       },
     });

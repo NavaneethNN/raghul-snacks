@@ -48,9 +48,10 @@ export function CustomerOrders() {
         const value = window.localStorage.getItem("raghul-snacks-last-order");
         if (!value) return;
         const parsed = JSON.parse(value) as SavedOrder;
-        if (!/^RS-\d{8}$/i.test(parsed.orderNumber) || !/^[6-9]\d{9}$/.test(parsed.phone)) return;
-        setSaved(parsed);
-        const response = await fetch("/api/orders/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(parsed) });
+        const cleanPhone = (parsed.phone || "").replace(/^\+91/, "").replace(/\D/g, "");
+        if (!/^RS-[A-Za-z0-9-]+$/i.test(parsed.orderNumber) || !/^[6-9]\d{9}$/.test(cleanPhone)) return;
+        setSaved({ orderNumber: parsed.orderNumber, phone: cleanPhone });
+        const response = await fetch("/api/orders/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderNumber: parsed.orderNumber, phone: cleanPhone }) });
         const data = await response.json() as { order?: CustomerOrder };
         if (response.ok && data.order) setTrackedOrder(data.order);
       } catch {} finally { setLoading(false); }
@@ -65,15 +66,23 @@ export function CustomerOrders() {
   const displayOrder = orders.length > 0 ? orders[0] : trackedOrder!;
   const stageIndex = stages.indexOf(displayOrder.orderStatus);
 
-  const downloadInvoice = async (orderNumber: string) => {
-    // Open invoice in new tab — browser will auto-print via window.onload
-    window.open(`/api/orders/${orderNumber}/invoice`, "_blank");
+  const downloadInvoice = (orderNumber: string) => {
+    const link = document.createElement("a");
+    link.href = `/api/orders/${orderNumber}/invoice`;
+    link.download = `Invoice-${orderNumber}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
     <main className={styles.page}>
       <section className={styles.success}>
-        <div className={styles.check}>✓</div>
+        <div className={styles.check}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
         {isPostPayment ? (
           <>
             <p className="eyebrow">Payment successful</p>
@@ -109,7 +118,15 @@ export function CustomerOrders() {
           <ol className={styles.timeline} style={{ opacity: displayOrder.orderStatus === "cancelled" ? 0.4 : 1 }}>
             {stages.map((stage, index) => (
               <li className={index <= stageIndex ? styles.done : ""} key={stage}>
-                <i>{index < stageIndex ? "✓" : index + 1}</i>
+                <i>
+                  {index < stageIndex ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle" }}>
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  ) : (
+                    index + 1
+                  )}
+                </i>
                 <div>
                   <strong>{statusLabels[stage]}</strong>
                   <span>{index === 0 ? new Date(displayOrder.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" }) : index === stageIndex ? "Current update" : "Pending"}</span>
@@ -118,9 +135,20 @@ export function CustomerOrders() {
             ))}
           </ol>
           {displayOrder.awbCode && (
-            <div className={styles.awb}>
-              <span>Tracking number</span>
-              <strong>{displayOrder.awbCode}</strong>
+            <div className={styles.awb} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+              <div>
+                <span>Tracking number</span>
+                <strong>{displayOrder.awbCode}</strong>
+              </div>
+              <a
+                href={`https://shiprocket.co/tracking/${displayOrder.awbCode}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="button button-dark"
+                style={{ padding: "6px 14px", fontSize: 12, borderRadius: 6, textDecoration: "none" }}
+              >
+                Track Live →
+              </a>
             </div>
           )}
         </article>

@@ -266,12 +266,12 @@ export function AdminBanners() {
         </div>
       )}
       <header className={styles.header}>
-        <div>
+        <div className={styles.headerTitleWrap}>
           <p className={styles.eyebrow}>Banner Management</p>
           <h1>Homepage Banners</h1>
           <p>Manage promotional banners and hero images.</p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className={styles.headerActions}>
           <button className={styles.primaryButton} onClick={openAdd}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -279,8 +279,8 @@ export function AdminBanners() {
             </svg>
             Add Banner
           </button>
+          <div className={styles.headerBell}><AdminHeaderActions /></div>
         </div>
-        <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
       <section className={styles.workspace}>

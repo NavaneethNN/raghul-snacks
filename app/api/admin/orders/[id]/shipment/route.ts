@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { orderItems, orders, products } from "@/drizzle/schema";
+import { orderItems, orders } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
 import { parseWeightToKg, calculatePackagingBufferKg } from "@/lib/catalog";
@@ -19,6 +19,8 @@ const shipmentRequestSchema = z.object({
   length: z.number().positive().optional().default(15),
   breadth: z.number().positive().optional().default(15),
   height: z.number().positive().optional().default(10),
+  boxName: z.string().trim().optional(),
+  courierId: z.number().optional(),
   courierName: z.string().trim().optional(),
   awbCode: z.string().trim().optional(),
   provider: z.enum(["shiprocket", "manual"]).optional(),
@@ -58,13 +60,23 @@ export async function GET(
       .from(orderItems)
       .where(eq(orderItems.orderId, order.id));
 
-    // Calculate base weight from products + dynamic parcel packaging buffer
+    const billedWeight = order.billedWeight ? parseFloat(order.billedWeight) : null;
+    const length = order.packageLength ? parseFloat(order.packageLength) : 15;
+    const breadth = order.packageBreadth ? parseFloat(order.packageBreadth) : 15;
+    const height = order.packageHeight ? parseFloat(order.packageHeight) : 10;
+    const boxName = order.packageBoxName || null;
+
+    // Calculate base weight from items (using approxWeight when available) + parcel packaging buffer as fallback
     const productWeight = items.reduce((sum, item) => {
-      const w = item.weight ? parseWeightToKg(item.weight) : 0.25;
+      const w = item.approxWeight
+        ? parseWeightToKg(item.approxWeight)
+        : item.weight
+        ? parseWeightToKg(item.weight)
+        : 0.25;
       return sum + w * item.quantity;
     }, 0);
     const packagingBufferKg = calculatePackagingBufferKg(productWeight);
-    const estimatedWeightKg = Math.round((productWeight + packagingBufferKg) * 100) / 100;
+    const estimatedWeightKg = billedWeight ?? Math.round((productWeight + packagingBufferKg) * 100) / 100;
 
     let labelUrl: string | null = null;
     if (order.shipmentId && isShiprocketConfigured()) {
@@ -73,6 +85,9 @@ export async function GET(
       } catch {
         // Label generation can fail if not ready yet
       }
+    }
+    if (!labelUrl && order.awbCode) {
+      labelUrl = `/api/admin/orders/${order.id}/label`;
     }
 
     return NextResponse.json({
@@ -83,6 +98,10 @@ export async function GET(
       shipmentId: order.shipmentId,
       awbCode: order.awbCode,
       estimatedWeightKg,
+      length,
+      breadth,
+      height,
+      boxName,
       shiprocketConfigured: isShiprocketConfigured(),
       labelUrl,
       trackingUrl: order.awbCode ? `https://shiprocket.co/tracking/${order.awbCode}` : null,
@@ -168,6 +187,8 @@ export async function POST(
         length: body.data.length,
         breadth: body.data.breadth,
         height: body.data.height,
+        courierId: body.data.courierId,
+        courierName: body.data.courierName,
         lines,
       });
 
@@ -187,29 +208,118 @@ export async function POST(
       awbCode = manualAwb;
     }
 
-    // Update order with courier booking and advance status to dispatched
+    const hasAwb = Boolean(awbCode && awbCode.trim() !== "");
+
+    // Update order with courier booking; advance to 'dispatched' only if AWB is confirmed
     await db
       .update(orders)
       .set({
         shiprocketOrderId: shiprocketOrderId ?? order.shiprocketOrderId,
         shipmentId: shipmentId ?? order.shipmentId,
-        awbCode: awbCode ?? order.awbCode,
-        shippingStatus: "created",
-        orderStatus: "dispatched",
+        awbCode: hasAwb ? awbCode : null,
+        shippingStatus: hasAwb ? "created" : "pending",
+        orderStatus: hasAwb ? "dispatched" : "packed",
+        billedWeight: String(finalWeight),
+        packageLength: String(body.data.length),
+        packageBreadth: String(body.data.breadth),
+        packageHeight: String(body.data.height),
+        packageBoxName: body.data.boxName ?? order.packageBoxName,
       })
       .where(eq(orders.id, order.id));
+
+    if (!hasAwb && shiprocketActive) {
+      throw new Error(
+        "Shiprocket order was created, but AWB could not be generated due to insufficient wallet balance (₹0.00). Please recharge your Shiprocket wallet or switch to Manual Booking."
+      );
+    }
 
     return NextResponse.json({
       success: true,
       shipmentId,
       awbCode,
-      orderStatus: "dispatched",
-      shippingStatus: "created",
+      orderStatus: hasAwb ? "dispatched" : "packed",
+      shippingStatus: hasAwb ? "created" : "pending",
+      labelUrl: `/api/admin/orders/${order.id}/label`,
     });
   } catch (error) {
     console.error("[shipment] Booking failed:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Courier booking failed." },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/admin/orders/[id]/shipment
+// Cancels courier booking, voids AWB in Shiprocket (triggering wallet refund), and resets order back to 'packed'
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const cookieStore = await cookies();
+    if (!isValidAdminSession(cookieStore.get(adminCookieName())?.value)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const orderId = parseInt(id, 10);
+    if (isNaN(orderId)) {
+      return NextResponse.json({ error: "Invalid order ID" }, { status: 400 });
+    }
+
+    const db = getDb();
+    const [order] = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    if (!order.awbCode && !order.shipmentId) {
+      return NextResponse.json(
+        { error: "No active courier booking or AWB found on this order." },
+        { status: 400 }
+      );
+    }
+
+    let cancelMessage = "Courier booking cancelled.";
+
+    // If Shiprocket was used and AWB is present, cancel it on Shiprocket so charges are refunded to wallet
+    if (order.awbCode && isShiprocketConfigured()) {
+      const { cancelShiprocketAwb, cancelShiprocketOrder } = await import("@/lib/shiprocket");
+      const awbRes = await cancelShiprocketAwb(order.awbCode);
+      if (order.shiprocketOrderId) {
+        await cancelShiprocketOrder(order.shiprocketOrderId).catch(() => {});
+      }
+      cancelMessage = awbRes.success
+        ? "Shiprocket AWB cancelled. Wallet balance will be refunded automatically."
+        : `Shiprocket notice: ${awbRes.message || "AWB cancelled locally."}`;
+    }
+
+    // Reset order back to 'packed' so it can be re-booked with new weight/courier
+    await db
+      .update(orders)
+      .set({
+        awbCode: null,
+        shipmentId: null,
+        shippingStatus: "pending",
+        orderStatus: "packed",
+      })
+      .where(eq(orders.id, order.id));
+
+    return NextResponse.json({
+      success: true,
+      message: cancelMessage,
+      orderStatus: "packed",
+    });
+  } catch (error) {
+    console.error("[shipment] Cancellation failed:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to cancel courier booking." },
       { status: 500 }
     );
   }

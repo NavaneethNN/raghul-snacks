@@ -4,7 +4,16 @@ import * as schema from "@/drizzle/schema";
 import https from "node:https";
 import { Resolver } from "node:dns/promises";
 
-// Setup resilient DNS resolution for Neon database on Windows / restricted local DNS
+// Setup resilient DNS resolution & persistent TCP keep-alive connection pool for Neon Postgres
+const keepAliveAgent = typeof window === "undefined"
+  ? new https.Agent({
+      keepAlive: true,
+      keepAliveMsecs: 60000,
+      maxSockets: 64,
+      maxFreeSockets: 16,
+    })
+  : undefined;
+
 if (typeof window === "undefined" && !neonConfig.fetchFunction) {
   const resolver = new Resolver();
   resolver.setServers(["8.8.8.8", "1.1.1.1"]);
@@ -53,6 +62,7 @@ if (typeof window === "undefined" && !neonConfig.fetchFunction) {
             method: init.method || "POST",
             headers,
             servername: url.hostname,
+            agent: keepAliveAgent,
           }, (res) => {
             const chunks: Buffer[] = [];
             res.on("data", (chunk: Buffer) => chunks.push(chunk));

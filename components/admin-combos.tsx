@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
 import { ConfirmDialog } from "./admin-confirm-dialog";
+import { parseWeightToKg } from "@/lib/catalog";
 import styles from "./admin-table.module.css";
 
 type Product = {
   id: number;
   name: string;
   price: string;
+  weight?: string;
   image: string | null;
 };
 
@@ -54,6 +56,20 @@ export function AdminCombos() {
   const [imageInputType, setImageInputType] = useState<"url" | "file">("url");
   const [imagePreview, setImagePreview] = useState<string>("");
   const [imageData, setImageData] = useState<string>("");
+
+  const calculatedComboWeight = React.useMemo(() => {
+    if (selectedItems.length === 0) return "";
+    let totalKg = 0;
+    for (const item of selectedItems) {
+      const prod = products.find((p) => p.id === item.productId);
+      const wStr = item.unitWeight || prod?.weight || "250g";
+      const kg = parseWeightToKg(wStr);
+      totalKg += kg * (item.quantity || 1);
+    }
+    if (totalKg <= 0) return "";
+    if (totalKg >= 1) return `${Math.round(totalKg * 100) / 100}kg`;
+    return `${Math.round(totalKg * 1000)}g`;
+  }, [selectedItems, products]);
 
   useEffect(() => {
     fetchCombos();
@@ -293,19 +309,21 @@ export function AdminCombos() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div>
+        <div className={styles.headerTitleWrap}>
           <p className={styles.eyebrow}>Bundle Management</p>
           <h1>Product Combos</h1>
           <p>Create product bundles to increase average order value.</p>
         </div>
-        <button className={styles.primaryButton} onClick={() => setShowForm(true)}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Create Combo
-        </button>
-        <div className={styles.headerBell}><AdminHeaderActions /></div>
+        <div className={styles.headerActions}>
+          <button className={styles.primaryButton} onClick={() => setShowForm(true)}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Create Combo
+          </button>
+          <div className={styles.headerBell}><AdminHeaderActions /></div>
+        </div>
       </header>
 
       <section className={styles.workspace}>
@@ -313,24 +331,23 @@ export function AdminCombos() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Combo Name</th>
-                <th className={styles.colHide}>Products</th>
+                <th>Combo</th>
+                <th className={styles.colHide}>Products Included</th>
                 <th>Price</th>
-                <th className={styles.colHide}>Offer Price</th>
-                <th>Actions</th>
+                <th style={{ textAlign: "right" }}>Actions</th>
                 <th className={styles.colHideDesktop} style={{ width: 28 }} />
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className={styles.emptyState}>
+                  <td colSpan={5} className={styles.emptyState}>
                     <div><p>Loading combos...</p></div>
                   </td>
                 </tr>
               ) : combos.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className={styles.emptyState}>
+                  <td colSpan={5} className={styles.emptyState}>
                     <div>
                       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                         <rect x="3" y="8" width="18" height="12" rx="2"></rect>
@@ -348,6 +365,11 @@ export function AdminCombos() {
               ) : (
                 combos.map((combo) => {
                   const isOpen = expanded === combo.id;
+                  const hasDiscount = Number(combo.discount) > 0 && Number(combo.discount) < Number(combo.price);
+                  const productsSummary = combo.items && combo.items.length > 0
+                    ? combo.items.map((it) => it.productName).join(", ")
+                    : "No products";
+
                   return (
                     <React.Fragment key={combo.id}>
                       {/* ── Main row ── */}
@@ -356,33 +378,37 @@ export function AdminCombos() {
                         className={`${styles.expandableRow} ${isOpen ? styles.rowOpen : ""}`}
                       >
                         <td>
-                          <strong>{combo.title}</strong>
-                          <br />
-                          <code style={{ background: "#f3f4f6", padding: "2px 6px", borderRadius: "4px", fontSize: "11px", color: "#6b7280" }}>
-                            {combo.slug}
-                          </code>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                            <strong>{combo.title}</strong>
+                            {combo.items && combo.items.length > 0 && (
+                              <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 6px", borderRadius: "10px", background: "var(--surface-sunken, #f3f4f6)", color: "var(--ink-muted, #6b7280)" }}>
+                                {combo.items.length} {combo.items.length === 1 ? "item" : "items"}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: "11px", color: "var(--ink-muted, #9ca3af)", marginTop: "2px" }}>
+                            /{combo.slug}
+                          </div>
                         </td>
-                        <td className={styles.colHide}>
-                          {combo.items && combo.items.length > 0 ? (
-                            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                              {combo.items.map((item) => (
-                                <span key={item.id} style={{ fontSize: "13px", color: "#6b7280" }}>
-                                  {item.productName} × {item.quantity}{item.unitWeight ? ` (${item.unitWeight})` : ""}
-                                </span>
-                              ))}
+                        <td className={styles.colHide} style={{ maxWidth: "240px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--ink-muted, #6b7280)", fontSize: "13px" }} title={productsSummary}>
+                          {productsSummary}
+                        </td>
+                        <td>
+                          {hasDiscount ? (
+                            <div style={{ display: "flex", alignItems: "baseline", gap: "6px", flexWrap: "wrap" }}>
+                              <strong style={{ color: "var(--primary-strong, #15803d)", fontSize: "14px" }}>
+                                {price.format(Number(combo.discount))}
+                              </strong>
+                              <span style={{ textDecoration: "line-through", color: "var(--ink-muted, #9ca3af)", fontSize: "12px" }}>
+                                {price.format(Number(combo.price))}
+                              </span>
                             </div>
                           ) : (
-                            <span style={{ color: "#9ca3af", fontSize: "13px" }}>No products</span>
+                            <strong>{price.format(Number(combo.price))}</strong>
                           )}
                         </td>
-                        <td><strong>{price.format(Number(combo.price))}</strong></td>
-                        <td className={styles.colHide}>
-                          {Number(combo.discount) > 0
-                            ? <strong style={{ color: "#10b981" }}>{price.format(Number(combo.discount))}</strong>
-                            : "—"}
-                        </td>
-                        <td onClick={(e) => e.stopPropagation()}>
-                          <div className={styles.actionButtons}>
+                        <td onClick={(e) => e.stopPropagation()} style={{ textAlign: "right" }}>
+                          <div className={styles.actionButtons} style={{ justifyContent: "flex-end" }}>
                             <button className={styles.iconButton} onClick={() => handleEdit(combo)} title="Edit">
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -410,7 +436,7 @@ export function AdminCombos() {
                       {/* ── Expanded detail row ── */}
                       {isOpen && (
                         <tr className={styles.detailRowWrapper}>
-                          <td colSpan={6} style={{ padding: 0 }}>
+                          <td colSpan={5} style={{ padding: 0 }}>
                             <div className={styles.rowDetail}>
                               {/* Products */}
                               {combo.items && combo.items.length > 0 && (
@@ -426,11 +452,11 @@ export function AdminCombos() {
                                 </div>
                               )}
                               {/* Offer price */}
-                              {Number(combo.discount) > 0 && (
+                              {hasDiscount && (
                                 <div className={styles.detailRow}>
-                                  <span className={styles.detailLabel}>Offer</span>
+                                  <span className={styles.detailLabel}>Offer Price</span>
                                   <span className={styles.detailValue} style={{ color: "#10b981", fontWeight: 700 }}>
-                                    {price.format(Number(combo.discount))}
+                                    {price.format(Number(combo.discount))} <span style={{ textDecoration: "line-through", color: "#9ca3af", fontWeight: 400, marginLeft: "6px" }}>{price.format(Number(combo.price))}</span>
                                   </span>
                                 </div>
                               )}
@@ -522,7 +548,28 @@ export function AdminCombos() {
                 </div>
               </div>
               <div className={styles.field}>
-                <label>Total Shipping Weight (Hidden from customers)</label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px", flexWrap: "wrap", gap: "6px" }}>
+                  <label style={{ margin: 0 }}>Total Shipping Weight (For Courier)</label>
+                  {calculatedComboWeight && (
+                    <button
+                      type="button"
+                      onClick={() => handleInputChange("weight", calculatedComboWeight)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "var(--terracotta)",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                        padding: 0
+                      }}
+                      title="Click to apply calculated item sum"
+                    >
+                      Use sum of items: {calculatedComboWeight}
+                    </button>
+                  )}
+                </div>
                 <input
                   type="text"
                   placeholder="e.g., 500g, 800g, 1.2kg"
@@ -681,8 +728,11 @@ export function AdminCombos() {
                                 </div>
                               </div>
                               {isSelected && (
-                                <span style={{ fontSize: "11px", fontWeight: 600, color: "#10b981", textTransform: "uppercase" }}>
-                                  ✓ Selected
+                                <span style={{ fontSize: "11px", fontWeight: 600, color: "#10b981", textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 3 }}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                  Selected
                                 </span>
                               )}
                             </label>

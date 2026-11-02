@@ -33,15 +33,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { subtotal, weight, rawSnackWeightKg, packagingBufferKg } = await priceOrder(payload.data.items);
+    const { subtotal, weight, rawSnackWeightKg, packagingBufferKg, packageBox } = await priceOrder(payload.data.items);
     const deliveryMode = process.env.DELIVERY_MODE || "automated";
 
     // ── 1. Automated Minimum Shiprocket Courier ──────────────────────────────
     if (deliveryMode !== "manual" && payload.data.pincode) {
       try {
-        const quote = await getShiprocketQuote(payload.data.pincode, weight, subtotal);
+        const quote = await getShiprocketQuote(payload.data.pincode, weight, subtotal, {
+          length: packageBox.length,
+          breadth: packageBox.breadth,
+          height: packageBox.height,
+        });
         if (quote) {
-          const platformFee = 2;
+          const platformFee = 5;
           const actualCharge = quote.charge;
           const chargedShipping = Math.round((actualCharge + platformFee) * 100) / 100;
 
@@ -109,8 +113,15 @@ export async function POST(request: Request) {
     const totalWeightKg = Math.max(1, weight);
     const extraKg = Math.ceil(Math.max(0, totalWeightKg - 1));
     const actualCharge = baseRate + extraKg * extraRate;
-    const platformFee = 2;
+    const platformFee = 5;
     const chargedShipping = actualCharge + platformFee;
+
+    const prepDays = weight > 3 ? 3 : 2;
+    const estimatedDeliveryDays = isTN
+      ? `${2 + prepDays}–${3 + prepDays} business days`
+      : isSouth
+      ? `${3 + prepDays}–${5 + prepDays} business days`
+      : `${4 + prepDays}–${7 + prepDays} business days`;
 
     return NextResponse.json({
       charge: chargedShipping,
@@ -118,7 +129,7 @@ export async function POST(request: Request) {
       platformFee,
       courierId: null,
       courierName: courierLabel,
-      estimatedDeliveryDays: isTN ? "2–3 business days" : isSouth ? "3–5 business days" : "4–7 business days",
+      estimatedDeliveryDays,
       subtotal,
       total: Math.round((subtotal + chargedShipping) * 100) / 100,
       weightKg: weight,

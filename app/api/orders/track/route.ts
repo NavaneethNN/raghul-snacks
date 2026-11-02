@@ -1,18 +1,20 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { orders } from "@/drizzle/schema";
 import { getDb } from "@/lib/db";
+import { getShiprocketTracking, getCourierTrackingUrl } from "@/lib/shiprocket";
 
 const lookupSchema = z.object({
   orderNumber: z
     .string()
     .trim()
-    .regex(/^RS-\d{8}$/i, "Please enter a valid order number (format: RS-12345678)."),
+    .regex(/^RS-[A-Za-z0-9-]+$/i, "Please enter a valid order number (format: RS-12345678 or RS-WA-...)."),
   phone: z
     .string()
     .trim()
-    .regex(/^[6-9]\d{9}$/, "Please enter a valid 10-digit mobile number."),
+    .transform((val) => val.replace(/^\+91/, "").replace(/\D/g, ""))
+    .refine((val) => /^[6-9]\d{9}$/.test(val), "Please enter a valid 10-digit mobile number."),
 });
 
 export async function POST(request: Request) {
@@ -30,7 +32,7 @@ export async function POST(request: Request) {
   if (!input.success) {
     const errorMsg =
       input.error.issues[0]?.message ||
-      "Please enter your order number (e.g. RS-12345678) and the 10-digit mobile number used at checkout.";
+      "Please enter your order number (e.g. RS-12345678) and your 10-digit mobile number.";
     return NextResponse.json({ error: errorMsg }, { status: 400 });
   }
 
@@ -46,14 +48,19 @@ export async function POST(request: Request) {
         orderStatus: orders.orderStatus,
         paymentStatus: orders.paymentStatus,
         shippingStatus: orders.shippingStatus,
+        shipmentId: orders.shipmentId,
         awbCode: orders.awbCode,
+        packageBoxName: orders.packageBoxName,
         createdAt: orders.createdAt,
       })
       .from(orders)
       .where(
         and(
           eq(orders.orderNumber, input.data.orderNumber.toUpperCase()),
-          eq(orders.phone, input.data.phone)
+          or(
+            eq(orders.phone, input.data.phone),
+            eq(orders.phone, `+91${input.data.phone}`)
+          )
         )
       )
       .limit(1);
@@ -68,18 +75,32 @@ export async function POST(request: Request) {
       );
     }
 
+    let tracking = null;
+    if (order.awbCode) {
+      try {
+        tracking = await getShiprocketTracking(order.awbCode);
+      } catch (err) {
+        console.warn("[orders/track] Live tracking lookup error:", err);
+      }
+    }
+
+    const courierName =
+      order.shipmentId && !/^\d+$/.test(order.shipmentId)
+        ? order.shipmentId
+        : tracking?.courierName || (order.awbCode ? "Shiprocket Express" : null);
+
     return NextResponse.json({
       order: {
         ...order,
+        courierName,
+        tracking,
+        trackingUrl: order.awbCode ? getCourierTrackingUrl(order.shipmentId, order.awbCode) : null,
         total: Number(order.total),
         createdAt: order.createdAt.toISOString(),
       },
     });
   } catch (error) {
-    // Log technical error on the server for admin investigation
     console.error("[orders/track] Database query error:", error);
-
-    // Always return a clean, friendly message to the customer - NEVER leak raw SQL to the user
     return NextResponse.json(
       {
         error:

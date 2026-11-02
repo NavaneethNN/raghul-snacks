@@ -119,7 +119,7 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
     };
     addItem(cartItem, 1);
     setAddedId(c.id);
-    show(`✓ ${c.title} added to cart`, { duration: 4500, href: "/cart" });
+    show(`${c.title} added to cart`, { duration: 4500, href: "/cart" });
     setTimeout(() => setAddedId(null), 2500);
   }
 
@@ -960,7 +960,11 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
       <div className="combo-section-header">
         <div className="combo-header-left">
           <span className="combo-eyebrow-pill">
-            <span className="sparkle">✦</span> Curated Bundles & Gift Boxes
+            <span className="sparkle">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ display: "inline-block", verticalAlign: "middle" }}>
+                <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
+              </svg>
+            </span> Curated Bundles & Gift Boxes
           </span>
           <h2>Handpicked Combos, Made for Sharing.</h2>
           <p className="combo-section-subtitle">
@@ -1008,7 +1012,13 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
                   onClick={() => handleGoTo(i)}
                 >
                   <span className="tab-pill-index">
-                    {isActive && <span className="tab-pill-sparkle">✦</span>}
+                    {isActive && (
+                      <span className="tab-pill-sparkle">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
+                        </svg>
+                      </span>
+                    )}
                     0{i + 1}
                   </span>
                   <span className="tab-pill-title">{c.title}</span>
@@ -1106,7 +1116,12 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
                   disabled={isAdded}
                 >
                   {isAdded ? (
-                    <>✓ Added to Cart</>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      Added to Cart
+                    </span>
                   ) : inCart ? (
                     <>+ Add More · ₹{Math.round(displayPrice)}</>
                   ) : (

@@ -8,16 +8,61 @@ export const combos = pgTable("combos", { id: serial("id").primaryKey(), title: 
 export const comboItems = pgTable("combo_items", { id: serial("id").primaryKey(), comboId: integer("combo_id").notNull().references(() => combos.id, { onDelete: "cascade" }), productId: integer("product_id").notNull().references(() => products.id, { onDelete: "cascade" }), quantity: integer("quantity").notNull().default(1), unitWeight: text("unit_weight") }, (table) => [index("combo_items_product_id_idx").on(table.productId)]);
 export const customers = pgTable("customers", { id: serial("id").primaryKey(), name: text("name").notNull(), phone: text("phone").notNull(), email: text("email"), createdAt }, (table) => [uniqueIndex("customers_phone_unique").on(table.phone)]);
 export const customerAccounts = pgTable("customer_accounts", { id: serial("id").primaryKey(), name: text("name").notNull(), email: text("email").notNull(), passwordHash: text("password_hash"), googleId: text("google_id"), isAdmin: boolean("is_admin").notNull().default(false), createdAt }, (table) => [uniqueIndex("customer_accounts_email_unique").on(table.email), uniqueIndex("customer_accounts_google_id_unique").on(table.googleId)]);
-export const orders = pgTable("orders", { id: serial("id").primaryKey(), orderNumber: text("order_number").notNull(), customerId: integer("customer_id").references(() => customers.id, { onDelete: "set null" }), accountId: integer("account_id").references(() => customerAccounts.id, { onDelete: "set null" }), customerName: text("customer_name").notNull(), phone: text("phone").notNull(), email: text("email"), address: text("address").notNull(), city: text("city").notNull(), state: text("state").notNull(), pincode: text("pincode").notNull(), total: numeric("total", { precision: 10, scale: 2 }).notNull(), couponCode: text("coupon_code"), discount: numeric("discount", { precision: 10, scale: 2 }).notNull().default("0"), paymentStatus: text("payment_status").notNull().default("pending"), paymentMethod: text("payment_method").default("online"), orderStatus: text("order_status").notNull().default("placed"), paymentOrderId: text("payment_order_id"), shiprocketOrderId: text("shiprocket_order_id"), shipmentId: text("shipment_id"), awbCode: text("awb_code"), shippingStatus: text("shipping_status").notNull().default("pending"), shippingActual: numeric("shipping_actual", { precision: 10, scale: 2 }).default("0.00"), shippingExtra: numeric("shipping_extra", { precision: 10, scale: 2 }).default("0.00"), createdAt }, (table) => [uniqueIndex("orders_number_unique").on(table.orderNumber), index("orders_account_id_idx").on(table.accountId), index("orders_customer_id_idx").on(table.customerId)]);
+
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  orderNumber: text("order_number").notNull(),
+  customerId: integer("customer_id").references(() => customers.id, { onDelete: "set null" }),
+  accountId: integer("account_id").references(() => customerAccounts.id, { onDelete: "set null" }),
+  customerName: text("customer_name").notNull(),
+  phone: text("phone").notNull(),
+  email: text("email"),
+  address: text("address").notNull(),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  pincode: text("pincode").notNull(),
+  total: numeric("total", { precision: 10, scale: 2 }).notNull(),
+  couponCode: text("coupon_code"),
+  discount: numeric("discount", { precision: 10, scale: 2 }).notNull().default("0"),
+  paymentStatus: text("payment_status").notNull().default("pending"),
+  paymentMethod: text("payment_method").default("online"),
+  orderStatus: text("order_status").notNull().default("placed"),
+  paymentOrderId: text("payment_order_id"),
+  shiprocketOrderId: text("shiprocket_order_id"),
+  shipmentId: text("shipment_id"),
+  awbCode: text("awb_code"),
+  shippingStatus: text("shipping_status").notNull().default("pending"),
+  shippingActual: numeric("shipping_actual", { precision: 10, scale: 2 }).default("0.00"),
+  shippingExtra: numeric("shipping_extra", { precision: 10, scale: 2 }).default("0.00"),
+  billedWeight: numeric("billed_weight", { precision: 6, scale: 3 }),
+  packageLength: numeric("package_length", { precision: 6, scale: 2 }),
+  packageBreadth: numeric("package_breadth", { precision: 6, scale: 2 }),
+  packageHeight: numeric("package_height", { precision: 6, scale: 2 }),
+  packageBoxName: text("package_box_name"),
+  orderSource: text("order_source").default("website"),
+  createdAt,
+}, (table) => [uniqueIndex("orders_number_unique").on(table.orderNumber), index("orders_account_id_idx").on(table.accountId), index("orders_customer_id_idx").on(table.customerId)]);
+
 export const settings = pgTable("settings", { id: serial("id").primaryKey(), key: text("key").notNull().unique(), value: text("value").notNull(), description: text("description"), updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull() });
-export const orderItems = pgTable("order_items", { id: serial("id").primaryKey(), orderId: integer("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }), productId: integer("product_id").references(() => products.id), variantId: integer("variant_id").references(() => productVariants.id, { onDelete: "set null" }), name: text("name").notNull(), quantity: integer("quantity").notNull(), price: numeric("price", { precision: 10, scale: 2 }).notNull(), weight: text("weight") }, (table) => [index("order_items_order_id_idx").on(table.orderId), index("order_items_product_id_idx").on(table.productId)]);
+
+export const orderItems = pgTable("order_items", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  productId: integer("product_id").references(() => products.id),
+  variantId: integer("variant_id").references(() => productVariants.id, { onDelete: "set null" }),
+  name: text("name").notNull(),
+  quantity: integer("quantity").notNull(),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  weight: text("weight"),
+  approxWeight: text("approx_weight"),
+}, (table) => [index("order_items_order_id_idx").on(table.orderId), index("order_items_product_id_idx").on(table.productId)]);
+
 export const coupons = pgTable("coupons", { id: serial("id").primaryKey(), code: text("code").notNull(), name: text("name"), description: text("description"), discountType: text("discount_type").notNull(), value: numeric("value", { precision: 10, scale: 2 }).notNull(), maxDiscount: numeric("max_discount", { precision: 10, scale: 2 }), minOrderValue: numeric("min_order_value", { precision: 10, scale: 2 }).notNull().default("0"), validFrom: timestamp("valid_from", { withTimezone: true }), validUntil: timestamp("valid_until", { withTimezone: true }), totalUsage: integer("total_usage"), perCustomer: integer("per_customer"), applicableProducts: text("applicable_products").array(), applicableCategories: text("applicable_categories").array(), applyTo: text("apply_to").notNull().default("entire_store"), firstPurchase: boolean("first_purchase").notNull().default(false), publicCoupon: boolean("public_coupon").notNull().default(true), notes: text("notes"), active: boolean("active").notNull().default(true), createdAt }, (table) => [uniqueIndex("coupons_code_unique").on(table.code)]);
 export const reviews = pgTable("reviews", { id: serial("id").primaryKey(), productId: integer("product_id").references(() => products.id, { onDelete: "set null" }), accountId: integer("account_id").references(() => customerAccounts.id, { onDelete: "set null" }), orderId: integer("order_id").references(() => orders.id, { onDelete: "set null" }), customerName: text("customer_name").notNull(), rating: integer("rating").notNull(), content: text("content").notNull(), approved: boolean("approved").notNull().default(false), createdAt }, (table) => [index("reviews_product_id_idx").on(table.productId), index("reviews_account_id_idx").on(table.accountId), index("reviews_order_id_idx").on(table.orderId)]);
 export const banners = pgTable("banners", { id: serial("id").primaryKey(), eyebrow: text("eyebrow").notNull().default(""), title: text("title").notNull(), subtitle: text("subtitle"), offerText: text("offer_text"), couponCode: text("coupon_code"), buttonText: text("button_text").notNull().default("Shop Now"), validityText: text("validity_text"), image: text("image"), href: text("href").notNull().default("/shop"), active: boolean("active").notNull().default(true), createdAt });
 export const announcements = pgTable("announcements", { id: serial("id").primaryKey(), text: text("text").notNull(), icon: text("icon"), active: boolean("active").notNull().default(true), order: integer("order").notNull().default(0), createdAt });
 export const cartItems = pgTable("cart_items", { id: serial("id").primaryKey(), accountId: integer("account_id").notNull().references(() => customerAccounts.id, { onDelete: "cascade" }), productId: text("product_id").notNull(), quantity: integer("quantity").notNull().default(1), updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull() }, (table) => [uniqueIndex("cart_items_account_product_unique").on(table.accountId, table.productId)]);
 export const contactMessages = pgTable("contact_messages", { id: serial("id").primaryKey(), name: text("name").notNull(), email: text("email").notNull(), phone: text("phone"), subject: text("subject").notNull(), message: text("message").notNull(), read: boolean("read").notNull().default(false), adminReply: text("admin_reply"), replyAt: timestamp("reply_at", { withTimezone: true }), createdAt });
-
 
 export const productVariants = pgTable("product_variants", { id: serial("id").primaryKey(), productId: integer("product_id").notNull().references(() => products.id, { onDelete: "cascade" }), weight: text("weight").notNull(), variantType: text("variant_type").notNull().default("weight"), approxWeight: text("approx_weight"), price: numeric("price", { precision: 10, scale: 2 }).notNull(), offerPrice: numeric("offer_price", { precision: 10, scale: 2 }), sortOrder: integer("sort_order").notNull().default(0), active: boolean("active").notNull().default(true), createdAt });
 
@@ -34,3 +79,15 @@ export const customerAddresses = pgTable("customer_addresses", {
   createdAt,
 }, (table) => [index("customer_addresses_account_id_idx").on(table.accountId)]);
 
+export const packagingBoxes = pgTable("packaging_boxes", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  length: numeric("length", { precision: 6, scale: 2 }).notNull().default("15.00"),
+  breadth: numeric("breadth", { precision: 6, scale: 2 }).notNull().default("15.00"),
+  height: numeric("height", { precision: 6, scale: 2 }).notNull().default("10.00"),
+  boxWeightKg: numeric("box_weight_kg", { precision: 6, scale: 3 }).notNull().default("0.120"),
+  maxCapacityKg: numeric("max_capacity_kg", { precision: 6, scale: 3 }).notNull().default("1.200"),
+  active: boolean("active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt,
+});

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatPrice, formatWeight } from "@/lib/catalog";
 import { useCart } from "@/components/cart/cart-provider";
@@ -29,9 +29,72 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
   const [added, setAdded] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
 
+  // Pincode checker state
+  const [pincodeInput, setPincodeInput] = useState("");
+  const [pincodeStatus, setPincodeStatus] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Sticky mobile bottom bar state
+  const [showStickyBar, setShowStickyBar] = useState(false);
+
   // If variants exist, default to the first one
   const hasVariants = variants.length > 0;
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(hasVariants ? variants[0] : null);
+
+  // Pre-load saved pincode from previous checks
+  useEffect(() => {
+    try {
+      const savedPin = window.localStorage.getItem("raghul-customer-pincode");
+      if (savedPin && /^\d{6}$/.test(savedPin)) {
+        setPincodeInput(savedPin);
+        evaluatePincode(savedPin);
+      }
+    } catch {
+      // LocalStorage not accessible
+    }
+  }, []);
+
+  // Listen to window scroll for sticky mobile bar
+  useEffect(() => {
+    function handleScroll() {
+      if (window.scrollY > 400) {
+        setShowStickyBar(true);
+      } else {
+        setShowStickyBar(false);
+      }
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  function evaluatePincode(pin: string) {
+    const prefix = parseInt(pin.slice(0, 2), 10);
+    let estimate = "";
+    if (prefix >= 60 && prefix <= 64) {
+      estimate = "Usually delivers in 2–3 business days (Tamil Nadu & Pondicherry) • Express Courier";
+    } else if ((prefix >= 50 && prefix <= 53) || (prefix >= 56 && prefix <= 59) || (prefix >= 67 && prefix <= 69)) {
+      estimate = "Usually delivers in 3–4 business days (South India) • Express Courier";
+    } else {
+      estimate = "Delivers across India in 4–7 business days • Nitrogen moisture barrier packaging";
+    }
+    setPincodeStatus({
+      success: true,
+      message: `Available for PIN ${pin}: ${estimate}`,
+    });
+  }
+
+  function handleCheckPincode() {
+    if (!/^\d{6}$/.test(pincodeInput)) {
+      setPincodeStatus({
+        success: false,
+        message: "Please enter a valid 6-digit Indian PIN code.",
+      });
+      return;
+    }
+    try {
+      window.localStorage.setItem("raghul-customer-pincode", pincodeInput);
+    } catch {}
+    evaluatePincode(pincodeInput);
+  }
 
   // Prices come from selected variant when available, otherwise fall back to product
   const basePrice = selectedVariant
@@ -41,7 +104,6 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
     ? (selectedVariant.offerPrice ? parseFloat(selectedVariant.offerPrice) : basePrice)
     : (product.offerPrice ? parseFloat(product.offerPrice) : basePrice);
   const displayWeight = selectedVariant ? selectedVariant.weight : product.weight;
-
 
   const isCombo =
     product.categorySlug === "combos" ||
@@ -82,7 +144,6 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
 
   const cartQuantity = getItemQuantity(cartItemId);
   const inCart = cartQuantity > 0;
-  const isAdded = added;
   const hasDiscount = displayPrice < basePrice;
   const isOutOfStock = product.active === false || (typeof product.stock === "number" && product.stock <= 0);
 
@@ -107,13 +168,13 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
 
   function handleVariantSelect(variant: Variant) {
     setSelectedVariant(variant);
-    setAdded(false); // reset added state when switching variant
+    setAdded(false);
   }
 
   function handleAddToCart() {
     if (added) return;
     addItem(cartProduct, quantity);
-    show(`✓ ${product.name} ${isCombo ? "(Combo Pack)" : `(${formatWeight(displayWeight)})`} added to cart`);
+    show(`${product.name} ${isCombo ? "(Combo Pack)" : `(${formatWeight(displayWeight)})`} added to bag`);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 2200);
   }
@@ -126,222 +187,331 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
   }
 
   return (
-    <section className="product-page">
-      <div className="product-breadcrumbs-row">
-        <nav className="breadcrumbs" aria-label="Breadcrumbs">
-          <Link href="/">Home</Link>
-          <span className="crumb-sep">/</span>
-          <Link href="/shop">Shop</Link>
-          {product.categorySlug && (
-            <>
-              <span className="crumb-sep">/</span>
-              <Link href={`/category/${product.categorySlug}`}>{categoryName}</Link>
-            </>
-          )}
-          <span className="crumb-sep">/</span>
-          <span className="crumb-current" aria-current="page">{product.name}</span>
-        </nav>
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="product-back-btn"
-          aria-label="Go back"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5" />
-            <path d="M12 5l-7 7 7 7" />
-          </svg>
-          Back
-        </button>
-      </div>
-
-      <div className="product-large-visual">
-        <img src={product.image || "/hero.png"} alt={product.name} />
-        <span className="category-badge">{isCombo ? "Combo Pack" : categoryName}</span>
-        <WishlistButton product={wishlistProduct} className="product-detail-wishlist" />
-      </div>
-
-      <div className="product-detail">
-        <p className="eyebrow">{isCombo ? "Value Combo Pack" : "Made fresh in small batches"}</p>
-        <h1>{product.name}</h1>
-
-        {/* Price */}
-        <div className="price-section">
-          <div className="price">
-            <strong>{formatPrice(displayPrice)}</strong>
-            {hasDiscount && <s>{formatPrice(basePrice)}</s>}
-          </div>
-          {hasDiscount && (
-            <span className="savings">Save {formatPrice(basePrice - displayPrice)}</span>
-          )}
-          {isOutOfStock && (
-            <span className="out-of-stock-badge">Out of Stock</span>
-          )}
-        </div>
-
-        {/* Weight / variant selector */}
-        {hasVariants ? (
-          <div className="variant-selector">
-            <div className="variant-header">
-              <p className="variant-label">Select Pack Size</p>
-              <span className="variant-helper">Freshly Packed</span>
-            </div>
-            <div className="variant-options">
-              {variants.map((v) => {
-                const vBase = parseFloat(v.price) || 0;
-                const vOffer = v.offerPrice ? parseFloat(v.offerPrice) : vBase;
-                const isSelected = selectedVariant?.id === v.id;
-                return (
-                  <button
-                    key={v.id}
-                    type="button"
-                    className={`variant-btn${isSelected ? " variant-btn--active" : ""}`}
-                    onClick={() => handleVariantSelect(v)}
-                  >
-                    <span className="variant-weight">{formatWeight(v.weight)}</span>
-                    <span className="variant-price">{formatPrice(vOffer)}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : null}
-
-        <p className="description">{product.description}</p>
-
-        {isCombo && comboItemsList.length > 0 && (
-          <div style={{ margin: "20px 0 24px", padding: "16px 20px", background: "var(--cream)", borderRadius: 12, border: "1px solid var(--line)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
-              <h3 style={{ margin: 0, font: "700 16px 'Playfair Display',serif", color: "var(--ink)" }}>What&apos;s inside this box</h3>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--terracotta)", background: "rgba(201, 95, 59, 0.1)", padding: "2px 8px", borderRadius: 999, textTransform: "uppercase", letterSpacing: "0.05em" }}>{comboItemsList.length} items</span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {comboItemsList.map((item: any, idx: number) => (
-                <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6, padding: "8px 12px", background: "var(--paper)", borderRadius: 8, border: "1px solid rgba(0,0,0,0.04)" }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>{item.name}</span>
-                  {item.spec && (
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--terracotta)", background: "rgba(201, 95, 59, 0.1)", padding: "2px 8px", borderRadius: 6 }}>
-                      {item.spec}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="detail-list">
-          <div className="detail-item">
-            {isCombo ? (
+    <>
+      <section className="product-page">
+        <div className="product-breadcrumbs-row">
+          <nav className="breadcrumbs" aria-label="Breadcrumbs">
+            <Link href="/">Home</Link>
+            <span className="crumb-sep">/</span>
+            <Link href="/shop">Shop</Link>
+            {product.categorySlug && (
               <>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="8" width="18" height="12" rx="2" />
-                  <path d="M12 8v-4" />
-                  <path d="M8 4h8" />
-                </svg>
-                <div>
-                  <span>Package</span>
-                  <strong>Curated Combo Pack</strong>
-                </div>
-              </>
-            ) : (
-              <>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                </svg>
-                <div>
-                  <span>Weight</span>
-                  <strong>{selectedVariant?.variantType === "pack" && selectedVariant?.approxWeight ? `${selectedVariant.weight} (approx. ${formatWeight(selectedVariant.approxWeight)})` : formatWeight(displayWeight)}</strong>
-                </div>
+                <span className="crumb-sep">/</span>
+                <Link href={`/shop?tab=${product.categorySlug}`}>{categoryName}</Link>
               </>
             )}
-          </div>
-          <div className="detail-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v6l4 2" />
+            <span className="crumb-sep">/</span>
+            <span className="crumb-current" aria-current="page">{product.name}</span>
+          </nav>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="product-back-btn"
+            aria-label="Go back"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5" />
+              <path d="M12 5l-7 7 7 7" />
             </svg>
-            <div>
-              <span>Shelf life</span>
-              <strong>{product.shelfLife || '30 days'}</strong>
+            Back
+          </button>
+        </div>
+
+        <div className="product-large-visual">
+          <img src={product.image || "/hero.png"} alt={product.name} />
+          <span className="category-badge">{isCombo ? "Combo Pack" : categoryName}</span>
+          <WishlistButton product={wishlistProduct} className="product-detail-wishlist" />
+        </div>
+
+        <div className="product-detail">
+          <p className="eyebrow">{isCombo ? "Value Combo Pack" : "Made fresh in small batches"}</p>
+          <h1>{product.name}</h1>
+
+          {/* Price */}
+          <div className="price-section">
+            <div className="price">
+              <strong>{formatPrice(displayPrice)}</strong>
+              {hasDiscount && <s>{formatPrice(basePrice)}</s>}
             </div>
+            {hasDiscount && (
+              <span className="savings">Save {formatPrice(basePrice - displayPrice)}</span>
+            )}
+            {isOutOfStock && (
+              <span className="out-of-stock-badge">Out of Stock</span>
+            )}
           </div>
-          {!isCombo && product.ingredients && (
-            <div className="detail-item">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z" />
-                <path d="M9 2v4M15 2v4M3 9h18" />
-              </svg>
-              <div>
-                <span>Ingredients</span>
-                <strong>{product.ingredients}</strong>
+
+          {/* Weight / variant selector */}
+          {hasVariants ? (
+            <div className="variant-selector">
+              <div className="variant-header">
+                <p className="variant-label">Select Pack Size</p>
+                <span className="variant-helper">Freshly Packed</span>
+              </div>
+              <div className="variant-options">
+                {variants.map((v) => {
+                  const vBase = parseFloat(v.price) || 0;
+                  const vOffer = v.offerPrice ? parseFloat(v.offerPrice) : vBase;
+                  const isSelected = selectedVariant?.id === v.id;
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      className={`variant-btn${isSelected ? " variant-btn--active" : ""}`}
+                      onClick={() => handleVariantSelect(v)}
+                    >
+                      <span className="variant-weight">{formatWeight(v.weight)}</span>
+                      <span className="variant-price">{formatPrice(vOffer)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          <p className="description">{product.description}</p>
+
+          {isCombo && comboItemsList.length > 0 && (
+            <div style={{ margin: "20px 0 24px", padding: "16px 20px", background: "var(--cream)", borderRadius: 12, border: "1px solid var(--line)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+                <h3 style={{ margin: 0, font: "700 16px 'Playfair Display',serif", color: "var(--ink)" }}>What&apos;s inside this box</h3>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--terracotta)", background: "rgba(201, 95, 59, 0.1)", padding: "2px 8px", borderRadius: 999, textTransform: "uppercase", letterSpacing: "0.05em" }}>{comboItemsList.length} items</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {comboItemsList.map((item: any, idx: number) => (
+                  <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6, padding: "8px 12px", background: "var(--paper)", borderRadius: 8, border: "1px solid rgba(0,0,0,0.04)" }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>{item.name}</span>
+                    {item.spec && (
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--terracotta)", background: "rgba(201, 95, 59, 0.1)", padding: "2px 8px", borderRadius: 6 }}>
+                        {item.spec}
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}
-        </div>
 
-        {/* Purchase row */}
-        <div className="product-purchase-row">
-          <div className="quantity-selector-compact">
-            <button
-              type="button"
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              disabled={quantity <= 1}
-              aria-label="Decrease quantity"
-            >−</button>
-            <span>{quantity}</span>
-            <button
-              type="button"
-              onClick={() => setQuantity(quantity + 1)}
-              aria-label="Increase quantity"
-            >+</button>
+          <div className="detail-list">
+            <div className="detail-item">
+              {isCombo ? (
+                <>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="8" width="18" height="12" rx="2" />
+                    <path d="M12 8v-4" />
+                    <path d="M8 4h8" />
+                  </svg>
+                  <div>
+                    <span>Package</span>
+                    <strong>Curated Combo Pack</strong>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                  </svg>
+                  <div>
+                    <span>Weight</span>
+                    <strong>{selectedVariant?.variantType === "pack" && selectedVariant?.approxWeight ? `${selectedVariant.weight} (approx. ${formatWeight(selectedVariant.approxWeight)})` : formatWeight(displayWeight)}</strong>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="detail-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+              </svg>
+              <div>
+                <span>Shelf life</span>
+                <strong>{product.shelfLife || "30 days"}</strong>
+              </div>
+            </div>
+            {!isCombo && product.ingredients && (
+              <div className="detail-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z" />
+                  <path d="M9 2v4M15 2v4M3 9h18" />
+                </svg>
+                <div>
+                  <span>Ingredients</span>
+                  <strong>{product.ingredients}</strong>
+                </div>
+              </div>
+            )}
           </div>
-          <button
-            className={`button wide-button ${isOutOfStock ? "button-disabled" : added ? "button-success" : inCart ? "button-dark" : "button-dark"}`}
-            onClick={handleAddToCart}
-            disabled={added || isOutOfStock}
-            style={isOutOfStock ? { opacity: 0.5, cursor: "not-allowed" } : added ? { cursor: "default" } : undefined}
-          >
-            {isOutOfStock ? "Out of Stock" : added ? "✓ Added to Cart" : inCart ? "+ Add More" : "Add to Cart"}
-          </button>
-          {!isOutOfStock && (
+
+          {/* Delivery & Pincode Checker */}
+          <div className="pincode-check-card">
+            <div className="pincode-check-header">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="1" y="3" width="15" height="13"/>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
+                <circle cx="5.5" cy="18.5" r="2.5"/>
+                <circle cx="18.5" cy="18.5" r="2.5"/>
+              </svg>
+              <span>Estimated Delivery to Your Doorstep</span>
+            </div>
+            <div className="pincode-check-form">
+              <input
+                type="text"
+                maxLength={6}
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                placeholder="Enter 6-digit PIN code"
+                value={pincodeInput}
+                onChange={(e) => {
+                  setPincodeInput(e.target.value.replace(/\D/g, "").slice(0, 6));
+                  setPincodeStatus(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleCheckPincode();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleCheckPincode}
+                disabled={pincodeInput.length !== 6}
+              >
+                Check
+              </button>
+            </div>
+            {pincodeStatus && (
+              <div className={`pincode-status ${pincodeStatus.success ? "pincode-success" : "pincode-error"}`} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                {pincodeStatus.success && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+                <span>{pincodeStatus.message}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Purchase row */}
+          <div className="product-purchase-row">
+            <div className="quantity-selector-compact">
+              <button
+                type="button"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                disabled={quantity <= 1}
+                aria-label="Decrease quantity"
+              >−</button>
+              <span>{quantity}</span>
+              <button
+                type="button"
+                onClick={() => setQuantity(quantity + 1)}
+                aria-label="Increase quantity"
+              >+</button>
+            </div>
             <button
-              type="button"
-              className="button buy-now-button wide-button"
-              onClick={handleBuyNow}
-              disabled={redirecting}
+              className={`button wide-button ${isOutOfStock ? "button-disabled" : added ? "button-success" : inCart ? "button-dark" : "button-dark"}`}
+              onClick={handleAddToCart}
+              disabled={added || isOutOfStock}
+              style={isOutOfStock ? { opacity: 0.5, cursor: "not-allowed" } : added ? { cursor: "default" } : undefined}
             >
-              {redirecting ? "Redirecting…" : "Buy Now"}
+              {isOutOfStock ? (
+                "Out of Stock"
+              ) : added ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Added to Bag
+                </span>
+              ) : inCart ? (
+                "+ Add More"
+              ) : (
+                "Add to Bag"
+              )}
             </button>
-          )}
-        </div>
+            {!isOutOfStock && (
+              <button
+                type="button"
+                className="button buy-now-button wide-button"
+                onClick={handleBuyNow}
+                disabled={redirecting}
+              >
+                {redirecting ? "Redirecting…" : "Buy Now"}
+              </button>
+            )}
+          </div>
 
-        {/* Product Trust Strip */}
-        <div className="product-trust-strip">
-          <div className="trust-pill">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            <span>100% Pure Natural</span>
-          </div>
-          <div className="trust-pill">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="12 6 12 12 16 14"/>
-            </svg>
-            <span>Small-Batch Daily</span>
-          </div>
-          <div className="trust-pill">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="1" y="3" width="15" height="13"/>
-              <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
-              <circle cx="5.5" cy="18.5" r="2.5"/>
-              <circle cx="18.5" cy="18.5" r="2.5"/>
-            </svg>
-            <span>Pan-India Safe Pack</span>
+          {/* Product Trust Strip */}
+          <div className="product-trust-strip">
+            <div className="trust-pill">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              <span>100% Pure Natural</span>
+            </div>
+            <div className="trust-pill">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span>Small-Batch Daily</span>
+            </div>
+            <div className="trust-pill">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="1" y="3" width="15" height="13"/>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
+                <circle cx="5.5" cy="18.5" r="2.5"/>
+                <circle cx="18.5" cy="18.5" r="2.5"/>
+              </svg>
+              <span>Pan-India Safe Pack</span>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* Sticky Mobile Purchase Bar */}
+      {showStickyBar && (
+        <aside className="sticky-mobile-bar" aria-label="Quick purchase bar">
+          <div className="sticky-mobile-info">
+            <img src={product.image || "/hero.png"} alt={product.name} />
+            <div>
+              <span className="sticky-mobile-name">{product.name}</span>
+              <strong className="sticky-mobile-price">{formatPrice(displayPrice)}</strong>
+            </div>
+          </div>
+          <div className="sticky-mobile-actions">
+            <button
+              type="button"
+              className="button button-dark"
+              onClick={handleAddToCart}
+              disabled={added || isOutOfStock}
+            >
+              {isOutOfStock ? (
+                "Out of Stock"
+              ) : added ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Added
+                </span>
+              ) : (
+                "+ Bag"
+              )}
+            </button>
+            {!isOutOfStock && (
+              <button
+                type="button"
+                className="button buy-now-button"
+                onClick={handleBuyNow}
+                disabled={redirecting}
+              >
+                Buy Now
+              </button>
+            )}
+          </div>
+        </aside>
+      )}
+    </>
   );
 }

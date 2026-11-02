@@ -514,12 +514,12 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
 
       {/* Header */}
       <header className={styles.header}>
-        <div>
+        <div className={styles.headerTitleWrap}>
           <p className={styles.eyebrow}>Catalog Management</p>
           <h1>Products</h1>
           <p>Manage snacks, variety packs, and festive combo gift boxes.</p>
         </div>
-        <div className={productStyles.headerBtnGroup}>
+        <div className={styles.headerActions}>
           <button className={styles.primaryButton} onClick={() => { handleCloseForm(); setShowForm(true); }} type="button">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="12" y1="5" x2="12" y2="19"/>
@@ -527,8 +527,8 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
             </svg>
             + Add Product
           </button>
+          <div className={styles.headerBell}><AdminHeaderActions /></div>
         </div>
-        <div className={styles.headerBell}><AdminHeaderActions /></div>
       </header>
 
       {/* Stat Banners / Quick Filter Cards */}
@@ -808,13 +808,13 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
                           {productIsCombo ? (
                             <>
                               {product.ingredients && (
-                                <div className={productStyles.comboContents} title="Box contents">
+                                <div className={productStyles.comboContents} title={`Inside: ${product.ingredients}`}>
                                   <strong>Inside:</strong> {product.ingredients}
                                 </div>
                               )}
                               {product.weight && product.weight !== "—" && (
                                 <span className={productStyles.shippingWeightBadge}>
-                                  Courier Shipping Wt: {product.weight}
+                                  Courier Wt: {product.weight}
                                 </span>
                               )}
                             </>

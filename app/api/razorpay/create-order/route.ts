@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       if (account) accountEmail = account.email;
     }
 
-    const { lines, subtotal, weight } = await priceOrder(payload.data.items);
+    const { lines, subtotal, weight, packageBox } = await priceOrder(payload.data.items);
 
     let discount = 0;
     if (payload.data.couponCode) {
@@ -47,19 +47,24 @@ export async function POST(request: Request) {
       discount = couponResult.discountAmount;
     }
 
-    // Calculate shipping server-side (Shiprocket minimum quote + ₹2 platform fee)
+    // Calculate shipping server-side (Shiprocket minimum quote + ₹5 platform fee)
+    const prepDays = weight > 3 ? 3 : 2;
     let shippingCharge = 0;
     let courierName = "Delivery";
-    let estimatedDeliveryDays: string | null = "3–7 business days";
+    let estimatedDeliveryDays: string | null = `${3 + prepDays}–${7 + prepDays} business days`;
 
     const deliveryMode = process.env.DELIVERY_MODE || "automated";
 
     if (deliveryMode !== "manual" && payload.data.pincode) {
       try {
         const { getShiprocketQuote } = await import("@/lib/shiprocket");
-        const quote = await getShiprocketQuote(payload.data.pincode, weight, subtotal - discount);
+        const quote = await getShiprocketQuote(payload.data.pincode, weight, subtotal - discount, {
+          length: packageBox.length,
+          breadth: packageBox.breadth,
+          height: packageBox.height,
+        });
         if (quote) {
-          shippingCharge = Math.round((quote.charge + 2) * 100) / 100;
+          shippingCharge = Math.round((quote.charge + 5) * 100) / 100;
           courierName = quote.courierName;
           estimatedDeliveryDays = quote.estimatedDeliveryDays;
         }
@@ -89,17 +94,20 @@ export async function POST(request: Request) {
       if (isTN) {
         baseRate = tnRate;
         courierName = "Surface Delivery";
+        estimatedDeliveryDays = `${2 + prepDays}–${3 + prepDays} business days`;
       } else if (isSouth) {
         baseRate = southRate;
         courierName = "Express Delivery";
+        estimatedDeliveryDays = `${3 + prepDays}–${5 + prepDays} business days`;
       } else {
         baseRate = northRate;
         courierName = "Air Delivery";
+        estimatedDeliveryDays = `${4 + prepDays}–${7 + prepDays} business days`;
       }
 
       const totalWeightKg = Math.max(1, weight);
       const extraKg = Math.ceil(Math.max(0, totalWeightKg - 1));
-      shippingCharge = baseRate + extraKg * extraRate + 2; // includes ₹2 platform fee
+      shippingCharge = baseRate + extraKg * extraRate + 5; // includes ₹5 platform fee
     }
 
     const total = Math.round((subtotal - discount + shippingCharge) * 100) / 100;

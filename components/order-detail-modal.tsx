@@ -63,7 +63,11 @@ function StarPicker({ value, onChange }: { value: number; onChange: (n: number) 
           onClick={() => onChange(n)}
           style={{ background: "none", border: "none", fontSize: 32, cursor: "pointer", color: n <= (hover || value) ? "#e5a52f" : "#ddd", padding: "0 2px", lineHeight: 1 }}
           aria-label={`${n} star`}
-        >★</button>
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+        </button>
       ))}
     </div>
   );
@@ -179,6 +183,18 @@ export function OrderDetailModal({ order, onClose, onDownloadInvoice, onBuyAgain
       const data = await res.json() as { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Failed to submit review.");
       setDonePids((prev) => new Set([...prev, reviewingPid]));
+      try {
+        localStorage.setItem("review-posted", "true");
+        localStorage.setItem(`reviewed-prod-${reviewingPid}`, "true");
+        localStorage.setItem("delivery-nudge-dismissed", "true");
+        sessionStorage.setItem("delivery-nudge-dismissed", "true");
+        localStorage.setItem("delivery-notification-dismissed-permanently", "true");
+        if (order?.orderNumber) {
+          localStorage.setItem(`reviewed-order-${order.orderNumber}`, "true");
+        }
+      } catch {}
+      window.dispatchEvent(new Event("review-submitted"));
+      window.dispatchEvent(new CustomEvent("product-reviewed", { detail: { productId: reviewingPid } }));
       setReviewingPid(null);
       setRating(0);
       setContent("");

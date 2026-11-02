@@ -520,7 +520,11 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
         {/* Left Story & Actions */}
         <div className="hero-text-col">
           <div className="hero-eyebrow-pill">
-            <span className="sparkle">✦</span> Handcrafted South Indian Delights
+            <span className="sparkle">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ display: "inline-block", verticalAlign: "middle" }}>
+                <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
+              </svg>
+            </span> Handcrafted South Indian Delights
           </div>
 
           <h1 className="hero-heading">

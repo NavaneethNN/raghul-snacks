@@ -19,8 +19,14 @@ export function DeliveryReviewNudge() {
   useEffect(() => {
     async function check() {
       try {
-        if (typeof window !== "undefined" && window.sessionStorage.getItem("delivery-nudge-dismissed")) {
-          return;
+        if (typeof window !== "undefined") {
+          if (
+            localStorage.getItem("review-posted") ||
+            localStorage.getItem("delivery-nudge-dismissed") ||
+            sessionStorage.getItem("delivery-nudge-dismissed")
+          ) {
+            return;
+          }
         }
 
         // Check if logged in via shared session utility
@@ -52,6 +58,15 @@ export function DeliveryReviewNudge() {
         for (const order of ordersData.orders ?? []) {
           if (order.orderStatus !== "delivered" || order.paymentStatus !== "paid") continue;
 
+          // If this order was already reviewed or dismissed, skip it
+          if (typeof window !== "undefined" && localStorage.getItem(`reviewed-order-${order.orderNumber}`)) {
+            continue;
+          }
+
+          // If ANY product in this order has already been reviewed, customer completed review for this order
+          const hasAnyReviewed = order.items?.some((i) => i.product?.id && reviewedIds.has(i.product.id));
+          if (hasAnyReviewed) continue;
+
           // Only show if there's an unreviewed product with a valid ID
           for (const i of order.items ?? []) {
             if (!i.product?.slug || !i.product?.id) continue;
@@ -71,13 +86,24 @@ export function DeliveryReviewNudge() {
       } catch { /* silent */ }
     }
     const initTimer = setTimeout(check, 2500);
-    // Re-check when user returns to this tab or submits a review anywhere
+
+    const handleReviewSubmitted = () => {
+      setVisible(false);
+      setDismissed(true);
+      try {
+        localStorage.setItem("review-posted", "true");
+        localStorage.setItem("delivery-nudge-dismissed", "true");
+        sessionStorage.setItem("delivery-nudge-dismissed", "true");
+      } catch {}
+    };
+
+    // Re-check when user returns to this tab
     window.addEventListener("focus", check);
-    window.addEventListener("review-submitted", check);
+    window.addEventListener("review-submitted", handleReviewSubmitted);
     return () => {
       clearTimeout(initTimer);
       window.removeEventListener("focus", check);
-      window.removeEventListener("review-submitted", check);
+      window.removeEventListener("review-submitted", handleReviewSubmitted);
     };
   }, []);
 
@@ -87,6 +113,18 @@ export function DeliveryReviewNudge() {
     const t = setTimeout(() => setVisible(false), 5000);
     return () => clearTimeout(t);
   }, [visible]);
+
+  function handleDismiss() {
+    setVisible(false);
+    setDismissed(true);
+    try {
+      localStorage.setItem("delivery-nudge-dismissed", "true");
+      sessionStorage.setItem("delivery-nudge-dismissed", "true");
+      if (item?.orderNumber) {
+        localStorage.setItem(`reviewed-order-${item.orderNumber}`, "true");
+      }
+    } catch {}
+  }
 
   if (!item || dismissed) return null;
 
@@ -133,7 +171,7 @@ export function DeliveryReviewNudge() {
       {/* Review link */}
       <Link
         href="/account"
-        onClick={() => { setVisible(false); setDismissed(true); }}
+        onClick={handleDismiss}
         style={{
           flexShrink: 0,
           background: "var(--terracotta, #c95f3b)",
@@ -151,7 +189,7 @@ export function DeliveryReviewNudge() {
 
       {/* Close button */}
       <button
-        onClick={() => { setVisible(false); setDismissed(true); }}
+        onClick={handleDismiss}
         aria-label="Dismiss"
         style={{
           flexShrink: 0,

@@ -3,8 +3,37 @@
 import { FormEvent, useEffect, useState } from "react";
 import styles from "./order-tracker.module.css";
 
-type Result = { orderNumber: string; orderStatus: string; paymentStatus: string; createdAt: string };
-const labels: Record<string, string> = { placed: "Order placed", packed: "Packed & ready", dispatched: "On the way", delivered: "Delivered", cancelled: "Cancelled" };
+type TrackingActivity = {
+  date: string;
+  status: string;
+  activity: string;
+  location: string;
+};
+
+type Result = {
+  orderNumber: string;
+  orderStatus: string;
+  paymentStatus: string;
+  createdAt: string;
+  awbCode?: string | null;
+  courierName?: string | null;
+  trackingUrl?: string | null;
+  packageBoxName?: string | null;
+  tracking?: {
+    currentStatus?: string;
+    courierName?: string;
+    estimatedDeliveryDate?: string | null;
+    activities?: TrackingActivity[];
+  } | null;
+};
+
+const labels: Record<string, string> = {
+  placed: "Order placed",
+  packed: "Packed & ready",
+  dispatched: "On the way",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+};
 
 function GuestReviewForm({ orderNumber, phone }: { orderNumber: string; phone: string }) {
   const [name, setName] = useState("");
@@ -30,6 +59,14 @@ function GuestReviewForm({ orderNumber, phone }: { orderNumber: string; phone: s
       const data = await res.json() as { success?: boolean; error?: string };
       if (!res.ok) throw new Error(data.error || "Failed to submit review.");
       setSubmitted(true);
+      try {
+        localStorage.setItem("review-posted", "true");
+        localStorage.setItem("delivery-nudge-dismissed", "true");
+        sessionStorage.setItem("delivery-nudge-dismissed", "true");
+        localStorage.setItem("delivery-notification-dismissed-permanently", "true");
+        localStorage.setItem(`reviewed-order-${orderNumber}`, "true");
+      } catch {}
+      window.dispatchEvent(new Event("review-submitted"));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit.");
     } finally {
@@ -38,8 +75,11 @@ function GuestReviewForm({ orderNumber, phone }: { orderNumber: string; phone: s
   }
 
   if (submitted) return (
-    <div style={{ marginTop: 20, padding: "14px 18px", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 10, fontSize: 14, color: "#166534" }}>
-      ✓ Thank you for your review!
+    <div style={{ marginTop: 20, padding: "14px 18px", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 10, fontSize: 14, color: "#166534", display: "flex", alignItems: "center", gap: 8 }}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+      <span>Thank you for your review!</span>
     </div>
   );
 
@@ -69,7 +109,11 @@ function GuestReviewForm({ orderNumber, phone }: { orderNumber: string; phone: s
                 onMouseLeave={() => setHovered(0)}
                 style={{ background: "none", border: "none", fontSize: 30, cursor: "pointer", color: star <= (hovered || rating) ? "#e5a52f" : "#d1d5db", lineHeight: 1, padding: "2px", transition: "color 0.1s" }}
                 aria-label={`${star} star`}
-              >★</button>
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              </button>
             ))}
           </div>
         </div>
@@ -103,7 +147,7 @@ export function OrderTracker({ initialOrder, initialPhone }: { initialOrder?: st
     if (
       initialOrder &&
       initialPhone &&
-      /^RS-\d{8}$/i.test(initialOrder) &&
+      /^RS-[A-Za-z0-9-]+$/i.test(initialOrder) &&
       /^[6-9]\d{9}$/.test(initialPhone)
     ) {
       setLoading(true);
@@ -135,8 +179,8 @@ export function OrderTracker({ initialOrder, initialPhone }: { initialOrder?: st
       setError("Please enter your order number.");
       return;
     }
-    if (!/^RS-\d{8}$/i.test(orderNumber)) {
-      setError("Please enter a valid order number (format: RS-12345678).");
+    if (!/^RS-[A-Za-z0-9-]+$/i.test(orderNumber)) {
+      setError("Please enter a valid order number (e.g. RS-12345678).");
       return;
     }
     if (!phone.trim()) {
@@ -264,10 +308,71 @@ export function OrderTracker({ initialOrder, initialPhone }: { initialOrder?: st
                 <div className={styles.detail}>
                   <span>Payment status</span>
                   <strong className={result.paymentStatus === "paid" ? styles.paid : ""}>
-                    {result.paymentStatus === "paid" ? "Paid ✓" : result.paymentStatus}
+                    {result.paymentStatus === "paid" ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        Paid
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </span>
+                    ) : (
+                      result.paymentStatus
+                    )}
                   </strong>
                 </div>
               </div>
+
+              {/* Courier & Tracking Card */}
+              {result.awbCode && (
+                <div style={{
+                  background: "#f0fdf4",
+                  border: "1px solid #bbf7d0",
+                  borderRadius: 10,
+                  padding: "14px 16px",
+                  marginTop: 18,
+                  marginBottom: 18,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+                    <div>
+                      <span style={{ display: "block", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", color: "#166534", fontWeight: 700 }}>
+                        {result.courierName
+                          ? result.courierName
+                              .replace(/(?:^|[\s\(\[\{—\-])\d+(\.\d+)?\s*(kg|kgs|gm|gms|g)\b[\)\]\}]?/gi, "")
+                              .replace(/\s*-\s*$/, "")
+                              .replace(/\s{2,}/g, " ")
+                              .trim() || result.courierName
+                          : "Courier Partner"}{" "}
+                        Tracking
+                      </span>
+                      <strong style={{ fontSize: 16, color: "#14532d", letterSpacing: 0.5, fontFamily: "monospace" }}>
+                        {result.awbCode}
+                      </strong>
+                    </div>
+                    {result.trackingUrl && (
+                      <a
+                        href={result.trackingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="button button-dark"
+                        style={{ padding: "6px 14px", fontSize: 12, borderRadius: 6 }}
+                      >
+                        Track Live on Partner →
+                      </a>
+                    )}
+                  </div>
+                  {result.tracking?.currentStatus && (
+                    <div style={{ fontSize: 13, color: "#15803d", borderTop: "1px dashed #bbf7d0", paddingTop: 8 }}>
+                      <strong>Latest Status:</strong> {result.tracking.currentStatus}
+                      {result.tracking.estimatedDeliveryDate && (
+                        <span> · Expected by: <strong>{result.tracking.estimatedDeliveryDate}</strong></span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {result.orderStatus === "cancelled" ? (
                 <div className={styles.cancelledBanner}>
@@ -287,6 +392,26 @@ export function OrderTracker({ initialOrder, initialPhone }: { initialOrder?: st
                   </div>
                   <div className={result.orderStatus === "delivered" ? styles.active : ""}>
                     <span>Delivered</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Recent tracking activities if available */}
+              {result.tracking?.activities && result.tracking.activities.length > 0 && (
+                <div style={{ marginTop: 20, textAlign: "left" }}>
+                  <p style={{ margin: "0 0 8px", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", color: "#6b7280", fontWeight: 700 }}>
+                    Transit Milestones
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {result.tracking.activities.slice(0, 4).map((act, i) => (
+                      <div key={i} style={{ display: "flex", gap: 10, fontSize: 12, borderLeft: "2px solid var(--terracotta)", paddingLeft: 10 }}>
+                        <span style={{ color: "#6b7280", minWidth: 80, fontSize: 11 }}>{act.date.split(" ")[0]}</span>
+                        <div>
+                          <strong style={{ color: "var(--ink)" }}>{act.activity}</strong>
+                          {act.location && <span style={{ color: "#6b7280" }}> ({act.location})</span>}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

@@ -127,7 +127,7 @@ export function buildOrderEmailHtml(data: OrderEmailData): string {
                 <td style="text-align:right;vertical-align:top;">
                   <span style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#8c9388;font-weight:700;">Payment Status</span>
                   <div style="font-size:13px;font-weight:700;color:#16a34a;margin-top:4px;">
-                    ✓ Paid Online
+                    Paid Online
                   </div>
                 </td>
               </tr>
@@ -333,13 +333,13 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData): Promise<
         subject: `Order Confirmed – ${data.orderNumber} | Raghul Delights`,
         html: buildOrderEmailHtml(data),
       });
-      console.log(`[email] ✓ Order confirmation sent to customer ${data.customerEmail} (${data.orderNumber})`);
+      console.log(`[email] Order confirmation sent to customer ${data.customerEmail} (${data.orderNumber})`);
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      console.error(`[email] ✗ Failed to send customer email to ${data.customerEmail}:`, errorMsg);
+      console.error(`[email] Failed to send customer email to ${data.customerEmail}:`, errorMsg);
       if (errorMsg.includes("535") || errorMsg.includes("Authentication failed")) {
         console.error(
-          "[email] 💡 Brevo Authentication Failed (535): Please check your Brevo account (Settings > SMTP & API > SMTP tab). Verify that the 'Login' and 'SMTP Key' match your .env values, and that transactional sending is enabled on your Brevo account."
+          "[email] Note: Brevo Authentication Failed (535): Please check your Brevo account (Settings > SMTP & API > SMTP tab). Verify that the 'Login' and 'SMTP Key' match your .env values, and that transactional sending is enabled on your Brevo account."
         );
       }
     }
@@ -354,10 +354,10 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData): Promise<
         subject: `[New Order] ${data.orderNumber} – ₹${data.total} by ${data.customerName}`,
         html: buildAdminNotificationHtml(data),
       });
-      console.log(`[email] ✓ Admin notification sent to ${adminEmail} (${data.orderNumber})`);
+      console.log(`[email] Admin notification sent to ${adminEmail} (${data.orderNumber})`);
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      console.error(`[email] ✗ Failed to send admin notification to ${adminEmail}:`, errorMsg);
+      console.error(`[email] Failed to send admin notification to ${adminEmail}:`, errorMsg);
     }
   }
 }
