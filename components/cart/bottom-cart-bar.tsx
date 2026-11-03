@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/components/cart/cart-provider";
 import { formatPrice } from "@/lib/catalog";
@@ -8,38 +8,49 @@ import styles from "./bottom-cart-bar.module.css";
 
 const STORAGE_KEY = "raghul-hide-bottom-cart";
 
+function subscribe() {
+  return () => {};
+}
+
+function getClientSnapshot() {
+  return true;
+}
+
+function getServerSnapshot() {
+  return false;
+}
+
+function readDismissed(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return sessionStorage.getItem(STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
 export function BottomCartBar() {
+  const isClient = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
   const pathname = usePathname();
   const { count, subtotal, isCartOpen, openCart, items } = useCart();
-  const [dismissed, setDismissed] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const prevCountRef = useRef(count);
-
-  useEffect(() => {
-    setMounted(true);
-    try {
-      if (sessionStorage.getItem(STORAGE_KEY) === "true") {
-        setDismissed(true);
-      }
-    } catch {
-      // sessionStorage unavailable
-    }
-  }, []);
+  const [dismissed, setDismissed] = useState(readDismissed);
+  const [prevCount, setPrevCount] = useState(count);
 
   // If user adds new items after dismissing, reveal the bar again to confirm addition
-  useEffect(() => {
-    if (!mounted) return;
-    if (count > prevCountRef.current && dismissed) {
+  if (count > prevCount) {
+    setPrevCount(count);
+    if (dismissed) {
       setDismissed(false);
       try {
         sessionStorage.removeItem(STORAGE_KEY);
       } catch {}
     }
-    prevCountRef.current = count;
-  }, [count, dismissed, mounted]);
+  } else if (count !== prevCount) {
+    setPrevCount(count);
+  }
 
-  // Don't render if not mounted (hydration safe), cart is empty, or dismissed
-  if (!mounted || count <= 0 || items.length === 0 || dismissed) {
+  // Don't render if SSR, cart is empty, or dismissed
+  if (!isClient || count <= 0 || items.length === 0 || dismissed) {
     return null;
   }
 
