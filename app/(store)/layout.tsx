@@ -4,6 +4,7 @@ import { ScrollToTop } from "@/components/scroll-to-top";
 import { ReplyNotification } from "@/components/reply-notification";
 import { DeliveryReviewNudge } from "@/components/delivery-review-nudge";
 import { CartDrawer } from "@/components/cart/cart-drawer";
+import { BottomCartBar } from "@/components/cart/bottom-cart-bar";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import Link from "next/link";
 
@@ -14,6 +15,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
       <AnnouncementBar />
       <StoreHeader />
       <CartDrawer />
+      <BottomCartBar />
       <WhatsAppButton />
       <ReplyNotification />
       <DeliveryReviewNudge />

@@ -1,12 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { useCart } from "@/components/cart/cart-provider";
 
 export function WhatsAppButton() {
   const [hovered, setHovered] = useState(false);
+  const pathname = usePathname();
+  const { count, isCartOpen } = useCart();
+  const hasCartBar =
+    count > 0 &&
+    !isCartOpen &&
+    pathname !== "/cart" &&
+    pathname !== "/checkout" &&
+    !pathname?.startsWith("/admin");
 
   return (
     <aside
+      className={`whatsapp-button-wrapper ${hasCartBar ? "has-cart-bar" : ""}`}
       aria-label="Customer Support WhatsApp"
       style={{
         position: "fixed",
@@ -15,6 +26,7 @@ export function WhatsAppButton() {
         zIndex: 9999,
         display: "flex",
         alignItems: "center",
+        transition: "bottom 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
       }}
     >
       <a
