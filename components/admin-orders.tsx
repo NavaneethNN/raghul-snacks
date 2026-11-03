@@ -1811,9 +1811,9 @@ export function AdminOrders({
           }}
         >
           <div
-            className={styles.modalCard}
+            className={`${styles.modalCard} ${styles.createOrderModalCard}`}
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: 640, maxHeight: "90vh", overflowY: "auto" }}
+            style={{ maxWidth: 660, maxHeight: "90vh", overflowY: "auto", overflowX: "hidden" }}
           >
             <div className={styles.modalHeader}>
               <div>
@@ -2170,19 +2170,49 @@ export function AdminOrders({
 
                     return (
                       <div key={item.id} className={styles.createItemCard}>
-                        <div className={styles.createItemInputsRow}>
-                          <div className={`${styles.createItemInputGroup} ${styles.createItemNameCol}`}>
-                            <label>Product Name *</label>
-                            <input
-                              required
-                              type="text"
-                              placeholder="e.g. Kai Murukku"
-                              value={item.name}
-                              onChange={(e) => handleUpdateItem(idx, "name", e.target.value)}
-                            />
+                        {/* Item Card Header */}
+                        <div className={styles.createItemCardHeader}>
+                          <div className={styles.createItemBadge}>
+                            <span className={styles.createItemIndex}>#{idx + 1}</span>
+                            <span className={styles.createItemBadgeText}>Snack Item</span>
                           </div>
+                          <div className={styles.createItemHeaderActions}>
+                            <span className={styles.createItemRowTotalTag}>
+                              Total: ₹{rowTotal.toFixed(2)}
+                            </span>
+                            {createItems.length > 1 && (
+                              <button
+                                type="button"
+                                className={styles.createItemRemoveBtn}
+                                onClick={() => handleRemoveItem(idx)}
+                                title="Remove this snack item"
+                                aria-label={`Remove snack #${idx + 1}`}
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                                <span>Remove</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
 
-                          <div className={styles.createItemInputGroup}>
+                        {/* Product Name Input */}
+                        <div className={styles.createItemFieldGroup}>
+                          <label>Product Name *</label>
+                          <input
+                            required
+                            type="text"
+                            placeholder="e.g. Kai Murukku, Mixture, Ribbon Pakoda..."
+                            value={item.name}
+                            onChange={(e) => handleUpdateItem(idx, "name", e.target.value)}
+                          />
+                        </div>
+
+                        {/* Metrics: Pack Weight, Quantity, Unit Price */}
+                        <div className={styles.createItemMetricsRow}>
+                          <div className={styles.createItemFieldGroup}>
                             <label>Pack Weight</label>
                             <input
                               type="text"
@@ -2192,7 +2222,7 @@ export function AdminOrders({
                             />
                           </div>
 
-                          <div className={styles.createItemInputGroup}>
+                          <div className={styles.createItemFieldGroup}>
                             <label>Qty *</label>
                             <input
                               required
@@ -2205,8 +2235,8 @@ export function AdminOrders({
                             />
                           </div>
 
-                          <div className={styles.createItemInputGroup}>
-                            <label>Price (₹) *</label>
+                          <div className={styles.createItemFieldGroup}>
+                            <label>Unit Price (₹) *</label>
                             <input
                               required
                               type="number"
@@ -2216,28 +2246,6 @@ export function AdminOrders({
                               value={item.unitPrice}
                               onChange={(e) => handleUpdateItem(idx, "unitPrice", e.target.value)}
                             />
-                          </div>
-
-                          <div className={styles.createItemLineTotal}>
-                            <label>Total</label>
-                            <strong>₹{rowTotal.toFixed(2)}</strong>
-                          </div>
-
-                          <div className={styles.createItemActionCol}>
-                            {createItems.length > 1 && (
-                              <button
-                                type="button"
-                                className={styles.createItemRemoveBtn}
-                                onClick={() => handleRemoveItem(idx)}
-                                title="Remove this item"
-                                aria-label="Remove item"
-                              >
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="3 6 5 6 21 6" />
-                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                </svg>
-                              </button>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -2285,7 +2293,7 @@ export function AdminOrders({
                     )}
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
                     <div style={{ position: "relative", width: 140 }}>
                       <input
                         required
@@ -2304,7 +2312,7 @@ export function AdminOrders({
                         kg
                       </span>
                     </div>
-                    <span style={{ fontSize: 12, color: "#64748b" }}>
+                    <span style={{ fontSize: 12, color: "#64748b", flex: "1 1 200px" }}>
                       Scale weight of the packed carton (used for live courier booking and AWB label).
                     </span>
                   </div>
@@ -2313,7 +2321,7 @@ export function AdminOrders({
                 {/* ── Section 4: Live Courier Rates ── */}
                 {createPincode.length === 6 && parseFloat(createWeight) > 0 && (
                   <div style={{ marginTop: 12, padding: "12px 14px", background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 6 }}>
                       <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                         Live Shiprocket Delivery Rates ({createWeight} kg to {createPincode})
                       </span>
@@ -2341,6 +2349,8 @@ export function AdminOrders({
                                 background: isSelected ? "#fff8f5" : "#fff",
                                 borderRadius: 6,
                                 cursor: "pointer",
+                                flexWrap: "wrap",
+                                gap: 8,
                               }}
                             >
                               <div>
@@ -2359,7 +2369,7 @@ export function AdminOrders({
                                 </div>
                                 {c.etd && <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>Est: {c.etd}</div>}
                               </div>
-                              <div style={{ textAlign: "right" }}>
+                              <div style={{ textAlign: "right", marginLeft: "auto" }}>
                                 <strong style={{ fontSize: 13.5, color: isSelected ? "var(--terracotta)" : "var(--ink)", display: "block" }}>
                                   ₹{(c.rate + 5).toFixed(2)}
                                 </strong>
@@ -2406,11 +2416,11 @@ export function AdminOrders({
 
                 {/* ── Section 6: Order Summary ── */}
                 <div style={{ marginTop: 14, padding: "12px 14px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, marginBottom: 5 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, marginBottom: 5, flexWrap: "wrap", gap: 4 }}>
                     <span style={{ color: "#64748b" }}>Snacks Subtotal ({createItems.length} items):</span>
                     <strong style={{ color: "var(--ink)" }}>₹{itemsSubtotal.toFixed(2)}</strong>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, marginBottom: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, marginBottom: 6, flexWrap: "wrap", gap: 4 }}>
                     <span style={{ color: "#64748b" }}>Delivery / Shipping:</span>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
                       <span>₹</span>
@@ -2425,7 +2435,7 @@ export function AdminOrders({
                       />
                     </span>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: "1px solid #e2e8f0" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: "1px solid #e2e8f0", flexWrap: "wrap", gap: 4 }}>
                     <strong style={{ fontSize: 13.5, color: "var(--ink)" }}>Total Amount to Collect:</strong>
                     <strong style={{ fontSize: 17, color: "var(--terracotta)" }}>
                       ₹{(itemsSubtotal + (parseFloat(String(createShippingCharge)) || 0)).toFixed(2)}

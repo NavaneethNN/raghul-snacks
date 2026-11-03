@@ -1270,6 +1270,7 @@
     max-height: calc(100vh - 54px);
     padding: 16px 14px 24px;
     box-sizing: border-box;
+    overflow-x: hidden;
   }
 
   .modalHeader {
@@ -1480,13 +1481,22 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   width: 100%;
-  max-width: 620px;
+  max-width: 640px;
   max-height: 90vh;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   padding: 24px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
   animation: slideUp 0.2s ease-out;
+  box-sizing: border-box;
+}
+
+.createOrderModalCard {
+  max-width: 660px;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
   box-sizing: border-box;
 }
 
@@ -1889,6 +1899,9 @@
   border-radius: 10px;
   padding: 14px;
   margin-top: 4px;
+  box-sizing: border-box;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .createItemsHeader {
@@ -1896,6 +1909,8 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .createItemsTitle {
@@ -1914,35 +1929,108 @@
   color: var(--terracotta);
   padding: 3px 8px;
   border-radius: 6px;
+  white-space: nowrap;
 }
 
 .createItemCard {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 10px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .createItemCard:hover {
   border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.createItemInputsRow {
-  display: grid;
-  grid-template-columns: minmax(180px, 2.4fr) minmax(90px, 1.1fr) 75px 110px 95px 36px;
-  gap: 10px;
-  align-items: flex-end;
+.createItemCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.createItemInputGroup {
+.createItemBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.createItemIndex {
+  background: var(--terracotta);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.createItemBadgeText {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+.createItemHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.createItemRowTotalTag {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 3px 8px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.createItemRemoveBtn {
+  background: #fff5f5;
+  border: 1px solid #fee2e2;
+  color: #dc2626;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.createItemRemoveBtn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.createItemFieldGroup {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.createItemInputGroup label {
+.createItemFieldGroup label {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -1951,93 +2039,53 @@
   margin: 0;
 }
 
-.createItemInputGroup input {
-  padding: 7px 9px !important;
-  font-size: 13px !important;
-  border: 1px solid var(--line) !important;
-  border-radius: 6px !important;
-  background: #fff !important;
+.createItemFieldGroup input {
   width: 100% !important;
   box-sizing: border-box !important;
+  padding: 8px 10px !important;
+  font-size: 13.5px !important;
+  font-family: inherit !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 6px !important;
+  background: #ffffff !important;
+  color: var(--ink) !important;
+  transition: border-color 0.15s ease !important;
 }
 
-.createItemLineTotal {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 4px;
+.createItemFieldGroup input:focus {
+  outline: none !important;
+  border-color: var(--terracotta) !important;
+  box-shadow: 0 0 0 2px rgba(201, 95, 59, 0.15) !important;
 }
 
-.createItemLineTotal label {
-  font-size: 10.5px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #64748b;
-  margin: 0;
+.createItemMetricsRow {
+  display: grid;
+  grid-template-columns: 1.2fr 0.9fr 1.1fr;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.createItemLineTotal strong {
-  font-size: 14px;
-  color: var(--ink);
-  white-space: nowrap;
+@media (max-width: 520px) {
+  .createItemMetricsRow {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .createItemMetricsRow input {
+    padding: 7px 6px !important;
+    font-size: 12.5px !important;
+  }
 }
 
-.createItemActionCol {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 35px;
-}
-
-.createItemRemoveBtn {
-  background: #fff5f5;
-  border: 1px solid #fee2e2;
-  color: #ef4444;
-  cursor: pointer;
-  width: 34px;
-  height: 34px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-}
-
-.createItemRemoveBtn:hover {
-  color: #dc2626;
-  background-color: #fee2e2;
-  border-color: #fca5a5;
-}
-
-@media (max-width: 640px) {
-  .createItemInputsRow {
+@media (max-width: 400px) {
+  .createItemMetricsRow {
     grid-template-columns: 1fr 1fr;
-    gap: 10px 8px;
-  }
-
-  .createItemNameCol {
-    grid-column: span 2;
-  }
-
-  .createItemLineTotal {
-    align-items: flex-start;
-  }
-
-  .createItemActionCol {
-    grid-column: span 2;
-    justify-content: flex-end;
-    height: auto;
-    padding-top: 6px;
-    border-top: 1px dashed #f1f5f9;
   }
 }
 
 .addItemRowBtn {
   width: 100%;
-  padding: 8px 12px;
+  padding: 9px 12px;
   background: #fff;
   border: 1.5px dashed var(--line);
   border-radius: 6px;
@@ -2049,6 +2097,7 @@
   justify-content: center;
   gap: 6px;
   transition: all 0.15s ease;
+  box-sizing: border-box;
 }
 
 .addItemRowBtn:hover {
