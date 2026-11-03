@@ -8,9 +8,9 @@ import { Resolver } from "node:dns/promises";
 const keepAliveAgent = typeof window === "undefined"
   ? new https.Agent({
       keepAlive: true,
-      keepAliveMsecs: 60000,
-      maxSockets: 64,
-      maxFreeSockets: 16,
+      keepAliveMsecs: 120000,
+      maxSockets: 128,
+      maxFreeSockets: 32,
     })
   : undefined;
 
@@ -18,20 +18,30 @@ if (typeof window === "undefined" && !neonConfig.fetchFunction) {
   const resolver = new Resolver();
   resolver.setServers(["8.8.8.8", "1.1.1.1"]);
   const ipCache = new Map<string, { ip: string; time: number }>();
+  const dnsPending = new Map<string, Promise<string | null>>();
 
   async function resolveHostIp(hostname: string): Promise<string | null> {
     const cached = ipCache.get(hostname);
-    if (cached && Date.now() - cached.time < 300000) return cached.ip;
-    try {
-      const ips = await resolver.resolve4(hostname);
-      if (ips && ips.length > 0) {
-        ipCache.set(hostname, { ip: ips[0], time: Date.now() });
-        return ips[0];
+    if (cached && Date.now() - cached.time < 7200000) return cached.ip;
+    if (dnsPending.has(hostname)) return dnsPending.get(hostname)!;
+
+    const promise = (async () => {
+      try {
+        const ips = await resolver.resolve4(hostname);
+        if (ips && ips.length > 0) {
+          ipCache.set(hostname, { ip: ips[0], time: Date.now() });
+          return ips[0];
+        }
+      } catch {
+        // Fallback
+      } finally {
+        dnsPending.delete(hostname);
       }
-    } catch {
-      // Fallback
-    }
-    return null;
+      return null;
+    })();
+
+    dnsPending.set(hostname, promise);
+    return promise;
   }
 
   neonConfig.fetchFunction = async (input: RequestInfo | URL, init: RequestInit = {}) => {

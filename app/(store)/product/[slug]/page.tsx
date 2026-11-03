@@ -7,79 +7,100 @@ import { getDb } from "@/lib/db";
 import { products, categories, productVariants } from "@/drizzle/schema";
 import { and, eq } from "drizzle-orm";
 import { getProductsWithVariants } from "@/lib/db-queries";
+import { getOrSetCache } from "@/lib/cache";
 
 export const revalidate = 120;
 
-const getProduct = cache(async (slug: string) => {
+export async function generateStaticParams() {
   try {
     const db = getDb();
-    const result = await db
-      .select({
-        id: products.id,
-        name: products.name,
-        slug: products.slug,
-        description: products.description,
-        ingredients: products.ingredients,
-        price: products.price,
-        offerPrice: products.offerPrice,
-        weight: products.weight,
-        categoryId: products.categoryId,
-        categoryName: categories.name,
-        categorySlug: categories.slug,
-        image: products.image,
-                active: products.active,
-        shelfLife: products.shelfLife,
-        createdAt: products.createdAt,
-      })
+    const rows = await db
+      .select({ slug: products.slug })
       .from(products)
-      .leftJoin(categories, eq(products.categoryId, categories.id))
-      .where(eq(products.slug, slug))
-      .limit(1);
-    return result[0] || null;
+      .where(eq(products.active, true));
+    return rows.map((r) => ({ slug: r.slug }));
   } catch (error) {
-    console.error('Error fetching product:', error);
-    return null;
-  }
-});
-
-async function getVariants(productId: number) {
-  try {
-    const db = getDb();
-    return await db
-      .select()
-      .from(productVariants)
-      .where(and(eq(productVariants.productId, productId), eq(productVariants.active, true)))
-      .orderBy(productVariants.sortOrder);
-  } catch {
+    console.error("Error generating static params for products:", error);
     return [];
   }
 }
 
+const getProduct = cache(async (slug: string) => {
+  return getOrSetCache(`product:${slug}`, 300, async () => {
+    try {
+      const db = getDb();
+      const result = await db
+        .select({
+          id: products.id,
+          name: products.name,
+          slug: products.slug,
+          description: products.description,
+          ingredients: products.ingredients,
+          price: products.price,
+          offerPrice: products.offerPrice,
+          weight: products.weight,
+          categoryId: products.categoryId,
+          categoryName: categories.name,
+          categorySlug: categories.slug,
+          image: products.image,
+          active: products.active,
+          shelfLife: products.shelfLife,
+          createdAt: products.createdAt,
+        })
+        .from(products)
+        .leftJoin(categories, eq(products.categoryId, categories.id))
+        .where(eq(products.slug, slug))
+        .limit(1);
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      return null;
+    }
+  });
+});
+
+async function getVariants(productId: number) {
+  return getOrSetCache(`variants:${productId}`, 300, async () => {
+    try {
+      const db = getDb();
+      return await db
+        .select()
+        .from(productVariants)
+        .where(and(eq(productVariants.productId, productId), eq(productVariants.active, true)))
+        .orderBy(productVariants.sortOrder);
+    } catch {
+      return [];
+    }
+  });
+}
+
 // Recommendations reuse the shared query with a limit to avoid loading the entire catalog.
 async function getRecommendations(categoryId: number | null, currentProductId: number) {
-  try {
-    const db = getDb();
-    let recs: any[] = [];
-    if (categoryId) {
-      const sameCat = await getProductsWithVariants(db, { categoryId, limit: 4 });
-      recs = sameCat.filter((p: any) => p.id !== currentProductId);
-    }
-    if (recs.length < 3) {
-      const more = await getProductsWithVariants(db, { limit: 6 });
-      const existingIds = new Set([currentProductId, ...recs.map((r: any) => r.id)]);
-      for (const item of more) {
-        if (!existingIds.has(item.id)) {
-          recs.push(item);
-          existingIds.add(item.id);
-          if (recs.length >= 3) break;
+  return getOrSetCache(`recs:${categoryId}:${currentProductId}`, 300, async () => {
+    try {
+      const db = getDb();
+      let recs: any[] = [];
+      if (categoryId) {
+        const sameCat = await getProductsWithVariants(db, { categoryId, limit: 4 });
+        recs = sameCat.filter((p: any) => p.id !== currentProductId);
+      }
+      if (recs.length < 3) {
+        const more = await getProductsWithVariants(db, { limit: 6 });
+        const existingIds = new Set([currentProductId, ...recs.map((r: any) => r.id)]);
+        for (const item of more) {
+          if (!existingIds.has(item.id)) {
+            recs.push(item);
+            existingIds.add(item.id);
+            if (recs.length >= 3) break;
+          }
         }
       }
+      return recs.slice(0, 3);
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+      return [];
     }
-    return recs.slice(0, 3);
-  } catch (error) {
-    console.error('Error fetching recommendations:', error);
-    return [];
-  }
+  });
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {

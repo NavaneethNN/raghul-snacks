@@ -108,9 +108,12 @@ export async function POST(request: NextRequest) {
 
     invalidateCache("home:products");
     invalidateCache("shop:products");
+    invalidateCache("product:");
+    invalidateCache("variants:");
     try {
       revalidatePath("/");
       revalidatePath("/shop");
+      revalidatePath("/product", "layout");
     } catch {}
 
     return NextResponse.json(newProduct, { status: 201 });

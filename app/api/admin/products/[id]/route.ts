@@ -57,6 +57,8 @@ export async function PATCH(
 
     invalidateCache("home:products");
     invalidateCache("shop:products");
+    invalidateCache("product:");
+    invalidateCache("variants:");
     try {
       revalidatePath("/");
       revalidatePath("/shop");
@@ -96,6 +98,8 @@ export async function DELETE(
 
     invalidateCache("home:products");
     invalidateCache("shop:products");
+    invalidateCache("product:");
+    invalidateCache("variants:");
     try {
       revalidatePath("/");
       revalidatePath("/shop");

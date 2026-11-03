@@ -5,28 +5,44 @@ import { getDb } from "@/lib/db";
 import { categories } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { getProductsWithVariants } from "@/lib/db-queries";
+import { getOrSetCache } from "@/lib/cache";
 
 export const revalidate = 120;
 
-async function getCategory(slug: string) {
+export async function generateStaticParams() {
   try {
     const db = getDb();
-    const result = await db.select().from(categories).where(eq(categories.slug, slug)).limit(1);
-    return result[0] || null;
+    const rows = await db.select({ slug: categories.slug }).from(categories);
+    return rows.map((r) => ({ category: r.slug }));
   } catch (error) {
-    console.error('Error fetching category:', error);
-    return null;
+    console.error("Error generating static params for categories:", error);
+    return [];
   }
 }
 
+async function getCategory(slug: string) {
+  return getOrSetCache(`category:${slug}`, 300, async () => {
+    try {
+      const db = getDb();
+      const result = await db.select().from(categories).where(eq(categories.slug, slug)).limit(1);
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error fetching category:', error);
+      return null;
+    }
+  });
+}
+
 async function getProductsByCategoryId(categoryId: number) {
-  try {
-    const db = getDb();
-    return await getProductsWithVariants(db, { categoryId });
-  } catch (error) {
-    console.error('Error fetching products:', error);
-    return [];
-  }
+  return getOrSetCache(`category:products:${categoryId}`, 300, async () => {
+    try {
+      const db = getDb();
+      return await getProductsWithVariants(db, { categoryId });
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      return [];
+    }
+  });
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {

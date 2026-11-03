@@ -29,11 +29,12 @@ export function ShopContent({
   searchQuery?: string;
 }) {
   const searchParams = useSearchParams();
+  const searchParam = searchParams.get("search") || "";
   const tabParam = searchParams.get("tab");
   const categoryParam = searchParams.get("category");
 
   // User input states
-  const [searchTerm, setSearchTerm] = useState(searchQuery);
+  const [searchTerm, setSearchTerm] = useState(searchParam || searchQuery);
   const [userTab, setUserTab] = useState<string | null>(categoryParam || null);
   const [sortBy, setSortBy] = useState<SortOption>("featured");
 

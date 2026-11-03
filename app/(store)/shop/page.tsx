@@ -31,9 +31,8 @@ async function getProducts() {
   });
 }
 
-export default async function ShopPage({ searchParams }: { searchParams: Promise<{ search?: string; tab?: string; category?: string }> }) {
-  const [params, allCategories, allProducts] = await Promise.all([
-    searchParams,
+export default async function ShopPage() {
+  const [allCategories, allProducts] = await Promise.all([
     getCategories(),
     getProducts(),
   ]);
@@ -41,7 +40,6 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   const regularProducts = allProducts.filter((p: any) => p.categorySlug !== 'combos' && p.categoryName?.toLowerCase() !== 'combos');
   const comboProducts = allProducts.filter((p: any) => p.categorySlug === 'combos' || p.categoryName?.toLowerCase() === 'combos');
   const nonComboCategories = allCategories.filter((c: any) => c.slug !== 'combos');
-  const searchQuery = params.search || "";
 
   return (
     <section className="section shop-page">
@@ -53,7 +51,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
           <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </div>
       }>
-        <ShopContent categories={nonComboCategories} products={regularProducts} combos={comboProducts} searchQuery={searchQuery} />
+        <ShopContent categories={nonComboCategories} products={regularProducts} combos={comboProducts} />
       </Suspense>
     </section>
   );
