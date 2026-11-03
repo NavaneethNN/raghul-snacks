@@ -118,9 +118,9 @@ function inferStateFromPincode(pincode: string): string | null {
 export type CreateOrderItem = {
   id: string;
   name: string;
-  weight: string;
   quantity: number | string;
-  unitPrice: number | string;
+  totalPrice: number | string;
+  weight?: string;
   productId?: number | null;
   variantId?: number | null;
 };
@@ -202,9 +202,9 @@ export function AdminOrders({
   const [createState, setCreateState] = useState("");
   const [createPincode, setCreatePincode] = useState("");
 
-  // Product items list
+  // Product items list (Name, Quantity, Total Price)
   const [createItems, setCreateItems] = useState<CreateOrderItem[]>([
-    { id: "item-1", name: "", weight: "250g", quantity: 1, unitPrice: "" },
+    { id: "item-1", name: "", quantity: 1, totalPrice: "" },
   ]);
   const [weightManuallyEdited, setWeightManuallyEdited] = useState(false);
   const [createWeight, setCreateWeight] = useState("");
@@ -232,12 +232,11 @@ export function AdminOrders({
     labelUrl?: string | null;
   } | null>(null);
 
-  // Auto-calculate snacks subtotal
+  // Auto-calculate snacks subtotal directly from each item's total price
   const itemsSubtotal = useMemo(() => {
     return createItems.reduce((acc, it) => {
-      const q = Math.max(0, Number(it.quantity) || 0);
-      const p = Math.max(0, Number(it.unitPrice) || 0);
-      return acc + q * p;
+      const p = Math.max(0, Number(it.totalPrice) || 0);
+      return acc + p;
     }, 0);
   }, [createItems]);
 
@@ -246,8 +245,9 @@ export function AdminOrders({
     let netKg = 0;
     for (const it of createItems) {
       const q = Math.max(1, Number(it.quantity) || 1);
-      const w = it.weight ? parseWeightToKg(it.weight) : 0.25;
-      netKg += (w || 0.25) * q;
+      const parsedWeight = parseWeightToKg(it.name);
+      const w = parsedWeight || 0.25;
+      netKg += w * q;
     }
     const bufferKg = calculatePackagingBufferKg(netKg);
     return Math.max(0.15, Math.round((netKg + bufferKg) * 100) / 100);
@@ -265,9 +265,8 @@ export function AdminOrders({
       {
         id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         name: "",
-        weight: "250g",
         quantity: 1,
-        unitPrice: "",
+        totalPrice: "",
       },
     ]);
   }
@@ -294,7 +293,7 @@ export function AdminOrders({
     setCreateCity("");
     setCreateState("");
     setCreatePincode("");
-    setCreateItems([{ id: "item-1", name: "", weight: "250g", quantity: 1, unitPrice: "" }]);
+    setCreateItems([{ id: "item-1", name: "", quantity: 1, totalPrice: "" }]);
     setWeightManuallyEdited(false);
     setCreateWeight("");
     setCreateShippingCharge(0);
@@ -391,7 +390,7 @@ export function AdminOrders({
 
     const validItems = createItems.filter((it) => it.name.trim().length > 0);
     if (validItems.length === 0) {
-      setCreateError("Please enter at least one snack item with product name, quantity, and price.");
+      setCreateError("Please enter at least one snack item with product name, quantity, and total price.");
       return;
     }
 
@@ -421,15 +420,20 @@ export function AdminOrders({
           orderSource: createSource,
           paymentMethod: createPaymentMethod,
           paymentStatus: createPaymentStatus,
-          items: validItems.map((it) => ({
-            name: it.name.trim(),
-            quantity: Math.max(1, Number(it.quantity) || 1),
-            price: Math.max(0, Number(it.unitPrice) || 0),
-            weight: it.weight?.trim() || null,
-            approxWeight: it.weight?.trim() || null,
-            productId: it.productId || null,
-            variantId: it.variantId || null,
-          })),
+          items: validItems.map((it) => {
+            const qty = Math.max(1, Number(it.quantity) || 1);
+            const tot = Math.max(0, Number(it.totalPrice) || 0);
+            const unitPrice = Math.round((tot / qty) * 100) / 100;
+            return {
+              name: it.name.trim(),
+              quantity: qty,
+              price: unitPrice,
+              weight: parseWeightToKg(it.name) ? it.name : null,
+              approxWeight: null,
+              productId: null,
+              variantId: null,
+            };
+          }),
           orderAmount: itemsSubtotal,
           finalWeightKg: w,
           length,
@@ -2166,7 +2170,7 @@ export function AdminOrders({
                   </div>
 
                   {createItems.map((item, idx) => {
-                    const rowTotal = Math.max(1, Number(item.quantity) || 1) * Math.max(0, Number(item.unitPrice) || 0);
+                    const itemTotal = Math.max(0, Number(item.totalPrice) || 0);
 
                     return (
                       <div key={item.id} className={styles.createItemCard}>
@@ -2178,7 +2182,7 @@ export function AdminOrders({
                           </div>
                           <div className={styles.createItemHeaderActions}>
                             <span className={styles.createItemRowTotalTag}>
-                              Total: ₹{rowTotal.toFixed(2)}
+                              Total: ₹{itemTotal.toFixed(2)}
                             </span>
                             {createItems.length > 1 && (
                               <button
@@ -2204,26 +2208,16 @@ export function AdminOrders({
                           <input
                             required
                             type="text"
-                            placeholder="e.g. Kai Murukku, Mixture, Ribbon Pakoda..."
+                            placeholder="e.g. Kai Murukku 250g, Ribbon Pakoda, Mixture..."
                             value={item.name}
                             onChange={(e) => handleUpdateItem(idx, "name", e.target.value)}
                           />
                         </div>
 
-                        {/* Metrics: Pack Weight, Quantity, Unit Price */}
+                        {/* Quantity & Product Total Price */}
                         <div className={styles.createItemMetricsRow}>
                           <div className={styles.createItemFieldGroup}>
-                            <label>Pack Weight</label>
-                            <input
-                              type="text"
-                              placeholder="e.g. 250g"
-                              value={item.weight}
-                              onChange={(e) => handleUpdateItem(idx, "weight", e.target.value)}
-                            />
-                          </div>
-
-                          <div className={styles.createItemFieldGroup}>
-                            <label>Qty *</label>
+                            <label>Quantity *</label>
                             <input
                               required
                               type="number"
@@ -2236,15 +2230,15 @@ export function AdminOrders({
                           </div>
 
                           <div className={styles.createItemFieldGroup}>
-                            <label>Unit Price (₹) *</label>
+                            <label>Product Total Price (₹) *</label>
                             <input
                               required
                               type="number"
                               min="0"
                               step="0.01"
                               placeholder="0.00"
-                              value={item.unitPrice}
-                              onChange={(e) => handleUpdateItem(idx, "unitPrice", e.target.value)}
+                              value={item.totalPrice}
+                              onChange={(e) => handleUpdateItem(idx, "totalPrice", e.target.value)}
                             />
                           </div>
                         </div>
