@@ -202,12 +202,25 @@ export function AdminOrders({
   const [createState, setCreateState] = useState("");
   const [createPincode, setCreatePincode] = useState("");
 
-  // Product items list (Name, Quantity, Total Price)
+  // Product items list (Name, Quantity or Weight, Total Price)
   const [createItems, setCreateItems] = useState<CreateOrderItem[]>([
     { id: "item-1", name: "", quantity: 1, totalPrice: "" },
   ]);
-  const [weightManuallyEdited, setWeightManuallyEdited] = useState(false);
-  const [createWeight, setCreateWeight] = useState("");
+  const [createSnackWeight, setCreateSnackWeight] = useState("");
+
+  // Calculate packaging box buffer based on the overall snack weight entered by admin
+  const packagingBufferKg = useMemo(() => {
+    const sw = parseFloat(createSnackWeight);
+    if (isNaN(sw) || sw <= 0) return 0;
+    return calculatePackagingBufferKg(sw);
+  }, [createSnackWeight]);
+
+  // Final total parcel weight (overall snacks weight + carton packaging buffer)
+  const finalTotalWeightKg = useMemo(() => {
+    const sw = parseFloat(createSnackWeight);
+    if (isNaN(sw) || sw <= 0) return 0;
+    return Math.round((sw + packagingBufferKg) * 100) / 100;
+  }, [createSnackWeight, packagingBufferKg]);
 
   const [createPaymentMethod, setCreatePaymentMethod] = useState("upi");
   const [createPaymentStatus, setCreatePaymentStatus] = useState<"paid" | "pending">("paid");
@@ -239,25 +252,6 @@ export function AdminOrders({
       return acc + p;
     }, 0);
   }, [createItems]);
-
-  // Auto-calculate total package weight from items + packaging buffer
-  const estimatedPackageWeightKg = useMemo(() => {
-    let netKg = 0;
-    for (const it of createItems) {
-      const q = Math.max(1, Number(it.quantity) || 1);
-      const parsedWeight = parseWeightToKg(it.name);
-      const w = parsedWeight || 0.25;
-      netKg += w * q;
-    }
-    const bufferKg = calculatePackagingBufferKg(netKg);
-    return Math.max(0.15, Math.round((netKg + bufferKg) * 100) / 100);
-  }, [createItems]);
-
-  useEffect(() => {
-    if (!weightManuallyEdited && estimatedPackageWeightKg > 0) {
-      setCreateWeight(estimatedPackageWeightKg.toString());
-    }
-  }, [estimatedPackageWeightKg, weightManuallyEdited]);
 
   function handleAddItem() {
     setCreateItems((prev) => [
@@ -294,8 +288,7 @@ export function AdminOrders({
     setCreateState("");
     setCreatePincode("");
     setCreateItems([{ id: "item-1", name: "", quantity: 1, totalPrice: "" }]);
-    setWeightManuallyEdited(false);
-    setCreateWeight("");
+    setCreateSnackWeight("");
     setCreateShippingCharge(0);
     setCreateRates([]);
     setCreateBookCourierNow(true);
@@ -310,8 +303,7 @@ export function AdminOrders({
       setCreateShippingCharge(0);
       return;
     }
-    const w = parseFloat(createWeight);
-    if (isNaN(w) || w <= 0) {
+    if (finalTotalWeightKg <= 0) {
       setCreateRates([]);
       setCreateShippingCharge(0);
       return;
@@ -319,6 +311,7 @@ export function AdminOrders({
 
     const timer = setTimeout(async () => {
       setCreateRatesLoading(true);
+      const w = finalTotalWeightKg;
       const length = w <= 0.4 ? 20 : w <= 1.5 ? 22 : w <= 3.0 ? 28 : 35;
       const breadth = w <= 0.4 ? 15 : w <= 1.5 ? 16 : w <= 3.0 ? 22 : 28;
       const height = w <= 0.4 ? 5 : w <= 1.5 ? 10 : w <= 3.0 ? 14 : 20;
@@ -355,7 +348,7 @@ export function AdminOrders({
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [createPincode, createWeight]);
+  }, [createPincode, finalTotalWeightKg]);
 
   function handleCreatePincodeChange(pincode: string) {
     const clean = pincode.replace(/\D/g, "").slice(0, 6);
@@ -394,17 +387,20 @@ export function AdminOrders({
       return;
     }
 
-    const w = parseFloat(createWeight);
-    if (isNaN(w) || w <= 0) {
-      setCreateError("Please mention the total package weight in kg.");
+    const sw = parseFloat(createSnackWeight);
+    if (isNaN(sw) || sw <= 0) {
+      setCreateError("Please enter the overall order weight in kg.");
       return;
     }
 
+    const finalW = finalTotalWeightKg > 0 ? finalTotalWeightKg : sw;
+
     setCreateSubmitting(true);
     try {
-      const length = w <= 0.4 ? 20 : w <= 1.5 ? 22 : w <= 3.0 ? 28 : 35;
-      const breadth = w <= 0.4 ? 15 : w <= 1.5 ? 16 : w <= 3.0 ? 22 : 28;
-      const height = w <= 0.4 ? 5 : w <= 1.5 ? 10 : w <= 3.0 ? 14 : 20;
+      const length = finalW <= 0.4 ? 20 : finalW <= 1.5 ? 22 : finalW <= 3.0 ? 28 : 35;
+      const breadth = finalW <= 0.4 ? 15 : finalW <= 1.5 ? 16 : finalW <= 3.0 ? 22 : 28;
+      const height = finalW <= 0.4 ? 5 : finalW <= 1.5 ? 10 : finalW <= 3.0 ? 14 : 20;
+      const boxName = finalW <= 0.35 ? "Pouch / Small Mailer" : finalW <= 1.2 ? "Small Carton Box" : finalW <= 2.5 ? "Medium Carton Box" : "Master Carton Box";
 
       const res = await fetch("/api/admin/orders/create", {
         method: "POST",
@@ -421,24 +417,45 @@ export function AdminOrders({
           paymentMethod: createPaymentMethod,
           paymentStatus: createPaymentStatus,
           items: validItems.map((it) => {
-            const qty = Math.max(1, Number(it.quantity) || 1);
+            const rawQty = String(it.quantity || "1").trim();
+            const isWeightOnly = /^\d+(?:\.\d+)?\s*(?:g|gm|gms|gram|grams|kg|kilogram|kgs)\b/i.test(rawQty);
+            const numMatch = rawQty.match(/^(\d+)/);
+
+            let qty = 1;
+            let weightStr: string | null = null;
+
+            if (isWeightOnly) {
+              qty = 1;
+              weightStr = rawQty;
+            } else if (numMatch) {
+              qty = Math.max(1, parseInt(numMatch[1], 10));
+              const weightMatch = rawQty.match(/\b\d+(?:\.\d+)?\s*(?:g|gm|gms|gram|grams|kg|kilogram|kgs)\b/i);
+              if (weightMatch) weightStr = weightMatch[0];
+            }
+
+            if (!weightStr) {
+              const nameWeight = it.name.match(/\b\d+(?:\.\d+)?\s*(?:g|gm|gms|gram|grams|kg|kilogram|kgs)\b/i);
+              if (nameWeight) weightStr = nameWeight[0];
+            }
+
             const tot = Math.max(0, Number(it.totalPrice) || 0);
             const unitPrice = Math.round((tot / qty) * 100) / 100;
             return {
               name: it.name.trim(),
               quantity: qty,
               price: unitPrice,
-              weight: parseWeightToKg(it.name) ? it.name : null,
-              approxWeight: null,
+              weight: weightStr,
+              approxWeight: weightStr,
               productId: null,
               variantId: null,
             };
           }),
           orderAmount: itemsSubtotal,
-          finalWeightKg: w,
+          finalWeightKg: finalW,
           length,
           breadth,
           height,
+          boxName,
           courierId: createSelectedCourierId,
           courierName: createSelectedCourierName,
           shippingCharge: createShippingCharge,
@@ -2214,16 +2231,14 @@ export function AdminOrders({
                           />
                         </div>
 
-                        {/* Quantity & Product Total Price */}
+                        {/* Quantity / Weight & Product Total Price */}
                         <div className={styles.createItemMetricsRow}>
                           <div className={styles.createItemFieldGroup}>
-                            <label>Quantity *</label>
+                            <label>Qty / Weight *</label>
                             <input
                               required
-                              type="number"
-                              min="1"
-                              step="1"
-                              placeholder="1"
+                              type="text"
+                              placeholder="e.g. 2, 250g, 500g, 1 kg"
                               value={item.quantity}
                               onChange={(e) => handleUpdateItem(idx, "quantity", e.target.value)}
                             />
@@ -2259,7 +2274,7 @@ export function AdminOrders({
                   </button>
                 </div>
 
-                {/* ── Section 3: Total Package Weight ── */}
+                {/* ── Section 3: Overall Order Weight & Packaging Buffer ── */}
                 <div className={styles.packageWeightCard}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
                     <label style={{ fontWeight: 700, fontSize: 13, color: "var(--ink)", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
@@ -2267,22 +2282,11 @@ export function AdminOrders({
                         <circle cx="12" cy="12" r="10" />
                         <polyline points="12 6 12 12 16 14" />
                       </svg>
-                      Total Package Weight (kg) *
+                      Overall Order Weight (kg) *
                     </label>
-                    {weightManuallyEdited ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setWeightManuallyEdited(false);
-                          setCreateWeight(estimatedPackageWeightKg > 0 ? estimatedPackageWeightKg.toString() : "");
-                        }}
-                        style={{ background: "none", border: "none", color: "var(--terracotta)", fontSize: 11.5, cursor: "pointer", textDecoration: "underline", padding: 0 }}
-                      >
-                        Reset to auto-calculated ({estimatedPackageWeightKg} kg)
-                      </button>
-                    ) : (
+                    {finalTotalWeightKg > 0 && (
                       <span style={{ fontSize: 11, color: "#166534", background: "#dcfce7", padding: "2px 7px", borderRadius: 4, fontWeight: 700 }}>
-                        Auto-calculated from items + carton buffer
+                        Total Shipping Weight: {finalTotalWeightKg} kg
                       </span>
                     )}
                   </div>
@@ -2294,30 +2298,38 @@ export function AdminOrders({
                         type="number"
                         step="0.01"
                         min="0.05"
-                        placeholder="e.g. 0.85"
-                        value={createWeight}
-                        onChange={(e) => {
-                          setWeightManuallyEdited(true);
-                          setCreateWeight(e.target.value);
-                        }}
+                        placeholder="e.g. 1.0"
+                        value={createSnackWeight}
+                        onChange={(e) => setCreateSnackWeight(e.target.value)}
                         style={{ width: "100%", paddingRight: 32, fontSize: 15, fontWeight: 700 }}
                       />
                       <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "#64748b", fontWeight: 700, pointerEvents: "none" }}>
                         kg
                       </span>
                     </div>
-                    <span style={{ fontSize: 12, color: "#64748b", flex: "1 1 200px" }}>
-                      Scale weight of the packed carton (used for live courier booking and AWB label).
-                    </span>
+                    {finalTotalWeightKg > 0 ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12 }}>
+                        <span style={{ background: "#fef3c7", color: "#92400e", padding: "3px 8px", borderRadius: 4, fontWeight: 600 }}>
+                          +{packagingBufferKg} kg carton box buffer
+                        </span>
+                        <span style={{ color: "#475569" }}>
+                          ({createSnackWeight} kg snacks + {packagingBufferKg} kg carton = <strong>{finalTotalWeightKg} kg</strong> parcel)
+                        </span>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: 12, color: "#64748b", flex: "1 1 200px" }}>
+                        Enter the overall weight of all items combined. Carton box buffer and courier charges will be auto-calculated.
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 {/* ── Section 4: Live Courier Rates ── */}
-                {createPincode.length === 6 && parseFloat(createWeight) > 0 && (
+                {createPincode.length === 6 && finalTotalWeightKg > 0 && (
                   <div style={{ marginTop: 12, padding: "12px 14px", background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 6 }}>
                       <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                        Live Shiprocket Delivery Rates ({createWeight} kg to {createPincode})
+                        Live Shiprocket Delivery Rates ({finalTotalWeightKg} kg parcel to {createPincode})
                       </span>
                       {createRatesLoading && <small style={{ color: "var(--terracotta)", fontWeight: 600 }}>Fetching rates…</small>}
                     </div>
