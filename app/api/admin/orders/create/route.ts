@@ -7,6 +7,16 @@ import { customers, orders, orderItems } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { createShiprocketShipment, isShiprocketConfigured } from "@/lib/shiprocket";
 
+const orderItemInputSchema = z.object({
+  name: z.string().trim().min(1, "Product name is required"),
+  quantity: z.number().int().min(1, "Quantity must be at least 1"),
+  price: z.number().min(0, "Price must be at least 0"),
+  weight: z.string().optional().nullable(),
+  approxWeight: z.string().optional().nullable(),
+  productId: z.number().optional().nullable(),
+  variantId: z.number().optional().nullable(),
+});
+
 const createOrderSchema = z.object({
   customerName: z.string().trim().min(2, "Customer name is required"),
   phone: z.string().trim().regex(/^(\+91)?[6-9]\d{9}$/, "Valid 10-digit mobile number required"),
@@ -18,6 +28,7 @@ const createOrderSchema = z.object({
   orderSource: z.enum(["whatsapp", "instagram", "offline", "phone"]).default("whatsapp"),
   paymentMethod: z.string().trim().default("upi"),
   paymentStatus: z.enum(["paid", "pending"]).default("paid"),
+  items: z.array(orderItemInputSchema).optional().default([]),
   orderAmount: z.number().min(0, "Order amount must be 0 or greater"),
   finalWeightKg: z.number().positive("Weight must be greater than 0"),
   length: z.number().positive().default(22),
@@ -105,15 +116,30 @@ export async function POST(request: Request) {
       })
       .returning();
 
-    // 4. Insert order item
-    await db.insert(orderItems).values({
-      orderId: insertedOrder.id,
-      name: "Assorted Fresh Snacks & Sweets",
-      quantity: 1,
-      price: String(data.orderAmount),
-      weight: `${data.finalWeightKg} kg`,
-      approxWeight: `${data.finalWeightKg} kg`,
-    });
+    // 4. Insert order items
+    if (data.items && data.items.length > 0) {
+      for (const item of data.items) {
+        await db.insert(orderItems).values({
+          orderId: insertedOrder.id,
+          productId: item.productId || null,
+          variantId: item.variantId || null,
+          name: item.name,
+          quantity: item.quantity,
+          price: String(item.price),
+          weight: item.weight || null,
+          approxWeight: item.approxWeight || item.weight || null,
+        });
+      }
+    } else {
+      await db.insert(orderItems).values({
+        orderId: insertedOrder.id,
+        name: "Assorted Fresh Snacks & Sweets",
+        quantity: 1,
+        price: String(data.orderAmount),
+        weight: `${data.finalWeightKg} kg`,
+        approxWeight: `${data.finalWeightKg} kg`,
+      });
+    }
 
     let awbCode: string | null = null;
     let shipmentId: string | null = null;
@@ -122,6 +148,20 @@ export async function POST(request: Request) {
     // 5. Optionally book courier immediately
     if (data.bookCourierNow && isShiprocketConfigured()) {
       try {
+        const lines = (data.items && data.items.length > 0)
+          ? data.items.map((item) => ({
+              product: { name: item.name, slug: "snack" },
+              quantity: item.quantity,
+              lineTotal: Math.round(item.price * item.quantity * 100) / 100,
+            }))
+          : [
+              {
+                product: { name: "Assorted Fresh Snacks", slug: "snacks" },
+                quantity: 1,
+                lineTotal: data.orderAmount,
+              },
+            ];
+
         const srResult = await createShiprocketShipment({
           orderNumber,
           customerName: data.customerName,
@@ -139,13 +179,7 @@ export async function POST(request: Request) {
           height: data.height,
           courierId: data.courierId ?? null,
           courierName: data.courierName ?? null,
-          lines: [
-            {
-              product: { name: "Assorted Fresh Snacks", slug: "snacks" },
-              quantity: 1,
-              lineTotal: data.orderAmount,
-            },
-          ],
+          lines,
         });
 
         if (srResult) {

@@ -115,7 +115,36 @@ function inferStateFromPincode(pincode: string): string | null {
   return null;
 }
 
-export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
+export type CatalogProductOption = {
+  id: number;
+  name: string;
+  price: number;
+  weight?: string | null;
+  variants: {
+    id: number;
+    weight: string;
+    price: number;
+    approxWeight?: string | null;
+  }[];
+};
+
+export type CreateOrderItem = {
+  id: string;
+  productId?: number | null;
+  variantId?: number | null;
+  name: string;
+  weight: string;
+  quantity: number;
+  unitPrice: number;
+};
+
+export function AdminOrders({
+  orders,
+  catalogProducts = [],
+}: {
+  orders: AdminOrder[];
+  catalogProducts?: CatalogProductOption[];
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<Record<number, { ok: boolean; msg: string }>>({});
@@ -187,12 +216,17 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
   const [createCity, setCreateCity] = useState("");
   const [createState, setCreateState] = useState("");
   const [createPincode, setCreatePincode] = useState("");
-  const [createAmount, setCreateAmount] = useState("");
+
+  // Product items list
+  const [createItems, setCreateItems] = useState<CreateOrderItem[]>([
+    { id: "item-1", name: "", weight: "250g", quantity: 1, unitPrice: 0 },
+  ]);
+  const [weightManuallyEdited, setWeightManuallyEdited] = useState(false);
   const [createWeight, setCreateWeight] = useState("");
-  const [createSelectedBox, setCreateSelectedBox] = useState("");
+
   const [createPaymentMethod, setCreatePaymentMethod] = useState("upi");
   const [createPaymentStatus, setCreatePaymentStatus] = useState<"paid" | "pending">("paid");
-  const [createBookCourierNow, setCreateBookCourierNow] = useState(false);
+  const [createBookCourierNow, setCreateBookCourierNow] = useState(true);
   const [createSubmitting, setCreateSubmitting] = useState(false);
   const [createError, setCreateError] = useState("");
   const [createRates, setCreateRates] = useState<LiveCourier[]>([]);
@@ -213,46 +247,104 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
     labelUrl?: string | null;
   } | null>(null);
 
-  const [createWeightBreakdown, setCreateWeightBreakdown] = useState<{
-    physicalWeightKg: number;
-    volumetricWeightKg: number;
-    chargeableWeightKg: number;
-    appliedSlab: string;
-    boxDimensions: string;
-    boxName: string;
-  } | null>(null);
+  // Auto-calculate snacks subtotal
+  const itemsSubtotal = useMemo(() => {
+    return createItems.reduce((acc, it) => {
+      const q = Math.max(0, Number(it.quantity) || 0);
+      const p = Math.max(0, Number(it.unitPrice) || 0);
+      return acc + q * p;
+    }, 0);
+  }, [createItems]);
 
-  function getCreateBoxDimensions(weightKg: number, boxName?: string) {
-    if (boxName) {
-      const found = availableBoxes.find((b) => b.name === boxName);
-      if (found) {
-        return { length: found.length, breadth: found.breadth, height: found.height, name: found.name };
-      }
+  // Auto-calculate total package weight from items + packaging buffer
+  const estimatedPackageWeightKg = useMemo(() => {
+    let netKg = 0;
+    for (const it of createItems) {
+      const q = Math.max(1, Number(it.quantity) || 1);
+      const w = it.weight ? parseWeightToKg(it.weight) : 0.25;
+      netKg += (w || 0.25) * q;
     }
-    // Auto-select optimal packaging box based on scale weight
-    if (weightKg <= 0.35) {
-      const pouch = availableBoxes.find(
-        (b) => b.maxCapacityKg <= 0.4 || b.name.toLowerCase().includes("pouch") || b.name.toLowerCase().includes("mailer")
-      );
-      if (pouch) return { length: pouch.length, breadth: pouch.breadth, height: pouch.height, name: pouch.name };
-      return { length: 20, breadth: 15, height: 5, name: "Small Mailer / Pouch" };
+    const bufferKg = calculatePackagingBufferKg(netKg);
+    return Math.max(0.15, Math.round((netKg + bufferKg) * 100) / 100);
+  }, [createItems]);
+
+  useEffect(() => {
+    if (!weightManuallyEdited && estimatedPackageWeightKg > 0) {
+      setCreateWeight(estimatedPackageWeightKg.toString());
     }
-    if (weightKg <= 1.2) {
-      const std = availableBoxes.find((b) => b.maxCapacityKg <= 1.5 && b.maxCapacityKg > 0.5);
-      if (std) return { length: std.length, breadth: std.breadth, height: std.height, name: std.name };
-      return { length: 22, breadth: 16, height: 10, name: "Standard Snack Box" };
+  }, [estimatedPackageWeightKg, weightManuallyEdited]);
+
+  function handleAddItem() {
+    setCreateItems((prev) => [
+      ...prev,
+      {
+        id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        name: "",
+        weight: "250g",
+        quantity: 1,
+        unitPrice: 0,
+      },
+    ]);
+  }
+
+  function handleRemoveItem(index: number) {
+    if (createItems.length <= 1) return;
+    setCreateItems((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function handleUpdateItem(index: number, field: keyof CreateOrderItem, value: any) {
+    setCreateItems((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+  }
+
+  function handleSelectCatalogProduct(index: number, selectValue: string) {
+    if (selectValue === "custom" || !selectValue) {
+      handleUpdateItem(index, "productId", null);
+      handleUpdateItem(index, "variantId", null);
+      return;
     }
-    if (weightKg <= 2.5) {
-      const med = availableBoxes.find((b) => b.maxCapacityKg <= 3.0 && b.maxCapacityKg > 1.5);
-      if (med) return { length: med.length, breadth: med.breadth, height: med.height, name: med.name };
-      return { length: 28, breadth: 22, height: 14, name: "Medium Box" };
+
+    const [pIdStr, vIdStr] = selectValue.split(":");
+    const pId = parseInt(pIdStr, 10);
+    const prod = catalogProducts.find((p) => p.id === pId);
+    if (!prod) return;
+
+    if (vIdStr === "default" || !vIdStr) {
+      setCreateItems((prev) => {
+        const next = [...prev];
+        next[index] = {
+          ...next[index],
+          productId: prod.id,
+          variantId: null,
+          name: prod.name,
+          weight: prod.weight || "250g",
+          unitPrice: prod.price,
+        };
+        return next;
+      });
+    } else {
+      const vId = parseInt(vIdStr, 10);
+      const variant = prod.variants.find((v) => v.id === vId);
+      setCreateItems((prev) => {
+        const next = [...prev];
+        next[index] = {
+          ...next[index],
+          productId: prod.id,
+          variantId: variant ? variant.id : null,
+          name: `${prod.name} (${variant?.weight || "250g"})`,
+          weight: variant?.weight || "250g",
+          unitPrice: variant ? variant.price : prod.price,
+        };
+        return next;
+      });
     }
-    const large = availableBoxes.find((b) => b.maxCapacityKg > 3.0);
-    if (large) return { length: large.length, breadth: large.breadth, height: large.height, name: large.name };
-    return { length: 35, breadth: 28, height: 20, name: "Large Bulk Carton" };
   }
 
   function resetCreateForm() {
+    setCreateSource("whatsapp");
     setCreateName("");
     setCreatePhone("");
     setCreateEmail("");
@@ -260,36 +352,36 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
     setCreateCity("");
     setCreateState("");
     setCreatePincode("");
-    setCreateAmount("");
+    setCreateItems([{ id: "item-1", name: "", weight: "250g", quantity: 1, unitPrice: 0 }]);
+    setWeightManuallyEdited(false);
     setCreateWeight("");
-    setCreateSelectedBox("");
     setCreateShippingCharge(0);
     setCreateRates([]);
-    setCreateWeightBreakdown(null);
-    setCreateBookCourierNow(false);
+    setCreateBookCourierNow(true);
     setCreatedResult(null);
     setCreateError("");
   }
 
-  // Auto-fetch courier rates when PIN code, final weight, or packaging box preset changes
+  // Auto-fetch courier rates when PIN code or Total Package Weight changes
   useEffect(() => {
     if (!/^\d{6}$/.test(createPincode.trim())) {
       setCreateRates([]);
       setCreateShippingCharge(0);
-      setCreateWeightBreakdown(null);
       return;
     }
     const w = parseFloat(createWeight);
     if (isNaN(w) || w <= 0) {
       setCreateRates([]);
       setCreateShippingCharge(0);
-      setCreateWeightBreakdown(null);
       return;
     }
 
     const timer = setTimeout(async () => {
       setCreateRatesLoading(true);
-      const dims = getCreateBoxDimensions(w, createSelectedBox);
+      const length = w <= 0.4 ? 20 : w <= 1.5 ? 22 : w <= 3.0 ? 28 : 35;
+      const breadth = w <= 0.4 ? 15 : w <= 1.5 ? 16 : w <= 3.0 ? 22 : 28;
+      const height = w <= 0.4 ? 5 : w <= 1.5 ? 10 : w <= 3.0 ? 14 : 20;
+
       try {
         const res = await fetch("/api/admin/shipping/rates", {
           method: "POST",
@@ -297,17 +389,13 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
           body: JSON.stringify({
             pincode: createPincode.trim(),
             weight: w,
-            length: dims.length,
-            breadth: dims.breadth,
-            height: dims.height,
-            boxName: dims.name,
+            length,
+            breadth,
+            height,
             isFinalWeight: true,
           }),
         });
         const data = await res.json();
-        if (data.packaging) {
-          setCreateWeightBreakdown(data.packaging);
-        }
         if (data.couriers && Array.isArray(data.couriers) && data.couriers.length > 0) {
           setCreateRates(data.couriers);
           const cheapest = data.couriers.find((c: LiveCourier) => c.isCheapest) || data.couriers[0];
@@ -326,7 +414,7 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [createPincode, createWeight, createSelectedBox, availableBoxes]);
+  }, [createPincode, createWeight]);
 
   function handleCreatePincodeChange(pincode: string) {
     const clean = pincode.replace(/\D/g, "").slice(0, 6);
@@ -340,14 +428,18 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
   async function handleCreateOrder(e: React.FormEvent) {
     e.preventDefault();
     setCreateError("");
-    const amt = parseFloat(createAmount);
-    const w = parseFloat(createWeight);
-    if (isNaN(amt) || amt < 0) {
-      setCreateError("Please enter a valid order amount in ₹.");
+
+    if (!createName.trim()) {
+      setCreateError("Customer name is required.");
       return;
     }
-    if (isNaN(w) || w <= 0) {
-      setCreateError("Please enter the final parcel weight in kg (from weighing scale).");
+    const cleanPhone = createPhone.replace(/\D/g, "");
+    if (cleanPhone.length < 10) {
+      setCreateError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    if (!createAddress.trim()) {
+      setCreateError("Please enter the delivery address.");
       return;
     }
     if (!/^\d{6}$/.test(createPincode.trim())) {
@@ -355,35 +447,59 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
       return;
     }
 
+    const validItems = createItems.filter((it) => it.name.trim().length > 0);
+    if (validItems.length === 0) {
+      setCreateError("Please enter at least one snack item with product name, quantity, and price.");
+      return;
+    }
+
+    const w = parseFloat(createWeight);
+    if (isNaN(w) || w <= 0) {
+      setCreateError("Please mention the total package weight in kg.");
+      return;
+    }
+
     setCreateSubmitting(true);
     try {
-      const dims = getCreateBoxDimensions(w, createSelectedBox);
+      const length = w <= 0.4 ? 20 : w <= 1.5 ? 22 : w <= 3.0 ? 28 : 35;
+      const breadth = w <= 0.4 ? 15 : w <= 1.5 ? 16 : w <= 3.0 ? 22 : 28;
+      const height = w <= 0.4 ? 5 : w <= 1.5 ? 10 : w <= 3.0 ? 14 : 20;
+
       const res = await fetch("/api/admin/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerName: createName.trim(),
-          phone: createPhone.trim(),
+          phone: cleanPhone,
           email: createEmail.trim() || undefined,
           address: createAddress.trim(),
-          city: createCity.trim(),
-          state: createState.trim(),
+          city: createCity.trim() || "City",
+          state: createState.trim() || "Tamil Nadu",
           pincode: createPincode.trim(),
           orderSource: createSource,
           paymentMethod: createPaymentMethod,
           paymentStatus: createPaymentStatus,
-          orderAmount: amt,
+          items: validItems.map((it) => ({
+            name: it.name.trim(),
+            quantity: Math.max(1, Number(it.quantity) || 1),
+            price: Math.max(0, Number(it.unitPrice) || 0),
+            weight: it.weight?.trim() || null,
+            approxWeight: it.weight?.trim() || null,
+            productId: it.productId || null,
+            variantId: it.variantId || null,
+          })),
+          orderAmount: itemsSubtotal,
           finalWeightKg: w,
-          length: dims.length,
-          breadth: dims.breadth,
-          height: dims.height,
-          boxName: dims.name,
+          length,
+          breadth,
+          height,
           courierId: createSelectedCourierId,
           courierName: createSelectedCourierName,
           shippingCharge: createShippingCharge,
           bookCourierNow: createBookCourierNow,
         }),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create order");
 
@@ -394,9 +510,9 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
         orderNumber: createdOrderNumber,
         orderId: createdOrderId,
         customerName: data.customerName || createName.trim(),
-        phone: data.phone || createPhone.trim(),
-        total: data.total || amt + createShippingCharge,
-        subtotal: data.subtotal || amt,
+        phone: data.phone || cleanPhone,
+        total: data.total || itemsSubtotal + createShippingCharge,
+        subtotal: data.subtotal || itemsSubtotal,
         shippingCharge: data.shippingCharge ?? createShippingCharge,
         awbCode: data.awbCode || null,
         invoiceUrl: data.invoiceUrl || `/api/orders/${createdOrderNumber}/invoice`,
@@ -2091,95 +2207,205 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
                   />
                 </div>
 
-                {/* Packaging Box Preset (Optional) */}
-                {availableBoxes.length > 0 && (
-                  <div className={styles.modalFieldGroup}>
-                    <label>Packaging Box Preset (Optional)</label>
-                    <select
-                      value={createSelectedBox}
-                      onChange={(e) => setCreateSelectedBox(e.target.value)}
-                    >
-                      <option value="">Auto-select optimal box (based on weight)</option>
-                      {availableBoxes.map((b) => (
-                        <option key={b.id} value={b.name}>
-                          {b.name} ({b.length} &times; {b.breadth} &times; {b.height} cm &bull; Max {b.maxCapacityKg}kg)
-                        </option>
-                      ))}
-                    </select>
+                {/* ── Section 2: Snacks & Items (Itemized) ── */}
+                <div className={styles.createItemsSection}>
+                  <div className={styles.createItemsHeader}>
+                    <div className={styles.createItemsTitle}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <path d="M16 10a4 4 0 0 1-8 0" />
+                      </svg>
+                      <span>Ordered Snacks &amp; Sweets ({createItems.length})</span>
+                    </div>
+                    <span className={styles.createItemsSubtotalBadge}>
+                      Subtotal: ₹{itemsSubtotal.toFixed(2)}
+                    </span>
                   </div>
-                )}
 
-                {/* Order Amount and Parcel Final Weight */}
-                <div className={styles.modalFieldRow}>
-                  <div className={styles.modalFieldGroup}>
-                    <label>Snacks / Items Subtotal (₹) *</label>
-                    <input
-                      required
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="Snacks amount (e.g. 450)"
-                      value={createAmount}
-                      onChange={(e) => setCreateAmount(e.target.value)}
-                    />
+                  {createItems.map((item, idx) => {
+                    const rowTotal = Math.max(1, Number(item.quantity) || 1) * Math.max(0, Number(item.unitPrice) || 0);
+                    const currentCatalogVal = item.productId
+                      ? (item.variantId ? `${item.productId}:${item.variantId}` : `${item.productId}:default`)
+                      : "custom";
+
+                    return (
+                      <div key={item.id} className={styles.createItemCard}>
+                        <div className={styles.createItemTopRow}>
+                          <select
+                            className={styles.createItemSelect}
+                            value={currentCatalogVal}
+                            onChange={(e) => handleSelectCatalogProduct(idx, e.target.value)}
+                            aria-label={`Select product for item ${idx + 1}`}
+                          >
+                            <option value="">-- Choose Snack / Sweet from Menu --</option>
+                            {catalogProducts.map((p) => {
+                              if (p.variants && p.variants.length > 0) {
+                                return (
+                                  <optgroup key={p.id} label={p.name}>
+                                    {p.variants.map((v) => (
+                                      <option key={v.id} value={`${p.id}:${v.id}`}>
+                                        {p.name} - {v.weight} (₹{v.price})
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                );
+                              }
+                              return (
+                                <option key={p.id} value={`${p.id}:default`}>
+                                  {p.name} {p.weight ? `(${p.weight})` : ""} (₹{p.price})
+                                </option>
+                              );
+                            })}
+                            <option value="custom">✏️ Custom / Other Item...</option>
+                          </select>
+
+                          {createItems.length > 1 && (
+                            <button
+                              type="button"
+                              className={styles.createItemRemoveBtn}
+                              onClick={() => handleRemoveItem(idx)}
+                              title="Remove this item"
+                            >
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+
+                        <div className={styles.createItemInputsRow}>
+                          <div className={styles.createItemInputGroup}>
+                            <label>Product Name *</label>
+                            <input
+                              required
+                              type="text"
+                              placeholder="e.g. Kai Murukku"
+                              value={item.name}
+                              onChange={(e) => handleUpdateItem(idx, "name", e.target.value)}
+                            />
+                          </div>
+
+                          <div className={styles.createItemInputGroup}>
+                            <label>Pack Weight</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. 250g"
+                              value={item.weight}
+                              onChange={(e) => handleUpdateItem(idx, "weight", e.target.value)}
+                            />
+                          </div>
+
+                          <div className={styles.createItemInputGroup}>
+                            <label>Qty *</label>
+                            <input
+                              required
+                              type="number"
+                              min="1"
+                              step="1"
+                              value={item.quantity}
+                              onChange={(e) => handleUpdateItem(idx, "quantity", Math.max(1, parseInt(e.target.value, 10) || 1))}
+                            />
+                          </div>
+
+                          <div className={styles.createItemInputGroup}>
+                            <label>Price (₹) *</label>
+                            <input
+                              required
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="0.00"
+                              value={item.unitPrice}
+                              onChange={(e) => handleUpdateItem(idx, "unitPrice", Math.max(0, parseFloat(e.target.value) || 0))}
+                            />
+                          </div>
+
+                          <div className={styles.createItemLineTotal}>
+                            <label>Total</label>
+                            <strong>₹{rowTotal.toFixed(2)}</strong>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    className={styles.addItemRowBtn}
+                    onClick={handleAddItem}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    <span>Add Another Snack / Sweet</span>
+                  </button>
+                </div>
+
+                {/* ── Section 3: Total Package Weight ── */}
+                <div className={styles.packageWeightCard}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+                    <label style={{ fontWeight: 700, fontSize: 13, color: "var(--ink)", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                      Total Package Weight (kg) *
+                    </label>
+                    {weightManuallyEdited ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWeightManuallyEdited(false);
+                          setCreateWeight(estimatedPackageWeightKg > 0 ? estimatedPackageWeightKg.toString() : "");
+                        }}
+                        style={{ background: "none", border: "none", color: "var(--terracotta)", fontSize: 11.5, cursor: "pointer", textDecoration: "underline", padding: 0 }}
+                      >
+                        Reset to auto-calculated ({estimatedPackageWeightKg} kg)
+                      </button>
+                    ) : (
+                      <span style={{ fontSize: 11, color: "#166534", background: "#dcfce7", padding: "2px 7px", borderRadius: 4, fontWeight: 700 }}>
+                        Auto-calculated from items + carton buffer
+                      </span>
+                    )}
                   </div>
-                  <div className={styles.modalFieldGroup}>
-                    <label>Final Parcel Weight (kg) *</label>
-                    <input
-                      required
-                      type="number"
-                      step="0.01"
-                      min="0.05"
-                      placeholder="Scale weight (e.g. 0.85)"
-                      value={createWeight}
-                      onChange={(e) => setCreateWeight(e.target.value)}
-                    />
-                    <small style={{ color: "#6b7280", fontSize: 11, marginTop: 3 }}>
-                      Weigh the packed box on your scale and enter total final weight.
-                    </small>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
+                    <div style={{ position: "relative", width: 140 }}>
+                      <input
+                        required
+                        type="number"
+                        step="0.01"
+                        min="0.05"
+                        placeholder="e.g. 0.85"
+                        value={createWeight}
+                        onChange={(e) => {
+                          setWeightManuallyEdited(true);
+                          setCreateWeight(e.target.value);
+                        }}
+                        style={{ width: "100%", paddingRight: 32, fontSize: 15, fontWeight: 700 }}
+                      />
+                      <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "#64748b", fontWeight: 700, pointerEvents: "none" }}>
+                        kg
+                      </span>
+                    </div>
+                    <span style={{ fontSize: 12, color: "#64748b" }}>
+                      Scale weight of the packed carton (used for live courier booking and AWB label).
+                    </span>
                   </div>
                 </div>
 
-                {/* Live Courier Rate Calculation */}
+                {/* ── Section 4: Live Courier Rates ── */}
                 {createPincode.length === 6 && parseFloat(createWeight) > 0 && (
                   <div style={{ marginTop: 12, padding: "12px 14px", background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                       <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                        Live Shiprocket Delivery Rates
+                        Live Shiprocket Delivery Rates ({createWeight} kg to {createPincode})
                       </span>
-                      {createRatesLoading && <small style={{ color: "var(--terracotta)" }}>Fetching rates…</small>}
+                      {createRatesLoading && <small style={{ color: "var(--terracotta)", fontWeight: 600 }}>Fetching rates…</small>}
                     </div>
-
-                    {createWeightBreakdown && (
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))",
-                          gap: 8,
-                          padding: "8px 12px",
-                          background: "#ffffff",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: 6,
-                          marginBottom: 10,
-                        }}
-                      >
-                        <div>
-                          <span style={{ color: "#64748b", display: "block", fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>Scale Weight</span>
-                          <strong style={{ color: "var(--ink)", fontSize: 13 }}>{createWeightBreakdown.physicalWeightKg} kg</strong>
-                        </div>
-                        <div>
-                          <span style={{ color: "#64748b", display: "block", fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>Packaging &amp; Volumetric</span>
-                          <strong style={{ color: "var(--ink)", fontSize: 12 }}>
-                            {createWeightBreakdown.volumetricWeightKg} kg
-                            <small style={{ color: "#64748b", fontWeight: 500, display: "block", fontSize: 10.5 }}>{createWeightBreakdown.boxDimensions}</small>
-                          </strong>
-                        </div>
-                        <div>
-                          <span style={{ color: "#64748b", display: "block", fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>Chargeable Slab</span>
-                          <strong style={{ color: "var(--terracotta)", fontSize: 13 }}>{createWeightBreakdown.appliedSlab}</strong>
-                        </div>
-                      </div>
-                    )}
 
                     {createRates.length > 0 ? (
                       <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 180, overflowY: "auto" }}>
@@ -2238,7 +2464,7 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
                   </div>
                 )}
 
-                {/* Payment Details */}
+                {/* ── Section 5: Payment Details ── */}
                 <div className={styles.modalFieldRow} style={{ marginTop: 12 }}>
                   <div className={styles.modalFieldGroup}>
                     <label>Payment Method</label>
@@ -2265,11 +2491,11 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
                   </div>
                 </div>
 
-                {/* Order Total Summary & Delivery Charge Breakdown */}
+                {/* ── Section 6: Order Summary ── */}
                 <div style={{ marginTop: 14, padding: "12px 14px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, marginBottom: 5 }}>
-                    <span style={{ color: "#64748b" }}>Snacks Subtotal:</span>
-                    <strong style={{ color: "var(--ink)" }}>₹{(parseFloat(createAmount) || 0).toFixed(2)}</strong>
+                    <span style={{ color: "#64748b" }}>Snacks Subtotal ({createItems.length} items):</span>
+                    <strong style={{ color: "var(--ink)" }}>₹{itemsSubtotal.toFixed(2)}</strong>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, marginBottom: 6 }}>
                     <span style={{ color: "#64748b" }}>Delivery / Shipping:</span>
@@ -2289,7 +2515,7 @@ export function AdminOrders({ orders }: { orders: AdminOrder[] }) {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: "1px solid #e2e8f0" }}>
                     <strong style={{ fontSize: 13.5, color: "var(--ink)" }}>Total Amount to Collect:</strong>
                     <strong style={{ fontSize: 17, color: "var(--terracotta)" }}>
-                      ₹{((parseFloat(createAmount) || 0) + (parseFloat(String(createShippingCharge)) || 0)).toFixed(2)}
+                      ₹{(itemsSubtotal + (parseFloat(String(createShippingCharge)) || 0)).toFixed(2)}
                     </strong>
                   </div>
                 </div>

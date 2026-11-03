@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { orders, orderItems, productVariants, products } from "@/drizzle/schema";
 import { adminCookieName, isValidAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
+import { getProductsWithVariants } from "@/lib/db-queries";
 import { AdminOrders } from "@/components/admin-orders";
 
 export const dynamic = "force-dynamic";
@@ -184,9 +185,25 @@ export default async function AdminOrdersPage() {
         }),
       };
     });
+
+    // Also fetch catalog products and variants for itemized manual order creation
+    const catalogProductsRaw = await getProductsWithVariants(db);
+    const catalogProducts = catalogProductsRaw.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      price: Number(p.price || 0),
+      weight: p.weight,
+      variants: (p.variants || []).map((v: any) => ({
+        id: v.id,
+        weight: v.weight,
+        price: Number(v.offerPrice || v.price || 0),
+        approxWeight: v.approxWeight,
+      })),
+    }));
+
+    return <AdminOrders orders={ordersWithItems} catalogProducts={catalogProducts} />;
   } catch (error) {
     console.error("Error loading orders:", error);
+    return <AdminOrders orders={ordersWithItems} catalogProducts={[]} />;
   }
-
-  return <AdminOrders orders={ordersWithItems} />;
 }
