@@ -31,25 +31,46 @@ type Combo = {
 export function CombosSlider({ combos }: { combos: Combo[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [animating, setAnimating] = useState(false);
   const [addedId, setAddedId] = useState<number | null>(null);
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tabsTrackRef = useRef<HTMLDivElement | null>(null);
   const tabButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const cardsTrackRef = useRef<HTMLDivElement | null>(null);
+  const cardSlideRefs = useRef<(HTMLDivElement | null)[]>([]);
   const total = combos.length;
 
   const { addItem, getItemQuantity } = useCart();
   const { show } = useToast();
 
+  const scrollToIndex = useCallback((i: number, smooth = true) => {
+    const track = cardsTrackRef.current;
+    const slide = cardSlideRefs.current[i];
+    if (!track || !slide) return;
+    const trackRect = track.getBoundingClientRect();
+    const slideRect = slide.getBoundingClientRect();
+    const targetScroll =
+      track.scrollLeft +
+      (slideRect.left - trackRect.left) -
+      (trackRect.width - slideRect.width) / 2;
+
+    track.scrollTo({
+      left: Math.max(0, targetScroll),
+      behavior: smooth ? "smooth" : "auto",
+    });
+  }, []);
+
   // Smoothly scroll active tab into view inside the tabs track ONLY
-  // (Avoids element.scrollIntoView which scrolls the entire window/page causing horizontal blowout)
   useEffect(() => {
     const activeBtn = tabButtonRefs.current[activeIndex];
     const track = tabsTrackRef.current;
     if (activeBtn && track) {
       const trackRect = track.getBoundingClientRect();
       const btnRect = activeBtn.getBoundingClientRect();
-      const targetScroll = track.scrollLeft + (btnRect.left - trackRect.left) - (trackRect.width / 2) + (btnRect.width / 2);
+      const targetScroll =
+        track.scrollLeft +
+        (btnRect.left - trackRect.left) -
+        trackRect.width / 2 +
+        btnRect.width / 2;
       track.scrollTo({
         left: Math.max(0, targetScroll),
         behavior: "smooth",
@@ -64,23 +85,15 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
     }
   };
 
-  const goTo = useCallback(
-    (next: number) => {
-      if (animating) return;
-      setAnimating(true);
-      setTimeout(() => {
-        setActiveIndex(next);
-        setAnimating(false);
-      }, 260);
-    },
-    [animating]
-  );
-
   const advance = useCallback(() => {
-    goTo((activeIndex + 1) % total);
-  }, [activeIndex, total, goTo]);
+    setActiveIndex((prev) => {
+      const next = (prev + 1) % total;
+      scrollToIndex(next, true);
+      return next;
+    });
+  }, [total, scrollToIndex]);
 
-  // Auto-advance every 5 seconds when not hovered
+  // Auto-advance every 5 seconds when not hovered or touched
   useEffect(() => {
     if (total <= 1 || paused) {
       if (autoRef.current) clearInterval(autoRef.current);
@@ -92,13 +105,82 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
     };
   }, [paused, advance, total]);
 
-  function handleGoTo(i: number) {
-    if (autoRef.current) clearInterval(autoRef.current);
-    goTo(i);
-    if (!paused && total > 1) {
-      autoRef.current = setInterval(advance, 5000);
-    }
-  }
+  const handleGoTo = useCallback(
+    (i: number) => {
+      if (autoRef.current) clearInterval(autoRef.current);
+      setActiveIndex(i);
+      scrollToIndex(i, true);
+      if (!paused && total > 1) {
+        autoRef.current = setInterval(advance, 5000);
+      }
+    },
+    [paused, total, scrollToIndex, advance]
+  );
+
+  const scrollRafRef = useRef<number | null>(null);
+  const handleTrackScroll = useCallback(() => {
+    if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
+    scrollRafRef.current = requestAnimationFrame(() => {
+      const track = cardsTrackRef.current;
+      if (!track) return;
+      const trackRect = track.getBoundingClientRect();
+      const trackCenter = trackRect.left + trackRect.width / 2;
+
+      let closestIndex = activeIndex;
+      let minDistance = Infinity;
+
+      cardSlideRefs.current.forEach((slide, idx) => {
+        if (!slide) return;
+        const slideRect = slide.getBoundingClientRect();
+        const slideCenter = slideRect.left + slideRect.width / 2;
+        const dist = Math.abs(slideCenter - trackCenter);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestIndex = idx;
+        }
+      });
+
+      if (closestIndex !== activeIndex) {
+        setActiveIndex(closestIndex);
+      }
+    });
+  }, [activeIndex]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      scrollToIndex(activeIndex, false);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [activeIndex, scrollToIndex]);
+
+  // Desktop mouse drag scrolling
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const track = cardsTrackRef.current;
+    if (!track) return;
+    if ((e.target as HTMLElement).closest("button, a, input")) return;
+    isDraggingRef.current = true;
+    startXRef.current = e.pageX - track.offsetLeft;
+    scrollLeftRef.current = track.scrollLeft;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingRef.current) return;
+    const track = cardsTrackRef.current;
+    if (!track) return;
+    e.preventDefault();
+    const x = e.pageX - track.offsetLeft;
+    const walk = (x - startXRef.current) * 1.1;
+    track.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  const handleMouseUp = () => {
+    isDraggingRef.current = false;
+  };
 
   function handleAddToCart(c: Combo) {
     if (addedId === c.id) return;
@@ -124,19 +206,6 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
   }
 
   if (total === 0) return null;
-
-  const combo = combos[activeIndex] || combos[0];
-  const displayPrice = combo.discount && parseFloat(combo.discount) > 0
-    ? parseFloat(combo.discount)
-    : parseFloat(combo.price);
-  const originalPrice = parseFloat(combo.price);
-  const hasDiscount = combo.discount && parseFloat(combo.discount) > 0 && displayPrice < originalPrice;
-  const savings = hasDiscount ? Math.round(originalPrice - displayPrice) : 0;
-  const savingsPercent = hasDiscount ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100) : 0;
-
-  const cartComboId = `combo-${combo.id}`;
-  const inCart = getItemQuantity(cartComboId) > 0;
-  const isAdded = addedId === combo.id;
 
   return (
     <section
@@ -372,6 +441,44 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           }
         }
 
+        /* ── Scrollable Track for Cards ── */
+        .combo-cards-track {
+          display: flex;
+          flex-direction: row;
+          align-items: stretch;
+          gap: 20px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          overscroll-behavior-x: contain;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+          padding: 6px 0 10px;
+          cursor: grab;
+        }
+
+        .combo-cards-track:active {
+          cursor: grabbing;
+        }
+
+        .combo-cards-track::-webkit-scrollbar {
+          display: none;
+        }
+
+        .combo-card-slide {
+          flex: 0 0 100%;
+          width: 100%;
+          min-width: 100%;
+          max-width: 100%;
+          scroll-snap-align: center;
+          scroll-snap-stop: normal;
+          box-sizing: border-box;
+          display: flex;
+        }
+
         /* ── Showcase Card ── */
         .combo-card-outer {
           position: relative;
@@ -386,6 +493,10 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           width: 100%;
           max-width: 100%;
           box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          flex: 1;
         }
         .combo-card-outer::before {
           content: '';
@@ -403,15 +514,11 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
           gap: 44px;
           align-items: center;
-          transition: opacity 0.25s ease, transform 0.25s ease;
           width: 100%;
           max-width: 100%;
           min-width: 0;
           box-sizing: border-box;
-        }
-        .combo-card-inner.exit {
-          opacity: 0;
-          transform: translateY(6px);
+          flex: 1;
         }
 
         /* ── Info Column ── */
@@ -871,6 +978,24 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
             padding: 0 12px;
             overflow-x: clip;
           }
+          .combo-cards-track {
+            gap: 12px;
+            scroll-padding: 0 6px;
+            padding: 4px 0 10px;
+          }
+          .combo-card-slide {
+            flex: 0 0 calc(100% - 18px);
+            width: calc(100% - 18px);
+            min-width: calc(100% - 18px);
+            max-width: calc(100% - 18px);
+            scroll-snap-align: center;
+          }
+          .combo-cards-track.single-combo .combo-card-slide {
+            flex: 0 0 100% !important;
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+          }
           .combo-section-header {
             flex-direction: column;
             align-items: flex-start;
@@ -925,6 +1050,17 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
         @media (max-width: 440px) {
           .combo-section {
             padding: 0 8px;
+          }
+          .combo-cards-track {
+            gap: 10px;
+            scroll-padding: 0 4px;
+          }
+          .combo-card-slide {
+            flex: 0 0 calc(100% - 12px);
+            width: calc(100% - 12px);
+            min-width: calc(100% - 12px);
+            max-width: calc(100% - 12px);
+            scroll-snap-align: center;
           }
           .combo-card-outer {
             padding: 18px 12px;
@@ -1043,136 +1179,174 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
         </div>
       )}
 
-      {/* Showcase Card */}
-      <div className="combo-card-outer">
-        <div className={`combo-card-inner combo-slide${animating ? " exit" : ""}`}>
-          {/* Info Column */}
-          <div className="combo-info-col">
-            <div className="combo-badge-row">
-              <span className="combo-badge-tag">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13"/><path d="M19 8a3 3 0 0 0-3-3 3 3 0 0 0-3 3"/><path d="M5 8a3 3 0 0 1 3-3 3 3 0 0 1 3 3"/>
-                </svg>
-                Special Value Box
-              </span>
-              <span className="combo-count-tag">
-                {combo.items.length} Delicious Snacks
-              </span>
-              {hasDiscount && (
-                <span className="combo-savings-glow-badge">
-                  Save ₹{savings} ({savingsPercent}% OFF)
-                </span>
-              )}
-            </div>
+      {/* ── Scrollable Track for Combo Cards ── */}
+      <div
+        ref={cardsTrackRef}
+        className={`combo-cards-track${total === 1 ? " single-combo" : ""}`}
+        onScroll={handleTrackScroll}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onTouchStart={() => setPaused(true)}
+        onTouchEnd={() => {
+          setTimeout(() => setPaused(false), 7000);
+        }}
+      >
+        {combos.map((c, i) => {
+          const displayPrice = c.discount && parseFloat(c.discount) > 0
+            ? parseFloat(c.discount)
+            : parseFloat(c.price);
+          const originalPrice = parseFloat(c.price);
+          const hasDiscount = c.discount && parseFloat(c.discount) > 0 && displayPrice < originalPrice;
+          const savings = hasDiscount ? Math.round(originalPrice - displayPrice) : 0;
+          const savingsPercent = hasDiscount ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100) : 0;
+          const cartComboId = `combo-${c.id}`;
+          const inCart = getItemQuantity(cartComboId) > 0;
+          const isAdded = addedId === c.id;
 
-            <h3 className="combo-card-title">{combo.title}</h3>
-
-            {combo.description && (
-              <p className="combo-card-desc">{combo.description}</p>
-            )}
-
-            {/* What's in this box */}
-            {combo.items && combo.items.length > 0 && (
-              <div className="combo-items-box">
-                <div className="combo-items-box-head">
-                  <span className="combo-items-label">What&apos;s inside this box</span>
-                  <span className="combo-items-count">{combo.items.length} items</span>
-                </div>
-                <div className="combo-items-list">
-                  {combo.items.map((item, idx) => (
-                    <div key={idx} className="combo-item-row">
-                      <div className="combo-item-title-group">
-                        
-                        <span className="combo-item-name">{item.name || "Traditional Snack"}</span>
-                      </div>
-                      <span className="combo-item-qty">
-                        {item.unitWeight ? item.unitWeight : `Qty: ${item.quantity}`}
+          return (
+            <div
+              key={c.id}
+              ref={(el) => { cardSlideRefs.current[i] = el; }}
+              className="combo-card-slide"
+              onFocus={() => {
+                setActiveIndex(i);
+                scrollToIndex(i, true);
+              }}
+            >
+              <div className="combo-card-outer">
+                <div className="combo-card-inner">
+                  {/* Info Column */}
+                  <div className="combo-info-col">
+                    <div className="combo-badge-row">
+                      <span className="combo-badge-tag">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13"/><path d="M19 8a3 3 0 0 0-3-3 3 3 0 0 0-3 3"/><path d="M5 8a3 3 0 0 1 3-3 3 3 0 0 1 3 3"/>
+                        </svg>
+                        Special Value Box
                       </span>
+                      <span className="combo-count-tag">
+                        {c.items.length} Delicious Snacks
+                      </span>
+                      {hasDiscount && (
+                        <span className="combo-savings-glow-badge">
+                          Save ₹{savings} ({savingsPercent}% OFF)
+                        </span>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {/* Price & Actions */}
-            <div className="combo-bottom-bar">
-              <div className="combo-price-group">
-                <div className="combo-price-row">
-                  <span className="combo-price-current">₹{Math.round(displayPrice)}</span>
-                  {hasDiscount && (
-                    <span className="combo-price-original">₹{Math.round(originalPrice)}</span>
-                  )}
+                    <h3 className="combo-card-title">{c.title}</h3>
+
+                    {c.description && (
+                      <p className="combo-card-desc">{c.description}</p>
+                    )}
+
+                    {/* What's in this box */}
+                    {c.items && c.items.length > 0 && (
+                      <div className="combo-items-box">
+                        <div className="combo-items-box-head">
+                          <span className="combo-items-label">What&apos;s inside this box</span>
+                          <span className="combo-items-count">{c.items.length} items</span>
+                        </div>
+                        <div className="combo-items-list">
+                          {c.items.map((item, idx) => (
+                            <div key={idx} className="combo-item-row">
+                              <div className="combo-item-title-group">
+                                <span className="combo-item-name">{item.name || "Traditional Snack"}</span>
+                              </div>
+                              <span className="combo-item-qty">
+                                {item.unitWeight ? item.unitWeight : `Qty: ${item.quantity}`}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Price & Actions */}
+                    <div className="combo-bottom-bar">
+                      <div className="combo-price-group">
+                        <div className="combo-price-row">
+                          <span className="combo-price-current">₹{Math.round(displayPrice)}</span>
+                          {hasDiscount && (
+                            <span className="combo-price-original">₹{Math.round(originalPrice)}</span>
+                          )}
+                        </div>
+                        {hasDiscount && (
+                          <span className="combo-price-subtext">You save ₹{savings} ({savingsPercent}% OFF)</span>
+                        )}
+                      </div>
+
+                      <div className="combo-actions-group">
+                        <button
+                          type="button"
+                          className={`combo-btn-primary ${isAdded ? "added" : inCart ? "in-cart" : ""}`}
+                          onClick={() => handleAddToCart(c)}
+                          disabled={isAdded}
+                        >
+                          {isAdded ? (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                              Added to Cart
+                            </span>
+                          ) : inCart ? (
+                            <>+ Add More · ₹{Math.round(displayPrice)}</>
+                          ) : (
+                            <>Add to Cart · ₹{Math.round(displayPrice)}</>
+                          )}
+                        </button>
+                        <Link href={`/product/${c.slug}`} className="combo-btn-details">
+                          View Details →
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Visual Column */}
+                  <div className="combo-visual-col">
+                    <Link href={`/product/${c.slug}`} className="combo-image-link" tabIndex={-1} aria-label={`View ${c.title}`}>
+                      <div className="combo-image-card">
+                        {c.image ? (
+                          <img src={c.image} alt={c.title} className="combo-hero-image" loading="lazy" decoding="async" />
+                        ) : (
+                          <div className="combo-placeholder-box">
+                            <span className="combo-placeholder-icon">
+                              <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 12 20 22 4 22 4 12" />
+                                <rect x="2" y="7" width="20" height="5" />
+                                <line x1="12" y1="22" x2="12" y2="7" />
+                                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+                                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+                              </svg>
+                            </span>
+                            <span className="combo-placeholder-num">{c.items.length}</span>
+                            <span className="combo-placeholder-label">Handcrafted Snacks</span>
+                          </div>
+                        )}
+                        <div className="combo-image-badge-top">
+                          Fresh Batch
+                        </div>
+                        {hasDiscount && (
+                          <div className="combo-image-badge-save">
+                            {savingsPercent}% OFF
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  </div>
                 </div>
-                {hasDiscount && (
-                  <span className="combo-price-subtext">You save ₹{savings} ({savingsPercent}% OFF)</span>
+
+                {/* Auto-advance progress line */}
+                {total > 1 && !paused && i === activeIndex && (
+                  <div key={`${activeIndex}-progress`} className="combo-card-progress" />
                 )}
-              </div>
-
-              <div className="combo-actions-group">
-                <button
-                  type="button"
-                  className={`combo-btn-primary ${isAdded ? "added" : inCart ? "in-cart" : ""}`}
-                  onClick={() => handleAddToCart(combo)}
-                  disabled={isAdded}
-                >
-                  {isAdded ? (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      Added to Cart
-                    </span>
-                  ) : inCart ? (
-                    <>+ Add More · ₹{Math.round(displayPrice)}</>
-                  ) : (
-                    <>Add to Cart · ₹{Math.round(displayPrice)}</>
-                  )}
-                </button>
-                <Link href={`/product/${combo.slug}`} className="combo-btn-details">
-                  View Details →
-                </Link>
               </div>
             </div>
-          </div>
-
-          {/* Visual Column */}
-          <div className="combo-visual-col">
-            <Link href={`/product/${combo.slug}`} className="combo-image-link" tabIndex={-1} aria-label={`View ${combo.title}`}>
-              <div className="combo-image-card">
-                {combo.image ? (
-                  <img src={combo.image} alt={combo.title} className="combo-hero-image" loading="lazy" decoding="async" />
-                ) : (
-                  <div className="combo-placeholder-box">
-                    <span className="combo-placeholder-icon">
-                      <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 12 20 22 4 22 4 12" />
-                        <rect x="2" y="7" width="20" height="5" />
-                        <line x1="12" y1="22" x2="12" y2="7" />
-                        <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
-                        <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
-                      </svg>
-                    </span>
-                    <span className="combo-placeholder-num">{combo.items.length}</span>
-                    <span className="combo-placeholder-label">Handcrafted Snacks</span>
-                  </div>
-                )}
-                <div className="combo-image-badge-top">
-                  Fresh Batch
-                </div>
-                {hasDiscount && (
-                  <div className="combo-image-badge-save">
-                    {savingsPercent}% OFF
-                  </div>
-                )}
-              </div>
-            </Link>
-          </div>
-        </div>
-
-        {/* Auto-advance progress line */}
-        {total > 1 && !paused && (
-          <div key={`${activeIndex}-progress`} className="combo-card-progress" />
-        )}
+          );
+        })}
       </div>
 
       {/* Carousel Controls (when multiple combos) */}
