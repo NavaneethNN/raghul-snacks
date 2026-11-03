@@ -115,35 +115,20 @@ function inferStateFromPincode(pincode: string): string | null {
   return null;
 }
 
-export type CatalogProductOption = {
-  id: number;
-  name: string;
-  price: number;
-  weight?: string | null;
-  variants: {
-    id: number;
-    weight: string;
-    price: number;
-    approxWeight?: string | null;
-  }[];
-};
-
 export type CreateOrderItem = {
   id: string;
-  productId?: number | null;
-  variantId?: number | null;
   name: string;
   weight: string;
-  quantity: number;
-  unitPrice: number;
+  quantity: number | string;
+  unitPrice: number | string;
+  productId?: number | null;
+  variantId?: number | null;
 };
 
 export function AdminOrders({
   orders,
-  catalogProducts = [],
 }: {
   orders: AdminOrder[];
-  catalogProducts?: CatalogProductOption[];
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<number | null>(null);
@@ -219,7 +204,7 @@ export function AdminOrders({
 
   // Product items list
   const [createItems, setCreateItems] = useState<CreateOrderItem[]>([
-    { id: "item-1", name: "", weight: "250g", quantity: 1, unitPrice: 0 },
+    { id: "item-1", name: "", weight: "250g", quantity: 1, unitPrice: "" },
   ]);
   const [weightManuallyEdited, setWeightManuallyEdited] = useState(false);
   const [createWeight, setCreateWeight] = useState("");
@@ -282,7 +267,7 @@ export function AdminOrders({
         name: "",
         weight: "250g",
         quantity: 1,
-        unitPrice: 0,
+        unitPrice: "",
       },
     ]);
   }
@@ -300,49 +285,6 @@ export function AdminOrders({
     });
   }
 
-  function handleSelectCatalogProduct(index: number, selectValue: string) {
-    if (selectValue === "custom" || !selectValue) {
-      handleUpdateItem(index, "productId", null);
-      handleUpdateItem(index, "variantId", null);
-      return;
-    }
-
-    const [pIdStr, vIdStr] = selectValue.split(":");
-    const pId = parseInt(pIdStr, 10);
-    const prod = catalogProducts.find((p) => p.id === pId);
-    if (!prod) return;
-
-    if (vIdStr === "default" || !vIdStr) {
-      setCreateItems((prev) => {
-        const next = [...prev];
-        next[index] = {
-          ...next[index],
-          productId: prod.id,
-          variantId: null,
-          name: prod.name,
-          weight: prod.weight || "250g",
-          unitPrice: prod.price,
-        };
-        return next;
-      });
-    } else {
-      const vId = parseInt(vIdStr, 10);
-      const variant = prod.variants.find((v) => v.id === vId);
-      setCreateItems((prev) => {
-        const next = [...prev];
-        next[index] = {
-          ...next[index],
-          productId: prod.id,
-          variantId: variant ? variant.id : null,
-          name: `${prod.name} (${variant?.weight || "250g"})`,
-          weight: variant?.weight || "250g",
-          unitPrice: variant ? variant.price : prod.price,
-        };
-        return next;
-      });
-    }
-  }
-
   function resetCreateForm() {
     setCreateSource("whatsapp");
     setCreateName("");
@@ -352,7 +294,7 @@ export function AdminOrders({
     setCreateCity("");
     setCreateState("");
     setCreatePincode("");
-    setCreateItems([{ id: "item-1", name: "", weight: "250g", quantity: 1, unitPrice: 0 }]);
+    setCreateItems([{ id: "item-1", name: "", weight: "250g", quantity: 1, unitPrice: "" }]);
     setWeightManuallyEdited(false);
     setCreateWeight("");
     setCreateShippingCharge(0);
@@ -2225,58 +2167,11 @@ export function AdminOrders({
 
                   {createItems.map((item, idx) => {
                     const rowTotal = Math.max(1, Number(item.quantity) || 1) * Math.max(0, Number(item.unitPrice) || 0);
-                    const currentCatalogVal = item.productId
-                      ? (item.variantId ? `${item.productId}:${item.variantId}` : `${item.productId}:default`)
-                      : "custom";
 
                     return (
                       <div key={item.id} className={styles.createItemCard}>
-                        <div className={styles.createItemTopRow}>
-                          <select
-                            className={styles.createItemSelect}
-                            value={currentCatalogVal}
-                            onChange={(e) => handleSelectCatalogProduct(idx, e.target.value)}
-                            aria-label={`Select product for item ${idx + 1}`}
-                          >
-                            <option value="">-- Choose Snack / Sweet from Menu --</option>
-                            {catalogProducts.map((p) => {
-                              if (p.variants && p.variants.length > 0) {
-                                return (
-                                  <optgroup key={p.id} label={p.name}>
-                                    {p.variants.map((v) => (
-                                      <option key={v.id} value={`${p.id}:${v.id}`}>
-                                        {p.name} - {v.weight} (₹{v.price})
-                                      </option>
-                                    ))}
-                                  </optgroup>
-                                );
-                              }
-                              return (
-                                <option key={p.id} value={`${p.id}:default`}>
-                                  {p.name} {p.weight ? `(${p.weight})` : ""} (₹{p.price})
-                                </option>
-                              );
-                            })}
-                            <option value="custom">✏️ Custom / Other Item...</option>
-                          </select>
-
-                          {createItems.length > 1 && (
-                            <button
-                              type="button"
-                              className={styles.createItemRemoveBtn}
-                              onClick={() => handleRemoveItem(idx)}
-                              title="Remove this item"
-                            >
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="3 6 5 6 21 6" />
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                              </svg>
-                            </button>
-                          )}
-                        </div>
-
                         <div className={styles.createItemInputsRow}>
-                          <div className={styles.createItemInputGroup}>
+                          <div className={`${styles.createItemInputGroup} ${styles.createItemNameCol}`}>
                             <label>Product Name *</label>
                             <input
                               required
@@ -2304,8 +2199,9 @@ export function AdminOrders({
                               type="number"
                               min="1"
                               step="1"
+                              placeholder="1"
                               value={item.quantity}
-                              onChange={(e) => handleUpdateItem(idx, "quantity", Math.max(1, parseInt(e.target.value, 10) || 1))}
+                              onChange={(e) => handleUpdateItem(idx, "quantity", e.target.value)}
                             />
                           </div>
 
@@ -2318,13 +2214,30 @@ export function AdminOrders({
                               step="0.01"
                               placeholder="0.00"
                               value={item.unitPrice}
-                              onChange={(e) => handleUpdateItem(idx, "unitPrice", Math.max(0, parseFloat(e.target.value) || 0))}
+                              onChange={(e) => handleUpdateItem(idx, "unitPrice", e.target.value)}
                             />
                           </div>
 
                           <div className={styles.createItemLineTotal}>
                             <label>Total</label>
                             <strong>₹{rowTotal.toFixed(2)}</strong>
+                          </div>
+
+                          <div className={styles.createItemActionCol}>
+                            {createItems.length > 1 && (
+                              <button
+                                type="button"
+                                className={styles.createItemRemoveBtn}
+                                onClick={() => handleRemoveItem(idx)}
+                                title="Remove this item"
+                                aria-label="Remove item"
+                              >
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>

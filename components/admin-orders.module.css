@@ -1922,73 +1922,28 @@
   border-radius: 8px;
   padding: 10px 12px;
   margin-bottom: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .createItemCard:hover {
   border-color: #cbd5e1;
 }
 
-.createItemTopRow {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  align-items: center;
-}
-
-.createItemSelect {
-  width: 100%;
-  padding: 7px 10px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  font-size: 13px;
-  background: #fff;
-  color: var(--ink);
-  outline: none;
-}
-
-.createItemRemoveBtn {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.15s, background-color 0.15s;
-}
-
-.createItemRemoveBtn:hover {
-  color: #ef4444;
-  background: #fee2e2;
-}
-
 .createItemInputsRow {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.2fr auto;
-  gap: 8px;
-  align-items: center;
-}
-
-@media (max-width: 600px) {
-  .createItemInputsRow {
-    grid-template-columns: 1fr 1fr;
-  }
+  grid-template-columns: minmax(180px, 2.4fr) minmax(90px, 1.1fr) 75px 110px 95px 36px;
+  gap: 10px;
+  align-items: flex-end;
 }
 
 .createItemInputGroup {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .createItemInputGroup label {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -1997,7 +1952,7 @@
 }
 
 .createItemInputGroup input {
-  padding: 6px 8px !important;
+  padding: 7px 9px !important;
   font-size: 13px !important;
   border: 1px solid var(--line) !important;
   border-radius: 6px !important;
@@ -2011,7 +1966,7 @@
   flex-direction: column;
   align-items: flex-end;
   justify-content: center;
-  padding-left: 4px;
+  padding-bottom: 4px;
 }
 
 .createItemLineTotal label {
@@ -2024,8 +1979,60 @@
 }
 
 .createItemLineTotal strong {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--ink);
+  white-space: nowrap;
+}
+
+.createItemActionCol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 35px;
+}
+
+.createItemRemoveBtn {
+  background: #fff5f5;
+  border: 1px solid #fee2e2;
+  color: #ef4444;
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.createItemRemoveBtn:hover {
+  color: #dc2626;
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+}
+
+@media (max-width: 640px) {
+  .createItemInputsRow {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 8px;
+  }
+
+  .createItemNameCol {
+    grid-column: span 2;
+  }
+
+  .createItemLineTotal {
+    align-items: flex-start;
+  }
+
+  .createItemActionCol {
+    grid-column: span 2;
+    justify-content: flex-end;
+    height: auto;
+    padding-top: 6px;
+    border-top: 1px dashed #f1f5f9;
+  }
 }
 
 .addItemRowBtn {
