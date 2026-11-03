@@ -108,15 +108,28 @@
   cursor: pointer;
 }
 
-/* Shop tab pill bar (Mobile Default: horizontal smooth swipe with hidden scrollbar) */
+/* Category Tabs Slider Container */
+.sliderWrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* Horizontal Category Tabs Slider (Single row with smooth scroll on desktop & mobile) */
 .tabsScroll {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   overflow-x: auto;
-  padding: 2px 2px 8px 2px;
+  scroll-behavior: smooth;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+  padding: 4px 4px 10px 4px;
   scrollbar-width: none;
   -ms-overflow-style: none;
   -webkit-overflow-scrolling: touch;
+  width: 100%;
+  user-select: none;
 }
 
 .tabsScroll::-webkit-scrollbar {
@@ -126,38 +139,40 @@
 .tabBtn {
   white-space: nowrap;
   border: 1px solid var(--line);
-  padding: 7px 14px;
-  font: 500 13px 'DM Sans', sans-serif;
+  padding: 8px 18px;
+  font: 500 13.5px 'DM Sans', sans-serif;
   flex-shrink: 0;
-  border-radius: 999px;
-  background: #fff;
+  border-radius: 9999px;
+  background: #ffffff;
   color: #4b5563;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   letter-spacing: 0.01em;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  user-select: none;
 }
 
 .tabBtn:hover {
   color: var(--ink);
-  background: var(--cream);
+  background: #ffffff;
   border-color: #c4beaf;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .tabBtnActive {
   background: var(--terracotta) !important;
-  color: #fff !important;
+  color: #ffffff !important;
   font-weight: 600 !important;
   border-color: var(--terracotta) !important;
-  box-shadow: 0 2px 10px rgba(201, 95, 59, 0.25) !important;
+  box-shadow: 0 3px 12px rgba(201, 95, 59, 0.28) !important;
 }
 
 .tabCount {
   font-size: 11px;
   font-weight: 700;
-  padding: 1.5px 6.5px;
+  padding: 1.5px 7px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.06);
   color: #6b7280;
@@ -171,58 +186,101 @@
   color: #ffffff;
 }
 
-/* Modern Desktop Category Tabs Layout */
-@media (min-width: 769px) {
+/* Nav Button Edge Wrappers with subtle fade overlay */
+.navBtnWrapperLeft,
+.navBtnWrapperRight {
+  position: absolute;
+  top: 0;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.navBtnWrapperLeft {
+  left: 0;
+  padding-right: 28px;
+  background: linear-gradient(to right, var(--cream) 60%, rgba(247, 244, 236, 0));
+}
+
+.navBtnWrapperRight {
+  right: 0;
+  padding-left: 28px;
+  background: linear-gradient(to left, var(--cream) 60%, rgba(247, 244, 236, 0));
+}
+
+.sliderNavBtn {
+  pointer-events: auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sliderNavBtn:hover {
+  background: #ffffff;
+  color: var(--terracotta);
+  border-color: var(--terracotta);
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px rgba(201, 95, 59, 0.22);
+}
+
+.sliderNavBtn:active {
+  transform: scale(0.95);
+}
+
+/* Mobile: hide arrow buttons and fade wrappers so touch swipe is 100% unobstructed */
+@media (max-width: 768px) {
+  .navBtnWrapperLeft,
+  .navBtnWrapperRight {
+    display: none;
+  }
+
   .tabsScroll {
-    display: flex;
-    flex-wrap: wrap;
     gap: 8px;
-    overflow-x: visible;
-    padding: 6px 8px;
-    background: #fbf9f6;
-    border: 1px solid rgba(0, 0, 0, 0.07);
-    border-radius: 14px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    padding-bottom: 6px;
   }
 
   .tabBtn {
-    border: 1px solid transparent;
-    background: transparent;
-    padding: 8px 16px;
+    padding: 7px 14px;
+    font-size: 13px;
+  }
+}
+
+/* Desktop: enhanced modern styling and hover interactions */
+@media (min-width: 769px) {
+  .tabsScroll {
+    padding: 6px 2px 10px 2px;
+    gap: 10px;
+    cursor: grab;
+  }
+
+  .tabsScroll:active {
+    cursor: grabbing;
+  }
+
+  .tabBtn {
     font-size: 13.5px;
-    font-weight: 500;
-    color: #57534e;
-    border-radius: 9999px;
+    padding: 8px 18px;
   }
 
   .tabBtn:hover {
-    background: #ffffff;
-    color: var(--ink);
-    border-color: rgba(0, 0, 0, 0.08);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   }
 
-  .tabBtnActive {
-    background: var(--terracotta) !important;
-    color: #ffffff !important;
-    font-weight: 600 !important;
-    border-color: transparent !important;
-    box-shadow: 0 4px 14px rgba(201, 95, 59, 0.3) !important;
+  .tabBtnActive:hover {
     transform: translateY(-1px);
-  }
-
-  .tabCount {
-    background: rgba(0, 0, 0, 0.05);
-    color: #78716c;
-    padding: 2px 8px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-
-  .tabBtnActive .tabCount {
-    background: rgba(255, 255, 255, 0.25);
-    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(201, 95, 59, 0.32) !important;
   }
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ProductCard } from "@/components/product/product-card";
@@ -39,6 +39,104 @@ export function ShopContent({
 
   const selectedTab = userTab ?? tabParam ?? "products";
   const activeTab = selectedTab === "combos" && combos.length === 0 ? "products" : selectedTab;
+
+  // Modern horizontal slider refs and scroll state
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const isDraggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragScrollLeftRef = useRef(0);
+  const hasDraggedRef = useRef(false);
+
+  const updateScrollState = useCallback(() => {
+    const el = tabsRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 4);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const el = tabsRef.current;
+    if (!el) return;
+
+    updateScrollState();
+
+    const handleScroll = () => updateScrollState();
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => {
+        updateScrollState();
+      });
+      resizeObserver.observe(el);
+    }
+
+    return () => {
+      el.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+      if (resizeObserver) resizeObserver.disconnect();
+    };
+  }, [updateScrollState, categories.length, combos.length]);
+
+  // Keep active tab centered in view smoothly on mount or tab change
+  useEffect(() => {
+    if (!tabsRef.current) return;
+    const activeEl = tabsRef.current.querySelector<HTMLElement>(`.${styles.tabBtnActive}`);
+    if (activeEl) {
+      activeEl.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [activeTab]);
+
+  const slide = (direction: "left" | "right") => {
+    const el = tabsRef.current;
+    if (!el) return;
+    const distance = Math.max(el.clientWidth * 0.65, 260);
+    el.scrollBy({
+      left: direction === "left" ? -distance : distance,
+      behavior: "smooth",
+    });
+  };
+
+  const handleTabClick = (tab: string, e: React.MouseEvent<HTMLButtonElement>) => {
+    if (hasDraggedRef.current) return;
+    setActiveTab(tab);
+    e.currentTarget.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = tabsRef.current;
+    if (!el) return;
+    isDraggingRef.current = true;
+    hasDraggedRef.current = false;
+    dragStartXRef.current = e.pageX - el.offsetLeft;
+    dragScrollLeftRef.current = el.scrollLeft;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current || !tabsRef.current) return;
+    const x = e.pageX - tabsRef.current.offsetLeft;
+    const distance = x - dragStartXRef.current;
+    if (Math.abs(distance) > 5) {
+      hasDraggedRef.current = true;
+      tabsRef.current.scrollLeft = dragScrollLeftRef.current - distance;
+    }
+  };
+
+  const handleMouseUp = () => {
+    isDraggingRef.current = false;
+  };
 
   function setActiveTab(tab: string) {
     setUserTab(tab);
@@ -185,43 +283,90 @@ export function ShopContent({
           </div>
         </div>
 
-        {/* Categories Tabs Row */}
-        <nav className={styles.tabsScroll} aria-label="Snack categories">
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === "products" ? styles.tabBtnActive : ""}`}
-            onClick={() => setActiveTab("products")}
-          >
-            <span>All Snacks</span>
-            <span className={styles.tabCount}>{filteredProducts.length}</span>
-          </button>
-
-          {combos.length > 0 && (
-            <button
-              type="button"
-              className={`${styles.tabBtn} ${activeTab === "combos" ? styles.tabBtnActive : ""}`}
-              onClick={() => setActiveTab("combos")}
-            >
-              <span>Combos</span>
-              <span className={styles.tabCount}>{filteredCombos.length}</span>
-            </button>
-          )}
-
-          {categories.map((category) => {
-            const catCount = products.filter((p: any) => p.categorySlug === category.slug).length;
-            return (
+        {/* Categories Tabs Row (Modern Horizontal Slider) */}
+        <div className={styles.sliderWrapper}>
+          {canScrollLeft && (
+            <div className={styles.navBtnWrapperLeft}>
               <button
                 type="button"
-                key={category.slug}
-                className={`${styles.tabBtn} ${activeTab === category.slug ? styles.tabBtnActive : ""}`}
-                onClick={() => setActiveTab(category.slug)}
+                className={styles.sliderNavBtn}
+                onClick={() => slide("left")}
+                aria-label="Scroll categories left"
               >
-                <span>{category.name}</span>
-                <span className={styles.tabCount}>{catCount}</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
               </button>
-            );
-          })}
-        </nav>
+            </div>
+          )}
+
+          <div
+            ref={tabsRef}
+            className={styles.tabsScroll}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            role="tablist"
+            aria-label="Snack categories slider"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "products"}
+              className={`${styles.tabBtn} ${activeTab === "products" ? styles.tabBtnActive : ""}`}
+              onClick={(e) => handleTabClick("products", e)}
+            >
+              <span>All Snacks</span>
+              <span className={styles.tabCount}>{filteredProducts.length}</span>
+            </button>
+
+            {combos.length > 0 && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === "combos"}
+                className={`${styles.tabBtn} ${activeTab === "combos" ? styles.tabBtnActive : ""}`}
+                onClick={(e) => handleTabClick("combos", e)}
+              >
+                <span>Combos</span>
+                <span className={styles.tabCount}>{filteredCombos.length}</span>
+              </button>
+            )}
+
+            {categories.map((category) => {
+              const catCount = products.filter((p: any) => p.categorySlug === category.slug).length;
+              return (
+                <button
+                  type="button"
+                  role="tab"
+                  key={category.slug}
+                  aria-selected={activeTab === category.slug}
+                  className={`${styles.tabBtn} ${activeTab === category.slug ? styles.tabBtnActive : ""}`}
+                  onClick={(e) => handleTabClick(category.slug, e)}
+                >
+                  <span>{category.name}</span>
+                  <span className={styles.tabCount}>{catCount}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {canScrollRight && (
+            <div className={styles.navBtnWrapperRight}>
+              <button
+                type="button"
+                className={styles.sliderNavBtn}
+                onClick={() => slide("right")}
+                aria-label="Scroll categories right"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Results Summary Bar */}
