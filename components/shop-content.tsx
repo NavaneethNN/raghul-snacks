@@ -193,7 +193,7 @@ export function ShopContent({
             onClick={() => setActiveTab("products")}
           >
             <span>All Snacks</span>
-            <span className={styles.tabCount}>({filteredProducts.length})</span>
+            <span className={styles.tabCount}>{filteredProducts.length}</span>
           </button>
 
           {combos.length > 0 && (
@@ -203,7 +203,7 @@ export function ShopContent({
               onClick={() => setActiveTab("combos")}
             >
               <span>Combos</span>
-              <span className={styles.tabCount}>({filteredCombos.length})</span>
+              <span className={styles.tabCount}>{filteredCombos.length}</span>
             </button>
           )}
 
@@ -217,7 +217,7 @@ export function ShopContent({
                 onClick={() => setActiveTab(category.slug)}
               >
                 <span>{category.name}</span>
-                <span className={styles.tabCount}>({catCount})</span>
+                <span className={styles.tabCount}>{catCount}</span>
               </button>
             );
           })}
