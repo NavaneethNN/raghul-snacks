@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     .select({
       id: reviews.id,
       customerName: reviews.customerName,
+      phone: reviews.phone,
       rating: reviews.rating,
       content: reviews.content,
       approved: reviews.approved,

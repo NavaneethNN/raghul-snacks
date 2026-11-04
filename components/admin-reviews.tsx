@@ -8,6 +8,7 @@ import { ConfirmDialog } from "./admin-confirm-dialog";
 type Review = {
   id: number;
   customerName: string;
+  phone?: string | null;
   rating: number;
   content: string;
   approved: boolean;
@@ -121,9 +122,10 @@ export function AdminReviews() {
       if (search.trim()) {
         const q = search.toLowerCase();
         const nameMatch = r.customerName?.toLowerCase().includes(q);
+        const phoneMatch = r.phone?.toLowerCase().includes(q);
         const prodMatch = r.productName?.toLowerCase().includes(q);
         const contentMatch = r.content?.toLowerCase().includes(q);
-        return nameMatch || prodMatch || contentMatch;
+        return nameMatch || phoneMatch || prodMatch || contentMatch;
       }
       return true;
     });
@@ -480,6 +482,20 @@ export function AdminReviews() {
                         <strong style={{ fontSize: 15, color: "var(--ink, #243127)" }}>
                           {r.customerName}
                         </strong>
+                        {r.phone && (
+                          <span
+                            style={{
+                              fontSize: 12,
+                              color: "#4b5563",
+                              fontFamily: "var(--font-dm-mono, monospace)",
+                              background: "#f3f4f6",
+                              padding: "2px 7px",
+                              borderRadius: 4,
+                            }}
+                          >
+                            📞 {r.phone}
+                          </span>
+                        )}
                         <StarIcons rating={r.rating} size={14} />
                       </div>
 

@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { products, reviews } from "@/drizzle/schema";
 import { getDb } from "@/lib/db";
+import { normalizeIndianPhone } from "@/lib/phone";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as {
       productId?: number | string;
       customerName?: string;
-      city?: string;
+      phone?: string;
       rating?: number;
       content?: string;
     };
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
     const productId = Number(body.productId);
     const rating = Number(body.rating);
     const rawName = body.customerName?.trim();
-    const city = body.city?.trim();
+    const rawPhone = body.phone?.trim();
     const content = body.content?.trim();
 
     if (!productId || isNaN(productId)) {
@@ -32,6 +33,11 @@ export async function POST(request: NextRequest) {
     }
     if (!content || content.length < 3) {
       return NextResponse.json({ error: "Please share a few words about your experience." }, { status: 400 });
+    }
+
+    let cleanPhone: string | null = null;
+    if (rawPhone) {
+      cleanPhone = normalizeIndianPhone(rawPhone) || rawPhone;
     }
 
     const db = getDb();
@@ -49,14 +55,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Selected product was not found." }, { status: 404 });
     }
 
-    // Format display name (e.g., "Suresh K. (Coimbatore)" if city is provided)
-    const displayName = city ? `${rawName} (${city})` : rawName;
-
     const [newReview] = await db
       .insert(reviews)
       .values({
         productId: product.id,
-        customerName: displayName,
+        customerName: rawName,
+        phone: cleanPhone,
         rating,
         content,
         approved: true, // auto-approved; admin can hide or delete in /admin/reviews anytime

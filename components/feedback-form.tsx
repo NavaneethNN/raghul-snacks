@@ -32,7 +32,7 @@ export function FeedbackForm({
   const [rating, setRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [customerName, setCustomerName] = useState("");
-  const [city, setCity] = useState("");
+  const [phone, setPhone] = useState("");
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -61,6 +61,13 @@ export function FeedbackForm({
       setError("Please write a few words about your experience.");
       return;
     }
+    if (phone.trim()) {
+      const cleanDigits = phone.replace(/\D/g, "");
+      if (cleanDigits.length < 10) {
+        setError("Please enter a valid 10-digit contact number.");
+        return;
+      }
+    }
 
     setSubmitting(true);
     try {
@@ -70,7 +77,7 @@ export function FeedbackForm({
         body: JSON.stringify({
           productId: selectedId,
           customerName: customerName.trim(),
-          city: city.trim() || undefined,
+          phone: phone.trim() || undefined,
           rating,
           content: content.trim(),
         }),
@@ -92,6 +99,7 @@ export function FeedbackForm({
   function handleReset() {
     setSubmitted(false);
     setContent("");
+    setPhone("");
     setRating(5);
     setHoverRating(0);
     setError("");
@@ -354,7 +362,7 @@ export function FeedbackForm({
           </div>
         </div>
 
-        {/* 3. Name & Location Row */}
+        {/* 3. Name & Contact Number Row */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div>
             <label
@@ -395,7 +403,7 @@ export function FeedbackForm({
 
           <div>
             <label
-              htmlFor="feedback-city"
+              htmlFor="feedback-phone"
               style={{
                 display: "block",
                 fontSize: 12,
@@ -407,14 +415,15 @@ export function FeedbackForm({
                 fontFamily: "var(--font-dm-mono, monospace)",
               }}
             >
-              City / Town <span style={{ textTransform: "none", fontWeight: 400 }}>(Optional)</span>
+              Contact Number <span style={{ textTransform: "none", fontWeight: 400 }}>(Optional)</span>
             </label>
             <input
-              id="feedback-city"
-              type="text"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="e.g. Coimbatore"
+              id="feedback-phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="e.g. 98765 43210"
+              maxLength={15}
               style={{
                 width: "100%",
                 padding: "11px 12px",
