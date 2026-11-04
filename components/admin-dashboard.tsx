@@ -62,6 +62,16 @@ export function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [copiedFeedbackLink, setCopiedFeedbackLink] = useState(false);
+
+  function handleCopyFeedbackLink() {
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://raghuldelights.in";
+    const url = `${origin}/feedback`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedFeedbackLink(true);
+      setTimeout(() => setCopiedFeedbackLink(false), 2200);
+    }).catch(() => {});
+  }
 
   function loadDashboard() {
     setRefreshing(true);
@@ -78,7 +88,17 @@ export function AdminDashboard() {
   }
 
   useEffect(() => {
-    loadDashboard();
+    let active = true;
+    fetch("/api/admin/dashboard")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((res: DashboardData) => {
+        if (active) setData(res);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
   }, []);
 
   const fmt = new Intl.NumberFormat("en-IN", {
@@ -117,6 +137,38 @@ export function AdminDashboard() {
             </svg>
             <span>{todayStr}</span>
           </div>
+
+          <button
+            type="button"
+            onClick={handleCopyFeedbackLink}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 7,
+              padding: "7px 13px",
+              background: copiedFeedbackLink ? "#f0fdf4" : "#ffffff",
+              border: `1.5px solid ${copiedFeedbackLink ? "#86efac" : "var(--line, #e5e0d8)"}`,
+              color: copiedFeedbackLink ? "#166534" : "var(--ink, #243127)",
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "all 0.18s ease",
+            }}
+            title="Copy the direct WhatsApp customer review link"
+          >
+            {copiedFeedbackLink ? (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>✓ Link Copied!</span>
+              </>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <span>Review Form Link</span>
+              </>
+            )}
+          </button>
           <button
             type="button"
             className={styles.refreshBtn}
