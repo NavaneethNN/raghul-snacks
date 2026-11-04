@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { formatPrice, formatWeight, parseWeightToKg } from "@/lib/catalog";
 import { useCart } from "@/components/cart/cart-provider";
@@ -42,6 +42,7 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
     courierName?: string;
     isLocal?: boolean;
   };
+  const pincodeInputRef = useRef<HTMLInputElement>(null);
   const [pincodeInput, setPincodeInput] = useState("");
   const [pincodeStatus, setPincodeStatus] = useState<PincodeStatus | null>(null);
   const [checkingPincode, setCheckingPincode] = useState(false);
@@ -77,9 +78,6 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
           message: data.message || `Delivery is currently not available for PIN code ${clean}.`,
         });
       } else {
-        try {
-          window.localStorage.setItem("raghul-customer-pincode", clean);
-        } catch {}
         setPincodeStatus({
           success: true,
           message: data.message || `Available for PIN ${clean}`,
@@ -102,16 +100,13 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
     }
   }
 
-  // Pre-load saved pincode from previous checks
+  // Ensure any previously saved pincode in localStorage is wiped so pincode is never retained across reloads or page navigations
   useEffect(() => {
     try {
-      const savedPin = window.localStorage.getItem("raghul-customer-pincode");
-      if (savedPin && /^\d{6}$/.test(savedPin)) {
-        setPincodeInput(savedPin);
-        checkPincodeServiceability(savedPin);
-      }
+      window.localStorage.removeItem("raghul-customer-pincode");
+      window.sessionStorage.removeItem("raghul-customer-pincode");
     } catch {
-      // LocalStorage not accessible
+      // Storage not accessible
     }
   }, []);
 
@@ -129,6 +124,11 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
   }, []);
 
   function handleCheckPincode() {
+    // Explicitly blur the input so virtual keypads close properly on mobile devices
+    pincodeInputRef.current?.blur();
+    if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     checkPincodeServiceability(pincodeInput);
   }
 
@@ -391,6 +391,7 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
             </div>
             <div className="pincode-check-form">
               <input
+                ref={pincodeInputRef}
                 type="text"
                 maxLength={6}
                 inputMode="numeric"
@@ -404,7 +405,13 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    handleCheckPincode();
+                    pincodeInputRef.current?.blur();
+                    if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement) {
+                      document.activeElement.blur();
+                    }
+                    if (pincodeInput.length === 6) {
+                      handleCheckPincode();
+                    }
                   }
                 }}
               />
