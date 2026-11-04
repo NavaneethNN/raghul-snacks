@@ -371,9 +371,6 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                     Store Admin
                   </span>
                 )}
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#166534", background: "#dcfce7", border: "1px solid #bbf7d0", padding: "2px 8px", borderRadius: 999, fontFamily: "var(--font-dm-mono, monospace)" }}>
-                  ✓ Verified
-                </span>
                 <span style={{ fontSize: 12, color: "#a8a29e" }}>
                   Joined {new Date(account.createdAt).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
                 </span>
