@@ -975,20 +975,20 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
           .combo-section {
             margin-top: 24px;
             margin-bottom: 32px;
-            padding: 0 12px;
+            padding: 0 16px;
             overflow-x: clip;
           }
           .combo-cards-track {
-            gap: 12px;
-            scroll-padding: 0 6px;
+            gap: 16px;
+            scroll-padding: 0;
             padding: 4px 0 10px;
           }
           .combo-card-slide {
-            flex: 0 0 calc(100% - 18px);
-            width: calc(100% - 18px);
-            min-width: calc(100% - 18px);
-            max-width: calc(100% - 18px);
-            scroll-snap-align: center;
+            flex: 0 0 100%;
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+            scroll-snap-align: start;
           }
           .combo-cards-track.single-combo .combo-card-slide {
             flex: 0 0 100% !important;
@@ -1049,22 +1049,22 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
         }
         @media (max-width: 440px) {
           .combo-section {
-            padding: 0 8px;
+            padding: 0 16px;
           }
           .combo-cards-track {
-            gap: 10px;
-            scroll-padding: 0 4px;
+            gap: 16px;
+            scroll-padding: 0;
           }
           .combo-card-slide {
-            flex: 0 0 calc(100% - 12px);
-            width: calc(100% - 12px);
-            min-width: calc(100% - 12px);
-            max-width: calc(100% - 12px);
-            scroll-snap-align: center;
+            flex: 0 0 100%;
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+            scroll-snap-align: start;
           }
           .combo-card-outer {
-            padding: 18px 12px;
-            border-radius: 16px;
+            padding: 20px 14px;
+            border-radius: 18px;
           }
           .combo-item-row {
             padding: 6px 8px;
