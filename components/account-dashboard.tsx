@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart/cart-provider";
-import { OrderDetailModal } from "@/components/order-detail-modal";
 import { normalizeIndianPhone, isValidIndianPhone, formatIndianPhone } from "@/lib/phone";
 
 type Order = {
@@ -104,7 +103,6 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
 
   // Orders / reviews
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
-  const [detailOrder, setDetailOrder] = useState<Order | null>(null);
   const [reviewedProductIds, setReviewedProductIds] = useState<number[]>([]);
   const [reviewingItemId, setReviewingItemId] = useState<number | null>(null);
   const [reviewRating, setReviewRating] = useState(0);
@@ -470,18 +468,26 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                   const isExpanded = expandedOrderId === order.id;
                   const orderDate = new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
                   const itemCount = order.items.length;
-                  return (
-                    <div key={order.id} style={{ background: "#fff", border: `1px solid ${isExpanded ? "rgba(201,95,59,0.3)" : "#e5e0d8"}`, borderRadius: 14, overflow: "hidden", transition: "border-color 0.18s" }}>
+                  const subtotal = order.items.reduce((s, it) => s + (parseFloat(it.price) * it.quantity), 0);
+                  const discount = parseFloat(order.discount) || 0;
+                  const total = parseFloat(order.total);
+                  const shipping = Math.max(0, total - (subtotal - discount));
+                  const paymentMethodLabel = order.paymentMethod
+                    ? (({ upi: "UPI", card: "Card", netbanking: "Net Banking", wallet: "Wallet", emi: "EMI", online: "Online", cod: "Cash on Delivery" } as Record<string, string>)[order.paymentMethod] || order.paymentMethod)
+                    : "Online";
 
-                      {/* ── Clickable summary row ── */}
+                  return (
+                    <div key={order.id} style={{ background: "#fff", border: `1.5px solid ${isExpanded ? "var(--terracotta, #c95f3b)" : "#e5e0d8"}`, borderRadius: 14, overflow: "hidden", transition: "border-color 0.2s, box-shadow 0.2s", boxShadow: isExpanded ? "0 4px 16px rgba(201,95,59,0.08)" : "none" }}>
+
+                      {/* ── Clickable summary row (Click to toggle details in-place) ── */}
                       <button
                         onClick={() => {
                           setExpandedOrderId(prev => prev === order.id ? null : order.id);
                           setReviewingItemId(null);
                         }}
-                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "14px 18px", background: "none", border: "none", cursor: "pointer", textAlign: "left", boxSizing: "border-box" }}
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "14px 18px", background: isExpanded ? "#faf8f5" : "#fff", border: "none", cursor: "pointer", textAlign: "left", boxSizing: "border-box", transition: "background-color 0.15s" }}
                       >
-                        {/* Left: order number + date/count */}
+                        {/* Order number + date/count */}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink, #243127)", fontFamily: "var(--font-dm-mono, monospace)", whiteSpace: "nowrap" }}>
                             #{order.orderNumber}
@@ -499,58 +505,67 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
 
                         {/* Total */}
                         <span style={{ fontSize: 15, fontWeight: 700, color: "var(--ink, #243127)", fontFamily: "var(--font-playfair, Georgia, serif)", flexShrink: 0 }}>
-                          {fmt.format(parseFloat(order.total))}
+                          {fmt.format(total)}
                         </span>
 
-                        {/* Chevron */}
+                        {/* Chevron icon */}
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#78716c" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
                           <polyline points="6 9 12 15 18 9"/>
                         </svg>
                       </button>
 
-                      {/* ── Expandable content ── */}
+                      {/* ── Expandable in-place details (Items, breakdown, actions) ── */}
                       {isExpanded && (
-                        <div style={{ padding: "0 18px 18px", borderTop: "1px solid #f0ede8" }}>
+                        <div style={{ padding: "0 18px 18px", borderTop: "1px solid #f0ede8", background: "#fdfcf9" }}>
 
-                          {/* Items list */}
-                          <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 14, marginBottom: 14 }}>
-                            {order.items.map(item => (
-                              <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                {item.product?.image ? (
-                                  <Image src={item.product.image} alt={item.name} width={44} height={44} unoptimized style={{ borderRadius: 8, objectFit: "cover", border: "1px solid #e5e0d8", flexShrink: 0 }} />
-                                ) : (
-                                  <div style={{ width: 44, height: 44, borderRadius: 8, background: "#f0ede8", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a8a29e" strokeWidth="1.8"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
-                                  </div>
-                                )}
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                  {item.product?.slug ? (
-                                    <Link href={`/product/${item.product.slug}`} style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink, #243127)", textDecoration: "none", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                      {item.name}
-                                    </Link>
+                          {/* Items Section */}
+                          <div style={{ paddingTop: 14, marginBottom: 16 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#78716c", marginBottom: 10, fontFamily: "var(--font-dm-mono, monospace)" }}>
+                              Items in this order ({itemCount})
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                              {order.items.map(item => (
+                                <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "#fff", border: "1px solid #e5e0d8", borderRadius: 10, padding: "10px 12px" }}>
+                                  {item.product?.image ? (
+                                    <Image src={item.product.image} alt={item.name} width={44} height={44} unoptimized style={{ borderRadius: 8, objectFit: "cover", border: "1px solid #e5e0d8", flexShrink: 0 }} />
                                   ) : (
-                                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink, #243127)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</span>
+                                    <div style={{ width: 44, height: 44, borderRadius: 8, background: "#f0ede8", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a8a29e" strokeWidth="1.8"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+                                    </div>
                                   )}
-                                  <div style={{ fontSize: 12, color: "#78716c", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
-                                    <span>Qty {item.quantity} × {fmt.format(parseFloat(item.price))}</span>
-                                    {item.weight && <span style={{ background: "#f0ede8", padding: "1px 7px", borderRadius: 4, fontSize: 11, fontWeight: 600, fontFamily: "var(--font-dm-mono, monospace)" }}>{item.weight}</span>}
-                                  </div>
-                                </div>
-
-                                {/* Review button */}
-                                {order.orderStatus.toLowerCase() === "delivered" && item.productId && (
-                                  <div style={{ flexShrink: 0 }}>
-                                    {reviewedProductIds.includes(item.productId) ? (
-                                      <span style={{ fontSize: 11, fontWeight: 700, color: "#166534", background: "#dcfce7", border: "1px solid #bbf7d0", padding: "3px 8px", borderRadius: 999, whiteSpace: "nowrap" }}>✓ Reviewed</span>
-                                    ) : reviewingItemId === item.id ? null : (
-                                      <button onClick={() => { setReviewingItemId(item.id); setReviewRating(0); setReviewContent(""); setReviewError(""); }} style={{ fontSize: 12, fontWeight: 600, color: "var(--terracotta, #c95f3b)", background: "rgba(201,95,59,0.08)", border: "1px solid rgba(201,95,59,0.25)", borderRadius: 999, padding: "4px 10px", cursor: "pointer", whiteSpace: "nowrap" }}>
-                                        Rate it
-                                      </button>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    {item.product?.slug ? (
+                                      <Link href={`/product/${item.product.slug}`} style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink, #243127)", textDecoration: "none", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        {item.name}
+                                      </Link>
+                                    ) : (
+                                      <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink, #243127)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</span>
                                     )}
+                                    <div style={{ fontSize: 12, color: "#78716c", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
+                                      <span>Qty {item.quantity} × {fmt.format(parseFloat(item.price))}</span>
+                                      {item.weight && <span style={{ background: "#f0ede8", padding: "1px 7px", borderRadius: 4, fontSize: 11, fontWeight: 600, fontFamily: "var(--font-dm-mono, monospace)" }}>{item.weight}</span>}
+                                    </div>
                                   </div>
-                                )}
-                              </div>
-                            ))}
+
+                                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink, #243127)", flexShrink: 0 }}>
+                                    {fmt.format(parseFloat(item.price) * item.quantity)}
+                                  </div>
+
+                                  {/* Review button */}
+                                  {order.orderStatus.toLowerCase() === "delivered" && item.productId && (
+                                    <div style={{ flexShrink: 0, marginLeft: 4 }}>
+                                      {reviewedProductIds.includes(item.productId) ? (
+                                        <span style={{ fontSize: 11, fontWeight: 700, color: "#166534", background: "#dcfce7", border: "1px solid #bbf7d0", padding: "3px 8px", borderRadius: 999, whiteSpace: "nowrap" }}>✓ Reviewed</span>
+                                      ) : reviewingItemId === item.id ? null : (
+                                        <button onClick={() => { setReviewingItemId(item.id); setReviewRating(0); setReviewContent(""); setReviewError(""); }} style={{ fontSize: 12, fontWeight: 600, color: "var(--terracotta, #c95f3b)", background: "rgba(201,95,59,0.08)", border: "1px solid rgba(201,95,59,0.25)", borderRadius: 999, padding: "4px 10px", cursor: "pointer", whiteSpace: "nowrap" }}>
+                                          Rate it
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
                           </div>
 
                           {/* Inline review form */}
@@ -576,18 +591,65 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                             </div>
                           )}
 
-                          {/* Action buttons */}
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingTop: 4 }}>
-                            <button onClick={() => setDetailOrder(order)} style={{ flex: 1, minWidth: 110, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 14px", background: "#fff", border: "1px solid #e5e0d8", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "var(--ink, #243127)", cursor: "pointer" }}>
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                              Details
+                          {/* Order Details & Summary Box */}
+                          <div style={{ background: "#fff", border: "1px solid #e5e0d8", borderRadius: 10, padding: "14px 16px", marginBottom: 16 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#78716c", marginBottom: 12, fontFamily: "var(--font-dm-mono, monospace)" }}>
+                              Order Details
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 12, paddingBottom: 12, borderBottom: "1px solid #f0ede8" }}>
+                              <div>
+                                <span style={{ fontSize: 11.5, color: "#78716c", display: "block" }}>Payment Method</span>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink, #243127)" }}>{paymentMethodLabel}</span>
+                              </div>
+                              <div>
+                                <span style={{ fontSize: 11.5, color: "#78716c", display: "block" }}>Payment Status</span>
+                                <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", fontFamily: "var(--font-dm-mono, monospace)", color: order.paymentStatus.toLowerCase() === "paid" ? "#166534" : "#92400e" }}>
+                                  {order.paymentStatus}
+                                </span>
+                              </div>
+                              {order.awbCode && (
+                                <div>
+                                  <span style={{ fontSize: 11.5, color: "#78716c", display: "block" }}>Tracking AWB</span>
+                                  <Link href={`/track?orderId=${order.orderNumber}`} style={{ fontSize: 12.5, fontWeight: 700, color: "var(--terracotta, #c95f3b)", fontFamily: "var(--font-dm-mono, monospace)", textDecoration: "none" }}>
+                                    {order.awbCode} →
+                                  </Link>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Price breakdown */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", color: "#57534e" }}>
+                                <span>Subtotal</span>
+                                <span>{fmt.format(subtotal)}</span>
+                              </div>
+                              <div style={{ display: "flex", justifyContent: "space-between", color: "#57534e" }}>
+                                <span>Shipping</span>
+                                <span style={{ color: shipping === 0 ? "#166534" : "#57534e", fontWeight: shipping === 0 ? 600 : 400 }}>
+                                  {shipping === 0 ? "FREE" : fmt.format(shipping)}
+                                </span>
+                              </div>
+                              {discount > 0 && (
+                                <div style={{ display: "flex", justifyContent: "space-between", color: "#166534", fontWeight: 600 }}>
+                                  <span>Discount {order.couponCode ? `(${order.couponCode})` : ""}</span>
+                                  <span>−{fmt.format(discount)}</span>
+                                </div>
+                              )}
+                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 700, color: "var(--ink, #243127)", paddingTop: 8, marginTop: 4, borderTop: "1px dashed #e5e0d8" }}>
+                                <span>Total Paid</span>
+                                <span style={{ color: "var(--terracotta, #c95f3b)" }}>{fmt.format(total)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action buttons: Download Invoice & Buy Again */}
+                          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                            <button onClick={() => downloadInvoice(order.orderNumber)} style={{ flex: 1, minWidth: 130, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "9px 16px", background: "#fff", border: "1px solid #e5e0d8", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#57534e", cursor: "pointer" }}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                              Download Invoice
                             </button>
-                            <button onClick={() => downloadInvoice(order.orderNumber)} style={{ flex: 1, minWidth: 110, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 14px", background: "#fff", border: "1px solid #e5e0d8", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#57534e", cursor: "pointer" }}>
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                              Invoice
-                            </button>
-                            <button onClick={() => handleBuyAgain(order)} style={{ flex: 1, minWidth: 110, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 14px", background: "var(--terracotta, #c95f3b)", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+                            <button onClick={() => handleBuyAgain(order)} style={{ flex: 1, minWidth: 130, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "9px 16px", background: "var(--terracotta, #c95f3b)", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
                               Buy Again
                             </button>
                           </div>
@@ -781,16 +843,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
           </div>
         )}
 
-        {/* Order Detail Modal */}
-        {detailOrder && (
-          <OrderDetailModal
-            order={detailOrder}
-            onClose={() => setDetailOrder(null)}
-            onDownloadInvoice={downloadInvoice}
-            onBuyAgain={handleBuyAgain}
-            reviewedProductIds={reviewedProductIds}
-          />
-        )}
+        {/* Support inquiries WhatsApp banner / end */}
       </div>
     </div>
   );
