@@ -1,13 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/components/cart/cart-provider";
 
 export function WhatsAppButton() {
   const [hovered, setHovered] = useState(false);
+  const [hasStickyBar, setHasStickyBar] = useState(false);
   const pathname = usePathname();
   const { count, isCartOpen } = useCart();
+
+  const isProductPage =
+    pathname?.startsWith("/product/") || pathname?.startsWith("/combo/");
+
   const hasCartBar =
     count > 0 &&
     !isCartOpen &&
@@ -15,9 +20,27 @@ export function WhatsAppButton() {
     pathname !== "/checkout" &&
     !pathname?.startsWith("/admin");
 
+  useEffect(() => {
+    if (!isProductPage) {
+      setHasStickyBar(false);
+      return;
+    }
+
+    const checkStickyBar = () => {
+      // The sticky mobile bar appears when scrollY > 400
+      setHasStickyBar(window.scrollY > 350);
+    };
+
+    checkStickyBar();
+    window.addEventListener("scroll", checkStickyBar, { passive: true });
+    return () => window.removeEventListener("scroll", checkStickyBar);
+  }, [isProductPage]);
+
   return (
     <aside
-      className={`whatsapp-button-wrapper ${hasCartBar ? "has-cart-bar" : ""}`}
+      className={`whatsapp-button-wrapper ${hasCartBar ? "has-cart-bar" : ""} ${
+        hasStickyBar ? "has-sticky-bar" : ""
+      } ${isProductPage ? "is-product-page" : ""}`}
       aria-label="Customer Support WhatsApp"
       style={{
         position: "fixed",
