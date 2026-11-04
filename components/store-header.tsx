@@ -82,6 +82,9 @@ export function StoreHeader() {
     
     if (window.location.pathname !== '/') {
       // Use Next.js router for client-side navigation instead of hard reload
+      try {
+        sessionStorage.setItem("agy_pending_scroll_hash", sectionId);
+      } catch {}
       router.push(`/#${sectionId}`);
       return;
     }
@@ -89,10 +92,10 @@ export function StoreHeader() {
     setTimeout(() => {
       const element = document.getElementById(sectionId);
       if (element) {
-        const headerOffset = 80;
+        const headerOffset = 90;
         const elementPosition = element.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+        window.scrollTo({ top: Math.max(0, offsetPosition), behavior: 'smooth' });
       }
     }, 100);
   };

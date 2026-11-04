@@ -210,6 +210,7 @@ export function CombosSlider({ combos }: { combos: Combo[] }) {
   return (
     <section
       className="combo-section"
+      id="combos"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       aria-label="Special Combos"

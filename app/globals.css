@@ -598,7 +598,9 @@ body.mobile-menu-open .announcement {
 }
 
 #categories,
-#bestsellers {
+#bestsellers,
+#combos,
+#contact {
   scroll-margin-top: 90px;
 }
 
