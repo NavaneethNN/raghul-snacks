@@ -55,9 +55,22 @@ export function AdminCustomers() {
 
       <section className={styles.workspace}>
         <div className={styles.toolbar}>
-          <div className={styles.toolbarSearch}>
-            <span className={styles.searchIcon}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <div className={styles.toolbarSearch} style={{ position: "relative", width: "100%" }}>
+            <span
+              className={styles.searchIcon}
+              style={{
+                position: "absolute",
+                left: "14px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                pointerEvents: "none",
+                display: "flex",
+                alignItems: "center",
+                color: "#9ca3af",
+                zIndex: 2,
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
             </span>
@@ -66,8 +79,37 @@ export function AdminCustomers() {
               placeholder="Search by name, email or phone…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ paddingLeft: "36px" }}
+              style={{
+                paddingLeft: "42px",
+                paddingRight: searchQuery ? "36px" : "12px",
+                width: "100%",
+                boxSizing: "border-box",
+              }}
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  color: "#9ca3af",
+                  cursor: "pointer",
+                  padding: "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "14px",
+                }}
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
 
