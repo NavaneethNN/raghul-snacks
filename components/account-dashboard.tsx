@@ -76,7 +76,7 @@ type SavedAddress = {
   isDefault: boolean;
 };
 
-type TabType = "orders" | "addresses" | "profile" | "messages";
+type TabType = "orders" | "addresses" | "messages";
 
 const STATUS_STYLES: Record<string, { bg: string; color: string; dot: string }> = {
   placed:     { bg: "#fef9ec", color: "#92400e", dot: "#f59e0b" },
@@ -299,7 +299,6 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   const tabs: { key: TabType; label: string; count?: number }[] = [
     { key: "orders",    label: "Orders",    count: orders.length },
     { key: "addresses", label: "Addresses", count: addresses.length },
-    { key: "profile",   label: "Profile" },
     { key: "messages",  label: "Support",   count: messages.length },
   ];
 
@@ -702,43 +701,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
           </div>
         )}
 
-        {/* ── PROFILE TAB ── */}
-        {activeTab === "profile" && (
-          <div>
-            <h2 style={{ margin: "0 0 16px", fontSize: 20, fontWeight: 700, color: "var(--ink, #243127)", fontFamily: "var(--font-playfair, Georgia, serif)" }}>Account Details</h2>
-            <div style={{ background: "#fff", border: "1px solid #e5e0d8", borderRadius: 16, padding: 24, marginBottom: 18 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
-                {[
-                  { label: "Full Name", value: name },
-                  { label: "Email", value: account.email },
-                  { label: "Member Since", value: new Date(account.createdAt).toLocaleDateString("en-IN", { month: "long", year: "numeric" }) },
-                  { label: "Role", value: account.isAdmin ? "Store Administrator" : "Customer" },
-                ].map(item => (
-                  <div key={item.label} style={{ background: "var(--cream, #f7f4ec)", border: "1px solid #e5e0d8", borderRadius: 10, padding: "14px 16px" }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#78716c", marginBottom: 4, fontFamily: "var(--font-dm-mono, monospace)" }}>{item.label}</div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink, #243127)", wordBreak: "break-word" }}>{item.value}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ background: "#fff", border: "1px solid #e5e0d8", borderRadius: 16, padding: 24 }}>
-              <h3 style={{ margin: "0 0 14px", fontSize: 16, fontWeight: 700, color: "var(--ink, #243127)", fontFamily: "var(--font-playfair, Georgia, serif)" }}>Store Policies</h3>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                {[
-                  { label: "Shipping & Delivery", href: "/policies/shipping" },
-                  { label: "Returns & Refunds", href: "/policies/refund" },
-                  { label: "Privacy Policy", href: "/policies/privacy" },
-                  { label: "Terms of Service", href: "/policies/terms" },
-                ].map(p => (
-                  <Link key={p.href} href={p.href} style={{ padding: "8px 16px", background: "var(--cream, #f7f4ec)", border: "1px solid #e5e0d8", borderRadius: 8, fontSize: 13.5, fontWeight: 600, color: "var(--ink, #243127)", textDecoration: "none" }}>
-                    {p.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        
 
         {/* ── MESSAGES TAB ── */}
         {activeTab === "messages" && (
