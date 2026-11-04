@@ -40,6 +40,13 @@ export function ShopContent({
   const [userTab, setUserTab] = useState<string | null>(categoryParam || null);
   const [sortBy, setSortBy] = useState<SortOption>("featured");
 
+  useEffect(() => {
+    if (searchParam) {
+      setSearchTerm(searchParam);
+      setUserTab("products");
+    }
+  }, [searchParam]);
+
   const selectedTab = userTab ?? tabParam ?? "products";
   const activeTab = selectedTab === "combos" && combos.length === 0 ? "products" : selectedTab;
 
@@ -151,17 +158,18 @@ export function ShopContent({
     setSortBy("featured");
   }
 
-  // Filter products based on search query
+  // Filter products based on search query (supports multi-word matching)
   const filteredProducts = useMemo(() => {
     return products.filter((product: any) => {
       if (!searchTerm.trim()) return true;
       const query = searchTerm.toLowerCase().trim();
-      return (
-        product.name?.toLowerCase().includes(query) ||
-        product.description?.toLowerCase().includes(query) ||
-        product.categoryName?.toLowerCase().includes(query) ||
-        product.categorySlug?.toLowerCase().includes(query) ||
-        product.ingredients?.toLowerCase().includes(query)
+      const words = query.split(/\s+/).filter(Boolean);
+      return words.every((word) =>
+        product.name?.toLowerCase().includes(word) ||
+        product.description?.toLowerCase().includes(word) ||
+        product.categoryName?.toLowerCase().includes(word) ||
+        product.categorySlug?.toLowerCase().includes(word) ||
+        product.ingredients?.toLowerCase().includes(word)
       );
     });
   }, [products, searchTerm]);
@@ -205,18 +213,21 @@ export function ShopContent({
     };
   }
 
-  // Filter combos based on search query
+  // Filter combos based on search query (supports multi-word matching)
   const filteredCombos = useMemo(() => {
     return combos.filter((combo: any) => {
       if (!searchTerm.trim()) return true;
       const query = searchTerm.toLowerCase().trim();
+      const words = query.split(/\s+/).filter(Boolean);
       const title = (combo.title || combo.name || "").toLowerCase();
       const desc = (combo.description || "").toLowerCase();
       const items = parseComboItems(combo);
-      return (
-        title.includes(query) ||
-        desc.includes(query) ||
-        items.some((item: any) => item.name?.toLowerCase().includes(query))
+      const ingredients = (combo.ingredients || "").toLowerCase();
+      return words.every((word) =>
+        title.includes(word) ||
+        desc.includes(word) ||
+        ingredients.includes(word) ||
+        items.some((item: any) => item.name?.toLowerCase().includes(word))
       );
     });
   }, [combos, searchTerm]);
@@ -460,11 +471,29 @@ export function ShopContent({
           <div className={styles.emptyStateBox}>
             <h3 className={styles.emptyStateTitle}>No snacks found</h3>
             <p className={styles.emptyStateDesc}>
-              {searchTerm ? `We couldn't find any snacks matching "${searchTerm}".` : "No products available in this selection."}
+              {searchTerm ? (
+                activeTab !== "products" && filteredProducts.length > 0 ? (
+                  <>Found {filteredProducts.length} {filteredProducts.length === 1 ? "snack" : "snacks"} matching &ldquo;{searchTerm}&rdquo; in other categories.</>
+                ) : (
+                  `We couldn't find any snacks matching "${searchTerm}".`
+                )
+              ) : (
+                "No products available in this selection."
+              )}
             </p>
-            <button type="button" className={styles.emptyActionBtn} onClick={handleResetFilters}>
-              View All Snacks
-            </button>
+            {activeTab !== "products" && filteredProducts.length > 0 ? (
+              <button
+                type="button"
+                className={styles.emptyActionBtn}
+                onClick={() => setUserTab("products")}
+              >
+                View in All Delights ({filteredProducts.length})
+              </button>
+            ) : (
+              <button type="button" className={styles.emptyActionBtn} onClick={handleResetFilters}>
+                View All Snacks
+              </button>
+            )}
           </div>
         )}
 

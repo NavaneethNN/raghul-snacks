@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { desc, eq, like, or } from "drizzle-orm";
+import { and, desc, eq, ilike, or } from "drizzle-orm";
 import { products, categories } from "@/drizzle/schema";
 import { getDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-// GET - Search products by name, description, or category
+// GET - Search products by name, description, ingredients, or category
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -16,7 +16,20 @@ export async function GET(request: NextRequest) {
     }
 
     const db = getDb();
-    const searchTerm = `%${query.trim().toLowerCase()}%`;
+    const cleanQuery = query.trim();
+    const words = cleanQuery.split(/\s+/).filter(Boolean);
+
+    // Each word must match at least one searchable field
+    const wordConditions = words.map((w) => {
+      const pattern = `%${w}%`;
+      return or(
+        ilike(products.name, pattern),
+        ilike(products.description, pattern),
+        ilike(products.ingredients, pattern),
+        ilike(categories.name, pattern),
+        ilike(categories.slug, pattern)
+      );
+    });
 
     const results = await db
       .select({
@@ -34,11 +47,9 @@ export async function GET(request: NextRequest) {
       .from(products)
       .leftJoin(categories, eq(products.categoryId, categories.id))
       .where(
-        or(
-          like(products.name, searchTerm),
-          like(products.description, searchTerm),
-          like(products.ingredients, searchTerm),
-          like(categories.name, searchTerm)
+        and(
+          eq(products.active, true),
+          ...wordConditions
         )
       )
       .limit(10);

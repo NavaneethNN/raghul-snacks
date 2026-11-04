@@ -421,7 +421,7 @@ export function StoreHeader() {
                   {count > 0 && <span className="mobile-bag-count-badge">{count}</span>}
                 </div>
                 <div className="mobile-bag-details">
-                  <div className="mobile-bag-headline">Your Shopping Bag</div>
+                  <div className="mobile-bag-headline">Your Bag</div>
                   <div className="mobile-bag-meta">
                     {count > 0 ? (
                       <>
@@ -496,26 +496,6 @@ export function StoreHeader() {
                 </button>
               )}
             </form>
-
-            {/* Quick search chips */}
-            {!searchQuery.trim() && (
-              <div className="mobile-search-chips">
-                <span className="mobile-search-chip-label">Quick:</span>
-                {["Murukku", "Millet Laddu", "Mixture", "Seedai"].map((chip) => (
-                  <button
-                    key={chip}
-                    type="button"
-                    className="mobile-search-chip"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      router.push(`/shop?search=${encodeURIComponent(chip)}`);
-                    }}
-                  >
-                    {chip}
-                  </button>
-                ))}
-              </div>
-            )}
 
             {/* Live Search Suggestions Dropdown */}
             {searchQuery.trim().length >= 2 && searchResults.length > 0 && (
