@@ -166,11 +166,10 @@ export function CheckoutWizard() {
         setCheckingAuth(false);
       });
 
+    // Ensure any previously entered pincode from product detail checks is wiped out and never retained in checkout
     try {
-      const savedPin = window.localStorage.getItem("raghul-customer-pincode");
-      if (savedPin && /^\d{6}$/.test(savedPin)) {
-        setForm((c) => (c.pincode ? c : { ...c, pincode: savedPin }));
-      }
+      window.localStorage.removeItem("raghul-customer-pincode");
+      window.sessionStorage.removeItem("raghul-customer-pincode");
     } catch {}
   }, []);
 
