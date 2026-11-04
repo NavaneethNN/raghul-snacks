@@ -1,0 +1,136 @@
+/* Feedback Form Mobile Responsive Styles */
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e5e0d8;
+  border-radius: 18px;
+  padding: 28px 24px 32px;
+  box-shadow: 0 10px 30px -5px rgba(36, 49, 39, 0.08);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.ratingRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.ratingStars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.starBtn {
+  background: none;
+  border: none;
+  padding: 3px;
+  cursor: pointer;
+  color: #d1d5db;
+  transition: transform 0.15s, color 0.15s;
+  touch-action: manipulation;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.starBtn:active {
+  transform: scale(0.92);
+}
+
+.starBtnActive {
+  color: #f59e0b;
+}
+
+.ratingBadge {
+  font-size: 13px;
+  font-weight: 700;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-family: var(--font-dm-mono, monospace);
+  white-space: nowrap;
+}
+
+.fieldsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 14px 20px;
+  background: var(--terracotta, #c95f3b);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(201, 95, 59, 0.28);
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  touch-action: manipulation;
+}
+
+.submitBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: 18px 14px 22px;
+    border-radius: 14px;
+  }
+
+  .fieldsRow {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .ratingRow {
+    gap: 10px;
+  }
+
+  .ratingStars {
+    gap: 2px;
+  }
+
+  .starBtn {
+    padding: 2px;
+  }
+
+  .starBtn svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .ratingBadge {
+    font-size: 12px;
+    padding: 3px 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  .starBtn svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .ratingRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+

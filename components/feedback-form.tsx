@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import styles from "./feedback-form.module.css";
 
 type ProductOption = {
   id: number;
@@ -109,13 +110,9 @@ export function FeedbackForm({
   if (submitted && submittedProduct) {
     return (
       <div
+        className={styles.card}
         style={{
-          background: "#ffffff",
-          border: "1px solid #e5e0d8",
-          borderRadius: 18,
-          padding: "36px 24px",
           textAlign: "center",
-          boxShadow: "0 10px 30px -5px rgba(36, 49, 39, 0.08)",
           maxWidth: 520,
           margin: "0 auto",
         }}
@@ -210,17 +207,7 @@ export function FeedbackForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        background: "#ffffff",
-        border: "1px solid #e5e0d8",
-        borderRadius: 18,
-        padding: "28px 24px 32px",
-        boxShadow: "0 10px 30px -5px rgba(36, 49, 39, 0.08)",
-        boxSizing: "border-box",
-      }}
-    >
+    <form onSubmit={handleSubmit} className={styles.card}>
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         {/* 1. Snack Selection */}
         <div>
@@ -318,52 +305,35 @@ export function FeedbackForm({
             2. Your Overall Rating *
           </label>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-            {[1, 2, 3, 4, 5].map((s) => {
-              const active = s <= (hoverRating || rating);
-              return (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setRating(s)}
-                  onMouseEnter={() => setHoverRating(s)}
-                  onMouseLeave={() => setHoverRating(0)}
-                  aria-label={`${s} stars`}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    padding: "4px",
-                    cursor: "pointer",
-                    color: active ? "#f59e0b" : "#d1d5db",
-                    transition: "transform 0.15s, color 0.15s",
-                    transform: active ? "scale(1.08)" : "scale(1)",
-                  }}
-                >
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                  </svg>
-                </button>
-              );
-            })}
-            <span
-              style={{
-                marginLeft: 8,
-                fontSize: 13.5,
-                fontWeight: 700,
-                color: "#92400e",
-                background: "#fef3c7",
-                padding: "3px 10px",
-                borderRadius: 999,
-                fontFamily: "var(--font-dm-mono, monospace)",
-              }}
-            >
+          <div className={styles.ratingRow}>
+            <div className={styles.ratingStars}>
+              {[1, 2, 3, 4, 5].map((s) => {
+                const active = s <= (hoverRating || rating);
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setRating(s)}
+                    onMouseEnter={() => setHoverRating(s)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    aria-label={`${s} stars`}
+                    className={`${styles.starBtn} ${active ? styles.starBtnActive : ""}`}
+                  >
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  </button>
+                );
+              })}
+            </div>
+            <span className={styles.ratingBadge}>
               {RATING_LABELS[hoverRating || rating] || `${rating} Stars`}
             </span>
           </div>
         </div>
 
         {/* 3. Name & Contact Number Row */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className={styles.fieldsRow}>
           <div>
             <label
               htmlFor="feedback-name"
@@ -499,23 +469,7 @@ export function FeedbackForm({
         <button
           type="submit"
           disabled={submitting}
-          style={{
-            width: "100%",
-            padding: "14px 20px",
-            background: "var(--terracotta, #c95f3b)",
-            color: "#ffffff",
-            border: "none",
-            borderRadius: 12,
-            fontSize: 15,
-            fontWeight: 700,
-            cursor: submitting ? "not-allowed" : "pointer",
-            boxShadow: "0 4px 14px rgba(201, 95, 59, 0.28)",
-            transition: "all 0.2s ease",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-          }}
+          className={styles.submitBtn}
         >
           {submitting ? "Submitting Review…" : "Publish Review →"}
         </button>

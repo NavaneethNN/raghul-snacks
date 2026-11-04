@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart/cart-provider";
 import { normalizeIndianPhone, isValidIndianPhone, formatIndianPhone } from "@/lib/phone";
+import styles from "./account-dashboard.module.css";
 
 type Order = {
   id: number;
@@ -320,19 +321,14 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
           background: "#fff", border: "1px solid #e5e0d8", borderRadius: 16,
           padding: "20px", marginBottom: 20, boxSizing: "border-box",
         }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
+          <div className={styles.profileCardTop}>
             {/* Avatar */}
-            <div style={{
-              width: 52, height: 52, borderRadius: "50%", flexShrink: 0,
-              background: "linear-gradient(135deg, var(--terracotta, #c95f3b), var(--saffron, #e5a52f))",
-              color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 20, fontWeight: 700, fontFamily: "var(--font-playfair, Georgia, serif)",
-            }}>
+            <div className={styles.profileAvatar}>
               {initials}
             </div>
 
             {/* Info */}
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div className={styles.profileInfo}>
               {/* Name row */}
               {editingName ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
@@ -361,7 +357,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                 </div>
               )}
 
-              <div style={{ fontSize: 13.5, color: "#57534e", marginBottom: 8, wordBreak: "break-all" }}>{account.email}</div>
+              <div className={styles.profileEmail}>{account.email}</div>
 
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
                 {account.isAdmin && (
@@ -376,7 +372,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
             </div>
 
             {/* Actions */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, marginLeft: "auto" }}>
+            <div className={styles.profileActions}>
               {account.isAdmin && (
                 <a href="/api/admin/bridge" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", background: "var(--ink, #243127)", color: "#fff", borderRadius: 9, fontSize: 13, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>

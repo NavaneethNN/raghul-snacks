@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { AdminHeaderActions } from "./admin-header-actions";
 import { ConfirmDialog } from "./admin-confirm-dialog";
+import styles from "./admin-reviews.module.css";
 
 type Review = {
   id: number;
@@ -134,25 +135,15 @@ export function AdminReviews() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--cream, #f7f4ec)", paddingBottom: 60 }}>
       {/* ── Top Header ── */}
-      <header
-        style={{
-          background: "#ffffff",
-          borderBottom: "1px solid #e5e0d8",
-          padding: "24px 20px",
-          position: "sticky",
-          top: 0,
-          zIndex: 40,
-          boxShadow: "0 1px 4px rgba(36, 49, 39, 0.03)",
-        }}
-      >
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--terracotta, #c95f3b)", fontFamily: "var(--font-dm-mono, monospace)" }}>
                 Social Proof & Ratings
               </span>
             </div>
-            <h1 style={{ margin: 0, fontSize: "clamp(22px, 3.5vw, 28px)", fontWeight: 700, color: "var(--ink, #243127)", fontFamily: "var(--font-playfair, Georgia, serif)" }}>
+            <h1 style={{ margin: 0, fontSize: "clamp(20px, 3.5vw, 28px)", fontWeight: 700, color: "var(--ink, #243127)", fontFamily: "var(--font-playfair, Georgia, serif)" }}>
               Customer Reviews
             </h1>
             <p style={{ margin: "4px 0 0", fontSize: 13, color: "#78716c" }}>
@@ -160,25 +151,17 @@ export function AdminReviews() {
             </p>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <div className={styles.headerActions}>
             {/* Copy Review Form Link Button */}
             <button
               type="button"
               onClick={handleCopyFeedbackLink}
+              className={styles.copyBtn}
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 7,
-                padding: "9px 16px",
                 background: copiedLink ? "#f0fdf4" : "var(--terracotta, #c95f3b)",
                 color: copiedLink ? "#166534" : "#ffffff",
                 border: copiedLink ? "1.5px solid #86efac" : "none",
-                borderRadius: 9,
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: "pointer",
                 boxShadow: copiedLink ? "none" : "0 3px 10px rgba(201, 95, 59, 0.25)",
-                transition: "all 0.2s ease",
               }}
               title="Copy link to send to customers via WhatsApp or SMS"
             >
@@ -199,19 +182,7 @@ export function AdminReviews() {
               href="/feedback"
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 5,
-                padding: "9px 14px",
-                background: "#ffffff",
-                border: "1.5px solid #e5e0d8",
-                color: "#57534e",
-                borderRadius: 9,
-                fontSize: 13,
-                fontWeight: 600,
-                textDecoration: "none",
-              }}
+              className={styles.previewBtn}
               title="Preview the standalone feedback form in a new tab"
             >
               <span>Preview Form</span>
@@ -224,7 +195,7 @@ export function AdminReviews() {
       </header>
 
       {/* ── Main Workspace ── */}
-      <main style={{ maxWidth: 1200, margin: "24px auto 0", padding: "0 16px", boxSizing: "border-box" }}>
+      <main style={{ maxWidth: 1200, margin: "20px auto 0", padding: "0 14px", boxSizing: "border-box" }}>
 
         {/* ── Status Message Toast ── */}
         {message && (
@@ -250,40 +221,40 @@ export function AdminReviews() {
         )}
 
         {/* ── Stats Summary Row ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 20 }}>
-          <div style={{ background: "#ffffff", border: "1px solid #e5e0d8", borderRadius: 12, padding: "14px 16px" }}>
+        <div className={styles.metricsGrid}>
+          <div className={styles.metricCard}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#78716c", fontFamily: "var(--font-dm-mono, monospace)" }}>
               Total Reviews
             </div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: "var(--ink, #243127)", fontFamily: "var(--font-playfair, Georgia, serif)", marginTop: 4 }}>
+            <div className={styles.metricVal} style={{ color: "var(--ink, #243127)" }}>
               {reviews.length}
             </div>
           </div>
 
-          <div style={{ background: "#ffffff", border: "1px solid #e5e0d8", borderRadius: 12, padding: "14px 16px" }}>
+          <div className={styles.metricCard}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#166534", fontFamily: "var(--font-dm-mono, monospace)" }}>
               Live on Store
             </div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: "#166534", fontFamily: "var(--font-playfair, Georgia, serif)", marginTop: 4 }}>
+            <div className={styles.metricVal} style={{ color: "#166534" }}>
               {visibleCount}
             </div>
           </div>
 
-          <div style={{ background: "#ffffff", border: "1px solid #e5e0d8", borderRadius: 12, padding: "14px 16px" }}>
+          <div className={styles.metricCard}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#92400e", fontFamily: "var(--font-dm-mono, monospace)" }}>
               Hidden Reviews
             </div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: "#92400e", fontFamily: "var(--font-playfair, Georgia, serif)", marginTop: 4 }}>
+            <div className={styles.metricVal} style={{ color: "#92400e" }}>
               {hiddenCount}
             </div>
           </div>
 
-          <div style={{ background: "#ffffff", border: "1px solid #e5e0d8", borderRadius: 12, padding: "14px 16px" }}>
+          <div className={styles.metricCard}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#b45309", fontFamily: "var(--font-dm-mono, monospace)" }}>
               Average Rating
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-              <span style={{ fontSize: 24, fontWeight: 700, color: "var(--ink, #243127)", fontFamily: "var(--font-playfair, Georgia, serif)" }}>
+              <span className={styles.metricVal} style={{ color: "var(--ink, #243127)", margin: 0 }}>
                 {avgRating}
               </span>
               <StarIcons rating={Math.round(Number(avgRating))} size={14} />
@@ -292,36 +263,17 @@ export function AdminReviews() {
         </div>
 
         {/* ── Toolbar: Filter Tabs & Search ── */}
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e5e0d8",
-            borderRadius: 14,
-            padding: "12px 16px",
-            marginBottom: 16,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            flexWrap: "wrap",
-          }}
-        >
+        <div className={styles.toolbar}>
           {/* Filters */}
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <div className={styles.filterScroll}>
             <button
               type="button"
               onClick={() => setFilter("all")}
+              className={styles.filterBtn}
               style={{
-                padding: "8px 16px",
-                borderRadius: 999,
-                fontSize: 13,
-                fontWeight: 600,
-                border: "1.5px solid",
                 borderColor: filter === "all" ? "var(--terracotta, #c95f3b)" : "transparent",
                 background: filter === "all" ? "var(--terracotta, #c95f3b)" : "#f5f4ef",
                 color: filter === "all" ? "#ffffff" : "#57534e",
-                cursor: "pointer",
-                transition: "all 0.15s ease",
               }}
             >
               All ({reviews.length})
@@ -330,17 +282,11 @@ export function AdminReviews() {
             <button
               type="button"
               onClick={() => setFilter("visible")}
+              className={styles.filterBtn}
               style={{
-                padding: "8px 16px",
-                borderRadius: 999,
-                fontSize: 13,
-                fontWeight: 600,
-                border: "1.5px solid",
                 borderColor: filter === "visible" ? "#16a34a" : "transparent",
                 background: filter === "visible" ? "#16a34a" : "#f5f4ef",
                 color: filter === "visible" ? "#ffffff" : "#57534e",
-                cursor: "pointer",
-                transition: "all 0.15s ease",
               }}
             >
               Live on Store ({visibleCount})
@@ -349,17 +295,11 @@ export function AdminReviews() {
             <button
               type="button"
               onClick={() => setFilter("hidden")}
+              className={styles.filterBtn}
               style={{
-                padding: "8px 16px",
-                borderRadius: 999,
-                fontSize: 13,
-                fontWeight: 600,
-                border: "1.5px solid",
                 borderColor: filter === "hidden" ? "#78716c" : "transparent",
                 background: filter === "hidden" ? "#78716c" : "#f5f4ef",
                 color: filter === "hidden" ? "#ffffff" : "#57534e",
-                cursor: "pointer",
-                transition: "all 0.15s ease",
               }}
             >
               Hidden ({hiddenCount})
@@ -367,12 +307,12 @@ export function AdminReviews() {
           </div>
 
           {/* Search box */}
-          <div style={{ position: "relative", minWidth: 220, flex: 1, maxWidth: 320 }}>
+          <div className={styles.searchBox}>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by customer or snack…"
+              placeholder="Search by customer, phone, or snack…"
               style={{
                 width: "100%",
                 padding: "8px 12px 8px 32px",
@@ -465,72 +405,30 @@ export function AdminReviews() {
               return (
                 <div
                   key={r.id}
+                  className={styles.reviewCard}
                   style={{
-                    background: "#ffffff",
                     border: `1px solid ${r.approved ? "#e5e0d8" : "#fcd34d"}`,
-                    borderRadius: 14,
-                    padding: "16px 18px",
-                    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
-                    boxSizing: "border-box",
-                    transition: "border-color 0.15s ease",
                   }}
                 >
                   {/* Top Bar: Customer Name + Rating + Status Badge */}
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
-                    <div>
+                  <div className={styles.reviewCardTop}>
+                    <div className={styles.reviewCardTopHeader}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                         <strong style={{ fontSize: 15, color: "var(--ink, #243127)" }}>
                           {r.customerName}
                         </strong>
-                        {r.phone && (
-                          <span
-                            style={{
-                              fontSize: 12,
-                              color: "#4b5563",
-                              fontFamily: "var(--font-dm-mono, monospace)",
-                              background: "#f3f4f6",
-                              padding: "2px 7px",
-                              borderRadius: 4,
-                            }}
-                          >
-                            📞 {r.phone}
-                          </span>
-                        )}
                         <StarIcons rating={r.rating} size={14} />
                       </div>
 
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
-                        {r.productName ? (
-                          <span
-                            style={{
-                              fontSize: 11.5,
-                              fontWeight: 700,
-                              color: "var(--terracotta, #c95f3b)",
-                              background: "rgba(201, 95, 59, 0.08)",
-                              padding: "2px 8px",
-                              borderRadius: 6,
-                              fontFamily: "var(--font-dm-mono, monospace)",
-                            }}
-                          >
-                            {r.productName}
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: 11.5, color: "#78716c" }}>General Store Review</span>
-                        )}
-                        <span style={{ fontSize: 12, color: "#a8a29e" }}>• {dateStr}</span>
-                      </div>
-                    </div>
-
-                    {/* Live/Hidden Badge */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                      {/* Live/Hidden Badge */}
                       <span
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
                           gap: 5,
-                          fontSize: 11.5,
+                          fontSize: 11,
                           fontWeight: 700,
-                          padding: "3px 9px",
+                          padding: "2px 8px",
                           borderRadius: 999,
                           fontFamily: "var(--font-dm-mono, monospace)",
                           textTransform: "uppercase",
@@ -538,6 +436,7 @@ export function AdminReviews() {
                           background: r.approved ? "#dcfce7" : "#fef3c7",
                           color: r.approved ? "#166534" : "#92400e",
                           border: `1px solid ${r.approved ? "#bbf7d0" : "#fde68a"}`,
+                          flexShrink: 0,
                         }}
                       >
                         <span
@@ -551,6 +450,41 @@ export function AdminReviews() {
                         />
                         {r.approved ? "Live on Store" : "Hidden"}
                       </span>
+                    </div>
+
+                    <div className={styles.reviewMetaLine}>
+                      {r.productName ? (
+                        <span
+                          style={{
+                            fontSize: 11.5,
+                            fontWeight: 700,
+                            color: "var(--terracotta, #c95f3b)",
+                            background: "rgba(201, 95, 59, 0.08)",
+                            padding: "2px 8px",
+                            borderRadius: 6,
+                            fontFamily: "var(--font-dm-mono, monospace)",
+                          }}
+                        >
+                          {r.productName}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: 11.5, color: "#78716c" }}>General Store Review</span>
+                      )}
+                      {r.phone && (
+                        <span
+                          style={{
+                            fontSize: 11.5,
+                            color: "#4b5563",
+                            fontFamily: "var(--font-dm-mono, monospace)",
+                            background: "#f3f4f6",
+                            padding: "2px 7px",
+                            borderRadius: 4,
+                          }}
+                        >
+                          📞 {r.phone}
+                        </span>
+                      )}
+                      <span style={{ fontSize: 12, color: "#a8a29e" }}>• {dateStr}</span>
                     </div>
                   </div>
 
@@ -572,34 +506,26 @@ export function AdminReviews() {
                   </div>
 
                   {/* Actions Footer */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", paddingTop: 4, borderTop: "1px solid #f7f4ed" }}>
+                  <div className={styles.reviewFooter}>
                     <div style={{ fontSize: 12, color: "#78716c" }}>
                       {r.approved ? (
-                        <span>Currently visible to customers on the product page.</span>
+                        <span>Currently visible to customers on product page.</span>
                       ) : (
                         <span style={{ color: "#b45309" }}>Hidden — visitors cannot see this review.</span>
                       )}
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div className={styles.reviewFooterActions}>
                       {/* Hide / Show Toggle Button */}
                       <button
                         type="button"
                         disabled={busy === r.id}
                         onClick={() => toggleVisibility(r.id, r.approved)}
+                        className={styles.actionBtn}
                         style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 6,
-                          padding: "6px 12px",
-                          borderRadius: 7,
-                          fontSize: 12.5,
-                          fontWeight: 600,
-                          cursor: "pointer",
                           background: r.approved ? "#ffffff" : "#16a34a",
                           color: r.approved ? "#57534e" : "#ffffff",
                           border: r.approved ? "1px solid #e5e0d8" : "none",
-                          transition: "all 0.15s ease",
                         }}
                         title={r.approved ? "Hide from product page" : "Show on product page"}
                       >
@@ -621,19 +547,11 @@ export function AdminReviews() {
                         type="button"
                         disabled={busy === r.id}
                         onClick={() => setConfirmDeleteId(r.id)}
+                        className={styles.actionBtn}
                         style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 5,
-                          padding: "6px 12px",
-                          borderRadius: 7,
-                          fontSize: 12.5,
-                          fontWeight: 600,
-                          cursor: "pointer",
                           background: "#fff",
                           color: "#dc2626",
                           border: "1px solid #fecaca",
-                          transition: "all 0.15s ease",
                         }}
                         title="Delete this review permanently"
                       >
