@@ -7,6 +7,7 @@ import { useCart } from "@/components/cart/cart-provider";
 import { formatPrice, parseWeightToKg } from "@/lib/catalog";
 import { clearBuyNowItem, readBuyNowItem, type BuyNowItem } from "@/lib/buy-now";
 import { validateIndianPincode } from "@/lib/pincode";
+import { normalizeIndianPhone, isValidIndianPhone } from "@/lib/phone";
 import styles from "./checkout-wizard.module.css";
 type CheckoutForm = { customerName: string; phone: string; email: string; address: string; city: string; state: string; pincode: string };
 type ShippingQuote = { charge: number; courierName: string; estimatedDeliveryDays: string | null };
@@ -324,7 +325,7 @@ export function CheckoutWizard() {
     setSuccess("");
     let sanitized = value;
     if (field === "phone") {
-      sanitized = value.replace(/[^\d+]/g, "").slice(0, 13);
+      sanitized = value.replace(/[^\d+ \-()]/g, "").slice(0, 18);
     } else if (field === "pincode") {
       sanitized = value.replace(/\D/g, "").slice(0, 6);
       if (sanitized.length === 6) {
@@ -363,13 +364,13 @@ export function CheckoutWizard() {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    if (!form.phone) {
+    if (!form.phone.trim()) {
       setError("Please enter your mobile number.");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    if (!/^(\+91)?[6-9]\d{9}$/.test(form.phone)) {
-      setError("Please enter a valid Indian mobile number with or without +91.");
+    if (!isValidIndianPhone(form.phone)) {
+      setError("Please enter a valid 10-digit Indian mobile number (e.g. 9876543210, +91 98765 43210, or 09876543210).");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -417,8 +418,10 @@ export function CheckoutWizard() {
     setError("");
 
     try {
+      const cleanPhone = normalizeIndianPhone(form.phone);
       const payload = {
         ...form,
+        phone: cleanPhone,
         items: itemPayload,
         shipping: shipping, // pass client-calculated shipping to server
         ...(appliedCoupon ? { couponCode: appliedCoupon.code } : {}),
@@ -447,7 +450,7 @@ export function CheckoutWizard() {
           prefill: {
             name: form.customerName,
             email: form.email,
-            contact: form.phone,
+            contact: cleanPhone,
           },
           theme: { color: "#c95f3b" },
           handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
@@ -466,7 +469,6 @@ export function CheckoutWizard() {
               if (!verifyRes.ok || !verified.orderNumber)
                 throw new Error(verified.error || "Your payment needs support review. Please contact us.");
 
-              const cleanPhone = form.phone.replace(/^\+91/, "").replace(/\D/g, "");
               window.localStorage.setItem(
                 "raghul-snacks-last-order",
                 JSON.stringify({ orderNumber: verified.orderNumber, phone: cleanPhone }),
@@ -755,11 +757,16 @@ export function CheckoutWizard() {
                     <input
                       autoComplete="tel"
                       required
+                      type="tel"
                       inputMode="tel"
-                      pattern="(\+91[6-9][0-9]{9}|[6-9][0-9]{9})"
-                      placeholder="10-digit mobile (e.g. 9876543210)"
+                      placeholder="10-digit mobile (e.g. 9876543210 or +91 98765 43210)"
                       value={form.phone}
                       onChange={(e) => update("phone", e.target.value)}
+                      onBlur={() => {
+                        if (form.phone && isValidIndianPhone(form.phone)) {
+                          setForm((c) => ({ ...c, phone: normalizeIndianPhone(c.phone) }));
+                        }
+                      }}
                     />
                   </label>
 

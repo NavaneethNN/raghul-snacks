@@ -5,12 +5,17 @@ import { z } from "zod";
 import { customerAccounts, customerAddresses, orders } from "@/drizzle/schema";
 import { customerCookieName, getCustomerSession } from "@/lib/customer-auth";
 import { getDb } from "@/lib/db";
+import { normalizeIndianPhone, isValidIndianPhone } from "@/lib/phone";
 
 export const dynamic = "force-dynamic";
 
 const addressSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters"),
-  phone: z.string().trim().regex(/^(\+91)?[6-9]\d{9}$/, "Please enter a valid 10-digit mobile number"),
+  phone: z
+    .string()
+    .trim()
+    .transform(normalizeIndianPhone)
+    .refine(isValidIndianPhone, "Please enter a valid 10-digit mobile number"),
   address: z.string().trim().min(6, "Address must be at least 6 characters"),
   city: z.string().trim().min(2, "City / District is required"),
   state: z.string().trim().min(2, "State is required"),
@@ -54,7 +59,7 @@ export async function GET() {
         .values({
           accountId: session.id,
           name: lastOrder.customerName || session.name || "Customer",
-          phone: lastOrder.phone || "",
+          phone: normalizeIndianPhone(lastOrder.phone) || "",
           address: lastOrder.address,
           city: lastOrder.city,
           state: lastOrder.state,

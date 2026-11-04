@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { orderItems, orders, reviews } from "@/drizzle/schema";
 import { getDb } from "@/lib/db";
+import { normalizeIndianPhone } from "@/lib/phone";
 
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as {
@@ -27,12 +28,23 @@ export async function POST(request: NextRequest) {
   }
 
   const db = getDb();
+  const cleanPhone = normalizeIndianPhone(phone);
 
   // Verify the order exists and belongs to this phone
   const order = await db
     .select({ id: orders.id, orderStatus: orders.orderStatus })
     .from(orders)
-    .where(and(eq(orders.orderNumber, orderNumber.trim().toUpperCase()), eq(orders.phone, phone.trim())))
+    .where(
+      and(
+        eq(orders.orderNumber, orderNumber.trim().toUpperCase()),
+        or(
+          eq(orders.phone, cleanPhone),
+          eq(orders.phone, `+91${cleanPhone}`),
+          eq(orders.phone, `+91 ${cleanPhone}`),
+          eq(orders.phone, `0${cleanPhone}`)
+        )
+      )
+    )
     .limit(1);
 
   if (!order[0]) {

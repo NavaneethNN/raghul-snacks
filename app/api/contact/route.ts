@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { contactMessages } from "@/drizzle/schema";
 import { getDb } from "@/lib/db";
+import { normalizeIndianPhone } from "@/lib/phone";
 
 const schema = z.object({
   name: z.string().trim().min(2, "Name is required."),
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     await getDb().insert(contactMessages).values({
       name: body.data.name,
       email: body.data.email,
-      phone: body.data.phone || null,
+      phone: body.data.phone ? normalizeIndianPhone(body.data.phone) || null : null,
       subject: body.data.subject,
       message: body.data.message,
     });

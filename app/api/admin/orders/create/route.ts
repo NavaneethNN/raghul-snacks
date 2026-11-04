@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db";
 import { customers, orders, orderItems } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { createShiprocketShipment, isShiprocketConfigured } from "@/lib/shiprocket";
+import { normalizeIndianPhone, isValidIndianPhone } from "@/lib/phone";
 
 const orderItemInputSchema = z.object({
   name: z.string().trim().min(1, "Product name is required"),
@@ -19,7 +20,11 @@ const orderItemInputSchema = z.object({
 
 const createOrderSchema = z.object({
   customerName: z.string().trim().min(2, "Customer name is required"),
-  phone: z.string().trim().regex(/^(\+91)?[6-9]\d{9}$/, "Valid 10-digit mobile number required"),
+  phone: z
+    .string()
+    .trim()
+    .transform(normalizeIndianPhone)
+    .refine(isValidIndianPhone, "Valid 10-digit mobile number required"),
   email: z.string().trim().email().optional().or(z.literal("")),
   address: z.string().trim().min(5, "Delivery address is required"),
   city: z.string().trim().min(2, "City is required"),
@@ -61,7 +66,7 @@ export async function POST(request: Request) {
     const db = getDb();
 
     // 1. Find or create customer
-    const cleanPhone = data.phone.replace(/^\+91/, "").replace(/\D/g, "");
+    const cleanPhone = data.phone;
     let [customer] = await db
       .select({ id: customers.id })
       .from(customers)
@@ -95,7 +100,7 @@ export async function POST(request: Request) {
         orderNumber,
         customerId: customer.id,
         customerName: data.customerName,
-        phone: data.phone,
+        phone: cleanPhone,
         email: data.email || null,
         address: data.address,
         city: data.city,
@@ -165,7 +170,7 @@ export async function POST(request: Request) {
         const srResult = await createShiprocketShipment({
           orderNumber,
           customerName: data.customerName,
-          phone: data.phone,
+          phone: cleanPhone,
           email: data.email || null,
           address: data.address,
           city: data.city,

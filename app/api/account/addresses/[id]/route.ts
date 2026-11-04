@@ -5,12 +5,18 @@ import { z } from "zod";
 import { customerAddresses } from "@/drizzle/schema";
 import { customerCookieName, getCustomerSession } from "@/lib/customer-auth";
 import { getDb } from "@/lib/db";
+import { normalizeIndianPhone, isValidIndianPhone } from "@/lib/phone";
 
 export const dynamic = "force-dynamic";
 
 const patchSchema = z.object({
   name: z.string().trim().min(2).optional(),
-  phone: z.string().trim().regex(/^(\+91)?[6-9]\d{9}$/).optional(),
+  phone: z
+    .string()
+    .trim()
+    .transform(normalizeIndianPhone)
+    .refine(isValidIndianPhone, "Please enter a valid 10-digit mobile number")
+    .optional(),
   address: z.string().trim().min(6).optional(),
   city: z.string().trim().min(2).optional(),
   state: z.string().trim().min(2).optional(),

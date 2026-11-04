@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { normalizeIndianPhone, isValidIndianPhone } from "@/lib/phone";
 import styles from "./order-tracker.module.css";
 
 type TrackingActivity = {
@@ -54,7 +55,7 @@ function GuestReviewForm({ orderNumber, phone }: { orderNumber: string; phone: s
       const res = await fetch("/api/reviews/guest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderNumber, phone, customerName: name.trim(), rating, content: comment.trim() }),
+        body: JSON.stringify({ orderNumber, phone: normalizeIndianPhone(phone), customerName: name.trim(), rating, content: comment.trim() }),
       });
       const data = await res.json() as { success?: boolean; error?: string };
       if (!res.ok) throw new Error(data.error || "Failed to submit review.");
@@ -148,13 +149,14 @@ export function OrderTracker({ initialOrder, initialPhone }: { initialOrder?: st
       initialOrder &&
       initialPhone &&
       /^RS-[A-Za-z0-9-]+$/i.test(initialOrder) &&
-      /^[6-9]\d{9}$/.test(initialPhone)
+      isValidIndianPhone(initialPhone)
     ) {
+      const cleanPhone = normalizeIndianPhone(initialPhone);
       setLoading(true);
       fetch("/api/orders/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderNumber: initialOrder, phone: initialPhone }),
+        body: JSON.stringify({ orderNumber: initialOrder.trim(), phone: cleanPhone }),
       })
         .then(async (res) => {
           const data = (await res.json()) as { order?: Result; error?: string };
@@ -187,18 +189,19 @@ export function OrderTracker({ initialOrder, initialPhone }: { initialOrder?: st
       setError("Please enter your mobile number.");
       return;
     }
-    if (!/^[6-9]\d{9}$/.test(phone)) {
-      setError("Please enter a valid 10-digit mobile number.");
+    if (!isValidIndianPhone(phone)) {
+      setError("Please enter a valid 10-digit Indian mobile number (e.g. 9876543210 or +91 98765 43210).");
       return;
     }
 
+    const cleanPhone = normalizeIndianPhone(phone);
     setLoading(true);
 
     try {
       const response = await fetch("/api/orders/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderNumber, phone })
+        body: JSON.stringify({ orderNumber: orderNumber.trim(), phone: cleanPhone })
       });
       const data = await response.json() as { order?: Result; error?: string };
       if (!response.ok || !data.order) throw new Error(data.error || "Unable to find your order.");
@@ -234,13 +237,18 @@ export function OrderTracker({ initialOrder, initialPhone }: { initialOrder?: st
               <label>Mobile number</label>
               <input
                 required
-                inputMode="numeric"
-                pattern="[6-9][0-9]{9}"
-                placeholder="10-digit number"
+                type="tel"
+                inputMode="tel"
+                placeholder="10-digit mobile (e.g. 9876543210 or +91 98765 43210)"
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
+                onBlur={() => {
+                  if (phone && isValidIndianPhone(phone)) {
+                    setPhone(normalizeIndianPhone(phone));
+                  }
+                }}
               />
-              <small>Used during checkout</small>
+              <small>Used during checkout (with or without +91 or leading 0)</small>
             </div>
 
             {error && (

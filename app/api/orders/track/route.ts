@@ -4,6 +4,7 @@ import { z } from "zod";
 import { orders } from "@/drizzle/schema";
 import { getDb } from "@/lib/db";
 import { getShiprocketTracking, getCourierTrackingUrl } from "@/lib/shiprocket";
+import { normalizeIndianPhone, isValidIndianPhone } from "@/lib/phone";
 
 const lookupSchema = z.object({
   orderNumber: z
@@ -13,8 +14,8 @@ const lookupSchema = z.object({
   phone: z
     .string()
     .trim()
-    .transform((val) => val.replace(/^\+91/, "").replace(/\D/g, ""))
-    .refine((val) => /^[6-9]\d{9}$/.test(val), "Please enter a valid 10-digit mobile number."),
+    .transform(normalizeIndianPhone)
+    .refine(isValidIndianPhone, "Please enter a valid 10-digit mobile number."),
 });
 
 export async function POST(request: Request) {
@@ -59,7 +60,9 @@ export async function POST(request: Request) {
           eq(orders.orderNumber, input.data.orderNumber.toUpperCase()),
           or(
             eq(orders.phone, input.data.phone),
-            eq(orders.phone, `+91${input.data.phone}`)
+            eq(orders.phone, `+91${input.data.phone}`),
+            eq(orders.phone, `+91 ${input.data.phone}`),
+            eq(orders.phone, `0${input.data.phone}`)
           )
         )
       )

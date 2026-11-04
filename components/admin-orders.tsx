@@ -5,6 +5,7 @@ import { AdminHeaderActions } from "./admin-header-actions";
 import { useRouter } from "next/navigation";
 import { parseWeightToKg, calculatePackagingBufferKg } from "@/lib/catalog";
 import { getCourierTrackingUrl } from "@/lib/shipping-utils";
+import { normalizeIndianPhone, isValidIndianPhone } from "@/lib/phone";
 import styles from "./admin-orders.module.css";
 
 type OrderItem = {
@@ -367,11 +368,11 @@ export function AdminOrders({
       setCreateError("Customer name is required.");
       return;
     }
-    const cleanPhone = createPhone.replace(/\D/g, "");
-    if (cleanPhone.length < 10) {
-      setCreateError("Please enter a valid 10-digit mobile number.");
+    if (!createPhone.trim() || !isValidIndianPhone(createPhone)) {
+      setCreateError("Please enter a valid 10-digit mobile number (e.g. 9876543210 or +91 98765 43210).");
       return;
     }
+    const cleanPhone = normalizeIndianPhone(createPhone);
     if (!createAddress.trim()) {
       setCreateError("Please enter the delivery address.");
       return;
@@ -1023,7 +1024,7 @@ export function AdminOrders({
                             )}
                             {order.phone && (
                               <a
-                                href={`https://wa.me/91${order.phone.replace(/^\+91/, "").replace(/\D/g, "")}?text=${encodeURIComponent(
+                                href={`https://wa.me/91${normalizeIndianPhone(order.phone)}?text=${encodeURIComponent(
                                   `Hello ${order.customerName}! Thank you for your order with Raghul Delights (${order.orderNumber}). Total: ₹${order.total}.${
                                     order.awbCode
                                       ? `\nYour parcel has been dispatched! Track here: https://raghuldelights.in/track?order=${order.orderNumber}`
@@ -2011,7 +2012,7 @@ export function AdminOrders({
                   </div>
 
                   <a
-                    href={`https://wa.me/91${createdResult.phone}?text=${encodeURIComponent(
+                    href={`https://wa.me/91${normalizeIndianPhone(createdResult.phone)}?text=${encodeURIComponent(
                       `Vanakkam ${createdResult.customerName}! Your Raghul Sweet & Snacks order #${createdResult.orderNumber} has been received (Total: ₹${createdResult.total.toFixed(2)}). Track delivery: https://raghulsnacks.com/orders/track?order=${createdResult.orderNumber}`
                     )}`}
                     target="_blank"
@@ -2108,9 +2109,14 @@ export function AdminOrders({
                     <input
                       required
                       type="tel"
-                      placeholder="10-digit mobile (e.g. 9876543210)"
+                      placeholder="10-digit mobile (e.g. 9876543210 or +91 98765 43210)"
                       value={createPhone}
                       onChange={(e) => setCreatePhone(e.target.value)}
+                      onBlur={() => {
+                        if (createPhone && isValidIndianPhone(createPhone)) {
+                          setCreatePhone(normalizeIndianPhone(createPhone));
+                        }
+                      }}
                     />
                   </div>
                 </div>

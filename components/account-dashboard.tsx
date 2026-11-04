@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart/cart-provider";
 import { OrderDetailModal } from "@/components/order-detail-modal";
+import { normalizeIndianPhone, isValidIndianPhone, formatIndianPhone } from "@/lib/phone";
 import styles from "./account-dashboard.module.css";
 
 type Order = {
@@ -233,8 +234,8 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
       setAddressError("Please enter recipient name (at least 2 characters).");
       return;
     }
-    if (!addressDraft.phone.trim() || !/^(\+91)?[6-9]\d{9}$/.test(addressDraft.phone.trim())) {
-      setAddressError("Please enter a valid 10-digit mobile number.");
+    if (!addressDraft.phone.trim() || !isValidIndianPhone(addressDraft.phone)) {
+      setAddressError("Please enter a valid 10-digit mobile number (e.g. 9876543210 or +91 98765 43210).");
       return;
     }
     if (!addressDraft.address.trim() || addressDraft.address.trim().length < 6) {
@@ -260,7 +261,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
       const res = await fetch("/api/account/addresses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(addressDraft),
+        body: JSON.stringify({ ...addressDraft, phone: normalizeIndianPhone(addressDraft.phone) }),
       });
       const data = (await res.json()) as { address?: SavedAddress; error?: string };
       if (!res.ok) throw new Error(data.error || "Failed to save address.");
@@ -780,7 +781,12 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                         type="tel"
                         value={addressDraft.phone}
                         onChange={(e) => setAddressDraft((d) => ({ ...d, phone: e.target.value }))}
-                        placeholder="10-digit mobile"
+                        onBlur={() => {
+                          if (addressDraft.phone && isValidIndianPhone(addressDraft.phone)) {
+                            setAddressDraft((d) => ({ ...d, phone: normalizeIndianPhone(d.phone) }));
+                          }
+                        }}
+                        placeholder="10-digit mobile (e.g. 9876543210 or +91 98765 43210)"
                       />
                     </div>
                     <div className={styles.addressFormFull}>
@@ -901,7 +907,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                             </svg>
-                            {addr.phone}
+                            {formatIndianPhone(addr.phone)}
                           </p>
                         )}
                         <p className={styles.addressBody}>

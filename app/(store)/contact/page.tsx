@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { FormEvent, useState } from "react";
 
@@ -79,7 +79,7 @@ export default function ContactPage() {
                     <label><span>Your Name *</span><input type="text" name="name" placeholder="Full name" required /></label>
                     <label><span>Email Address *</span><input type="email" name="email" placeholder="you@example.com" required /></label>
                   </div>
-                  <label><span>Phone Number</span><input type="tel" name="phone" placeholder="10-digit mobile number" /></label>
+                  <label><span>Phone Number</span><input type="tel" name="phone" placeholder="10-digit mobile (e.g. 9876543210 or +91 98765 43210)" /></label>
                   <label>
                     <span>Subject *</span>
                     <select name="subject" required>

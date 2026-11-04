@@ -1,11 +1,5 @@
 import { z } from "zod";
-
-const cleanPhone = (val: string) => {
-  const digits = val.replace(/\D/g, "");
-  if (digits.length === 12 && digits.startsWith("91")) return digits.slice(2);
-  if (digits.length === 11 && digits.startsWith("0")) return digits.slice(1);
-  return digits;
-};
+import { normalizeIndianPhone, isValidIndianPhone } from "@/lib/phone";
 
 export const orderItemSchema = z.object({
   productId: z.string().min(1),
@@ -17,8 +11,8 @@ const checkoutFields = z.object({
   phone: z
     .string()
     .trim()
-    .transform(cleanPhone)
-    .refine((val) => /^[6-9]\d{9}$/.test(val), "Enter a valid 10-digit Indian mobile number."),
+    .transform(normalizeIndianPhone)
+    .refine(isValidIndianPhone, "Enter a valid 10-digit Indian mobile number."),
   email: z
     .string()
     .trim()

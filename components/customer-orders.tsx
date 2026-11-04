@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { OrderTracker } from "@/components/order-tracker";
+import { normalizeIndianPhone, isValidIndianPhone } from "@/lib/phone";
 import styles from "./customer-orders.module.css";
 
 type CustomerOrder = {
@@ -48,8 +49,8 @@ export function CustomerOrders() {
         const value = window.localStorage.getItem("raghul-snacks-last-order");
         if (!value) return;
         const parsed = JSON.parse(value) as SavedOrder;
-        const cleanPhone = (parsed.phone || "").replace(/^\+91/, "").replace(/\D/g, "");
-        if (!/^RS-[A-Za-z0-9-]+$/i.test(parsed.orderNumber) || !/^[6-9]\d{9}$/.test(cleanPhone)) return;
+        const cleanPhone = normalizeIndianPhone(parsed.phone);
+        if (!/^RS-[A-Za-z0-9-]+$/i.test(parsed.orderNumber) || !isValidIndianPhone(cleanPhone)) return;
         setSaved({ orderNumber: parsed.orderNumber, phone: cleanPhone });
         const response = await fetch("/api/orders/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderNumber: parsed.orderNumber, phone: cleanPhone }) });
         const data = await response.json() as { order?: CustomerOrder };
