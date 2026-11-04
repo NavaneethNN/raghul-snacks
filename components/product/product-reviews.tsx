@@ -56,14 +56,21 @@ export function ProductReviews({ productId }: { productId: number }) {
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [hasSubmittedThisSession, setHasSubmittedThisSession] = useState(false);
-
-  // Fetch reviews
-  useEffect(() => {
-    if (typeof window !== "undefined" && localStorage.getItem(`reviewed-prod-${productId}`)) {
-      setHasSubmittedThisSession(true);
+  const [hasSubmittedThisSession, setHasSubmittedThisSession] = useState(() => {
+    if (typeof window !== "undefined") {
+      return Boolean(localStorage.getItem(`reviewed-prod-${productId}`));
     }
+    return false;
+  });
+  const [eligibility, setEligibility] = useState<{
+    canReview: boolean;
+    alreadyReviewed?: boolean;
+    orderId?: number;
+    customerName?: string;
+  } | null>(null);
 
+  // Fetch reviews & eligibility
+  useEffect(() => {
     fetch(`/api/reviews?productId=${productId}`)
       .then((r) => r.json())
       .then((d: { reviews: Review[] }) => {
@@ -72,34 +79,38 @@ export function ProductReviews({ productId }: { productId: number }) {
       .catch(() => {})
       .finally(() => setLoading(false));
 
-    // Check auth session
-    fetch("/api/auth/session")
+    // Check review eligibility (only customers with a delivered order for this product can review)
+    fetch(`/api/reviews/eligibility?productId=${productId}`)
       .then((r) => r.json())
-      .then((d: { account?: { name?: string } }) => {
-        if (d.account) {
+      .then((d) => {
+        setEligibility(d);
+        if (d.customerName) setCustomerName(d.customerName);
+        if (d.canReview) {
           setIsLoggedIn(true);
-          if (d.account.name) setCustomerName(d.account.name);
+          if (typeof window !== "undefined") {
+            const hash = window.location.hash;
+            const search = window.location.search;
+            if (hash === "#write-review" || search.includes("writeReview=1")) {
+              setShowForm(true);
+            }
+          }
         }
       })
-      .catch(() => {});
+      .catch(() => setEligibility({ canReview: false }));
   }, [productId]);
 
-  // If page loads with #reviews or writeReview parameter, open form or scroll smoothly
+  // If page loads with #reviews anchor, scroll smoothly
   useEffect(() => {
     if (typeof window !== "undefined") {
       const hash = window.location.hash;
-      const search = window.location.search;
-      if (hash === "#reviews" || hash === "#write-review" || search.includes("writeReview=1")) {
-        if (!localStorage.getItem(`reviewed-prod-${productId}`)) {
-          setShowForm(true);
-        }
+      if (hash === "#reviews" || hash === "#write-review") {
         const el = document.getElementById("reviews");
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }
     }
-  }, [productId]);
+  }, []);
 
   async function handleSubmitReview(e: React.FormEvent) {
     e.preventDefault();
@@ -238,14 +249,14 @@ export function ProductReviews({ productId }: { productId: number }) {
           </div>
         </div>
 
-        {hasSubmittedThisSession ? (
+        {hasSubmittedThisSession || eligibility?.alreadyReviewed ? (
           <span style={{ fontSize: 13, color: "#166534", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6, background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "8px 14px", borderRadius: 8 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
             Review Submitted
           </span>
-        ) : (
+        ) : eligibility?.canReview ? (
           <button
             type="button"
             onClick={() => {
@@ -257,7 +268,7 @@ export function ProductReviews({ productId }: { productId: number }) {
           >
             {showForm ? "Cancel" : "Write a Review"}
           </button>
-        )}
+        ) : null}
       </div>
 
       {/* Review Submission Form */}
@@ -435,16 +446,23 @@ export function ProductReviews({ productId }: { productId: number }) {
           }}
         >
           <p style={{ margin: "0 0 12px", fontSize: 15, color: "#6b7280" }}>
-            No reviews yet. Be the first to share your experience with this snack!
+            {eligibility?.canReview
+              ? "No reviews yet. Be the first to share your experience with this snack!"
+              : "No reviews yet for this snack."}
           </p>
-          <button
-            type="button"
-            onClick={() => setShowForm(true)}
-            className="button button-dark"
-            style={{ padding: "8px 18px", fontSize: 13 }}
-          >
-            Leave First Review
-          </button>
+          {eligibility?.canReview && !showForm && (
+            <button
+              type="button"
+              onClick={() => {
+                setShowForm(true);
+                setFormSuccess(false);
+              }}
+              className="button button-dark"
+              style={{ padding: "8px 18px", fontSize: 13 }}
+            >
+              Leave First Review
+            </button>
+          )}
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>

@@ -83,65 +83,63 @@ export async function POST(request: NextRequest) {
   let accountId: number | null = null;
   let qualifyingOrderId: number | null = null;
 
-  if (session) {
-    accountId = session.id;
-    const account = (
-      await db
-        .select({ name: customerAccounts.name, email: customerAccounts.email })
-        .from(customerAccounts)
-        .where(eq(customerAccounts.id, session.id))
-        .limit(1)
-    )[0];
-
-    if (account?.name) accountName = account.name;
-
-    // Check duplicate review by this account for this product
-    const existing = await db
-      .select({ id: reviews.id })
-      .from(reviews)
-      .where(and(eq(reviews.productId, productId), eq(reviews.accountId, session.id)))
-      .limit(1);
-
-    if (existing.length > 0) {
-      return NextResponse.json(
-        { error: "You have already reviewed this snack. Thank you!" },
-        { status: 409 }
-      );
-    }
-
-    // Check if user purchased this product in a paid order (by productId or product name)
-    const qualifyingOrder = (
-      await db
-        .select({ id: orders.id })
-        .from(orders)
-        .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
-        .where(
-          and(
-            eq(orders.accountId, session.id),
-            eq(orders.paymentStatus, "paid"),
-            or(eq(orderItems.productId, productId), eq(orderItems.name, product.name))
-          )
-        )
-        .orderBy(desc(orders.createdAt))
-        .limit(1)
-    )[0];
-
-    if (body.orderId) {
-      qualifyingOrderId = body.orderId;
-    } else if (qualifyingOrder) {
-      qualifyingOrderId = qualifyingOrder.id;
-    }
-  } else {
-    // Guest submission
-    const guestName = body.customerName?.trim();
-    if (!guestName) {
-      return NextResponse.json(
-        { error: "Please provide your name or sign in to submit a review." },
-        { status: 400 }
-      );
-    }
-    accountName = guestName;
+  if (!session) {
+    return NextResponse.json(
+      { error: "You must be signed in with a delivered purchase to review this snack." },
+      { status: 401 }
+    );
   }
+
+  accountId = session.id;
+  const account = (
+    await db
+      .select({ name: customerAccounts.name, email: customerAccounts.email })
+      .from(customerAccounts)
+      .where(eq(customerAccounts.id, session.id))
+      .limit(1)
+  )[0];
+
+  if (account?.name) accountName = account.name;
+
+  // Check duplicate review by this account for this product
+  const existing = await db
+    .select({ id: reviews.id })
+    .from(reviews)
+    .where(and(eq(reviews.productId, productId), eq(reviews.accountId, session.id)))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return NextResponse.json(
+      { error: "You have already reviewed this snack. Thank you!" },
+      { status: 409 }
+    );
+  }
+
+  // Check if user purchased this product in a DELIVERED order
+  const qualifyingOrder = (
+    await db
+      .select({ id: orders.id })
+      .from(orders)
+      .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
+      .where(
+        and(
+          eq(orders.accountId, session.id),
+          eq(orders.orderStatus, "delivered"),
+          or(eq(orderItems.productId, productId), eq(orderItems.name, product.name))
+        )
+      )
+      .orderBy(desc(orders.createdAt))
+      .limit(1)
+  )[0];
+
+  if (!qualifyingOrder) {
+    return NextResponse.json(
+      { error: "Reviews are only available for snacks from orders that have been delivered to you." },
+      { status: 403 }
+    );
+  }
+
+  qualifyingOrderId = qualifyingOrder.id;
 
   const [newReview] = await db
     .insert(reviews)
