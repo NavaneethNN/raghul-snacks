@@ -55,11 +55,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    invalidateCache("home:products");
-    invalidateCache("shop:products");
-    invalidateCache("product:");
-    invalidateCache("variants:");
+    invalidateCache();
     try {
+      revalidatePath("/", "layout");
       revalidatePath("/");
       revalidatePath("/shop");
       if (updated.slug) revalidatePath(`/product/${updated.slug}`);
@@ -96,11 +94,9 @@ export async function DELETE(
     // Now delete the product (productVariants cascade automatically)
     await db.delete(products).where(eq(products.id, id));
 
-    invalidateCache("home:products");
-    invalidateCache("shop:products");
-    invalidateCache("product:");
-    invalidateCache("variants:");
+    invalidateCache();
     try {
+      revalidatePath("/", "layout");
       revalidatePath("/");
       revalidatePath("/shop");
     } catch {}

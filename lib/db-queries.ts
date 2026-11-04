@@ -107,8 +107,10 @@ export async function getProductsWithVariants(db: any, options?: ProductFilterOp
         }
       }
       const curPriceNum = parseFloat(price);
-      if (minP !== Infinity && (isNaN(curPriceNum) || curPriceNum <= 0)) {
-        price = minP.toFixed(2);
+      if (minP !== Infinity) {
+        if (isNaN(curPriceNum) || curPriceNum <= 0) {
+          price = minP.toFixed(2);
+        }
         offerPrice = minOffer;
       }
     }

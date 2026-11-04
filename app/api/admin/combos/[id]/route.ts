@@ -61,9 +61,9 @@ export async function PATCH(
       );
     }
 
-    invalidateCache("home:combos");
-    invalidateCache("shop:combos");
+    invalidateCache();
     try {
+      revalidatePath("/", "layout");
       revalidatePath("/");
       revalidatePath("/shop");
     } catch {}
@@ -93,9 +93,9 @@ export async function DELETE(
     await db.delete(comboItems).where(eq(comboItems.comboId, id));
     await db.delete(combos).where(eq(combos.id, id));
 
-    invalidateCache("home:combos");
-    invalidateCache("shop:combos");
+    invalidateCache();
     try {
+      revalidatePath("/", "layout");
       revalidatePath("/");
       revalidatePath("/shop");
     } catch {}

@@ -170,6 +170,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
     await fetch(`/api/admin/products/${productId}/variants/${variantId}`, { method: "DELETE" });
     await loadSavedVariants(productId);
     await syncProductPriceFromVariants(productId);
+    router.refresh();
   }
 
     async function saveVariantEdit(productId: number, variantId: number) {
@@ -191,6 +192,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
       setEditingVariantId(null);
       await loadSavedVariants(productId);
       await syncProductPriceFromVariants(productId);
+      router.refresh();
     } finally { setVariantSaving(false); }
   }
 
@@ -213,6 +215,7 @@ export function AdminProducts({ products, categories }: { products: Product[]; c
       });
       await loadSavedVariants(productId);
       await syncProductPriceFromVariants(productId);
+      router.refresh();
       setDraftLabel(""); setDraftApproxWeight(""); setDraftPrice(""); setDraftOffer("");
     } finally { setVariantSaving(false); }
   }

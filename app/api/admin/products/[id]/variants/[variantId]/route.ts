@@ -4,6 +4,8 @@ import { getDb } from "@/lib/db";
 import { cartItems, productVariants } from "@/drizzle/schema";
 import { isValidAdminSession, adminCookieName } from "@/lib/admin-auth";
 import { cookies } from "next/headers";
+import { invalidateCache } from "@/lib/cache";
+import { revalidatePath } from "next/cache";
 
 async function guard() {
   const cookieStore = await cookies();
@@ -40,6 +42,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     ...(body.active !== undefined ? { active: body.active } : {}),
   }).where(and(eq(productVariants.id, vId), eq(productVariants.productId, productId))).returning();
   if (!updated) return NextResponse.json({ error: "Variant not found" }, { status: 404 });
+  invalidateCache();
+  try {
+    revalidatePath("/", "layout");
+    revalidatePath("/");
+    revalidatePath("/shop");
+  } catch {}
   return NextResponse.json(updated);
 }
 
@@ -55,5 +63,11 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   // Remove cart items referencing this specific variant
   await db.delete(cartItems).where(eq(cartItems.productId, `${productId}-v${vId}`));
   await db.delete(productVariants).where(and(eq(productVariants.id, vId), eq(productVariants.productId, productId)));
+  invalidateCache();
+  try {
+    revalidatePath("/", "layout");
+    revalidatePath("/");
+    revalidatePath("/shop");
+  } catch {}
   return NextResponse.json({ ok: true });
 }

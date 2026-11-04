@@ -4,6 +4,8 @@ import { getDb } from "@/lib/db";
 import { productVariants } from "@/drizzle/schema";
 import { isValidAdminSession, adminCookieName } from "@/lib/admin-auth";
 import { cookies } from "next/headers";
+import { invalidateCache } from "@/lib/cache";
+import { revalidatePath } from "next/cache";
 
 async function guard() {
   const cookieStore = await cookies();
@@ -56,5 +58,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     sortOrder: body.sortOrder ?? 0,
     active: true,
   }).returning();
+  invalidateCache();
+  try {
+    revalidatePath("/", "layout");
+    revalidatePath("/");
+    revalidatePath("/shop");
+  } catch {}
   return NextResponse.json(variant, { status: 201 });
 }

@@ -106,14 +106,11 @@ export async function POST(request: NextRequest) {
       shelfLife: shelfLife || null,
     }).returning();
 
-    invalidateCache("home:products");
-    invalidateCache("shop:products");
-    invalidateCache("product:");
-    invalidateCache("variants:");
+    invalidateCache();
     try {
+      revalidatePath("/", "layout");
       revalidatePath("/");
       revalidatePath("/shop");
-      revalidatePath("/product", "layout");
     } catch {}
 
     return NextResponse.json(newProduct, { status: 201 });

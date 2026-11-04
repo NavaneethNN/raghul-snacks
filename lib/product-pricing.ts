@@ -91,7 +91,7 @@ export function resolveCardPricing(product: {
   const productOffer = toAmount(product.offerPrice);
 
   const originalPrice = defaultVariant ? variantPrice || productPrice : productPrice;
-  const offerCandidate = defaultVariant ? variantOffer || productOffer : productOffer;
+  const offerCandidate = defaultVariant ? variantOffer : productOffer;
   const displayPrice = offerCandidate > 0 && offerCandidate < originalPrice ? offerCandidate : originalPrice;
 
   const variantWeight = defaultVariant ? (defaultVariant.weight ?? "") : "";

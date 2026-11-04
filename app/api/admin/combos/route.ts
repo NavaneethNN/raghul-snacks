@@ -100,9 +100,9 @@ export async function POST(request: Request) {
       }))
     );
 
-    invalidateCache("home:combos");
-    invalidateCache("shop:combos");
+    invalidateCache();
     try {
+      revalidatePath("/", "layout");
       revalidatePath("/");
       revalidatePath("/shop");
     } catch {}
