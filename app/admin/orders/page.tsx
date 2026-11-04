@@ -184,10 +184,9 @@ export default async function AdminOrdersPage() {
         }),
       };
     });
-
-    return <AdminOrders orders={ordersWithItems} />;
   } catch (error) {
     console.error("Error loading orders:", error);
-    return <AdminOrders orders={ordersWithItems} />;
   }
+
+  return <AdminOrders orders={ordersWithItems} />;
 }

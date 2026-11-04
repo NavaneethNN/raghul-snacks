@@ -21,25 +21,27 @@ export function WhatsAppButton() {
     !pathname?.startsWith("/admin");
 
   useEffect(() => {
-    if (!isProductPage) {
-      setHasStickyBar(false);
-      return;
-    }
+    if (!isProductPage) return;
 
     const checkStickyBar = () => {
-      // The sticky mobile bar appears when scrollY > 400
+      // The sticky mobile bar appears when scrollY > 350
       setHasStickyBar(window.scrollY > 350);
     };
 
     checkStickyBar();
     window.addEventListener("scroll", checkStickyBar, { passive: true });
-    return () => window.removeEventListener("scroll", checkStickyBar);
+    return () => {
+      window.removeEventListener("scroll", checkStickyBar);
+      setHasStickyBar(false);
+    };
   }, [isProductPage]);
+
+  const showStickyBar = isProductPage && hasStickyBar;
 
   return (
     <aside
       className={`whatsapp-button-wrapper ${hasCartBar ? "has-cart-bar" : ""} ${
-        hasStickyBar ? "has-sticky-bar" : ""
+        showStickyBar ? "has-sticky-bar" : ""
       } ${isProductPage ? "is-product-page" : ""}`}
       aria-label="Customer Support WhatsApp"
       style={{
