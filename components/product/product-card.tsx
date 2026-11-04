@@ -27,6 +27,12 @@ export function ProductCard({ product }: { product: any }) {
     product.categoryName?.toLowerCase() === "combos" ||
     product.category?.toLowerCase() === "combos";
 
+  const comboItemCount = isCombo
+    ? (product.items && Array.isArray(product.items)
+        ? product.items.length
+        : (product.ingredients ? product.ingredients.split(",").filter((s: string) => s.trim().length > 0).length : 0))
+    : 0;
+
   // The card advertises the first variant, so its cart entry is that variant too —
   // the same id the product page uses, so both add to a single cart line.
   const cartProduct = {
@@ -78,12 +84,21 @@ export function ProductCard({ product }: { product: any }) {
         {isCombo && (
           <span style={{ position: "absolute", top: 10, left: 10, zIndex: 2, background: "var(--terracotta)", color: "#fff", padding: "3px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Combo</span>
         )}
+        {pricing.hasDiscount && (
+          <span style={{ position: "absolute", bottom: 10, left: 10, zIndex: 2, background: "var(--terracotta)", color: "#fff", padding: "3px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            {Math.round(((pricing.originalPrice - pricing.displayPrice) / pricing.originalPrice) * 100)}% OFF
+          </span>
+        )}
         {variants.length > 0 && <VariantStackFlag count={variants.length} />}
       </Link>
       <WishlistButton product={wishlistProduct} />
       <div className="product-copy">
         {isCombo ? (
-          <p style={{ color: "var(--terracotta)", fontWeight: 700, textTransform: "uppercase", fontSize: 11, letterSpacing: "0.06em" }}>Combo Pack</p>
+          <p style={{ color: "var(--terracotta)", fontWeight: 700, textTransform: "uppercase", fontSize: 11, letterSpacing: "0.06em" }}>
+            {comboItemCount > 0
+              ? `${comboItemCount} ${comboItemCount === 1 ? "Item" : "Items"}${product.weight ? ` • ${product.weight}` : ""}`
+              : (product.weight || "Combo Pack")}
+          </p>
         ) : (
           pricing.displayWeight && <p>{pricing.displayWeight}</p>
         )}
@@ -93,7 +108,12 @@ export function ProductCard({ product }: { product: any }) {
         {pricing.hasPrice && (
           <div className="price">
             <strong>{formatPrice(pricing.displayPrice)}</strong>
-            {pricing.hasDiscount && <s>{formatPrice(pricing.originalPrice)}</s>}
+            {pricing.hasDiscount && (
+              <>
+                <s>{formatPrice(pricing.originalPrice)}</s>
+                <em>{Math.round(((pricing.originalPrice - pricing.displayPrice) / pricing.originalPrice) * 100)}% OFF</em>
+              </>
+            )}
           </div>
         )}
         <div className="product-actions">

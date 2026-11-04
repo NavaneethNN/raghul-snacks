@@ -4,6 +4,8 @@ import { useMemo, useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ProductCard } from "@/components/product/product-card";
+import { WishlistButton } from "@/components/wishlist-button";
+import { formatPrice } from "@/lib/catalog";
 import styles from "./shop-content.module.css";
 
 type Category = {
@@ -164,15 +166,57 @@ export function ShopContent({
     });
   }, [products, searchTerm]);
 
+  // Helper to parse combo items from ingredients if not already structured
+  function parseComboItems(combo: any): Array<{ id: number; name: string; unitWeight?: string | null }> {
+    if (Array.isArray(combo.items) && combo.items.length > 0) {
+      return combo.items;
+    }
+    if (!combo.ingredients) return [];
+    return combo.ingredients
+      .split(",")
+      .map((s: string, idx: number) => {
+        const itemStr = s.trim();
+        const match = itemStr.match(/^(.+?)\s*\((.+?)\)$/);
+        if (match) {
+          return { id: idx, name: match[1].trim(), unitWeight: match[2].trim() };
+        }
+        return { id: idx, name: itemStr, unitWeight: null };
+      })
+      .filter((it: any) => Boolean(it.name));
+  }
+
+  // Helper to resolve combo pricing, discount and savings
+  function resolveComboPricing(combo: any) {
+    const originalPrice = parseFloat(combo.price) || 0;
+    const rawOffer = combo.offerPrice || combo.discount;
+    const offerPrice = rawOffer && parseFloat(rawOffer) > 0 ? parseFloat(rawOffer) : null;
+    const hasDiscount = offerPrice !== null && offerPrice > 0 && offerPrice < originalPrice;
+    const displayPrice = hasDiscount ? offerPrice : originalPrice;
+    const discountPercent = hasDiscount && originalPrice > 0
+      ? Math.round(((originalPrice - offerPrice) / originalPrice) * 100)
+      : 0;
+
+    return {
+      originalPrice,
+      offerPrice,
+      displayPrice,
+      hasDiscount,
+      discountPercent,
+    };
+  }
+
   // Filter combos based on search query
   const filteredCombos = useMemo(() => {
     return combos.filter((combo: any) => {
       if (!searchTerm.trim()) return true;
       const query = searchTerm.toLowerCase().trim();
+      const title = (combo.title || combo.name || "").toLowerCase();
+      const desc = (combo.description || "").toLowerCase();
+      const items = parseComboItems(combo);
       return (
-        combo.title?.toLowerCase().includes(query) ||
-        combo.description?.toLowerCase().includes(query) ||
-        combo.items?.some((item: any) => item.name?.toLowerCase().includes(query))
+        title.includes(query) ||
+        desc.includes(query) ||
+        items.some((item: any) => item.name?.toLowerCase().includes(query))
       );
     });
   }, [combos, searchTerm]);
@@ -221,11 +265,15 @@ export function ShopContent({
     let list = filteredCombos;
     if (sortBy !== "featured") {
       list = [...list].sort((a: any, b: any) => {
-        const priceA = parseFloat(a.discount && parseFloat(a.discount) > 0 ? a.discount : a.price) || 0;
-        const priceB = parseFloat(b.discount && parseFloat(b.discount) > 0 ? b.discount : b.price) || 0;
+        const priceA = resolveComboPricing(a).displayPrice;
+        const priceB = resolveComboPricing(b).displayPrice;
         if (sortBy === "price-asc") return priceA - priceB;
         if (sortBy === "price-desc") return priceB - priceA;
-        if (sortBy === "name-asc") return (a.title || "").localeCompare(b.title || "");
+        if (sortBy === "name-asc") {
+          const nameA = (a.title || a.name || "").toLowerCase();
+          const nameB = (b.title || b.name || "").toLowerCase();
+          return nameA.localeCompare(nameB);
+        }
         return 0;
       });
     }
@@ -439,41 +487,119 @@ export function ShopContent({
         )}
 
         {activeTab === "combos" &&
-          displayedCombos.map((combo: any) => (
-            <article key={combo.id} className="product-card">
-              <Link href={`/combo/${combo.slug}`} className="product-visual">
-                {combo.image ? (
-                  <img src={combo.image} alt={combo.title} loading="lazy" />
-                ) : (
-                  <div className="product-visual-placeholder">
-                    <span className="placeholder-icon">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4">
-                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                        <line x1="12" y1="22.08" x2="12" y2="12" />
-                      </svg>
-                    </span>
-                  </div>
-                )}
-                <span className="category-label">Combo</span>
-              </Link>
-              <div className="product-copy">
-                <p>{combo.items?.length || 0} items</p>
-                <Link href={`/combo/${combo.slug}`}>
-                  <h3>{combo.title}</h3>
-                </Link>
-                <div className="price">
-                  <strong>₹{combo.discount && parseFloat(combo.discount) > 0 ? combo.discount : combo.price}</strong>
-                  {combo.discount && parseFloat(combo.discount) > 0 && (
-                    <s>₹{combo.price}</s>
+          displayedCombos.map((combo: any) => {
+            const items = parseComboItems(combo);
+            const itemsCount = items.length;
+            const pricing = resolveComboPricing(combo);
+            const title = combo.title || combo.name || "Special Combo";
+            const productSlug = combo.slug;
+
+            const cartProduct = {
+              ...combo,
+              id: String(combo.id),
+              slug: productSlug,
+              name: title,
+              price: pricing.originalPrice,
+              offerPrice: pricing.displayPrice,
+              weight: combo.weight || (itemsCount > 0 ? `${itemsCount} Items` : "Combo Pack"),
+              approxWeight: combo.weight || "300g",
+              description: combo.description || "",
+              ingredients: combo.ingredients || items.map((i: any) => i.name).join(", "),
+              category: "combos",
+              image: combo.image || "",
+            };
+
+            const wishlistProduct = {
+              ...cartProduct,
+              variants: [],
+            };
+
+            return (
+              <article key={combo.id} className="product-card">
+                <Link href={`/product/${productSlug}`} className="product-visual">
+                  {combo.image ? (
+                    <img src={combo.image} alt={title} loading="lazy" />
+                  ) : (
+                    <div className="product-visual-placeholder">
+                      <span className="placeholder-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4">
+                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                          <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                          <line x1="12" y1="22.08" x2="12" y2="12" />
+                        </svg>
+                      </span>
+                    </div>
                   )}
-                </div>
-                <Link href={`/combo/${combo.slug}`} className="button">
-                  View Combo
+                  <span className="category-label">Combo</span>
+                  {pricing.hasDiscount && (
+                    <span style={{
+                      position: "absolute",
+                      bottom: 10,
+                      left: 10,
+                      zIndex: 2,
+                      background: "var(--terracotta)",
+                      color: "#fff",
+                      padding: "3px 8px",
+                      borderRadius: 4,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.04em"
+                    }}>
+                      {pricing.discountPercent}% OFF
+                    </span>
+                  )}
                 </Link>
-              </div>
-            </article>
-          ))
+
+                <WishlistButton product={wishlistProduct} />
+
+                <div className="product-copy">
+                  <p>
+                    {itemsCount > 0 ? (
+                      <>
+                        {itemsCount} {itemsCount === 1 ? "Item" : "Items"}
+                        {combo.weight ? ` • ${combo.weight}` : ""}
+                      </>
+                    ) : combo.weight ? (
+                      combo.weight
+                    ) : (
+                      "Combo Pack"
+                    )}
+                  </p>
+
+                  <Link href={`/product/${productSlug}`}>
+                    <h3>{title}</h3>
+                  </Link>
+
+                  <div className="price">
+                    <strong>{formatPrice(pricing.displayPrice)}</strong>
+                    {pricing.hasDiscount && (
+                      <>
+                        <s>{formatPrice(pricing.originalPrice)}</s>
+                        <em>{pricing.discountPercent}% OFF</em>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="product-actions">
+                    <Link
+                      href={`/product/${productSlug}`}
+                      className="button"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "100%",
+                        textAlign: "center"
+                      }}
+                    >
+                      View Combo
+                    </Link>
+                  </div>
+                </div>
+              </article>
+            );
+          })
         }
       </div>
     </>
