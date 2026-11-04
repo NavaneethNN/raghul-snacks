@@ -75,6 +75,15 @@ type SavedAddress = {
 
 type TabType = "profile" | "orders" | "messages";
 
+const statusBadgeStyles: Record<string, { bg: string; color: string }> = {
+  placed: { bg: "#fef3c7", color: "#92400e" },
+  packed: { bg: "#dbeafe", color: "#1e40af" },
+  dispatched: { bg: "#dcfce7", color: "#166534" },
+  shipped: { bg: "#dcfce7", color: "#166534" },
+  delivered: { bg: "#d1fae5", color: "#065f46" },
+  cancelled: { bg: "#fee2e2", color: "#991b1b" },
+};
+
 export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   const router = useRouter();
   const { addItem } = useCart();
@@ -113,6 +122,10 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   const [savingAddress, setSavingAddress] = useState(false);
   const [addressError, setAddressError] = useState("");
 
+  // Messages state
+  const [userMessages, setUserMessages] = useState<UserMessage[]>([]);
+  const [messagesLoaded, setMessagesLoaded] = useState(false);
+
   const loadAddresses = useCallback(() => {
     fetch("/api/account/addresses")
       .then((r) => r.json())
@@ -122,10 +135,6 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
       .catch(() => {})
       .finally(() => setAddressLoaded(true));
   }, []);
-
-  // Messages state
-  const [userMessages, setUserMessages] = useState<UserMessage[]>([]);
-  const [messagesLoaded, setMessagesLoaded] = useState(false);
 
   useEffect(() => {
     loadAddresses();
@@ -206,7 +215,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: trimmed }),
       });
-      const data = await response.json() as { account?: { name: string }; error?: string };
+      const data = (await response.json()) as { account?: { name: string }; error?: string };
       if (!response.ok) throw new Error(data.error || "Unable to update your name.");
       setName(data.account?.name || trimmed);
       setEditingName(false);
@@ -307,7 +316,10 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   }
 
   async function submitReview(productId: number) {
-    if (!reviewRating) { setReviewError("Please select a rating."); return; }
+    if (!reviewRating) {
+      setReviewError("Please select a rating.");
+      return;
+    }
     setReviewSubmitting(true);
     setReviewError("");
     try {
@@ -316,7 +328,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productId, rating: reviewRating, content: reviewContent.trim() }),
       });
-      const data = await res.json() as { success?: boolean; error?: string };
+      const data = (await res.json()) as { success?: boolean; error?: string };
       if (!res.ok) throw new Error(data.error || "Failed to submit review.");
       setReviewedProductIds((prev) => [...prev, productId]);
       setReviewingItemId(null);
@@ -389,7 +401,11 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
       return;
     }
     if (skippedCount > 0) {
-      alert(`${addedCount} item${addedCount > 1 ? "s" : ""} added to cart. ${skippedCount} item${skippedCount > 1 ? "s are" : " is"} no longer available.`);
+      alert(
+        `${addedCount} item${addedCount > 1 ? "s" : ""} added to cart. ${skippedCount} item${
+          skippedCount > 1 ? "s are" : " is"
+        } no longer available.`
+      );
     }
     router.push("/cart");
   }
@@ -406,690 +422,867 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
 
   return (
     <div className={styles.container}>
-      {/* Hero */}
-      <div className={styles.hero}>
-        <div className={styles.heroContent}>
-          <h1>My Account</h1>
-          <p>Manage your profile, view orders, and message customer support.</p>
-        </div>
-      </div>
+      <div className={styles.contentWrapper}>
+        {/* Page Top Heading */}
+        <header className={styles.pageHeader}>
+          <span className={styles.pageBadge}>Customer Portal</span>
+          <h1 className={styles.pageTitle}>My Account</h1>
+          <p className={styles.pageSubtitle}>
+            Welcome back, <strong>{name}</strong>. Manage your profile, view orders, and track deliveries.
+          </p>
+        </header>
 
-      {/* Order detail modal */}
-      {detailOrder && (
-        <OrderDetailModal
-          order={detailOrder}
-          onClose={() => setDetailOrder(null)}
-          onDownloadInvoice={downloadInvoice}
-          onBuyAgain={handleBuyAgain}
-          reviewedProductIds={reviewedProductIds}
-        />
-      )}
+        {/* Order detail modal */}
+        {detailOrder && (
+          <OrderDetailModal
+            order={detailOrder}
+            onClose={() => setDetailOrder(null)}
+            onDownloadInvoice={downloadInvoice}
+            onBuyAgain={handleBuyAgain}
+            reviewedProductIds={reviewedProductIds}
+          />
+        )}
 
-      {/* Main Two-Column Layout */}
-      <div className={styles.content}>
-        <div className={styles.layoutGrid}>
-          {/* ── Left Column: Sidebar ── */}
-          <aside className={styles.sidebarCard}>
-            {/* User Profile Summary */}
-            <div className={styles.sidebarUser}>
-              <div className={styles.sidebarAvatar}>
-                {initials || "U"}
-              </div>
-              <div className={styles.sidebarUserInfo}>
-                <span className={styles.sidebarUserName}>{name}</span>
-                <span className={styles.sidebarUserEmail}>{account.email}</span>
-                {account.isAdmin ? (
-                  <span className={styles.adminBadge}>Store Admin</span>
-                ) : (
-                  <span style={{ fontSize: 11, color: "#9ca3af", fontFamily: "'DM Mono',monospace" }}>Customer</span>
+        {/* Profile Hero Card */}
+        <section className={styles.profileCard} aria-label="Customer profile summary">
+          <div className={styles.profileTopRow}>
+            {/* User Identity Group */}
+            <div className={styles.profileUserGroup}>
+              <div className={styles.profileAvatar}>{initials || "U"}</div>
+              <div className={styles.profileMeta}>
+                <div className={styles.profileNameRow}>
+                  <span className={styles.profileName}>{name}</span>
+                  {!editingName && (
+                    <button
+                      type="button"
+                      className={styles.editNameBtn}
+                      onClick={startEditingName}
+                      aria-label="Edit name"
+                      title="Edit name"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+
+                {editingName && (
+                  <div className={styles.nameEditBox}>
+                    <div className={styles.nameEditControls}>
+                      <input
+                        className={styles.nameInput}
+                        value={nameDraft}
+                        onChange={(e) => setNameDraft(e.target.value)}
+                        autoFocus
+                        maxLength={100}
+                        disabled={savingName}
+                        placeholder="Your full name"
+                      />
+                      <button
+                        type="button"
+                        className={styles.nameSaveBtn}
+                        onClick={saveName}
+                        disabled={savingName}
+                      >
+                        {savingName ? "Saving…" : "Save"}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.nameCancelBtn}
+                        onClick={cancelEditingName}
+                        disabled={savingName}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    {nameError && <p className={styles.nameError}>{nameError}</p>}
+                  </div>
                 )}
+
+                <span className={styles.profileEmail}>{account.email}</span>
+
+                <div className={styles.profileBadges}>
+                  {account.isAdmin ? (
+                    <span className={styles.roleBadgeAdmin}>Store Admin</span>
+                  ) : (
+                    <span className={styles.roleBadgeCustomer}>Customer</span>
+                  )}
+                  <span className={styles.memberSinceChip}>
+                    Member since {new Date(account.createdAt).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Sidebar Navigation */}
-            <nav className={styles.sidebarNav} aria-label="Account navigation">
-              {/* Profile Tab */}
-              <button
-                type="button"
-                className={`${styles.sidebarBtn} ${activeTab === "profile" ? styles.sidebarBtnActive : ""}`}
-                onClick={() => setActiveTab("profile")}
-              >
-                <div className={styles.sidebarBtnLeft}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                  </svg>
-                  <span>Profile</span>
-                </div>
-              </button>
-
-              {/* My Orders Tab */}
-              <button
-                type="button"
-                className={`${styles.sidebarBtn} ${activeTab === "orders" ? styles.sidebarBtnActive : ""}`}
-                onClick={() => setActiveTab("orders")}
-              >
-                <div className={styles.sidebarBtnLeft}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                    <line x1="3" y1="6" x2="21" y2="6"/>
-                    <path d="M16 10a4 4 0 0 1-8 0"/>
-                  </svg>
-                  <span>My Orders</span>
-                </div>
-                {orders.length > 0 && (
-                  <span className={styles.sidebarCount}>{orders.length}</span>
-                )}
-              </button>
-
-              {/* My Messages Tab */}
-              <button
-                type="button"
-                className={`${styles.sidebarBtn} ${activeTab === "messages" ? styles.sidebarBtnActive : ""}`}
-                onClick={() => setActiveTab("messages")}
-              >
-                <div className={styles.sidebarBtnLeft}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                  <span>My Messages</span>
-                </div>
-                {repliedMessagesCount > 0 && (
-                  <span className={styles.sidebarReplied}>{repliedMessagesCount}</span>
-                )}
-              </button>
-
-              {/* Admin Panel Direct Button (Only for Admins) */}
+            {/* Quick Actions (Admin Portal + Sign Out) */}
+            <div className={styles.profileActions}>
               {account.isAdmin && (
                 <a
                   href="/api/admin/bridge"
-                  className={styles.adminBridgeLink}
-                  title="Open Admin Dashboard"
+                  className={styles.adminBridgeButton}
+                  title="Direct access to Store Management"
                 >
-                  <div className={styles.sidebarBtnLeft}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="7" height="9" />
-                      <rect x="14" y="3" width="7" height="5" />
-                      <rect x="14" y="12" width="7" height="9" />
-                      <rect x="3" y="16" width="7" height="5" />
-                    </svg>
-                    <span>Admin Panel</span>
-                  </div>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="9" />
+                    <rect x="14" y="3" width="7" height="5" />
+                    <rect x="14" y="12" width="7" height="9" />
+                    <rect x="3" y="16" width="7" height="5" />
                   </svg>
+                  <span>Admin Dashboard</span>
                 </a>
               )}
-            </nav>
 
-            {/* Sidebar Footer: Sign Out */}
-            <div className={styles.sidebarFooter}>
               {!confirmSignOut ? (
                 <button
                   type="button"
                   onClick={() => setConfirmSignOut(true)}
-                  className={styles.signOutButton}
-                  style={{ width: "100%" }}
+                  className={styles.signOutBtn}
                   disabled={signingOut}
                 >
-                  {signingOut ? "Signing out…" : "Sign Out"}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                  <span>{signingOut ? "Signing out…" : "Sign Out"}</span>
                 </button>
               ) : (
-                <div className={styles.signOutConfirm} style={{ justifyContent: "center" }}>
+                <div className={styles.signOutConfirm}>
                   <span>Sign out?</span>
-                  <button type="button" onClick={handleSignOut} className={styles.signOutConfirmYes} disabled={signingOut}>Yes</button>
-                  <button type="button" onClick={() => setConfirmSignOut(false)} className={styles.signOutConfirmNo}>Cancel</button>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className={styles.signOutConfirmYes}
+                    disabled={signingOut}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmSignOut(false)}
+                    className={styles.signOutConfirmNo}
+                  >
+                    Cancel
+                  </button>
                 </div>
               )}
             </div>
-          </aside>
+          </div>
 
-          {/* ── Right Column: Dynamic Main View ── */}
-          <main style={{ minWidth: 0 }}>
-            {/* 1. Profile Tab Content */}
-            {activeTab === "profile" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-                {/* Account Details Card */}
-                <section className={styles.card}>
-                  <div className={styles.cardHeader}>
-                    <h2>Account Information</h2>
+          {/* Interactive Metric Strip */}
+          <div className={styles.statsStrip}>
+            <button
+              type="button"
+              className={styles.statTile}
+              onClick={() => setActiveTab("orders")}
+              title="View your orders"
+            >
+              <span className={styles.statValue}>{orders.length}</span>
+              <span className={styles.statLabel}>Total Orders</span>
+            </button>
+            <button
+              type="button"
+              className={styles.statTile}
+              onClick={() => setActiveTab("profile")}
+              title="Manage delivery addresses"
+            >
+              <span className={styles.statValue}>
+                {addressLoaded ? addresses.length : "—"}
+              </span>
+              <span className={styles.statLabel}>Saved Addresses</span>
+            </button>
+            <button
+              type="button"
+              className={styles.statTile}
+              onClick={() => setActiveTab("messages")}
+              title="Customer support inquiries"
+            >
+              <span className={styles.statValue}>
+                {repliedMessagesCount > 0 ? `${repliedMessagesCount} New` : userMessages.length}
+              </span>
+              <span className={styles.statLabel}>Support Messages</span>
+            </button>
+          </div>
+        </section>
+
+        {/* Tab Navigation (Seamless, Full Width, Zero Mobile Clipping) */}
+        <nav className={styles.tabsContainer} aria-label="Account navigation">
+          <div className={styles.tabsList}>
+            {/* Tab 1: Profile & Addresses */}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "profile"}
+              className={`${styles.tabButton} ${activeTab === "profile" ? styles.tabButtonActive : ""}`}
+              onClick={() => setActiveTab("profile")}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span>Profile & Addresses</span>
+            </button>
+
+            {/* Tab 2: My Orders */}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "orders"}
+              className={`${styles.tabButton} ${activeTab === "orders" ? styles.tabButtonActive : ""}`}
+              onClick={() => setActiveTab("orders")}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+              <span>My Orders</span>
+              {orders.length > 0 && <span className={styles.tabBadge}>{orders.length}</span>}
+            </button>
+
+            {/* Tab 3: Support & Messages */}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "messages"}
+              className={`${styles.tabButton} ${activeTab === "messages" ? styles.tabButtonActive : ""}`}
+              onClick={() => setActiveTab("messages")}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span>Support & Inquiries</span>
+              {repliedMessagesCount > 0 ? (
+                <span className={styles.tabBadgeGreen}>{repliedMessagesCount} New Reply</span>
+              ) : userMessages.length > 0 ? (
+                <span className={styles.tabBadge}>{userMessages.length}</span>
+              ) : null}
+            </button>
+
+            {/* Admin portal shortcut for admins */}
+            {account.isAdmin && (
+              <a
+                href="/api/admin/bridge"
+                className={styles.tabButtonAdmin}
+                title="Open Admin Management Panel"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <rect x="3" y="3" width="7" height="9" />
+                  <rect x="14" y="3" width="7" height="5" />
+                  <rect x="14" y="12" width="7" height="9" />
+                  <rect x="3" y="16" width="7" height="5" />
+                </svg>
+                <span>Admin Panel</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </a>
+            )}
+          </div>
+        </nav>
+
+        {/* ── Tab 1: Profile & Addresses ── */}
+        {activeTab === "profile" && (
+          <main className={styles.panel}>
+            {/* Account Details Card */}
+            <section className={styles.card}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardHeaderLeft}>
+                  <h2 className={styles.cardTitle}>Account Details</h2>
+                  <p className={styles.cardSubtitle}>Your personal contact information and membership tier</p>
+                </div>
+              </div>
+
+              <div className={styles.infoGrid}>
+                <div className={styles.infoCell}>
+                  <span className={styles.infoLabel}>Full Name</span>
+                  <span className={styles.infoValue}>{name}</span>
+                </div>
+                <div className={styles.infoCell}>
+                  <span className={styles.infoLabel}>Email Address</span>
+                  <span className={styles.infoValue}>{account.email}</span>
+                </div>
+                <div className={styles.infoCell}>
+                  <span className={styles.infoLabel}>Member Since</span>
+                  <span className={styles.infoValue}>
+                    {new Date(account.createdAt).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
+                  </span>
+                </div>
+                <div className={styles.infoCell}>
+                  <span className={styles.infoLabel}>Account Role</span>
+                  <span className={styles.infoValue} style={{ color: account.isAdmin ? "#166534" : "inherit" }}>
+                    {account.isAdmin ? "Store Administrator" : "Customer"}
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            {/* Saved Delivery Addresses Card */}
+            <section className={styles.card}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardHeaderLeft}>
+                  <h2 className={styles.cardTitle}>Saved Delivery Addresses</h2>
+                  <p className={styles.cardSubtitle}>
+                    Used for automated courier rate calculation and fast 1-click checkout.
+                  </p>
+                </div>
+                {!showAddAddress && (
+                  <button
+                    type="button"
+                    className={styles.addAddressBtn}
+                    onClick={() => {
+                      setShowAddAddress(true);
+                      setAddressError("");
+                    }}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    <span>Add New Address</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Inline Add Address Form */}
+              {showAddAddress && (
+                <form className={styles.addressFormCard} onSubmit={handleCreateAddress}>
+                  <h3 className={styles.addressFormTitle}>Add New Delivery Address</h3>
+                  <div className={styles.addressFormGrid}>
+                    <div>
+                      <label className={styles.fieldLabel}>Recipient Name</label>
+                      <input
+                        className={styles.addressFormInput}
+                        required
+                        value={addressDraft.name}
+                        onChange={(e) => setAddressDraft((d) => ({ ...d, name: e.target.value }))}
+                        placeholder="Full Name"
+                      />
+                    </div>
+                    <div>
+                      <label className={styles.fieldLabel}>Mobile Number</label>
+                      <input
+                        className={styles.addressFormInput}
+                        required
+                        type="tel"
+                        value={addressDraft.phone}
+                        onChange={(e) => setAddressDraft((d) => ({ ...d, phone: e.target.value }))}
+                        placeholder="10-digit mobile"
+                      />
+                    </div>
+                    <div className={styles.addressFormFull}>
+                      <label className={styles.fieldLabel}>Street Address</label>
+                      <input
+                        className={styles.addressFormInput}
+                        required
+                        value={addressDraft.address}
+                        onChange={(e) => setAddressDraft((d) => ({ ...d, address: e.target.value }))}
+                        placeholder="Flat / Door no., Building, Street name, Landmark"
+                      />
+                    </div>
+                    <div>
+                      <label className={styles.fieldLabel}>City / District</label>
+                      <input
+                        className={styles.addressFormInput}
+                        required
+                        value={addressDraft.city}
+                        onChange={(e) => setAddressDraft((d) => ({ ...d, city: e.target.value }))}
+                        placeholder="City"
+                      />
+                    </div>
+                    <div>
+                      <label className={styles.fieldLabel}>State</label>
+                      <input
+                        className={styles.addressFormInput}
+                        required
+                        value={addressDraft.state}
+                        onChange={(e) => setAddressDraft((d) => ({ ...d, state: e.target.value }))}
+                        placeholder="State"
+                      />
+                    </div>
+                    <div>
+                      <label className={styles.fieldLabel}>PIN Code</label>
+                      <input
+                        className={styles.addressFormInput}
+                        required
+                        type="text"
+                        maxLength={6}
+                        value={addressDraft.pincode}
+                        onChange={(e) => setAddressDraft((d) => ({ ...d, pincode: e.target.value }))}
+                        placeholder="6-digit PIN"
+                      />
+                    </div>
+                    <div className={styles.addressFormFull}>
+                      <label className={styles.addressCheckboxLabel}>
+                        <input
+                          type="checkbox"
+                          checked={addressDraft.isDefault}
+                          onChange={(e) => setAddressDraft((d) => ({ ...d, isDefault: e.target.checked }))}
+                        />
+                        <span>Set as default delivery address</span>
+                      </label>
+                    </div>
                   </div>
-                  <div className={styles.accountInfo}>
-                    <div className={styles.infoRow}>
-                      <span className={styles.label}>Full Name</span>
-                      {editingName ? (
-                        <div className={styles.nameEdit}>
-                          <input
-                            className={styles.nameInput}
-                            value={nameDraft}
-                            onChange={(e) => setNameDraft(e.target.value)}
-                            autoFocus
-                            maxLength={100}
-                            disabled={savingName}
-                          />
-                          <button
-                            type="button"
-                            className={styles.nameSaveButton}
-                            onClick={saveName}
-                            disabled={savingName}
-                          >
-                            {savingName ? "Saving…" : "Save"}
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.nameCancelButton}
-                            onClick={cancelEditingName}
-                            disabled={savingName}
-                          >
-                            Cancel
-                          </button>
-                          {nameError && <p className={styles.nameError}>{nameError}</p>}
-                        </div>
-                      ) : (
-                        <span className={styles.nameDisplay}>
-                          <strong>{name}</strong>
-                          <button
-                            type="button"
-                            className={styles.editIconButton}
-                            onClick={startEditingName}
-                            aria-label="Edit name"
-                          >
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+
+                  {addressError && (
+                    <p style={{ margin: "12px 0 0", color: "#dc2626", fontSize: 13, fontWeight: 500 }}>
+                      {addressError}
+                    </p>
+                  )}
+
+                  <div className={styles.addressFormActions}>
+                    <button
+                      type="button"
+                      className={styles.addressFormCancelBtn}
+                      onClick={() => {
+                        setShowAddAddress(false);
+                        setAddressError("");
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className={styles.addressFormSaveBtn}
+                      disabled={savingAddress}
+                    >
+                      {savingAddress ? "Saving…" : "Save Address"}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Address List */}
+              {!addressLoaded ? (
+                <p style={{ fontSize: 13, color: "#9ca3af", margin: 0 }}>Loading your saved addresses…</p>
+              ) : addresses.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <svg className={styles.emptyStateIcon} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  <h3 className={styles.emptyStateTitle}>No addresses saved yet</h3>
+                  <p className={styles.emptyStateText}>
+                    Add your delivery address for faster checkout, or it will be saved automatically when you place an order.
+                  </p>
+                  <button
+                    type="button"
+                    className={styles.btnPrimary}
+                    onClick={() => setShowAddAddress(true)}
+                  >
+                    + Add Your First Address
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.addressGrid}>
+                  {addresses.map((addr) => (
+                    <div
+                      key={addr.id}
+                      className={`${styles.addressCard} ${addr.isDefault ? styles.addressCardDefault : ""}`}
+                    >
+                      <div className={styles.addressTop}>
+                        {addr.isDefault && <span className={styles.defaultBadge}>Default Address</span>}
+                        <h4 className={styles.addressRecipient}>{addr.name}</h4>
+                        {addr.phone && (
+                          <p className={styles.addressPhone}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                             </svg>
-                          </button>
-                        </span>
-                      )}
-                    </div>
-
-                    <div className={styles.infoRow}>
-                      <span className={styles.label}>Email Address</span>
-                      <strong>{account.email}</strong>
-                    </div>
-
-                    <div className={styles.infoRow}>
-                      <span className={styles.label}>Member Since</span>
-                      <strong>{new Date(account.createdAt).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</strong>
-                    </div>
-
-                    {account.isAdmin && (
-                      <div className={styles.infoRow}>
-                        <span className={styles.label}>Role</span>
-                        <strong style={{ color: "#166534" }}>Store Administrator</strong>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Saved Delivery Addresses Section */}
-                  <div className={styles.addressSection}>
-                    <div className={styles.addressHeader}>
-                      <div>
-                        <h3>Saved Delivery Addresses</h3>
-                        <span style={{ fontSize: 13, color: "#6b7280" }}>
-                          Used for one-click checkout and automated delivery calculation.
-                        </span>
-                      </div>
-                      {!showAddAddress && (
-                        <button
-                          type="button"
-                          className={styles.addAddressBtn}
-                          onClick={() => {
-                            setShowAddAddress(true);
-                            setAddressError("");
-                          }}
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <line x1="12" y1="5" x2="12" y2="19"/>
-                            <line x1="5" y1="12" x2="19" y2="12"/>
-                          </svg>
-                          Add New Address
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Inline Add Address Form */}
-                    {showAddAddress && (
-                      <form className={styles.addressFormCard} onSubmit={handleCreateAddress}>
-                        <h4 className={styles.addressFormTitle}>Add Delivery Address</h4>
-                        <div className={styles.addressFormGrid}>
-                          <div>
-                            <label style={{ display: "block", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", color: "#6b7280", marginBottom: 4 }}>Recipient Name</label>
-                            <input
-                              className={styles.addressFormInput}
-                              required
-                              value={addressDraft.name}
-                              onChange={(e) => setAddressDraft((d) => ({ ...d, name: e.target.value }))}
-                              placeholder="Full Name"
-                            />
-                          </div>
-                          <div>
-                            <label style={{ display: "block", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", color: "#6b7280", marginBottom: 4 }}>Mobile Number</label>
-                            <input
-                              className={styles.addressFormInput}
-                              required
-                              type="tel"
-                              value={addressDraft.phone}
-                              onChange={(e) => setAddressDraft((d) => ({ ...d, phone: e.target.value }))}
-                              placeholder="10-digit mobile"
-                            />
-                          </div>
-                          <div className={styles.addressFormFull}>
-                            <label style={{ display: "block", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", color: "#6b7280", marginBottom: 4 }}>Street Address</label>
-                            <input
-                              className={styles.addressFormInput}
-                              required
-                              value={addressDraft.address}
-                              onChange={(e) => setAddressDraft((d) => ({ ...d, address: e.target.value }))}
-                              placeholder="House / Flat no., Street, Landmark"
-                            />
-                          </div>
-                          <div>
-                            <label style={{ display: "block", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", color: "#6b7280", marginBottom: 4 }}>City / District</label>
-                            <input
-                              className={styles.addressFormInput}
-                              required
-                              value={addressDraft.city}
-                              onChange={(e) => setAddressDraft((d) => ({ ...d, city: e.target.value }))}
-                              placeholder="City / District"
-                            />
-                          </div>
-                          <div>
-                            <label style={{ display: "block", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", color: "#6b7280", marginBottom: 4 }}>State</label>
-                            <input
-                              className={styles.addressFormInput}
-                              required
-                              value={addressDraft.state}
-                              onChange={(e) => setAddressDraft((d) => ({ ...d, state: e.target.value }))}
-                              placeholder="State (e.g. Tamil Nadu)"
-                            />
-                          </div>
-                          <div>
-                            <label style={{ display: "block", fontSize: 11, fontFamily: "'DM Mono',monospace", textTransform: "uppercase", color: "#6b7280", marginBottom: 4 }}>PIN Code</label>
-                            <input
-                              className={styles.addressFormInput}
-                              required
-                              type="text"
-                              maxLength={6}
-                              value={addressDraft.pincode}
-                              onChange={(e) => setAddressDraft((d) => ({ ...d, pincode: e.target.value }))}
-                              placeholder="6-digit PIN"
-                            />
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center" }}>
-                            <label className={styles.addressCheckboxLabel}>
-                              <input
-                                type="checkbox"
-                                checked={addressDraft.isDefault}
-                                onChange={(e) => setAddressDraft((d) => ({ ...d, isDefault: e.target.checked }))}
-                              />
-                              Set as default address
-                            </label>
-                          </div>
-                        </div>
-
-                        {addressError && (
-                          <p style={{ margin: "12px 0 0", color: "#b91c1c", fontSize: 12 }}>{addressError}</p>
+                            {addr.phone}
+                          </p>
                         )}
-
-                        <div className={styles.addressFormActions}>
-                          <button
-                            type="button"
-                            className={styles.addressFormCancelBtn}
-                            onClick={() => {
-                              setShowAddAddress(false);
-                              setAddressError("");
-                            }}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="submit"
-                            className={styles.addressFormSaveBtn}
-                            disabled={savingAddress}
-                          >
-                            {savingAddress ? "Saving…" : "Save Address"}
-                          </button>
-                        </div>
-                      </form>
-                    )}
-
-                    {/* Address List */}
-                    {!addressLoaded ? (
-                      <p style={{ fontSize: 13, color: "#9ca3af" }}>Loading addresses…</p>
-                    ) : addresses.length === 0 ? (
-                      <div className={styles.savedAddressCard}>
-                        <p style={{ margin: 0, fontSize: 13, color: "#6b7280", lineHeight: 1.6 }}>
-                          No delivery address saved yet. You can click <strong>+ Add New Address</strong> above, or your address will be automatically saved when you place your first order.
+                        <p className={styles.addressBody}>
+                          {addr.address}
+                          <br />
+                          {addr.city}, {addr.state} – <strong>{addr.pincode}</strong>
                         </p>
                       </div>
-                    ) : (
-                      <div className={styles.addressGrid}>
-                        {addresses.map((addr) => (
-                          <div
-                            key={addr.id}
-                            className={`${styles.addressCard} ${addr.isDefault ? styles.addressCardDefault : ""}`}
+
+                      <div className={styles.addressCardActions}>
+                        {!addr.isDefault && (
+                          <button
+                            type="button"
+                            className={styles.setDefaultBtn}
+                            onClick={() => handleSetDefaultAddress(addr.id)}
                           >
-                            <div>
-                              <div className={styles.addressBadgeRow}>
-                                {addr.isDefault && (
-                                  <span className={styles.defaultBadge}>Default Address</span>
-                                )}
-                              </div>
-                              <p className={styles.addressRecipient}>{addr.name}</p>
-                              {addr.phone && <p className={styles.addressPhone}>{addr.phone}</p>}
-                              <p className={styles.addressBody}>
-                                {addr.address}<br />
-                                {addr.city}, {addr.state} – {addr.pincode}
-                              </p>
-                            </div>
-                            <div className={styles.addressCardActions}>
-                              {!addr.isDefault && (
-                                <button
-                                  type="button"
-                                  className={styles.setDefaultBtn}
-                                  onClick={() => handleSetDefaultAddress(addr.id)}
-                                >
-                                  Set as Default
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                className={styles.deleteAddressBtn}
-                                onClick={() => handleDeleteAddress(addr.id)}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                            Set as Default
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className={styles.deleteAddressBtn}
+                          onClick={() => handleDeleteAddress(addr.id)}
+                        >
+                          Delete
+                        </button>
                       </div>
-                    )}
-                  </div>
-                </section>
-              </div>
-            )}
-
-            {/* 2. My Orders Tab Content */}
-            {activeTab === "orders" && (
-              <section className={styles.card} style={{ padding: 0, overflow: "hidden" }}>
-                <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <h2 style={{ margin: 0, font: "700 20px 'Playfair Display', serif", color: "var(--ink)" }}>
-                    Order History ({orders.length})
-                  </h2>
-                  <Link href="/track" className={styles.textLink}>Track Order</Link>
+                    </div>
+                  ))}
                 </div>
+              )}
+            </section>
+          </main>
+        )}
 
-                {orders.length === 0 ? (
-                  <div className={styles.emptyState}>
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <circle cx="9" cy="21" r="1"/>
-                      <circle cx="20" cy="21" r="1"/>
-                      <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
-                    </svg>
-                    <h3>No orders yet</h3>
-                    <p>Start shopping to see your orders here.</p>
-                    <Link href="/shop" className={styles.button}>Browse Products</Link>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    {orders.map((order, idx) => (
-                      <div
-                        key={order.id}
-                        style={{
-                          padding: "20px 24px",
-                          borderBottom: idx < orders.length - 1 ? "1px solid var(--line)" : "none",
-                        }}
-                      >
-                        {/* Order Header Row */}
-                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
-                          <div>
-                            <p style={{ margin: "0 0 4px", fontFamily: "'DM Mono',monospace", fontSize: 13, fontWeight: 700, color: "var(--ink)", letterSpacing: "0.04em" }}>
-                              {order.orderNumber}
-                            </p>
-                            <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>
+        {/* ── Tab 2: My Orders ── */}
+        {activeTab === "orders" && (
+          <main className={styles.panel}>
+            <section className={styles.card}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardHeaderLeft}>
+                  <h2 className={styles.cardTitle}>Order History ({orders.length})</h2>
+                  <p className={styles.cardSubtitle}>View tracking, past purchases, invoices and re-order easily</p>
+                </div>
+                <Link href="/track" className={styles.textLink}>
+                  <span>Track Consignment</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+
+              {orders.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <svg className={styles.emptyStateIcon} width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <circle cx="9" cy="21" r="1" />
+                    <circle cx="20" cy="21" r="1" />
+                    <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
+                  </svg>
+                  <h3 className={styles.emptyStateTitle}>No orders placed yet</h3>
+                  <p className={styles.emptyStateText}>
+                    Explore our handcrafted traditional sweets, savouries, and podis freshly made in small batches.
+                  </p>
+                  <Link href="/shop" className={styles.btnPrimary}>
+                    Browse Snacks & Combos
+                  </Link>
+                </div>
+              ) : (
+                <div className={styles.ordersList}>
+                  {orders.map((order) => {
+                    const statusKey = order.orderStatus.toLowerCase();
+                    const statusColor = statusBadgeStyles[statusKey] ?? { bg: "#f3f4f6", color: "#374151" };
+
+                    return (
+                      <article key={order.id} className={styles.orderCard}>
+                        {/* Order Header Meta */}
+                        <div className={styles.orderHeader}>
+                          <div className={styles.orderNumberMeta}>
+                            <span className={styles.orderNumber}>{order.orderNumber}</span>
+                            <span className={styles.orderDate}>
                               Placed {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
-                            </p>
+                            </span>
                           </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                            <span style={{
-                              padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700,
-                              fontFamily: "'DM Mono',monospace", textTransform: "uppercase", letterSpacing: "0.04em",
-                              ...({
-                                placed:     { background: "#fef3c7", color: "#92400e" },
-                                packed:     { background: "#dbeafe", color: "#1e40af" },
-                                dispatched: { background: "#dcfce7", color: "#166534" },
-                                delivered:  { background: "#d1fae5", color: "#065f46" },
-                                cancelled:  { background: "#fee2e2", color: "#991b1b" },
-                              } as Record<string, React.CSSProperties>)[order.orderStatus] ?? { background: "#f3f4f6", color: "#374151" }
-                            }}>
+
+                          <div className={styles.orderHeaderRight}>
+                            <span
+                              className={styles.orderStatusBadge}
+                              style={{ background: statusColor.bg, color: statusColor.color }}
+                            >
                               {order.orderStatus}
                             </span>
                             {order.paymentMethod && (
-                              <span style={{ fontSize: 11, fontFamily: "'DM Mono',monospace", color: "#6b7280", background: "#f3f4f6", borderRadius: 4, padding: "2px 8px" }}>
-                                {(order.paymentMethod === "cod" || order.paymentMethod === "cash_on_delivery")
-                                  ? "Cash on Delivery"
-                                  : "Online Payment"}
+                              <span className={styles.paymentChip}>
+                                {order.paymentMethod === "cod" || order.paymentMethod === "cash_on_delivery"
+                                  ? "COD"
+                                  : "Paid Online"}
                               </span>
                             )}
-                            <strong style={{ fontSize: 15, fontFamily: "'DM Sans',sans-serif", color: "var(--ink)" }}>
+                            <strong className={styles.orderTotal}>
                               {price.format(parseFloat(order.total))}
                             </strong>
                           </div>
                         </div>
 
-                        {/* Product Chips */}
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                        {/* Items Grid */}
+                        <div className={styles.orderItemsGrid}>
                           {order.items.map((item) => (
-                            <div key={item.id} style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-                              <div
-                                style={{
-                                  display: "flex", alignItems: "center", gap: 10,
-                                  background: "var(--cream)", border: "1px solid var(--line)",
-                                  borderRadius: 8, padding: "8px 12px",
-                                  textAlign: "left", transition: "border-color 0.15s",
-                                  maxWidth: 280,
-                                }}
-                              >
+                            <div key={item.id} className={styles.orderItemChip}>
+                              {item.product?.image ? (
+                                <img
+                                  src={item.product.image}
+                                  alt={item.name}
+                                  className={styles.itemThumb}
+                                />
+                              ) : (
+                                <div className={styles.itemThumbFallback}>
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
+                                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                                    <line x1="3" y1="6" x2="21" y2="6" />
+                                    <path d="M16 10a4 4 0 0 1-8 0" />
+                                  </svg>
+                                </div>
+                              )}
+
+                              <div className={styles.itemInfo}>
                                 {item.product?.slug ? (
-                                  <Link href={`/product/${item.product.slug}`} style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", flex: 1, minWidth: 0 }}>
-                                    {item.product?.image ? (
-                                      <img src={item.product.image} alt={item.name} style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6, border: "1px solid var(--line)", flexShrink: 0 }} />
-                                    ) : (
-                                      <div style={{ width: 36, height: 36, background: "#f0ede8", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                                      </div>
-                                    )}
-                                    <div style={{ minWidth: 0 }}>
-                                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</p>
-                                      <p style={{ margin: "2px 0 0", fontSize: 11, color: "#6b7280", fontFamily: "'DM Mono',monospace" }}>{item.quantity} × {price.format(parseFloat(item.price))}</p>
-                                    </div>
+                                  <Link href={`/product/${item.product.slug}`} className={styles.itemName}>
+                                    {item.name}
                                   </Link>
                                 ) : (
-                                  <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-                                    <div style={{ width: 36, height: 36, background: "#f0ede8", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                                    </div>
-                                    <div style={{ minWidth: 0 }}>
-                                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</p>
-                                      <p style={{ margin: "2px 0 0", fontSize: 11, color: "#6b7280", fontFamily: "'DM Mono',monospace" }}>{item.quantity} × {price.format(parseFloat(item.price))}</p>
-                                    </div>
+                                  <p className={styles.itemName}>{item.name}</p>
+                                )}
+                                <p className={styles.itemMeta}>
+                                  {item.quantity} × {price.format(parseFloat(item.price))}
+                                  {item.weight ? ` · ${item.weight}` : ""}
+                                </p>
+
+                                {/* Review prompt if delivered */}
+                                {order.orderStatus.toLowerCase() === "delivered" && (
+                                  <div className={styles.reviewActionRow}>
+                                    {item.productId && reviewedProductIds.includes(item.productId) ? (
+                                      <span className={styles.reviewedBadge}>
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                          <polyline points="20 6 9 17 4 12" />
+                                        </svg>
+                                        Reviewed
+                                      </span>
+                                    ) : item.productId ? (
+                                      reviewingItemId === item.id ? (
+                                        <div className={styles.inlineReviewCard}>
+                                          <div className={styles.starRatingRow}>
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                              <button
+                                                key={star}
+                                                type="button"
+                                                className={styles.starBtn}
+                                                onClick={() => setReviewRating(star)}
+                                                onMouseEnter={() => setReviewHovered(star)}
+                                                onMouseLeave={() => setReviewHovered(0)}
+                                                style={{ color: (reviewHovered || reviewRating) >= star ? "#f59e0b" : "#d1d5db" }}
+                                              >
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                                </svg>
+                                              </button>
+                                            ))}
+                                          </div>
+                                          <textarea
+                                            rows={2}
+                                            value={reviewContent}
+                                            onChange={(e) => setReviewContent(e.target.value)}
+                                            placeholder="Write your review here…"
+                                            className={styles.reviewTextarea}
+                                          />
+                                          {reviewError && (
+                                            <p style={{ margin: "0 0 6px", color: "#dc2626", fontSize: 11 }}>{reviewError}</p>
+                                          )}
+                                          <div className={styles.reviewActionsRow}>
+                                            <button
+                                              type="button"
+                                              onClick={() => submitReview(item.productId!)}
+                                              disabled={reviewSubmitting}
+                                              className={styles.nameSaveBtn}
+                                            >
+                                              {reviewSubmitting ? "Posting…" : "Post Review"}
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => setReviewingItemId(null)}
+                                              className={styles.nameCancelBtn}
+                                            >
+                                              Cancel
+                                            </button>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          className={styles.reviewPromptBtn}
+                                          onClick={() => {
+                                            setReviewingItemId(item.id);
+                                            setReviewRating(0);
+                                            setReviewContent("");
+                                            setReviewError("");
+                                          }}
+                                        >
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                          </svg>
+                                          <span>Review</span>
+                                        </button>
+                                      )
+                                    ) : null}
                                   </div>
                                 )}
                               </div>
-
-                              {/* Review Action */}
-                              {order.orderStatus === "delivered" && (
-                                item.productId && reviewedProductIds.includes(item.productId) ? (
-                                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, fontSize: 11, color: "#166534", fontFamily: "'DM Mono',monospace", fontWeight: 600 }}>
-                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                                    Reviewed
-                                  </span>
-                                ) : item.productId ? (
-                                  reviewingItemId === item.id ? (
-                                    <div style={{ marginTop: 8, padding: 12, background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, width: 280 }}>
-                                      <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
-                                        {[1, 2, 3, 4, 5].map((star) => (
-                                          <button
-                                            key={star}
-                                            type="button"
-                                            onClick={() => setReviewRating(star)}
-                                            onMouseEnter={() => setReviewHovered(star)}
-                                            onMouseLeave={() => setReviewHovered(0)}
-                                            style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: (reviewHovered || reviewRating) >= star ? "#f59e0b" : "#d1d5db" }}
-                                          >
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                                            </svg>
-                                          </button>
-                                        ))}
-                                      </div>
-                                      <textarea
-                                        rows={2}
-                                        value={reviewContent}
-                                        onChange={(e) => setReviewContent(e.target.value)}
-                                        placeholder="Share your thoughts..."
-                                        style={{ width: "100%", padding: "6px 8px", fontSize: 12, border: "1px solid var(--line)", borderRadius: 4, resize: "none", marginBottom: 6, boxSizing: "border-box" }}
-                                      />
-                                      {reviewError && <p style={{ margin: "0 0 6px", color: "#b91c1c", fontSize: 11 }}>{reviewError}</p>}
-                                      <div style={{ display: "flex", gap: 6 }}>
-                                        <button
-                                          type="button"
-                                          onClick={() => submitReview(item.productId!)}
-                                          disabled={reviewSubmitting}
-                                          style={{ padding: "4px 10px", fontSize: 11, background: "var(--terracotta)", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", fontWeight: 600 }}
-                                        >
-                                          {reviewSubmitting ? "Submitting…" : "Post"}
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => setReviewingItemId(null)}
-                                          style={{ padding: "4px 10px", fontSize: 11, background: "var(--paper)", border: "1px solid var(--line)", borderRadius: 4, cursor: "pointer" }}
-                                        >
-                                          Cancel
-                                        </button>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      onClick={() => { setReviewingItemId(item.id); setReviewRating(0); setReviewContent(""); setReviewError(""); }}
-                                      style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 4, padding: "3px 10px", background: "rgba(196,79,49,0.08)", border: "1px solid rgba(196,79,49,0.25)", borderRadius: 20, fontSize: 11, fontWeight: 600, color: "var(--terracotta)", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", outline: "none" }}
-                                    >
-                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                                      </svg>
-                                      Review
-                                    </button>
-                                  )
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => setDetailOrder(order)}
-                                    style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 4, padding: "3px 10px", background: "rgba(196,79,49,0.08)", border: "1px solid rgba(196,79,49,0.25)", borderRadius: 20, fontSize: 11, fontWeight: 600, color: "var(--terracotta)", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", outline: "none" }}
-                                  >
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                                    </svg>
-                                    Review
-                                  </button>
-                                )
-                              )}
                             </div>
                           ))}
                         </div>
 
-                        {/* Order Action Buttons */}
-                        <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                        {/* Order Actions Footer */}
+                        <div className={styles.orderActionsFooter}>
                           <button
                             type="button"
+                            className={styles.btnDetails}
                             onClick={() => setDetailOrder(order)}
-                            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 6, fontSize: 13, fontWeight: 600, color: "var(--ink)", cursor: "pointer" }}
                           >
-                            View Order Details
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="12" y1="16" x2="12" y2="12" />
+                              <line x1="12" y1="8" x2="12.01" y2="8" />
+                            </svg>
+                            <span>View Details</span>
                           </button>
                           <button
                             type="button"
+                            className={styles.btnInvoice}
                             onClick={() => downloadInvoice(order.orderNumber)}
-                            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 6, fontSize: 13, fontWeight: 600, color: "var(--ink)", cursor: "pointer" }}
                           >
-                            Download Invoice
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                              <polyline points="7 10 12 15 17 10" />
+                              <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            <span>Download Invoice</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.btnBuyAgain}
+                            onClick={() => handleBuyAgain(order)}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M1 4v6h6" />
+                              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                            </svg>
+                            <span>Buy Again</span>
                           </button>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-            )}
-
-            {/* 3. My Messages Tab Content */}
-            {activeTab === "messages" && (
-              <section className={styles.card} style={{ padding: 0, overflow: "hidden" }}>
-                <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <h2 style={{ margin: 0, font: "700 20px 'Playfair Display', serif", color: "var(--ink)" }}>
-                    Support Inquiries
-                  </h2>
-                  <Link href="/contact" className={styles.textLink}>Send New Message</Link>
+                      </article>
+                    );
+                  })}
                 </div>
+              )}
+            </section>
+          </main>
+        )}
 
-                {!messagesLoaded ? (
-                  <div style={{ padding: 36, textAlign: "center", color: "#9ca3af", fontSize: 14 }}>Loading messages…</div>
-                ) : userMessages.length === 0 ? (
-                  <div className={styles.emptyState} style={{ padding: "48px 24px" }}>
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ margin: "0 auto 12px", display: "block", color: "#9ca3af" }}>
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
-                    <p style={{ margin: 0, color: "#9ca3af", fontSize: 14 }}>No messages sent yet.</p>
-                    <Link href="/contact" className={styles.button} style={{ marginTop: 16, display: "inline-flex" }}>Send a Message</Link>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    {userMessages.map((msg, idx) => {
-                      const subjectLabels: Record<string, string> = { order: "Order Inquiry", product: "Product Question", bulk: "Bulk Orders", feedback: "Feedback", other: "Other" };
-                      return (
-                        <div key={msg.id} style={{ padding: "18px 24px", borderBottom: idx < userMessages.length - 1 ? "1px solid var(--line)" : "none" }}>
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                              <span style={{ background: "#fef3c7", color: "#92400e", borderRadius: 4, padding: "2px 8px", fontSize: 11, fontWeight: 700, fontFamily: "'DM Mono',monospace" }}>
-                                {subjectLabels[msg.subject] ?? msg.subject}
+        {/* ── Tab 3: Support & Messages ── */}
+        {activeTab === "messages" && (
+          <main className={styles.panel}>
+            <section className={styles.card}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardHeaderLeft}>
+                  <h2 className={styles.cardTitle}>Customer Support & Inquiries</h2>
+                  <p className={styles.cardSubtitle}>
+                    Direct messages with our team regarding your orders, special packaging, and product inquiries.
+                  </p>
+                </div>
+                <Link href="/contact" className={styles.addAddressBtn}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  <span>Send New Message</span>
+                </Link>
+              </div>
+
+              {!messagesLoaded ? (
+                <p style={{ fontSize: 13, color: "#9ca3af", margin: 0 }}>Loading your messages…</p>
+              ) : userMessages.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <svg className={styles.emptyStateIcon} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  <h3 className={styles.emptyStateTitle}>No messages sent yet</h3>
+                  <p className={styles.emptyStateText}>
+                    Need assistance with an existing order or want to inquire about bulk corporate gifting? We are here to help.
+                  </p>
+                  <Link href="/contact" className={styles.btnPrimary}>
+                    Contact Customer Care
+                  </Link>
+                </div>
+              ) : (
+                <div className={styles.messagesList}>
+                  {userMessages.map((msg) => {
+                    const subjectLabels: Record<string, string> = {
+                      order: "Order Inquiry",
+                      product: "Product Question",
+                      bulk: "Bulk Orders",
+                      feedback: "Feedback",
+                      other: "Other",
+                    };
+
+                    return (
+                      <div key={msg.id} className={styles.messageCard}>
+                        <div className={styles.messageHeader}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                            <span className={styles.messageSubjectBadge}>
+                              {subjectLabels[msg.subject] ?? msg.subject}
+                            </span>
+                            {msg.adminReply ? (
+                              <span className={styles.messageRepliedBadge}>Replied by Store</span>
+                            ) : (
+                              <span style={{ fontSize: 11, color: "#9ca3af", fontFamily: "'DM Mono',monospace" }}>
+                                Awaiting Reply
                               </span>
-                              {msg.adminReply && (
-                                <span style={{ background: "#dcfce7", color: "#166534", borderRadius: 4, padding: "2px 8px", fontSize: 11, fontWeight: 700, fontFamily: "'DM Mono',monospace" }}>
-                                  Replied
+                            )}
+                          </div>
+                          <span className={styles.messageDate}>
+                            {new Date(msg.createdAt).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </span>
+                        </div>
+
+                        <div className={styles.messageBody}>{msg.message}</div>
+
+                        {msg.adminReply && (
+                          <div className={styles.adminReplyBubble}>
+                            <p className={styles.replyHeader}>
+                              Response from Raghul Delights
+                              {msg.replyAt && (
+                                <span style={{ marginLeft: 8, fontWeight: 400, color: "#166534" }}>
+                                  · {new Date(msg.replyAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                                 </span>
                               )}
-                            </div>
-                            <span style={{ fontSize: 12, color: "#9ca3af" }}>
-                              {new Date(msg.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                            </span>
+                            </p>
+                            <p className={styles.replyText}>{msg.adminReply}</p>
                           </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
 
-                          <div style={{ background: "var(--cream)", border: "1px solid var(--line)", borderRadius: 8, padding: "12px 14px", marginBottom: msg.adminReply ? 10 : 0, fontSize: 14, lineHeight: 1.7, color: "var(--ink)", whiteSpace: "pre-wrap" }}>
-                            {msg.message}
-                          </div>
-
-                          {msg.adminReply && (
-                            <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "12px 14px" }}>
-                              <p style={{ margin: "0 0 6px", fontSize: 11, fontFamily: "'DM Mono',monospace", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#166534" }}>
-                                Reply from Raghul Delights
-                                {msg.replyAt && <span style={{ marginLeft: 8, fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
-                                  · {new Date(msg.replyAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                                </span>}
-                              </p>
-                              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: "#166534", whiteSpace: "pre-wrap" }}>{msg.adminReply}</p>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </section>
-            )}
+            {/* Quick WhatsApp Support Banner */}
+            <div className={styles.supportBanner}>
+              <div>
+                <strong style={{ display: "block", color: "#166534", fontSize: 14 }}>
+                  Need instant assistance?
+                </strong>
+                <span style={{ fontSize: 13, color: "#15803d" }}>
+                  Chat directly with our kitchen and packaging team on WhatsApp for quick updates.
+                </span>
+              </div>
+              <a
+                href="https://wa.me/919940893306?text=Hi%20Raghul%20Delights,%20I%20have%20an%20inquiry%20regarding%20my%20account"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "8px 16px",
+                  background: "#22c55e",
+                  color: "#ffffff",
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Chat on WhatsApp
+              </a>
+            </div>
           </main>
-        </div>
+        )}
       </div>
     </div>
   );
