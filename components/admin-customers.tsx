@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import { AdminHeaderActions } from "./admin-header-actions";
@@ -66,6 +66,7 @@ export function AdminCustomers() {
               placeholder="Search by name, email or phone…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ paddingLeft: "36px" }}
             />
           </div>
         </div>

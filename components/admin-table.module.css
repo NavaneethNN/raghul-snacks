@@ -136,11 +136,12 @@
   box-sizing: border-box;
 }
 
+.toolbar .toolbarSearch input,
 .toolbarSearch input {
   width: 100%;
   border: 1.5px solid var(--line);
   background: var(--paper);
-  padding: 9px 12px 9px 36px;
+  padding: 9px 12px 9px 36px !important;
   font: 14px 'DM Sans', sans-serif;
   color: var(--ink);
   border-radius: 8px;
@@ -164,13 +165,14 @@
 
 .searchIcon {
   position: absolute;
-  left: 10px;
+  left: 11px;
   top: 50%;
   transform: translateY(-50%);
   color: #9ca3af;
   pointer-events: none;
   display: flex;
   align-items: center;
+  z-index: 2;
 }
 
 /* Legacy label-based search (kept for backward compat) */
