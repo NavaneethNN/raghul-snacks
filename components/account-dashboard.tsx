@@ -425,7 +425,19 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
       <div className={styles.contentWrapper}>
         {/* Page Top Heading */}
         <header className={styles.pageHeader}>
-          <span className={styles.pageBadge}>Customer Portal</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+            <span className={styles.pageBadge}>Customer Portal</span>
+            <Link
+              href="/shop"
+              className={styles.textLink}
+              style={{ fontSize: 13, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+              <span>Back to Store</span>
+            </Link>
+          </div>
           <h1 className={styles.pageTitle}>My Account</h1>
           <p className={styles.pageSubtitle}>
             Welcome back, <strong>{name}</strong>. Manage your profile, view orders, and track deliveries.

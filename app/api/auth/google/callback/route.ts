@@ -17,11 +17,61 @@ type GoogleProfile = {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
-  const returnTo = searchParams.get("state") || "/account";
-  const safeReturnTo = (returnTo.startsWith('/') && !returnTo.includes('://')) ? returnTo : '/account';
+  const rawState = searchParams.get("state");
+
+  let safeReturnTo = "/account";
+  let isPopup = false;
+
+  if (rawState) {
+    try {
+      if (rawState.startsWith("/")) {
+        safeReturnTo = rawState;
+      } else {
+        const parsed = JSON.parse(Buffer.from(rawState, "base64url").toString("utf-8"));
+        if (
+          parsed.returnTo &&
+          typeof parsed.returnTo === "string" &&
+          parsed.returnTo.startsWith("/") &&
+          !parsed.returnTo.includes("://")
+        ) {
+          safeReturnTo = parsed.returnTo;
+        }
+        isPopup = Boolean(parsed.isPopup);
+      }
+    } catch {
+      safeReturnTo = "/account";
+    }
+  }
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
 
   function loginError(reason: string) {
+    if (isPopup) {
+      const errorHtml = `<!DOCTYPE html>
+<html>
+<head><title>Sign in Error</title></head>
+<body style="font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#faf8f5;">
+  <p style="font-size:14px;color:#dc2626;">Signing in was cancelled or failed. Closing window…</p>
+  <script>
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: "GOOGLE_AUTH_ERROR", error: ${JSON.stringify(reason)} }, window.location.origin);
+        setTimeout(function() { window.close(); }, 200);
+      } else {
+        window.location.replace("/login?error=" + encodeURIComponent(${JSON.stringify(reason)}));
+      }
+    } catch (e) {
+      window.location.replace("/login?error=" + encodeURIComponent(${JSON.stringify(reason)}));
+    }
+  </script>
+</body>
+</html>`;
+      return new NextResponse(errorHtml, {
+        status: 200,
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      });
+    }
+
     const dest = new URL("/login", appUrl);
     dest.searchParams.set("error", reason);
     return NextResponse.redirect(dest);
@@ -83,7 +133,7 @@ export async function GET(request: NextRequest) {
           isAdmin: customerAccounts.isAdmin,
         });
     } else {
-      // Link this Google identity to the existing account (e.g. one created via email/password).
+      // Link this Google identity to the existing account
       await db.update(customerAccounts).set({ googleId: profile.sub }).where(eq(customerAccounts.id, account.id));
     }
 
@@ -94,7 +144,44 @@ export async function GET(request: NextRequest) {
       isAdmin: Boolean(account.isAdmin),
     };
 
-    const response = NextResponse.redirect(new URL(safeReturnTo, appUrl));
+    // Return HTML that communicates with opener (popup) or replaces current page (direct redirect)
+    // This completely prevents Google consent screen or callback URL from staying in the browser history!
+    const successHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Signed in successfully</title>
+</head>
+<body style="font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#faf8f5;">
+  <div style="text-align:center;padding:24px;">
+    <div style="width:36px;height:36px;border:3px solid #e5e0d8;border-top-color:#c95f3b;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 16px;"></div>
+    <p style="font-size:16px;color:#1c1917;font-weight:600;margin:0 0 6px;">Signed in successfully</p>
+    <p style="font-size:13px;color:#6b7280;margin:0;">Redirecting to your account…</p>
+  </div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  <script>
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS', returnTo: ${JSON.stringify(safeReturnTo)} }, window.location.origin);
+        setTimeout(function() { window.close(); }, 120);
+      } else {
+        window.location.replace(${JSON.stringify(safeReturnTo)});
+      }
+    } catch (err) {
+      window.location.replace(${JSON.stringify(safeReturnTo)});
+    }
+  </script>
+</body>
+</html>`;
+
+    const response = new NextResponse(successHtml, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    });
+
     response.cookies.set(customerCookieName(), createCustomerSession(sessionData), {
       httpOnly: true,
       sameSite: "lax",

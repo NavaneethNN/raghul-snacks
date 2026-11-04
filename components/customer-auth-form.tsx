@@ -39,6 +39,26 @@ export function CustomerAuthForm({ mode }: { mode: "login" | "signup" }) {
   const [loading, setLoading] = useState(false);
   const returnTo = searchParams.get("returnTo") || "/account";
 
+  // Check if customer is already authenticated
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((r) => r.json())
+      .then((d: { account?: { id: number } | null }) => {
+        if (d.account?.id) {
+          // If the user arrived here via browser Back button while already logged in, continue back!
+          if (typeof window !== "undefined" && window.performance) {
+            const navEntries = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+            if (navEntries[0]?.type === "back_forward") {
+              window.history.back();
+              return;
+            }
+          }
+          router.replace(returnTo);
+        }
+      })
+      .catch(() => {});
+  }, [returnTo, router]);
+
   useEffect(() => {
     const googleErrors: Record<string, string> = {
       google_not_configured: "Google Sign-In is not available at this time.",
@@ -47,7 +67,7 @@ export function CustomerAuthForm({ mode }: { mode: "login" | "signup" }) {
       google_failed: "Something went wrong signing in with Google. Please try again.",
     };
     const code = searchParams.get("error");
-    if (code) setErrors({ form: googleErrors[code] || "Something went wrong signing in with Google." }); // eslint-disable-line react-hooks/set-state-in-effect
+    if (code) setErrors({ form: googleErrors[code] || "Something went wrong signing in with Google." });
   }, [searchParams]);
 
   function clearFieldError(field: keyof FieldErrors) {
@@ -90,6 +110,7 @@ export function CustomerAuthForm({ mode }: { mode: "login" | "signup" }) {
       });
       const data = await response.json() as { error?: string };
       if (!response.ok) throw new Error(data.error || "Unable to continue.");
+      // Using replace ensures /login is replaced in history so clicking Back doesn't return to login!
       router.replace(returnTo);
     } catch (caught) {
       setErrors({ form: caught instanceof Error ? caught.message : "Unable to continue." });
@@ -100,7 +121,70 @@ export function CustomerAuthForm({ mode }: { mode: "login" | "signup" }) {
   function handleGoogleSignIn() {
     setErrors({});
     setLoading(true);
-    window.location.href = `/api/auth/google?returnTo=${encodeURIComponent(returnTo)}`;
+
+    // Calculate centered coordinates for popup
+    const width = 500;
+    const height = 620;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2.5;
+
+    const popupUrl = `/api/auth/google?returnTo=${encodeURIComponent(returnTo)}&popup=true`;
+
+    let popup: Window | null = null;
+    try {
+      popup = window.open(
+        popupUrl,
+        "raghul_google_auth",
+        `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no,scrollbars=yes,resizable=yes`
+      );
+    } catch {
+      popup = null;
+    }
+
+    // If popup was blocked (e.g. strict mobile settings), fallback to replacing current page
+    if (!popup || popup.closed || typeof popup.closed === "undefined") {
+      window.location.replace(`/api/auth/google?returnTo=${encodeURIComponent(returnTo)}`);
+      return;
+    }
+
+    // Listen for authentication message from the popup
+    const handleAuthMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === "GOOGLE_AUTH_SUCCESS") {
+        window.removeEventListener("message", handleAuthMessage);
+        clearInterval(pollTimer);
+        // Replace /login with returnTo in browser history!
+        // This prevents the Google screen or login form from remaining in the back history stack!
+        router.replace(event.data.returnTo || returnTo);
+        router.refresh();
+      } else if (event.data?.type === "GOOGLE_AUTH_ERROR") {
+        window.removeEventListener("message", handleAuthMessage);
+        clearInterval(pollTimer);
+        setLoading(false);
+        const googleErrors: Record<string, string> = {
+          google_not_configured: "Google Sign-In is not available at this time.",
+          google_denied: "Google sign-in was cancelled.",
+          google_no_email: "Could not retrieve verified email from Google.",
+          google_failed: "Something went wrong signing in with Google.",
+        };
+        setErrors({ form: googleErrors[event.data.error] || "Google sign-in failed. Please try again." });
+      }
+    };
+
+    window.addEventListener("message", handleAuthMessage);
+
+    // Poll to detect if user manually closes the popup
+    const pollTimer = setInterval(() => {
+      try {
+        if (popup && popup.closed) {
+          clearInterval(pollTimer);
+          window.removeEventListener("message", handleAuthMessage);
+          setLoading(false);
+        }
+      } catch {
+        clearInterval(pollTimer);
+      }
+    }, 800);
   }
 
   const inputStyle = (hasError: boolean): React.CSSProperties => hasError
