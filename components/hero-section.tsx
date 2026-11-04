@@ -87,23 +87,36 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
         .hero-trust-chips {
           display: flex;
           flex-wrap: wrap;
-          gap: 8px 12px;
+          gap: 8px 10px;
           margin-bottom: 24px;
         }
         .hero-trust-chip {
           display: inline-flex;
           align-items: center;
-          gap: 6px;
+          gap: 7px;
           font-size: 12.5px;
           font-weight: 600;
           color: #374151;
-          background: rgba(0, 0, 0, 0.03);
-          border: 1px solid rgba(0, 0, 0, 0.07);
-          padding: 5px 11px;
-          border-radius: 8px;
+          background: #ffffff;
+          border: 1px solid #e7e2d8;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+          padding: 6px 12px;
+          border-radius: 999px;
+          transition: border-color 0.15s ease, background-color 0.15s ease;
         }
-        .hero-trust-chip svg {
-          color: var(--terracotta);
+        .hero-trust-chip:hover {
+          border-color: rgba(201, 95, 59, 0.35);
+          background: #fffcf9;
+        }
+        .hero-trust-chip-icon {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: rgba(22, 163, 74, 0.12);
+          color: #16a34a;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           flex-shrink: 0;
         }
 
@@ -309,48 +322,40 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
             max-width: 360px;
           }
 
-          /* 4. Compact Horizontal Scrolling Trust Badges */
+          /* 4. Perfectly Centered Wrapped Trust Badges (No awkward horizontal scroll cutoff) */
           .hero-trust-chips {
             order: 4;
             display: flex;
-            flex-direction: row;
+            flex-wrap: wrap;
             align-items: center;
-            gap: 8px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            padding: 2px 4px 12px;
+            justify-content: center;
+            gap: 7px 8px;
             width: 100%;
             max-width: 420px;
-            margin: 0 auto 4px;
-            scrollbar-width: none;
-            justify-content: flex-start;
-          }
-
-          .hero-trust-chips::-webkit-scrollbar {
-            display: none;
+            margin: 0 auto 16px;
+            padding: 0;
+            overflow-x: visible;
           }
 
           .hero-trust-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
             background: #ffffff !important;
-            border: 1px solid rgba(201, 95, 59, 0.18) !important;
-            box-shadow: 0 2px 6px -1px rgba(36, 49, 39, 0.06) !important;
-            padding: 6px 12px !important;
+            border: 1px solid #e7e2d8 !important;
+            box-shadow: 0 1px 4px rgba(36, 49, 39, 0.05) !important;
+            padding: 5px 11px !important;
             border-radius: 999px !important;
-            font-size: 11.5px;
-            font-weight: 600;
-            color: #374151;
-            white-space: nowrap;
+            font-size: 11.5px !important;
+            font-weight: 600 !important;
+            color: #374151 !important;
+            white-space: nowrap !important;
             flex-shrink: 0;
           }
 
-          .hero-trust-chip svg {
-            color: var(--terracotta);
-            flex-shrink: 0;
-            width: 13px;
-            height: 13px;
+          .hero-trust-chip-icon {
+            width: 14px !important;
+            height: 14px !important;
           }
 
           /* 5. Mobile Snack Visual Showcase & Promo Banner */
@@ -500,6 +505,16 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
             font-size: 12.5px;
           }
 
+          .hero-trust-chips {
+            gap: 5px 6px;
+          }
+
+          .hero-trust-chip {
+            font-size: 10.5px !important;
+            padding: 4px 8px !important;
+            gap: 4px !important;
+          }
+
           .hero-image-frame {
             border-radius: 14px;
           }
@@ -537,23 +552,31 @@ export function HeroSection({ banners = [] }: { banners?: Banner[] }) {
 
           <div className="hero-trust-chips">
             <span className="hero-trust-chip">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span className="hero-trust-chip-icon">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
               <span>Millet Laddus</span>
             </span>
 
             <span className="hero-trust-chip">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span className="hero-trust-chip-icon">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
               <span>Traditional Snacks</span>
             </span>
 
             <span className="hero-trust-chip">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span>Everyday Podi Varieties</span>
+              <span className="hero-trust-chip-icon">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+              <span>Everyday Podi</span>
             </span>
 
             <span className="hero-trust-chip">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              <span>Shipped Fresh Across India</span>
+              <span className="hero-trust-chip-icon">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+              <span>Fresh Across India</span>
             </span>
           </div>
 
