@@ -1,5 +1,5 @@
 import { calculatePackagingBufferKg } from "@/lib/catalog";
-import { validateIndianPincode } from "@/lib/pincode";
+import { validateIndianPincode, calculateDeliveryDateRange } from "@/lib/pincode";
 
 export class UnserviceablePincodeError extends Error {
   pincode: string;
@@ -14,10 +14,16 @@ export type PincodeServiceabilityResult = {
   serviceable: boolean;
   valid: boolean;
   pincode: string;
+  city?: string;
   state?: string;
   region?: string;
   courierName?: string | null;
   estimatedDeliveryDays?: string | null;
+  deliveryDateRange?: string;
+  deliveryDateShort?: string;
+  minDays?: number;
+  maxDays?: number;
+  isLocal?: boolean;
   prepDays?: number;
   message: string;
 };
@@ -351,16 +357,13 @@ export async function checkPincodeServiceability(
     return cached.data;
   }
 
-  const prepDays = weightKg > 3 ? 3 : 2;
-  const isTN = validation.state?.toLowerCase() === "tamil nadu";
-  const isSouth = ["tamil nadu", "kerala", "karnataka", "andhra pradesh", "telangana"].includes(
-    (validation.state || "").toLowerCase()
-  );
-  const fallbackEstimate = isTN
-    ? `${2 + prepDays}–${3 + prepDays} business days`
-    : isSouth
-    ? `${3 + prepDays}–${5 + prepDays} business days`
-    : `${4 + prepDays}–${7 + prepDays} business days`;
+  const dateEstimate = calculateDeliveryDateRange(cleanPin, weightKg);
+  const prepDays = dateEstimate?.prepDays || (weightKg > 3 ? 2 : 1);
+  const isTN = dateEstimate?.isTamilNadu ?? validation.state?.toLowerCase() === "tamil nadu";
+  const city = dateEstimate?.city || validation.state;
+  const deliveryRange = dateEstimate?.deliveryDateRange || `${2 + prepDays}–${4 + prepDays} business days`;
+  const deliveryShort = dateEstimate?.deliveryDateShort || `${dateEstimate?.minDays || 2}–${dateEstimate?.maxDays || 4} days`;
+  const courierDesc = dateEstimate?.courierName || (isTN ? "Tamil Nadu Express" : "Pan-India Standard Courier");
 
   const configuration = getShiprocketConfiguration();
 
@@ -370,12 +373,18 @@ export async function checkPincodeServiceability(
       serviceable: true,
       valid: true,
       pincode: cleanPin,
+      city,
       state: validation.state,
       region: validation.region,
-      courierName: isTN ? "Express Courier" : "Standard Courier",
-      estimatedDeliveryDays: fallbackEstimate,
+      courierName: courierDesc,
+      estimatedDeliveryDays: `${dateEstimate?.minDays || 2}–${dateEstimate?.maxDays || 4} business days`,
+      deliveryDateRange: deliveryRange,
+      deliveryDateShort: deliveryShort,
+      minDays: dateEstimate?.minDays,
+      maxDays: dateEstimate?.maxDays,
+      isLocal: dateEstimate?.isLocal,
       prepDays,
-      message: `Available for delivery to ${cleanPin} (${validation.state}) · Estimated delivery: ${fallbackEstimate} (includes ${prepDays} days fresh preparation & packing)`,
+      message: `Delivery by ${deliveryRange} to ${city}, ${validation.state}`,
     };
     serviceabilityCache.set(cacheKey, { data: res, expiresAt: now + 5 * 60 * 1000 });
     return res;
@@ -389,12 +398,18 @@ export async function checkPincodeServiceability(
         serviceable: true,
         valid: true,
         pincode: cleanPin,
+        city,
         state: validation.state,
         region: validation.region,
-        courierName: cleanCourierName(best.name),
-        estimatedDeliveryDays: best.etd || fallbackEstimate,
+        courierName: cleanCourierName(best.name) || courierDesc,
+        estimatedDeliveryDays: `${dateEstimate?.minDays || 2}–${dateEstimate?.maxDays || 4} business days`,
+        deliveryDateRange: deliveryRange,
+        deliveryDateShort: deliveryShort,
+        minDays: dateEstimate?.minDays,
+        maxDays: dateEstimate?.maxDays,
+        isLocal: dateEstimate?.isLocal,
         prepDays,
-        message: `Available for delivery to ${cleanPin} (${validation.state}) · Estimated delivery: ${best.etd || fallbackEstimate} (includes ${prepDays} days fresh preparation & packing)`,
+        message: `Delivery by ${deliveryRange} to ${city}, ${validation.state}`,
       };
       serviceabilityCache.set(cacheKey, { data: res, expiresAt: now + 5 * 60 * 1000 });
       return res;
@@ -404,6 +419,7 @@ export async function checkPincodeServiceability(
         serviceable: false,
         valid: true,
         pincode: cleanPin,
+        city,
         state: validation.state,
         region: validation.region,
         prepDays,
@@ -418,6 +434,7 @@ export async function checkPincodeServiceability(
         serviceable: false,
         valid: true,
         pincode: cleanPin,
+        city,
         state: validation.state,
         region: validation.region,
         prepDays,
@@ -432,12 +449,18 @@ export async function checkPincodeServiceability(
       serviceable: true,
       valid: true,
       pincode: cleanPin,
+      city,
       state: validation.state,
       region: validation.region,
-      courierName: isTN ? "Express Courier" : "Standard Courier",
-      estimatedDeliveryDays: fallbackEstimate,
+      courierName: courierDesc,
+      estimatedDeliveryDays: `${dateEstimate?.minDays || 2}–${dateEstimate?.maxDays || 4} business days`,
+      deliveryDateRange: deliveryRange,
+      deliveryDateShort: deliveryShort,
+      minDays: dateEstimate?.minDays,
+      maxDays: dateEstimate?.maxDays,
+      isLocal: dateEstimate?.isLocal,
       prepDays,
-      message: `Delivery estimated in ${fallbackEstimate} for ${cleanPin} (${validation.state}) (includes ${prepDays} days fresh preparation & packing)`,
+      message: `Delivery by ${deliveryRange} to ${city}, ${validation.state}`,
     };
     return res;
   }

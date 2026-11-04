@@ -31,8 +31,19 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
   const [redirecting, setRedirecting] = useState(false);
 
   // Pincode checker state
+  type PincodeStatus = {
+    success: boolean;
+    message: string;
+    pincode?: string;
+    city?: string;
+    state?: string;
+    deliveryDateRange?: string;
+    deliveryDateShort?: string;
+    courierName?: string;
+    isLocal?: boolean;
+  };
   const [pincodeInput, setPincodeInput] = useState("");
-  const [pincodeStatus, setPincodeStatus] = useState<{ success: boolean; message: string } | null>(null);
+  const [pincodeStatus, setPincodeStatus] = useState<PincodeStatus | null>(null);
   const [checkingPincode, setCheckingPincode] = useState(false);
 
   // Sticky mobile bottom bar state
@@ -71,7 +82,14 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
         } catch {}
         setPincodeStatus({
           success: true,
-          message: data.message || `Available for PIN ${clean} · Delivery in ${data.estimatedDeliveryDays || "2–4 business days"} (includes fresh preparation)`,
+          message: data.message || `Available for PIN ${clean}`,
+          pincode: data.pincode || clean,
+          city: data.city,
+          state: data.state,
+          deliveryDateRange: data.deliveryDateRange,
+          deliveryDateShort: data.deliveryDateShort,
+          courierName: data.courierName,
+          isLocal: data.isLocal,
         });
       }
     } catch {
@@ -399,25 +417,37 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
               </button>
             </div>
             {pincodeStatus && (
-              <div
-                className={`pincode-status ${pincodeStatus.success ? "pincode-success" : "pincode-error"}`}
-                style={{ display: "flex", alignItems: "flex-start", gap: 6 }}
-              >
-                {pincodeStatus.success ? (
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{ flexShrink: 0, marginTop: 2 }}
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                ) : (
+              pincodeStatus.success ? (
+                <div className="pincode-result-card">
+                  <div className="pincode-result-top">
+                    <span className="pincode-result-truck" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="1" y="3" width="15" height="13"/>
+                        <polygon points="16 8 20 8 23 11 23 16 16 8"/>
+                        <circle cx="5.5" cy="18.5" r="2.5"/>
+                        <circle cx="18.5" cy="18.5" r="2.5"/>
+                      </svg>
+                    </span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div className="pincode-delivery-date">
+                        Delivery by <strong>{pincodeStatus.deliveryDateRange || "3–4 business days"}</strong>
+                      </div>
+                      <div className="pincode-delivery-location">
+                        Delivering to {pincodeStatus.city ? `${pincodeStatus.city}, ` : ""}{pincodeStatus.state || "India"} ({pincodeStatus.pincode})
+                      </div>
+                    </div>
+                  </div>
+                  <div className="pincode-tags-row">
+                    <span className="pincode-tag">✨ Fresh Small Batch</span>
+                    <span className="pincode-tag">📦 Sealed Pan-India Pack</span>
+                    <span className="pincode-tag">⚡ {pincodeStatus.courierName || "Express Courier"}</span>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="pincode-status pincode-error"
+                  style={{ display: "flex", alignItems: "flex-start", gap: 6 }}
+                >
                   <svg
                     width="15"
                     height="15"
@@ -433,9 +463,9 @@ export function ProductDetailView({ product, variants = [] }: { product: any; va
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
                   </svg>
-                )}
-                <span>{pincodeStatus.message}</span>
-              </div>
+                  <span>{pincodeStatus.message}</span>
+                </div>
+              )
             )}
           </div>
 
