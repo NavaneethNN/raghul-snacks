@@ -103,6 +103,7 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
   const [nameError, setNameError] = useState("");
 
   // Orders / reviews
+  const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
   const [detailOrder, setDetailOrder] = useState<Order | null>(null);
   const [reviewedProductIds, setReviewedProductIds] = useState<number[]>([]);
   const [reviewingItemId, setReviewingItemId] = useState<number | null>(null);
@@ -464,112 +465,135 @@ export function AccountDashboard({ account, orders }: AccountDashboardProps) {
                 </Link>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {orders.map(order => {
                   const st = STATUS_STYLES[order.orderStatus.toLowerCase()] ?? STATUS_STYLES.placed;
+                  const isExpanded = expandedOrderId === order.id;
+                  const orderDate = new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+                  const itemCount = order.items.length;
                   return (
-                    <div key={order.id} style={{ background: "#fff", border: "1px solid #e5e0d8", borderRadius: 14, padding: "16px 18px", boxSizing: "border-box" }}>
-                      {/* Order header */}
-                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap", paddingBottom: 12, marginBottom: 12, borderBottom: "1px solid #f0ede8" }}>
-                        <div>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink, #243127)", fontFamily: "var(--font-dm-mono, monospace)", marginBottom: 3 }}>
+                    <div key={order.id} style={{ background: "#fff", border: `1px solid ${isExpanded ? "rgba(201,95,59,0.3)" : "#e5e0d8"}`, borderRadius: 14, overflow: "hidden", transition: "border-color 0.18s" }}>
+
+                      {/* ── Clickable summary row ── */}
+                      <button
+                        onClick={() => {
+                          setExpandedOrderId(prev => prev === order.id ? null : order.id);
+                          setReviewingItemId(null);
+                        }}
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "14px 18px", background: "none", border: "none", cursor: "pointer", textAlign: "left", boxSizing: "border-box" }}
+                      >
+                        {/* Left: order number + date/count */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink, #243127)", fontFamily: "var(--font-dm-mono, monospace)", whiteSpace: "nowrap" }}>
                             #{order.orderNumber}
                           </div>
-                          <div style={{ fontSize: 12, color: "#78716c" }}>
-                            {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                            {" · "}{order.items.length} {order.items.length === 1 ? "item" : "items"}
+                          <div style={{ fontSize: 12, color: "#78716c", marginTop: 2, whiteSpace: "nowrap" }}>
+                            {orderDate} · {itemCount} {itemCount === 1 ? "item" : "items"}
                           </div>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 700, color: st.color, background: st.bg, padding: "4px 10px", borderRadius: 999, fontFamily: "var(--font-dm-mono, monospace)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: st.dot, display: "inline-block" }} />
-                            {order.orderStatus}
-                          </span>
-                          <span style={{ fontSize: 17, fontWeight: 700, color: "var(--ink, #243127)", fontFamily: "var(--font-playfair, Georgia, serif)" }}>
-                            {fmt.format(parseFloat(order.total))}
-                          </span>
-                        </div>
-                      </div>
 
-                      {/* Items */}
-                      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
-                        {order.items.map(item => (
-                          <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                            {item.product?.image ? (
-                              <Image src={item.product.image} alt={item.name} width={44} height={44} unoptimized style={{ borderRadius: 8, objectFit: "cover", border: "1px solid #e5e0d8", flexShrink: 0 }} />
-                            ) : (
-                              <div style={{ width: 44, height: 44, borderRadius: 8, background: "#f0ede8", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a8a29e" strokeWidth="1.8"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
-                              </div>
-                            )}
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              {item.product?.slug ? (
-                                <Link href={`/product/${item.product.slug}`} style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink, #243127)", textDecoration: "none", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                  {item.name}
-                                </Link>
-                              ) : (
-                                <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink, #243127)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</span>
-                              )}
-                              <div style={{ fontSize: 12, color: "#78716c", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
-                                <span>Qty {item.quantity} × {fmt.format(parseFloat(item.price))}</span>
-                                {item.weight && <span style={{ background: "#f0ede8", padding: "1px 7px", borderRadius: 4, fontSize: 11, fontWeight: 600, fontFamily: "var(--font-dm-mono, monospace)" }}>{item.weight}</span>}
-                              </div>
-                            </div>
+                        {/* Status badge */}
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: st.color, background: st.bg, padding: "4px 9px", borderRadius: 999, fontFamily: "var(--font-dm-mono, monospace)", textTransform: "uppercase", letterSpacing: "0.04em", flexShrink: 0 }}>
+                          <span style={{ width: 5, height: 5, borderRadius: "50%", background: st.dot, display: "inline-block" }} />
+                          {order.orderStatus}
+                        </span>
 
-                            {/* Review */}
-                            {order.orderStatus.toLowerCase() === "delivered" && item.productId && (
-                              <div style={{ flexShrink: 0 }}>
-                                {reviewedProductIds.includes(item.productId) ? (
-                                  <span style={{ fontSize: 11, fontWeight: 700, color: "#166534", background: "#dcfce7", border: "1px solid #bbf7d0", padding: "3px 8px", borderRadius: 999, whiteSpace: "nowrap" }}>✓ Reviewed</span>
-                                ) : reviewingItemId === item.id ? null : (
-                                  <button onClick={() => { setReviewingItemId(item.id); setReviewRating(0); setReviewContent(""); setReviewError(""); }} style={{ fontSize: 12, fontWeight: 600, color: "var(--terracotta, #c95f3b)", background: "rgba(201,95,59,0.08)", border: "1px solid rgba(201,95,59,0.25)", borderRadius: 999, padding: "4px 10px", cursor: "pointer", whiteSpace: "nowrap" }}>
-                                    Rate it
-                                  </button>
+                        {/* Total */}
+                        <span style={{ fontSize: 15, fontWeight: 700, color: "var(--ink, #243127)", fontFamily: "var(--font-playfair, Georgia, serif)", flexShrink: 0 }}>
+                          {fmt.format(parseFloat(order.total))}
+                        </span>
+
+                        {/* Chevron */}
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#78716c" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
+                          <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                      </button>
+
+                      {/* ── Expandable content ── */}
+                      {isExpanded && (
+                        <div style={{ padding: "0 18px 18px", borderTop: "1px solid #f0ede8" }}>
+
+                          {/* Items list */}
+                          <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 14, marginBottom: 14 }}>
+                            {order.items.map(item => (
+                              <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                {item.product?.image ? (
+                                  <Image src={item.product.image} alt={item.name} width={44} height={44} unoptimized style={{ borderRadius: 8, objectFit: "cover", border: "1px solid #e5e0d8", flexShrink: 0 }} />
+                                ) : (
+                                  <div style={{ width: 44, height: 44, borderRadius: 8, background: "#f0ede8", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a8a29e" strokeWidth="1.8"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+                                  </div>
+                                )}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  {item.product?.slug ? (
+                                    <Link href={`/product/${item.product.slug}`} style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink, #243127)", textDecoration: "none", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                      {item.name}
+                                    </Link>
+                                  ) : (
+                                    <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink, #243127)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</span>
+                                  )}
+                                  <div style={{ fontSize: 12, color: "#78716c", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
+                                    <span>Qty {item.quantity} × {fmt.format(parseFloat(item.price))}</span>
+                                    {item.weight && <span style={{ background: "#f0ede8", padding: "1px 7px", borderRadius: 4, fontSize: 11, fontWeight: 600, fontFamily: "var(--font-dm-mono, monospace)" }}>{item.weight}</span>}
+                                  </div>
+                                </div>
+
+                                {/* Review button */}
+                                {order.orderStatus.toLowerCase() === "delivered" && item.productId && (
+                                  <div style={{ flexShrink: 0 }}>
+                                    {reviewedProductIds.includes(item.productId) ? (
+                                      <span style={{ fontSize: 11, fontWeight: 700, color: "#166534", background: "#dcfce7", border: "1px solid #bbf7d0", padding: "3px 8px", borderRadius: 999, whiteSpace: "nowrap" }}>✓ Reviewed</span>
+                                    ) : reviewingItemId === item.id ? null : (
+                                      <button onClick={() => { setReviewingItemId(item.id); setReviewRating(0); setReviewContent(""); setReviewError(""); }} style={{ fontSize: 12, fontWeight: 600, color: "var(--terracotta, #c95f3b)", background: "rgba(201,95,59,0.08)", border: "1px solid rgba(201,95,59,0.25)", borderRadius: 999, padding: "4px 10px", cursor: "pointer", whiteSpace: "nowrap" }}>
+                                        Rate it
+                                      </button>
+                                    )}
+                                  </div>
                                 )}
                               </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Inline review form */}
-                      {reviewingItemId !== null && order.items.some(i => i.id === reviewingItemId) && (
-                        <div style={{ background: "#faf8f5", border: "1px solid #e5e0d8", borderRadius: 10, padding: 14, marginBottom: 14 }}>
-                          <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
-                            {[1,2,3,4,5].map(s => (
-                              <button key={s} type="button" onClick={() => setReviewRating(s)} onMouseEnter={() => setReviewHovered(s)} onMouseLeave={() => setReviewHovered(0)} style={{ background: "none", border: "none", cursor: "pointer", color: (reviewHovered || reviewRating) >= s ? "#f59e0b" : "#d1d5db", padding: 2 }}>
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                              </button>
                             ))}
                           </div>
-                          <textarea rows={2} value={reviewContent} onChange={e => setReviewContent(e.target.value)} placeholder="Share your experience…" style={{ width: "100%", padding: "8px 10px", border: "1px solid #e5e0d8", borderRadius: 7, fontSize: 13, resize: "vertical", boxSizing: "border-box", fontFamily: "inherit", outline: "none", marginBottom: 8 }} />
-                          {reviewError && <p style={{ margin: "0 0 6px", color: "#dc2626", fontSize: 12 }}>{reviewError}</p>}
-                          <div style={{ display: "flex", gap: 8 }}>
-                            <button onClick={() => { const item = order.items.find(i => i.id === reviewingItemId); if (item?.productId) submitReview(item.productId); }} disabled={reviewSubmitting} style={{ padding: "7px 16px", background: "var(--terracotta, #c95f3b)", color: "#fff", border: "none", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                              {reviewSubmitting ? "Posting…" : "Post Review"}
+
+                          {/* Inline review form */}
+                          {reviewingItemId !== null && order.items.some(i => i.id === reviewingItemId) && (
+                            <div style={{ background: "#faf8f5", border: "1px solid #e5e0d8", borderRadius: 10, padding: 14, marginBottom: 14 }}>
+                              <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+                                {[1,2,3,4,5].map(s => (
+                                  <button key={s} type="button" onClick={() => setReviewRating(s)} onMouseEnter={() => setReviewHovered(s)} onMouseLeave={() => setReviewHovered(0)} style={{ background: "none", border: "none", cursor: "pointer", color: (reviewHovered || reviewRating) >= s ? "#f59e0b" : "#d1d5db", padding: 2 }}>
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                  </button>
+                                ))}
+                              </div>
+                              <textarea rows={2} value={reviewContent} onChange={e => setReviewContent(e.target.value)} placeholder="Share your experience…" style={{ width: "100%", padding: "8px 10px", border: "1px solid #e5e0d8", borderRadius: 7, fontSize: 13, resize: "vertical", boxSizing: "border-box", fontFamily: "inherit", outline: "none", marginBottom: 8 }} />
+                              {reviewError && <p style={{ margin: "0 0 6px", color: "#dc2626", fontSize: 12 }}>{reviewError}</p>}
+                              <div style={{ display: "flex", gap: 8 }}>
+                                <button onClick={() => { const item = order.items.find(i => i.id === reviewingItemId); if (item?.productId) submitReview(item.productId); }} disabled={reviewSubmitting} style={{ padding: "7px 16px", background: "var(--terracotta, #c95f3b)", color: "#fff", border: "none", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                                  {reviewSubmitting ? "Posting…" : "Post Review"}
+                                </button>
+                                <button onClick={() => setReviewingItemId(null)} style={{ padding: "7px 12px", background: "#fff", border: "1px solid #e5e0d8", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#57534e" }}>
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Action buttons */}
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingTop: 4 }}>
+                            <button onClick={() => setDetailOrder(order)} style={{ flex: 1, minWidth: 110, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 14px", background: "#fff", border: "1px solid #e5e0d8", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "var(--ink, #243127)", cursor: "pointer" }}>
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              Details
                             </button>
-                            <button onClick={() => setReviewingItemId(null)} style={{ padding: "7px 12px", background: "#fff", border: "1px solid #e5e0d8", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#57534e" }}>
-                              Cancel
+                            <button onClick={() => downloadInvoice(order.orderNumber)} style={{ flex: 1, minWidth: 110, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 14px", background: "#fff", border: "1px solid #e5e0d8", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#57534e", cursor: "pointer" }}>
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                              Invoice
+                            </button>
+                            <button onClick={() => handleBuyAgain(order)} style={{ flex: 1, minWidth: 110, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 14px", background: "var(--terracotta, #c95f3b)", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+                              Buy Again
                             </button>
                           </div>
                         </div>
                       )}
-
-                      {/* Actions */}
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        <button onClick={() => setDetailOrder(order)} style={{ flex: 1, minWidth: 120, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 14px", background: "#fff", border: "1px solid #e5e0d8", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "var(--ink, #243127)", cursor: "pointer" }}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                          Details
-                        </button>
-                        <button onClick={() => downloadInvoice(order.orderNumber)} style={{ flex: 1, minWidth: 120, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 14px", background: "#fff", border: "1px solid #e5e0d8", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#57534e", cursor: "pointer" }}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                          Invoice
-                        </button>
-                        <button onClick={() => handleBuyAgain(order)} style={{ flex: 1, minWidth: 120, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 14px", background: "var(--terracotta, #c95f3b)", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
-                          Buy Again
-                        </button>
-                      </div>
                     </div>
                   );
                 })}
