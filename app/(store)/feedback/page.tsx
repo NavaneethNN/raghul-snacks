@@ -36,11 +36,22 @@ export default async function FeedbackPage({
 
   const { product: productSlug, productId: productIdParam } = await searchParams;
 
+  // Deduplicate products by trimmed name to ensure a clean unique dropdown
+  const seenNames = new Set<string>();
+  const uniqueProducts: typeof allActiveProducts = [];
+  for (const prod of allActiveProducts) {
+    const key = prod.name.trim().toLowerCase();
+    if (!seenNames.has(key)) {
+      seenNames.add(key);
+      uniqueProducts.push(prod);
+    }
+  }
+
   let initialProductId: number | null = null;
   if (productIdParam && !isNaN(Number(productIdParam))) {
     initialProductId = Number(productIdParam);
   } else if (productSlug) {
-    const matched = allActiveProducts.find(
+    const matched = uniqueProducts.find(
       (p) => p.slug.toLowerCase() === productSlug.toLowerCase()
     );
     if (matched) initialProductId = matched.id;
@@ -112,7 +123,7 @@ export default async function FeedbackPage({
 
         {/* Feedback Form Card */}
         <FeedbackForm
-          products={allActiveProducts}
+          products={uniqueProducts}
           initialProductId={initialProductId}
         />
 

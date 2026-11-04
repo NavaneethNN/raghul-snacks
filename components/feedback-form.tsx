@@ -255,7 +255,7 @@ export function FeedbackForm({
               <option value="">— Choose a snack from our kitchen —</option>
               {products.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} {p.weight ? `(${p.weight})` : ""}
+                  {p.name.trim()}
                 </option>
               ))}
             </select>
